@@ -136,8 +136,8 @@ public class Vision extends SubsystemChecker {
 			return "Outside field";
 		}
 		double overallChange;
-		boolean isSkidding = RobotContainer.drivetrainS.isSkidding();
-		if (isSkidding
+		boolean[] moduleSkids = RobotContainer.drivetrainS.isSkidding();
+		if (moduleSkids[0] || moduleSkids[1] || moduleSkids[2] || moduleSkids[3]
 				|| RobotContainer.drivetrainS.isCollisionDetected() || override) {
 			if (RobotContainer.drivetrainS.isCollisionDetected()) {
 				override = true;
@@ -255,18 +255,21 @@ public class Vision extends SubsystemChecker {
 	 * deviation.
 	 */
 	private double applyAdditionalAdjustments(double stdDev, double tagCount) {
-		boolean isSkidding = RobotContainer.drivetrainS.isSkidding();
-		if (isSkidding){
-			stdDev /= 4; 
+		boolean[] moduleSkids = RobotContainer.drivetrainS.isSkidding();
+		for (boolean moduleSkid : moduleSkids) {
+			if (moduleSkid) {
+				stdDev /= 2;
+			}
 		}
 		if (RobotContainer.drivetrainS.isCollisionDetected() || override) {
 			stdDev /= 4;
 		}
-		if (isSkidding) { //overadjust from vision if skidding
-			return Math.max(0.00, stdDev);
+		if (moduleSkids[0] || moduleSkids[1] || moduleSkids[2]
+				|| moduleSkids[3]) {
+			return Math.max(0.05, stdDev);
 		}
 		// Add more adjustments as needed
-		return Math.max(0.05, stdDev); // Minimum threshold
+		return Math.max(0.02, stdDev); // Minimum threshold
 	}
 
 	/**
