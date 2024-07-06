@@ -129,6 +129,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private final SwerveSetpointGenerator setpointGenerator;
 	private int debounce = 0;
 	private boolean collisionDetected;
+	boolean isSkidding = false;
 
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
@@ -254,6 +255,45 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		this.robotVelocity = robotVelocity;
 	}
 
+	public boolean calculateSkidding() {
+		SwerveModuleState[] moduleStates = getModuleStates();
+		ChassisSpeeds currentChassisSpeeds = getChassisSpeeds();
+		// Step 1: Create a measured ChassisSpeeds object with solely the rotation component
+		ChassisSpeeds rotationOnlySpeeds = new ChassisSpeeds(0.0, 0.0,
+				currentChassisSpeeds.omegaRadiansPerSecond);
+		// Step 2: Convert it into module states with kinematics
+		SwerveModuleState[] rotationalStates = kinematics
+				.toSwerveModuleStates(rotationOnlySpeeds);
+		// Step 3: Subtract the rotational states from the module states to get the translational vectors and calculate the magnitudes.
+		// These should all be the same direction and magnitude if there is no skid. 
+		final double[] swerveStatesTranslationalPartMagnitudes = new double[moduleStates.length];
+		for (int i = 0; i < moduleStates.length; i++) {
+			final Translation2d swerveStateMeasuredAsVector = convertSwerveStateToVelocityVector(
+					moduleStates[i]),
+					swerveStatesRotationalPartAsVector = convertSwerveStateToVelocityVector(
+							rotationalStates[i]),
+					swerveStatesTranslationalPartAsVector = swerveStateMeasuredAsVector
+							.minus(swerveStatesRotationalPartAsVector);
+			swerveStatesTranslationalPartMagnitudes[i] = swerveStatesTranslationalPartAsVector
+					.getNorm();
+		}
+		//Step 4: Compare all of the translation vectors. If they aren't the same, skid is present.
+		double maximumTranslationalSpeed = 0,
+				minimumTranslationalSpeed = Double.POSITIVE_INFINITY;
+		for (double translationalSpeed : swerveStatesTranslationalPartMagnitudes) {
+			maximumTranslationalSpeed = Math.max(maximumTranslationalSpeed,
+					translationalSpeed);
+			minimumTranslationalSpeed = Math.min(minimumTranslationalSpeed,
+					translationalSpeed);
+		}
+		if (maximumTranslationalSpeed / minimumTranslationalSpeed > DriveConstants.SKID_THRESHOLD) {
+			return true;
+		}
+		return false;
+	}
+	private static Translation2d convertSwerveStateToVelocityVector(SwerveModuleState swerveModuleState) {
+		return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
+   }
 	/**
 	 * Reset estimated pose and odometry pose to pose <br>
 	 * Clear pose buffer
@@ -277,6 +317,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public Pose2d getEstimatedPose() { return estimatedPose; }
 
 	public void periodic() {
+		//Check if modules are skidding (test this)
+		isSkidding = calculateSkidding();
 		// Update & process inputs
 		odometryLock.lock();
 		// Read timestamps from odometry thread and fake sim timestamps
@@ -428,6 +470,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		brakeModeEnabled = enabled;
 	}
 
+	
+
 	/**
 	 * Returns the module states (turn angles and drive velocities) for all of
 	 * the modules.
@@ -483,7 +527,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		return orchestra;
 	}
-
+	@Override
+	public boolean isSkidding() { return isSkidding; }
+	
 	@Override
 	public double getCurrent() {
 		return modules[0].getCurrent() + modules[1].getCurrent()

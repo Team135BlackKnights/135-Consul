@@ -152,9 +152,8 @@ public interface DrivetrainS extends Subsystem {
 
 	default double getCurrent() { return 0; }
 
-	default boolean[] isSkidding() {
-		return new boolean[] { false, false, false, false
-		};
+	default boolean isSkidding() {
+		return false;
 	}
 
 	@Override

@@ -329,7 +329,7 @@ public class REVSwerveS extends SubsystemChecker implements DrivetrainS {
 	}
 
 	@Override
-	public boolean[] isSkidding() { return isSkidding; }
+	public boolean isSkidding() { return false; }
 
 	@Override
 	public void periodic() {
