@@ -59,7 +59,7 @@ public class DriveConstants {
 			kFrontRightAbsEncoderOffsetRad = 0.548137,
 			kBackLeftAbsEncoderOffsetRad = 2 * Math.PI - 2.891372,
 			kBackRightAbsEncoderOffsetRad = 2 * Math.PI - 0.116861,
-			SKID_THRESHOLD = .5, //Meters per second
+			SKID_THRESHOLD = 1.25, //Meters per second
 			MAX_G = .5;
 	public static PathConstraints pathConstraints = new PathConstraints(
 			kMaxSpeedMetersPerSecond, kTeleDriveMaxAcceleration,
