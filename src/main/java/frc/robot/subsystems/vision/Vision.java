@@ -48,28 +48,30 @@ public class Vision extends SubsystemChecker {
 				int[] aprilTagList = {};
 				PVCameras camera = PVCameras.getCameraByIndex(i);
 				switch (camera) {
-					case Front_Camera:
-					aprilTagList= inputs.frontCamTagList;
-						break;
-					case Left_Camera:
+				case Front_Camera:
+					aprilTagList = inputs.frontCamTagList;
+					break;
+				case Left_Camera:
 					aprilTagList = inputs.leftCamTagList;
-						break;
-					case Right_Camera:
+					break;
+				case Right_Camera:
 					aprilTagList = inputs.rightCamTagList;
-						break;
-					case Back_Camera:
+					break;
+				case Back_Camera:
 					aprilTagList = inputs.backCamTagList;
-						break;
-					}
+					break;
+				}
 				String response = shouldAcceptVision(inputs.time[i],
 						inputs.estPose[i], RobotContainer.drivetrainS.getPose(),
-						RobotContainer.drivetrainS.getChassisSpeeds(),
-						aprilTagList, inputs.avgPoseAmbiguity[i]);
+						RobotContainer.drivetrainS.getChassisSpeeds(), aprilTagList,
+						inputs.avgPoseAmbiguity[i]);
 				if (response == "OK") {
 					// Change our trust in the measurement based on the tags we can see
 					// We do this because we should trust cam estimates with closer apriltags than farther ones.
 					Matrix<N3, N1> estStdDevs = getEstimationStdDevs(
-							inputs.avgDist[i],inputs.lowestDist[i],inputs.weightAverage[i],inputs.avgPoseAmbiguity[i], aprilTagList.length);
+							inputs.avgDist[i], inputs.lowestDist[i],
+							inputs.weightAverage[i], inputs.avgPoseAmbiguity[i],
+							aprilTagList.length);
 					addVisionMeasurement(inputs.estPose[i], inputs.time[i],
 							estStdDevs);
 					for (int tag : aprilTagList) {
@@ -80,7 +82,7 @@ public class Vision extends SubsystemChecker {
 					}
 				} else {
 					if (response == "Max correction") {
-						if (inputs.avgDist[i] < VisionConstants.offsetMaxDistance){
+						if (inputs.avgDist[i] < VisionConstants.offsetMaxDistance) {
 							for (int tag : aprilTagList) {
 								VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 										.max(0,
@@ -88,7 +90,6 @@ public class Vision extends SubsystemChecker {
 														- .001);
 							}
 						}
-
 					}
 					if (response == "Min trust") {
 						for (int tag : aprilTagList) {
@@ -207,14 +208,13 @@ public class Vision extends SubsystemChecker {
 	 * @param cam             the camera to use
 	 * @return A matrix of the standard deviations
 	 */
-	private Matrix<N3, N1> getEstimationStdDevs(double avgDist, double lowestDist, double weightAverage, double avgPoseAmbiguity,
+	private Matrix<N3, N1> getEstimationStdDevs(double avgDist,
+			double lowestDist, double weightAverage, double avgPoseAmbiguity,
 			int numTags) {
-		double xyStdDev = calculateXYStdDev(avgDist,
-		lowestDist, weightAverage, avgPoseAmbiguity,
-				numTags);
-		double thetaStdDev = calculateThetaStdDev(avgDist,
-		lowestDist, weightAverage, avgPoseAmbiguity,
-				numTags);
+		double xyStdDev = calculateXYStdDev(avgDist, lowestDist, weightAverage,
+				avgPoseAmbiguity, numTags);
+		double thetaStdDev = calculateThetaStdDev(avgDist, lowestDist,
+				weightAverage, avgPoseAmbiguity, numTags);
 		xyStdDev = applyAdditionalAdjustments(xyStdDev, numTags);
 		thetaStdDev = applyAdditionalAdjustments(thetaStdDev, numTags);
 		return VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
@@ -229,7 +229,7 @@ public class Vision extends SubsystemChecker {
 		double distWeight = Math.pow(lowestDist / 2.0, 2.0);
 		double avgDistWeight = Math.pow(avgDist / 3.5, 2.0);
 		double poseWeight = Math.pow(avgPoseAmbiguity / 0.2, 2.0);
-		double weighAverageWeight = 1-weighAverage;
+		double weighAverageWeight = 1 - weighAverage;
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
 				/ (numTags * 2);
@@ -244,7 +244,7 @@ public class Vision extends SubsystemChecker {
 		double distWeight = Math.pow(lowestDist / 2.0, 2.0);
 		double avgDistWeight = Math.pow(avgDist / 3.5, 2.0);
 		double poseWeight = Math.pow(avgPoseAmbiguity / 0.2, 2.0);
-		double weighAverageWeight = Math.pow(1-weighAverage, 2.0);
+		double weighAverageWeight = Math.pow(1 - weighAverage, 2.0);
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
 				/ (numTags * 2);

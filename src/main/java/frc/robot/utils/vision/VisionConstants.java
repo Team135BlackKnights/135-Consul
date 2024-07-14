@@ -24,12 +24,14 @@ public class VisionConstants {
 	//We put the cameras into an enum to make iteration easier
 	public static enum PVCameras {
 		Front_Camera, Left_Camera, Right_Camera, Back_Camera;
+
 		public static PVCameras getCameraByIndex(int index) {
 			if (index < 0 || index >= PVCameras.values().length) {
-				 throw new IndexOutOfBoundsException("Index out of bounds for PVCameras enum.");
+				throw new IndexOutOfBoundsException(
+						"Index out of bounds for PVCameras enum.");
 			}
 			return PVCameras.values()[index];
-	  }
+		}
 	}
 	//We used 2 cameras for our 2024 year, adjust these accordingly by removing camera names (there are two extra cameras here)
 	//Camera names, from photonVision web interface
@@ -80,7 +82,7 @@ public class VisionConstants {
 			robotToBack = new Transform3d(backPos, backRot);
 	//Put in an array for easier iterating
 	public static Transform3d[] camTranslations = new Transform3d[] {
-		robotToFront, robotToLeft, robotToRight, robotToBack
+			robotToFront, robotToLeft, robotToRight, robotToBack
 	};
 	//Used for distance calculations for AI stuff
 	//Offset of your limelight (0 being perpendicular, negative meaning camera lens down)
@@ -92,18 +94,24 @@ public class VisionConstants {
 	//For use in drivetoAITarget (PLACEHOLDER VALUE)
 	public static double DriveToAITargetKp = .3, DriveToAIMaxAutoTime = 2;
 	public static final double kMaxVisionCorrection = Units.inchesToMeters(5); // Jump from fused pose
-	public static final double kMaxVisionCorrectionSkid = Units.inchesToMeters(15); // Jump from fused pose
+	public static final double kMaxVisionCorrectionSkid = Units
+			.inchesToMeters(15); // Jump from fused pose
 	public static final double offsetMaxDistance = 4; //in meters
 	public static final double kMaxVelocity = Units.feetToMeters(4);
-	public static final double std_dev_multiplier = 1; 
+	public static final double std_dev_multiplier = 1;
 	public static final double std_dev_steepness = 10;
-   public static final double kMaxRotationCorrection = Units.degreesToRadians(2);
-	public static final double kMaxRotationCorrectionSkid = Units.degreesToRadians(6);
+	public static final double kMaxRotationCorrection = Units
+			.degreesToRadians(2);
+	public static final double kMaxRotationCorrectionSkid = Units
+			.degreesToRadians(6);
+
 	public static class FieldConstants {
 		public static final double kFieldLength = Units.inchesToMeters(651.223);
 		public static final double kFieldWidth = Units.inchesToMeters(323.277);
 		public static final double kFieldBorderMargin = 0.5;
 		public static final double kFieldTagMinTrust = .8;
-		public static double[] aprilTagOffsets =  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+		public static double[] aprilTagOffsets = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				1, 1, 1, 1, 1, 1, 1
+		};
 	}
 }

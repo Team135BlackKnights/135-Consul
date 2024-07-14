@@ -34,7 +34,8 @@ import frc.robot.utils.drive.DriveConstants;
  */
 public class DriveToAITarget extends Command {
 	private final DrivetrainS swerveS;
-	private boolean isFinished = false, goingToCenterLine = false, loaded = false; //do we have game Piece?
+	private boolean isFinished = false, goingToCenterLine = false,
+			loaded = false; //do we have game Piece?
 	public static boolean takeOver = false; //to stop driver input
 	private static boolean close = false; //when close, stop moving
 	private Translation2d targetPieceLocation = null; //no target known unless in SIM
@@ -47,7 +48,11 @@ public class DriveToAITarget extends Command {
 	/*
 	 * Prpvide the drive subsystem.
 	 */
-	public DriveToAITarget(DrivetrainS swerveS) { this.swerveS = swerveS; addRequirements(swerveS);}
+	public DriveToAITarget(DrivetrainS swerveS) {
+		this.swerveS = swerveS;
+		addRequirements(swerveS);
+	}
+
 	@Override
 	public void initialize() {
 		if (Constants.currentMode == Mode.SIM) {
@@ -129,23 +134,28 @@ public class DriveToAITarget extends Command {
 		}
 		if (Constants.currentMatchState == FRCMatchState.AUTO
 				&& timer.get() > 1) {
-					isFinished = true; //if in auto, and greater than max time, STOP ENTIRE COMMAND
+			isFinished = true; //if in auto, and greater than max time, STOP ENTIRE COMMAND
 		}
 		if (gamePieceTv == false && loaded == false && close == false) {
 			// We don't see the target, seek for the target by spinning in place at a safe speed.
-			if (Constants.currentMatchState == FRCMatchState.AUTO && !goingToCenterLine){
-				if (Robot.isRed){
-					drivingToCenterLine = new DriveToPose(swerveS, new Pose2d(8.27, currentPose.getY(), new Rotation2d((Units.degreesToRadians(-90)))));
+			if (Constants.currentMatchState == FRCMatchState.AUTO
+					&& !goingToCenterLine) {
+				if (Robot.isRed) {
+					drivingToCenterLine = new DriveToPose(swerveS,
+							new Pose2d(8.27, currentPose.getY(),
+									new Rotation2d((Units.degreesToRadians(-90)))));
 					drivingToCenterLine.initialize();
 					goingToCenterLine = true;
-				}else{
-					drivingToCenterLine = new DriveToPose(swerveS, new Pose2d(8.27, currentPose.getY(), new Rotation2d((Units.degreesToRadians(90)))));
+				} else {
+					drivingToCenterLine = new DriveToPose(swerveS,
+							new Pose2d(8.27, currentPose.getY(),
+									new Rotation2d((Units.degreesToRadians(90)))));
 					drivingToCenterLine.initialize();
 					goingToCenterLine = true;
 				}
-			}else{
+			} else {
 				speeds = new ChassisSpeeds(0, 0,
-				0.1 * DriveConstants.kMaxTurningSpeedRadPerSec);
+						0.1 * DriveConstants.kMaxTurningSpeedRadPerSec);
 			}
 		} else if (loaded == false && close == false) { //We see a target, and we're not close.
 			goingToCenterLine = false;
@@ -162,11 +172,11 @@ public class DriveToAITarget extends Command {
 		} else {
 			speeds = new ChassisSpeeds(0, 0, 0); //We either have it, or are close enough to start just intaking, so stop.
 		}
-		if (!goingToCenterLine){
+		if (!goingToCenterLine) {
 			swerveS.setChassisSpeeds(speeds);
-		}else{
+		} else {
 			drivingToCenterLine.execute();
-			if (drivingToCenterLine.isFinished()){
+			if (drivingToCenterLine.isFinished()) {
 				goingToCenterLine = false;
 			}
 		}
@@ -176,7 +186,7 @@ public class DriveToAITarget extends Command {
 	public void end(boolean interrupted) {
 		//Return control of the drivetrain
 		takeOver = false;
-		if (drivingToCenterLine != null){
+		if (drivingToCenterLine != null) {
 			drivingToCenterLine.cancel();
 		}
 		timer.stop();

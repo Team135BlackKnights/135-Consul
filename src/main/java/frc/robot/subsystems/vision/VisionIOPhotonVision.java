@@ -1,6 +1,5 @@
 package frc.robot.subsystems.vision;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +24,7 @@ import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.Constants;
 
-public class VisionIOPhotonVision implements VisionIO{
+public class VisionIOPhotonVision implements VisionIO {
 	public static VisionSystemSim visionSim;
 	//These estimate pose based on april tag location
 	public final PhotonPoseEstimator rightEstimator, frontEstimator,
@@ -37,6 +36,7 @@ public class VisionIOPhotonVision implements VisionIO{
 	public static double camXError = 0f;
 	static double distance = 0;
 	private static PhotonCamera frontCam, rightCam, leftCam, backCam;
+
 	public VisionIOPhotonVision() {
 		//load the field 
 		AprilTagFieldLayout fieldLayout = AprilTagFieldLayout
@@ -109,16 +109,18 @@ public class VisionIOPhotonVision implements VisionIO{
 	}
 
 	@Override
-	public void updateVisionSim(String objectName, Pose2d estimatedPose){
+	public void updateVisionSim(String objectName, Pose2d estimatedPose) {
 		visionSim.getDebugField().getObject(objectName).setPose(estimatedPose);
 	}
+
 	@Override
-	public void updateVisionObject(String objectName){
+	public void updateVisionObject(String objectName) {
 		visionSim.getDebugField().getObject(objectName).setPoses();
 	}
 
 	public double[] getEstimationFactors(Pose2d estimatedPose,
-			PhotonPoseEstimator photonEstimator, PhotonCamera cam, List<Integer> numTags) {
+			PhotonPoseEstimator photonEstimator, PhotonCamera cam,
+			List<Integer> numTags) {
 		//Default Std deviation
 		//All the targets that have been pulled from a camera
 		var targets = cam.getLatestResult().getTargets();
@@ -147,7 +149,8 @@ public class VisionIOPhotonVision implements VisionIO{
 			weighAverage += VisionConstants.FieldConstants.aprilTagOffsets[tag];
 		}
 		weighAverage /= numTags.size();
-		return new double[]{avgDist,lowestDist,weighAverage,avgPoseAmbiguity};
+		return new double[] { avgDist, lowestDist, weighAverage, avgPoseAmbiguity
+		};
 	}
 
 	@Override
@@ -177,12 +180,12 @@ public class VisionIOPhotonVision implements VisionIO{
 						}
 					}*/
 					int[] aprilTags = new int[aprilTagList.size()];
-					for (int j = 0; j< aprilTagList.size(); j++) {
-						 aprilTags[j] = aprilTagList.get(j);
+					for (int j = 0; j < aprilTagList.size(); j++) {
+						aprilTags[j] = aprilTagList.get(j);
 					}
-
-					inputs.time[index] = est.timestampSeconds*1.0e6;
-					double[] factors = getEstimationFactors(estPose,cEstimator,cCam,aprilTagList);
+					inputs.time[index] = est.timestampSeconds * 1.0e6;
+					double[] factors = getEstimationFactors(estPose, cEstimator,
+							cCam, aprilTagList);
 					inputs.avgDist[index] = factors[0];
 					inputs.lowestDist[index] = factors[1];
 					inputs.weightAverage[index] = factors[2];
@@ -202,37 +205,38 @@ public class VisionIOPhotonVision implements VisionIO{
 						inputs.backCamTagList = aprilTags;
 						break;
 					}
-				},() -> {
+				}, () -> {
 					inputs.estPose[index] = new Pose2d();
 					inputs.avgDist[index] = 0;
 					inputs.lowestDist[index] = 0;
 					inputs.weightAverage[index] = 0;
 					inputs.avgPoseAmbiguity[index] = 0;
 					switch (camera) {
-						case Front_Camera:
-							inputs.frontCamTagList = new int[0];
-							break;
-						case Left_Camera:
-							inputs.leftCamTagList = new int[0];
-							break;
-						case Right_Camera:
-							inputs.rightCamTagList = new int[0];
-							break;
-						case Back_Camera:
-							inputs.backCamTagList = new int[0];
-							break;
-						}
+					case Front_Camera:
+						inputs.frontCamTagList = new int[0];
+						break;
+					case Left_Camera:
+						inputs.leftCamTagList = new int[0];
+						break;
+					case Right_Camera:
+						inputs.rightCamTagList = new int[0];
+						break;
+					case Back_Camera:
+						inputs.backCamTagList = new int[0];
+						break;
+					}
 					inputs.time[index] = 0;
 				});
 			}
-	}
+		}
 		inputs.aprilTagOffsets = VisionConstants.FieldConstants.aprilTagOffsets;
-}
-	
+	}
+
 	/**
 	 * Uses one particular camera to figure out if the AprilTags in the argument
 	 * is within sight or not, then returning the Pose3d if found. ROBOT
 	 * RELATIVE.
+	 * 
 	 * @param Camera       the camera to use
 	 * @param tagToLookFor the potential aprilTag to look for
 	 * @return An optional Pose3d which is ROBOT RELATIVE to the selected tag.
@@ -249,8 +253,9 @@ public class VisionIOPhotonVision implements VisionIO{
 		if (foundTargets.isPresent()) {
 			Transform3d cameraToTarget = foundTargets.get()
 					.getBestCameraToTarget();
-			return Optional.of(new Pose2d(cameraToTarget.getTranslation().toTranslation2d(),
-					cameraToTarget.getRotation().toRotation2d()));
+			return Optional
+					.of(new Pose2d(cameraToTarget.getTranslation().toTranslation2d(),
+							cameraToTarget.getRotation().toRotation2d()));
 		}
 		return Optional.empty();
 	}
@@ -303,7 +308,8 @@ public class VisionIOPhotonVision implements VisionIO{
 		}
 		return visionEst;
 	}
-		/**
+
+	/**
 	 * If the robot is in simulation, updates the states of the simulated camera
 	 * and the simulated robot pose
 	 * 
@@ -331,10 +337,12 @@ public class VisionIOPhotonVision implements VisionIO{
 				objectName = "VisionEstimationB";
 				break;
 			}
-			visionEst.ifPresentOrElse(est -> updateVisionSim(objectName,est.estimatedPose.toPose2d()),() -> {
-				if (newResult)
-					updateVisionObject(objectName);
-			});
+			visionEst.ifPresentOrElse(
+					est -> updateVisionSim(objectName, est.estimatedPose.toPose2d()),
+					() -> {
+						if (newResult)
+							updateVisionObject(objectName);
+					});
 		}
 	}
 }
