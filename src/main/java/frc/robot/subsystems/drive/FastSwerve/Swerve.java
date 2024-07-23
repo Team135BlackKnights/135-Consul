@@ -47,6 +47,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 
@@ -54,7 +55,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
-			"Drive/CoastMetersPerSecThreshold", 0.05);
+			"Drive/CoastMetersPerSecThreshold", 0.25);
 
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
@@ -128,7 +129,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private Rotation2d lastGyroAngle = new Rotation2d();
 	private Twist2d robotVelocity = new Twist2d();
 	private final SwerveSetpointGenerator setpointGenerator;
-	private int debounce = 0;
 	private boolean collisionDetected;
 	boolean[] isSkidding = new boolean[] { false, false, false, false
 	};
@@ -152,9 +152,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setChassisSpeeds,
 				new HolonomicPathFollowerConfig(
+					new PIDConstants(5, 0, 0.006),
+										new PIDConstants(5,0,0.006),
 						DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.kDriveBaseRadius,
-						new ReplanningConfig(true, true)),
+						new ReplanningConfig(true, true),.02),
 				() -> Robot.isRed, this);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
@@ -173,6 +175,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 						modules[i].runCharacterization(0, voltage.in(Volts));
 					}
 				}, null, this));
+		setBrakeMode(true);
 		registerSelfCheckHardware();
 	}
 
@@ -256,7 +259,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public void addVelocityData(Twist2d robotVelocity) {
 		this.robotVelocity = robotVelocity;
 	}
-		public boolean[] calculateSkidding() {
+
+	public boolean[] calculateSkidding() {
 		SwerveModuleState[] moduleStates = getModuleStates();
 		ChassisSpeeds currentChassisSpeeds = getChassisSpeeds();
 		// Step 1: Create a measured ChassisSpeeds object with solely the rotation component
@@ -345,10 +349,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
 		gyroIO.updateInputs(gyroInputs);
-		if (debounce == 1 && isConnected()) {
-			resetPose(new Pose2d());
-			debounce = 0;
-		}
 		Logger.processInputs("Drive/Gyro", gyroInputs);
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
@@ -441,18 +441,19 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		if (!modulesOrienting) {
 			// Run robot at desiredSpeeds
 			// Generate feasible next setpoint
-			currentSetpoint = setpointGenerator.generateSetpoint(
-					currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
 			SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
 			SwerveModuleState[] optimizedSetpointTorques = new SwerveModuleState[4];
-			for (int i = 0; i < modules.length; i++) {
-				// Optimize setpoints
-				optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
-				optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
-						optimizedSetpointStates[i].angle);
-				modules[i].runSetpoint(optimizedSetpointStates[i],
-						optimizedSetpointTorques[i]);
-			}
+
+				currentSetpoint = setpointGenerator.generateSetpoint(
+						currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
+				for (int i = 0; i < modules.length; i++) {
+					// Optimize setpoints
+					optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
+					optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
+							optimizedSetpointStates[i].angle);
+					modules[i].runSetpoint(optimizedSetpointStates[i],
+							optimizedSetpointTorques[i]);
+				}
 			Logger.recordOutput("Drive/SwerveStates/Setpoints",
 					optimizedSetpointStates);
 			Logger.recordOutput("Drive/SwerveStates/Torques",
@@ -470,6 +471,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		desiredSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 	}
+	@Override
+	public void setDiscreteChassisSpeeds(ChassisSpeeds speeds) {
+		desiredSpeeds = speeds;
+	}
 
 	/**
 	 * Set brake mode to {@code enabled} doesn't change brake mode if already
@@ -481,8 +486,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		brakeModeEnabled = enabled;
 	}
-
-	
 
 	/**
 	 * Returns the module states (turn angles and drive velocities) for all of
@@ -541,7 +544,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public boolean[] isSkidding() { return isSkidding; }
-	
+
 	@Override
 	public double getCurrent() {
 		return modules[0].getCurrent() + modules[1].getCurrent()
@@ -642,13 +645,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 						runOnce(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0))));
 	}
 
-	/**
-	 * UNTESTED!
-	 */
 	@Override
 	public void zeroHeading() {
 		gyroIO.reset();
-		debounce = 1;
 	}
 
 	@Override
@@ -687,4 +686,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public Command sysIdDynamicDrive(SysIdRoutine.Direction direction) {
 		return sysId.dynamic(direction);
 	}
+	@Override
+	public void setDriveCurrentLimit(int amps) { Arrays.stream(modules).forEach(module -> module.setCurrentLimit(amps)); }
+
+	@Override
+	public void setCurrentLimit(int amps) { setDriveCurrentLimit(amps); }
 }

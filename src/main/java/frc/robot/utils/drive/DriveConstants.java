@@ -15,7 +15,7 @@ import frc.robot.utils.MotorConstantContainer;
 public class DriveConstants {
 	public static MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
 	public static DriveTrainType driveType = DriveTrainType.SWERVE;
-	public static GyroType gyroType = GyroType.PIGEON;
+	public static GyroType gyroType = GyroType.NAVX;
 
 	/**
 	 * What motors and motorContollers are we using
@@ -44,9 +44,9 @@ public class DriveConstants {
 	//135-Blocks was tested on a chassis with all CANSparkMaxes, as well as all Kraken-x60s.
 	public static final double kChassisWidth = Units.inchesToMeters(24.25), // Distance between Left and Right wheels
 			kChassisLength = Units.inchesToMeters(24.25), // Distance betwwen Front and Back wheels
-			kDriveBaseRadius = Units.inchesToMeters(Math.sqrt(
+			kDriveBaseRadius = Math.sqrt(
 					kChassisLength * kChassisLength + kChassisWidth * kChassisWidth)
-					/ 2),
+					/ 2,
 			// Distance from center of robot to the farthest module
 			kMaxSpeedMetersPerSecond = Units.feetToMeters(15.1), //15.1
 			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI, // 1.33655 *2 *Math.PI
@@ -74,16 +74,16 @@ public class DriveConstants {
 	};
 	public static int kFrontLeftDrivePort = 16, // 10
 			kFrontLeftTurningPort = 17, // 20
-			kFrontLeftAbsEncoderPort = 2, // 1
+			kFrontLeftAbsEncoderPort = 20, // 2
 			kFrontRightDrivePort = 10, // 11
 			kFrontRightTurningPort = 11, // 21
-			kFrontRightAbsEncoderPort = 0, // 2
+			kFrontRightAbsEncoderPort = 21, // 0
 			kBackLeftDrivePort = 14, // 13
 			kBackLeftTurningPort = 15, // 23
-			kBackLeftAbsEncoderPort = 3, // 3
+			kBackLeftAbsEncoderPort = 23, // 3
 			kBackRightDrivePort = 12, // 14
 			kBackRightTurningPort = 13, // 24
-			kBackRightAbsEncoderPort = 1, // 4
+			kBackRightAbsEncoderPort = 24, // 1
 			kMaxDriveCurrent = 40, kMaxTurnCurrent = 30;
 	public static boolean kFrontLeftDriveReversed = true,
 			kFrontLeftTurningReversed = true, kFrontLeftAbsEncoderReversed = false,
@@ -91,10 +91,10 @@ public class DriveConstants {
 			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = false,
 			kBackLeftTurningReversed = true, kBackLeftAbsEncoderReversed = false,
 			kBackRightDriveReversed = false, kBackRightTurningReversed = true,
-			kBackRightAbsEncoderReversed = false;
+			kBackRightAbsEncoderReversed = false, kGyroReversed = true;
 	public static final ModuleLimits moduleLimitsFree = new ModuleLimits(
 			DriveConstants.kMaxSpeedMetersPerSecond,
-			DriveConstants.kTeleDriveMaxAcceleration * 4,
+			DriveConstants.kTeleDriveMaxAcceleration,
 			Units.degreesToRadians(1080.0));
 
 	public static class TrainConstants {
@@ -113,10 +113,10 @@ public class DriveConstants {
 				kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60,
 				kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI,
 				kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60,
-				kT = 1.0 / DCMotor.getKrakenX60Foc(1).KtNMPerAmp, kDeadband = 0.1,
-				weight = Units.lbsToKilograms(45);
+				kT = 1.0 / DCMotor.getNEO(1).KtNMPerAmp, kDeadband = 0.05,
+				weight = Units.lbsToKilograms(110);
 		public static final MotorConstantContainer overallTurningMotorConstantContainer = new MotorConstantContainer(
-				0.001, 0.001, 0.001, 7, 0.001), //Average the turning motors for these vals.
+				0.001, 0.001, 0.001, 5, 0.001), //Average the turning motors for these vals.
 				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
 						.13, 0.001, 0.05, 0.000);
 	}

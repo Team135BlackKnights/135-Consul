@@ -324,4 +324,10 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 		tempMap.put("BRDriveTemp", inputs.backRightDriveTemp);
 		return tempMap;
 	}
+
+	@Override
+	public void setDriveCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+
+	@Override
+	public void setCurrentLimit(int amps) { setDriveCurrentLimit(amps); }
 }

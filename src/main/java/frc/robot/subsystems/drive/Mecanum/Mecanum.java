@@ -95,7 +95,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		Measure<Time> timeout = Seconds.of(10);
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
-						(state) -> Logger.recordOutput("Drive/SysIdState",
+						(state) -> Logger.recordOutput("Mecanum/SysIdState",
 								state.toString())),
 				new SysIdRoutine.Mechanism(
 						(voltage) -> driveVolts(voltage.in(Volts), voltage.in(Volts),
@@ -364,4 +364,10 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		tempMap.put("BRDriveTemp", inputs.backRightDriveTemp);
 		return tempMap;
 	}
+
+	@Override
+	public void setDriveCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+
+	@Override
+	public void setCurrentLimit(int amps) { setDriveCurrentLimit(amps); }
 }

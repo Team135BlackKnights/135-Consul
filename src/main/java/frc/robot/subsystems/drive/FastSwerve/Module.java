@@ -100,6 +100,8 @@ public class Module {
 		io.setTurnBrakeMode(enabled);
 	}
 
+	public void setCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+
 	/** Stops motors. */
 	public void stop() { io.stop(); }
 

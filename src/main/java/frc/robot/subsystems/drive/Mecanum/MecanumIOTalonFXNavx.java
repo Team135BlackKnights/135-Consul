@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Mecanum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -75,9 +79,11 @@ public class MecanumIOTalonFXNavx implements MecanumIO {
 	private final AHRS navX = new AHRS(Port.kUSB);
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
+	private final TalonFXConfiguration config = new TalonFXConfiguration();
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 
 	public MecanumIOTalonFXNavx() {
-		var config = new TalonFXConfiguration();
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
 		config.MotorOutput.Inverted = DriveConstants.kFrontLeftDriveReversed
@@ -181,6 +187,20 @@ public class MecanumIOTalonFXNavx implements MecanumIO {
 		frontRight.setControl(new VoltageOut(frontRightVolts));
 		backLeft.setControl(new VoltageOut(backLeftVolts));
 		backRight.setControl(new VoltageOut(backRightVolts));
+	}
+
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			synchronized (config) {
+				config.CurrentLimits.StatorCurrentLimit = amps;
+				frontLeft.getConfigurator().apply(config, .25);
+				frontRight.getConfigurator().apply(config, .25);
+				backLeft.getConfigurator().apply(config, .25);
+				backRight.getConfigurator().apply(config, .25);
+			}
+		});
+		Logger.recordOutput("Mecanum/CurrentLimit", amps);
 	}
 
 	@Override

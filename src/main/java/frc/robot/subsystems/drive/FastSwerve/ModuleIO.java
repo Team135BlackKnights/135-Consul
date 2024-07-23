@@ -62,6 +62,9 @@ public interface ModuleIO {
 	/** Enable or disable brake mode on the turn motor. */
 	default void setTurnBrakeMode(boolean enable) {}
 
+	/** Update the motor controllers to a specificed max amperage */
+	default void setCurrentLimit(int amps) {}
+
 	/** Disable output to all motors */
 	default void stop() {}
 

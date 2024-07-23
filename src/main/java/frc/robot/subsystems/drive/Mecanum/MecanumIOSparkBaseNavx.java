@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Mecanum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkBase;
@@ -43,6 +47,8 @@ public class MecanumIOSparkBaseNavx implements MecanumIO {
 	private final AHRS navX = new AHRS(Port.kUSB);
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 
 	public MecanumIOSparkBaseNavx() {
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
@@ -191,6 +197,17 @@ public class MecanumIOSparkBaseNavx implements MecanumIO {
 				Units.radiansPerSecondToRotationsPerMinute(
 						backRightRadPerSec * GEAR_RATIO),
 				ControlType.kVelocity, 0, backRightFFVolts);
+	}
+
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			frontLeft.setSmartCurrentLimit(amps);
+			frontRight.setSmartCurrentLimit(amps);
+			backLeft.setSmartCurrentLimit(amps);
+			backRight.setSmartCurrentLimit(amps);
+		});
+		Logger.recordOutput("Mecanum/CurrentLimit", amps);
 	}
 
 	@Override

@@ -47,6 +47,9 @@ public interface MecanumIO {
 	/** Resets the Gyro */
 	public default void reset() {}
 
+	/** Update the motor controllers to a specificed max amperage */
+	public default void setCurrentLimit(int amps) {}
+
 	/** Run closed loop at the specified velocity. */
 	public default void setVelocity(double frontLeftRadPerSec,
 			double frontRightRadPerSec, double backLeftRadPerSec,

@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Mecanum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -50,6 +54,8 @@ public class MecanumIOSparkBasePigeon implements MecanumIO {
 	private final StatusSignal<Double> accelY = pigeon.getAccelerationY();
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 
 	public MecanumIOSparkBasePigeon() {
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
@@ -176,6 +182,17 @@ public class MecanumIOSparkBasePigeon implements MecanumIO {
 		frontRight.setVoltage(frontRightVolts);
 		backLeft.setVoltage(backLeftVolts);
 		backRight.setVoltage(backRightVolts);
+	}
+
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			frontLeft.setSmartCurrentLimit(amps);
+			frontRight.setSmartCurrentLimit(amps);
+			backLeft.setSmartCurrentLimit(amps);
+			backRight.setSmartCurrentLimit(amps);
+		});
+		Logger.recordOutput("Mecanum/CurrentLimit", amps);
 	}
 
 	@Override
