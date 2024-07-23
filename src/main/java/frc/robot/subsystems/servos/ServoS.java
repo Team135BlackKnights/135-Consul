@@ -8,7 +8,10 @@ import frc.robot.utils.servos.ServoConstantContainer.ServoType;
 import frc.robot.utils.servos.ServoConstantContainer.SimServoMode;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Collections;
+import java.util.HashMap;
+
 import com.ctre.phoenix6.hardware.ParentDevice;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -118,4 +121,12 @@ public class ServoS extends SubsystemChecker {
 
 	@Override
 	public double getCurrent() { return 0; } //negligible current draw
+
+	@Override
+	public HashMap<String, Double> getTemps() {
+		return new HashMap<>(Map.of("NULL", 0.0));
+  }
+
+	@Override
+	public void setCurrentLimit(int amps) { return; }
 }
