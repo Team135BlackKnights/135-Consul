@@ -1,7 +1,9 @@
 package frc.robot.subsystems.vision;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -318,4 +320,12 @@ public class Vision extends SubsystemChecker {
 
 	@Override
 	public double getCurrent() { return 0; }
+
+	@Override
+	public HashMap<String, Double> getTemps() {
+		return new HashMap<>(Map.of("NULL", 0.0));
+  }
+
+	@Override
+	public void setCurrentLimit(int amps) { return; }
 }
