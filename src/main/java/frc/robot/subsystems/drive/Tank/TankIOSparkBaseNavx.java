@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Tank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkBase;
@@ -39,6 +43,8 @@ public class TankIOSparkBaseNavx implements TankIO {
 	private final AHRS navX = new AHRS(Port.kUSB);
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 
 	public TankIOSparkBaseNavx() {
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
@@ -140,7 +146,16 @@ public class TankIOSparkBaseNavx implements TankIO {
 		leftLeader.setVoltage(leftVolts);
 		rightLeader.setVoltage(rightVolts);
 	}
-
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			leftLeader.setSmartCurrentLimit(amps);
+			leftFollower.setSmartCurrentLimit(amps);
+			rightLeader.setSmartCurrentLimit(amps);
+			rightFollower.setSmartCurrentLimit(amps);
+		});
+		Logger.recordOutput("Drive/CurrentLimit", amps);
+	}
 	@Override
 	public void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {

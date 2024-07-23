@@ -36,7 +36,8 @@ public interface TankIO {
 
 	/** Run open loop at the specified voltage. */
 	public default void setVoltage(double leftVolts, double rightVolts) {}
-
+	/** Update the motor controllers to a specificed max amperage */
+	public default void setCurrentLimit(int amps){}
 	/** Resets the Gyro */
 	public default void reset() {}
 

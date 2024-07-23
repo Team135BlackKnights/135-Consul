@@ -23,6 +23,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 import frc.robot.Robot;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
@@ -71,7 +72,8 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	public abstract List<ParentDevice> getOrchestraDevices();
 
 	public abstract double getCurrent();
-
+	public abstract HashMap<String, Double> getTemps();
+	public abstract void setCurrentLimit(int amps);
 	private void setupCallbacks() {
 		Robot.addPeriodic(this::checkForFaults, 0.25);
 		Robot.addPeriodic(this::publishStatus, 1.0);

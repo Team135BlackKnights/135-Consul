@@ -31,10 +31,10 @@ public class GyroIONavX implements GyroIO {
 	public GyroIONavX(boolean phoenixDrive) {
 		if (phoenixDrive) {
 			yawPositionQueue = PhoenixOdometryThread.getInstance()
-					.registerSignal(navX::getAngle);
+					.registerSignal(() -> navX.getAngle() * (DriveConstants.kGyroReversed ? -1 : 1));
 		} else {
 			yawPositionQueue = SparkMaxOdometryThread.getInstance()
-					.registerSignal(navX::getAngle);
+					.registerSignal(() -> navX.getAngle() * (DriveConstants.kGyroReversed ? -1 : 1));
 		}
 	}
 
@@ -51,7 +51,7 @@ public class GyroIONavX implements GyroIO {
 	@Override
 	public void updateInputs(GyroIOInputs inputs) {
 		inputs.connected = navX.isConnected();
-		current_angle_position = navX.getAngle();
+		current_angle_position = navX.getAngle() * (DriveConstants.kGyroReversed ? -1 : 1);
 		inputs.yawPosition = Rotation2d.fromDegrees(current_angle_position);
 		inputs.yawVelocityRadPerSec = Units.degreesToRadians(
 				(current_angle_position - last_angle_position) / 250);

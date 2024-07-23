@@ -119,6 +119,9 @@ public interface DrivetrainS extends Subsystem {
 	 */
 	boolean isCollisionDetected();
 
+	/** Update the motor controllers to a specificed max amperage */
+	public void setDriveCurrentLimit(int amps);
+
 	HashMap<String, Double> getTemps();
 
 	default Command getRunnableSystemCheckCommand() {
@@ -151,6 +154,8 @@ public interface DrivetrainS extends Subsystem {
 	}
 
 	default double getCurrent() { return 0; }
+
+	default void setDiscreteChassisSpeeds(ChassisSpeeds speeds) {}
 
 	default boolean[] isSkidding() {
 		return new boolean[] { false, false, false, false

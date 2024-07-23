@@ -294,6 +294,17 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	}
 
 	@Override
+	public void setCurrentLimit(int amps) {
+		brakeModeExecutor.execute(() -> {
+			synchronized (driveTalonConfig) {
+				driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = amps;
+				driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -amps;
+				driveTalon.getConfigurator().apply(driveTalonConfig, .25);
+			}
+		});
+	}
+
+	@Override
 	public void stop() {
 		driveTalon.setControl(neutralControl);
 		turnTalon.setControl(neutralControl);

@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Tank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -46,7 +50,8 @@ public class TankIOSparkBasePigeon implements TankIO {
 	private final StatusSignal<Double> accelY = pigeon.getAccelerationY();
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
-
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 	public TankIOSparkBasePigeon() {
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
 			leftLeader = new CANSparkMax(DriveConstants.kFrontLeftDrivePort,
@@ -149,7 +154,16 @@ public class TankIOSparkBasePigeon implements TankIO {
 		leftLeader.setVoltage(leftVolts);
 		rightLeader.setVoltage(rightVolts);
 	}
-
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			leftLeader.setSmartCurrentLimit(amps);
+			leftFollower.setSmartCurrentLimit(amps);
+			rightLeader.setSmartCurrentLimit(amps);
+			rightFollower.setSmartCurrentLimit(amps);
+		});
+		Logger.recordOutput("Drive/CurrentLimit", amps);
+	}
 	@Override
 	public void reset() { pigeon.reset(); }
 

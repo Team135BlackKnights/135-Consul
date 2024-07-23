@@ -5,6 +5,10 @@ package frc.robot.subsystems.drive.Tank;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -68,9 +72,11 @@ public class TankIOTalonFXPigeon implements TankIO {
 	private final StatusSignal<Double> accelY = pigeon.getAccelerationY();
 	private double last_world_linear_accel_x;
 	private double last_world_linear_accel_y;
+	private final TalonFXConfiguration config = new TalonFXConfiguration();
+	private static final Executor currentExecutor = Executors
+			.newFixedThreadPool(8);
 
 	public TankIOTalonFXPigeon() {
-		var config = new TalonFXConfiguration();
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
 		config.MotorOutput.Inverted = DriveConstants.kFrontLeftDriveReversed
@@ -164,6 +170,20 @@ public class TankIOTalonFXPigeon implements TankIO {
 	public void setVoltage(double leftVolts, double rightVolts) {
 		leftLeader.setControl(new VoltageOut(leftVolts));
 		rightLeader.setControl(new VoltageOut(rightVolts));
+	}
+
+	@Override
+	public void setCurrentLimit(int amps) {
+		currentExecutor.execute(() -> {
+			synchronized (config) {
+				config.CurrentLimits.StatorCurrentLimit = amps;
+				leftLeader.getConfigurator().apply(config, .25);
+				leftFollower.getConfigurator().apply(config, .25);
+				rightLeader.getConfigurator().apply(config, .25);
+				rightFollower.getConfigurator().apply(config, .25);
+			}
+		});
+		Logger.recordOutput("Drive/CurrentLimit", amps);
 	}
 
 	@Override
