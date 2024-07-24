@@ -46,9 +46,27 @@ public class Vision extends SubsystemChecker {
 		}
 		//Update the global pose for each camera
 		for (int i = 0; i < 4; i++) {
+			PVCameras camera = PVCameras.getCameraByIndex(i);
+			switch (camera) {
+			case Front_Camera:
+				if (!inputs.frontCamHeartbeat)
+					addFault("No heartbeat from Front Camera", true, false);
+				break;
+			case Left_Camera:
+				if (!inputs.leftCamHeartbeat)
+					addFault("No heartbeat from Left Camera", true, false);
+				break;
+			case Right_Camera:
+				if (!inputs.rightCamHeartbeat)
+					addFault("No heartbeat from Right Camera", true, false);
+				break;
+			case Back_Camera:
+				if (!inputs.backCamHeartbeat)
+					addFault("No heartbeat from Back Camera", true, false);
+				break;
+			}
 			if (!inputs.estPose[i].equals(new Pose2d())) { //if not default
 				int[] aprilTagList = {};
-				PVCameras camera = PVCameras.getCameraByIndex(i);
 				switch (camera) {
 				case Front_Camera:
 					aprilTagList = inputs.frontCamTagList;
@@ -324,7 +342,7 @@ public class Vision extends SubsystemChecker {
 	@Override
 	public HashMap<String, Double> getTemps() {
 		return new HashMap<>(Map.of("NULL", 0.0));
-  }
+	}
 
 	@Override
 	public void setCurrentLimit(int amps) { return; }

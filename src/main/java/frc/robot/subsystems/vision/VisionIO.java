@@ -23,6 +23,10 @@ public interface VisionIO {
 		public int[] leftCamTagList = {};
 		public int[] rightCamTagList = {};
 		public int[] backCamTagList = {};
+		public boolean frontCamHeartbeat = false;
+		public boolean leftCamHeartbeat = false;
+		public boolean rightCamHeartbeat = false;
+		public boolean backCamHeartbeat = false;
 		public Pose2d[] estPose = { new Pose2d(), new Pose2d(), new Pose2d(),
 				new Pose2d()
 		};

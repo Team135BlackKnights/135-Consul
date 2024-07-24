@@ -194,15 +194,19 @@ public class VisionIOPhotonVision implements VisionIO {
 					switch (camera) {
 					case Front_Camera:
 						inputs.frontCamTagList = aprilTags;
+						inputs.frontCamHeartbeat = true;
 						break;
 					case Left_Camera:
 						inputs.leftCamTagList = aprilTags;
+						inputs.leftCamHeartbeat = true;
 						break;
 					case Right_Camera:
 						inputs.rightCamTagList = aprilTags;
+						inputs.rightCamHeartbeat = true;
 						break;
 					case Back_Camera:
 						inputs.backCamTagList = aprilTags;
+						inputs.backCamHeartbeat = true;
 						break;
 					}
 				}, () -> {
@@ -214,19 +218,38 @@ public class VisionIOPhotonVision implements VisionIO {
 					switch (camera) {
 					case Front_Camera:
 						inputs.frontCamTagList = new int[0];
+						inputs.frontCamHeartbeat = true;
 						break;
 					case Left_Camera:
 						inputs.leftCamTagList = new int[0];
+						inputs.leftCamHeartbeat = true;
 						break;
 					case Right_Camera:
 						inputs.rightCamTagList = new int[0];
+						inputs.rightCamHeartbeat = true;
 						break;
 					case Back_Camera:
 						inputs.backCamTagList = new int[0];
+						inputs.backCamHeartbeat = true;
 						break;
 					}
 					inputs.time[index] = 0;
 				});
+			} else {
+				switch (PVCameras.getCameraByIndex(i)) {
+				case Front_Camera:
+					inputs.frontCamHeartbeat = false;
+					break;
+				case Left_Camera:
+					inputs.leftCamHeartbeat = false;
+					break;
+				case Right_Camera:
+					inputs.rightCamHeartbeat = false;
+					break;
+				case Back_Camera:
+					inputs.backCamHeartbeat = false;
+					break;
+				}
 			}
 		}
 		inputs.aprilTagOffsets = VisionConstants.FieldConstants.aprilTagOffsets;
