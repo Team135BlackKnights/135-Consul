@@ -10,7 +10,9 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.LimelightHelpers.LimelightResults;
-
+/**
+ * @apiNote Untested, needs to be checked with hardware
+ */
 public class SelfCheckingLimelight implements SelfChecking {
 	private final String label;
 
