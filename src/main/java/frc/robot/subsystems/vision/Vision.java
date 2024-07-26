@@ -34,7 +34,10 @@ public class Vision extends SubsystemChecker {
 	private boolean override = false;
 	private Timer timer = new Timer();
 
-	public Vision(VisionIO io) { this.io = io; }
+	public Vision(VisionIO io) {
+		this.io = io;
+		registerSelfCheckHardware();
+	}
 
 	@Override
 	public void periodic() {
@@ -218,6 +221,10 @@ public class Vision extends SubsystemChecker {
 		}
 		SmartDashboard.putString("Vision validation", "OK");
 		return "OK";
+	}
+
+	private void registerSelfCheckHardware() {
+		super.registerHardware(VisionConstants.limelightName);
 	}
 
 	/**
