@@ -33,7 +33,7 @@ This is designed so that the only files that need changing to combine different 
 - Drive to Pose Command
   - Slow/Fast mode, where each has custom max accel/velocity
   - Go to a given Pose2d
-  - Pathfinds on it's own using ADStar planning.
+  - Pathfinds on its own using ADStar planning.
 - Aim to Pose Command
   - Aim at a given Pose2d
   - Works IN PARALLEL with both TeleOp drive/Pathplanner drive
@@ -202,7 +202,7 @@ This block contains:
 - A (questionable) function to hold pneumatic cylinders at certain positions using a bang-bang PID-like controller.
 
 #### Notes
-NO sim/test support. Its a solenoid!
+NO sim/test support. It's a solenoid!
 
 ### State Space
 
@@ -233,7 +233,7 @@ For more details on State Space, refer to the [WPILib State Space Documentation]
 
 All blocks need two wrappers to be used in order to function:
 - `MotorConstantContainer`: A wrapper that holds characterization values (ks, kv, ka, kp, kd) of a particular motor. Throws an error if an incorrect value is input. Used for state-space models and drivetrain simulation.
-- Individual drivetrain constant containers: Constant containers that hold values necessary to create a drivetrain to know which constants are needed (Example: `REVModuleConstantContainer`)
+- `IO`: A wrapper that allows for efficient communication with component. Needs to be written independently for each component. Check the `utils` folders for example implementations.
 
 ## MatchState 
 

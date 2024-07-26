@@ -15,7 +15,7 @@ public class RunTest extends Command {
 			Subsystem requirements) {
 		this.direction = direction;
 		this.isQuasiastic = isQuasiastic;
-		addRequirements(requirements);
+		addRequirements(RobotContainer.getAllSubsystems());
 	}
 
 	@Override
