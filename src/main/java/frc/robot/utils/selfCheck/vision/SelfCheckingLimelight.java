@@ -28,13 +28,16 @@ public class SelfCheckingLimelight implements SelfChecking{
 			LimelightResults firstResult = LimelightHelpers.getLatestResults(label);
 			double firstTimestamp = firstResult.targetingResults.timestamp_LIMELIGHT_publish;
 			if (firstResult.error != ""){
-				faultList.add(new SubsystemFault(firstResult.error));
+				faultList.add(new SubsystemFault(String.format(firstResult.error, label)));
 			}	
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {		
 			}
 			LimelightResults secondResult = LimelightHelpers.getLatestResults(label);
+			if (secondResult.error !=""){
+				faultList.add(new SubsystemFault(String.format(secondResult.error,label)));
+			}
 			double secondTimestamp = secondResult.targetingResults.timestamp_LIMELIGHT_publish;
 			if (firstTimestamp == secondTimestamp){
 				faultList.add(new SubsystemFault(String.format("Limelight disconnected", label)));
