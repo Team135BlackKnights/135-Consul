@@ -111,27 +111,28 @@ public class DriveToAITarget extends Command {
 				}
 			}
 		}
-		Pose3d estimatedgamePiecePose3d = GeomUtil.calculateFieldRelativePose3d(
-				currentPose, gamePieceTx, gamePieceTy,
+		Pose3d estimatedgamePiecePose3d = GeomUtil
+		.calculateFieldRelativePose3d(currentPose, gamePieceTx,
+				gamePieceTy,
 				Units.inchesToMeters(
 						VisionConstants.limelightLensHeightoffFloorInches),
 				Units.inchesToMeters(2),
 				VisionConstants.limeLightAngleOffsetDegrees);
-		Logger.recordOutput("SIMINTAKEgamePiece", estimatedgamePiecePose3d);
-		gamePieceDistance = GeomUtil.calculateDistanceFromPose3d(currentPose,
-				estimatedgamePiecePose3d);
-		if (VisionConstants.debug) {
-			SmartDashboard.putNumber("tx", gamePieceTx);
-			SmartDashboard.putNumber("ty", gamePieceTy);
-			SmartDashboard.putNumber("DISTANCE", gamePieceDistance);
-		}
-		// SmartDashboard.putBoolean("Piece Loaded?", IntakeS.PieceIsLoaded());
-		if (gamePieceDistance <= Units.inchesToMeters(4.5)) { //less than 4.5 inches away, STOP!
-			if (Constants.currentMode == Constants.Mode.SIM) {
-				isFinished = true;
-			}
-			close = true;
-		}
+Logger.recordOutput("SIMINTAKEgamePiece", estimatedgamePiecePose3d);
+gamePieceDistance = GeomUtil.calculateDistanceFromPose3d(currentPose,
+		estimatedgamePiecePose3d);
+if (VisionConstants.debug) {
+	SmartDashboard.putNumber("tx", gamePieceTx);
+	SmartDashboard.putNumber("ty", gamePieceTy);
+	SmartDashboard.putNumber("DISTANCE", gamePieceDistance);
+}
+// SmartDashboard.putBoolean("Piece Loaded?", IntakeS.PieceIsLoaded());
+if (gamePieceDistance <= Units.inchesToMeters(4.5)) { //less than 4.5 inches away, STOP!
+	if (Constants.currentMode == Constants.Mode.SIM) {
+		isFinished = true;
+	}
+	close = true;
+}
 		if (Constants.currentMatchState == FRCMatchState.AUTO
 				&& timer.get() > 1) {
 			isFinished = true; //if in auto, and greater than max time, STOP ENTIRE COMMAND
