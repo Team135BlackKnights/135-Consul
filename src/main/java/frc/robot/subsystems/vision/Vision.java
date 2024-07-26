@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.PVCameras;
 
@@ -224,7 +227,8 @@ public class Vision extends SubsystemChecker {
 	}
 
 	private void registerSelfCheckHardware() {
-		super.registerHardware(VisionConstants.limelightName);
+		super.registerAllHardware(new ArrayList<SelfChecking>(
+				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));
 	}
 
 	/**
