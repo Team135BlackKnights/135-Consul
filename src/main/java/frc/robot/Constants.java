@@ -29,7 +29,7 @@ public final class Constants {
 	}
 
 	static {
-		currentMode = Mode.SIM;
+		currentMode = Mode.REAL;
 		//if (Robot.isReal()) currentMode = Mode.REAL;
 		//else if (Robot.isSimulation()) currentMode = Mode.SIM;
 		//else currentMode = Mode.REPLAY;

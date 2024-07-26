@@ -17,6 +17,10 @@ public class Module {
 			"Drive/Module/DrivekP",
 			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 					.getP());
+	private static final LoggableTunedNumber drivekI = new LoggableTunedNumber(
+			"Drive/Module/DrivekI",
+			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+					.getI());
 	private static final LoggableTunedNumber drivekD = new LoggableTunedNumber(
 			"Drive/Module/DrivekD",
 			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
@@ -63,8 +67,8 @@ public class Module {
 						0),
 				drivekS, drivekV);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setDrivePID(drivekP.get(), 0, drivekD.get()), drivekP,
-				drivekD);
+				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
+				drivekP, drivekI, drivekD);
 		LoggableTunedNumber.ifChanged(hashCode(),
 				() -> io.setTurnPID(turnkP.get(), 0, turnkD.get()), turnkP, turnkD);
 	}
@@ -73,6 +77,8 @@ public class Module {
 	public void runSetpoint(SwerveModuleState setpoint,
 			SwerveModuleState torqueFF) {
 		setpointState = setpoint;
+		Logger.recordOutput("Drive/SwerveSetpoint",
+				setpointState.speedMetersPerSecond);
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
 		io.runDriveVelocitySetpoint(
 				setpoint.speedMetersPerSecond
@@ -91,7 +97,7 @@ public class Module {
 	 */
 	public void runCharacterization(double turnSetpointRads, double input) {
 		io.runTurnPositionSetpoint(turnSetpointRads);
-		io.runCharacterization(input);
+		io.runDriveVolts(input);
 	}
 
 	/** Sets brake mode to {@code enabled}. */

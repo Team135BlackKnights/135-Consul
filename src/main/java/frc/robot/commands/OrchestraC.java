@@ -17,7 +17,17 @@ public class OrchestraC extends Command {
 	public OrchestraC(String fileName) {
 		List<ParentDevice> allDevices = new ArrayList<>();
 		allDevices.addAll(RobotContainer.getOrchestraDevices());
-		orchestra = new Orchestra(allDevices);
+		
+		orchestra = new Orchestra();
+		boolean flip =false;
+		for (ParentDevice device : allDevices){
+			if (flip){
+				orchestra.addInstrument(device,1);
+			}else{
+				orchestra.addInstrument(device,0);
+			}
+			flip = !flip;
+		}
 		this.filename = fileName;
 		if (Constants.currentMode == Constants.Mode.SIM) {
 			System.out.println(orchestra

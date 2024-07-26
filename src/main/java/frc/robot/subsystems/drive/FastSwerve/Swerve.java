@@ -52,6 +52,8 @@ import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 
 public class Swerve extends SubsystemChecker implements DrivetrainS {
+	//This is used
+	@SuppressWarnings("unused")
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
@@ -92,7 +94,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private boolean modulesOrienting = false;
 	private final Timer lastMovementTimer = new Timer();
 	@AutoLogOutput(key = "Drive/BrakeModeEnabled")
-	private boolean brakeModeEnabled = true;
+	private boolean brakeModeEnabled = false;
 	@AutoLogOutput(key = "Drive/CoastRequest")
 	private CoastRequest coastRequest = CoastRequest.AUTOMATIC;
 	private boolean lastEnabled = false;
@@ -152,7 +154,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setChassisSpeeds,
 				new HolonomicPathFollowerConfig(
-					new PIDConstants(5, 0, 0.006),
+					new PIDConstants(5, 2.4, 0.006),
 										new PIDConstants(5,0,0.006),
 						DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.kDriveBaseRadius,
@@ -426,7 +428,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		case AUTOMATIC -> {
 			if (DriverStation.isEnabled()) {
 				setBrakeMode(true);
-			} else if (lastMovementTimer.hasElapsed(coastWaitTime.get())) {
+			} else {
 				setBrakeMode(false);
 			}
 		}
@@ -481,9 +483,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * set.
 	 */
 	private void setBrakeMode(boolean enabled) {
-		if (brakeModeEnabled != enabled) {
-			Arrays.stream(modules).forEach(module -> module.setBrakeMode(enabled));
+		if (brakeModeEnabled != enabled){
+			System.out.println("modul");
+						Arrays.stream(modules).forEach(module -> module.setBrakeMode(enabled));
 		}
+		
 		brakeModeEnabled = enabled;
 	}
 
@@ -522,7 +526,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	private void registerSelfCheckHardware() {
-		super.registerAllHardware(gyroIO.getSelfCheckingHardware());
+		//super.registerAllHardware(gyroIO.getSelfCheckingHardware());
 		super.registerAllHardware(modules[0].getSelfCheckingHardware());
 		super.registerAllHardware(modules[1].getSelfCheckingHardware());
 		super.registerAllHardware(modules[2].getSelfCheckingHardware());
