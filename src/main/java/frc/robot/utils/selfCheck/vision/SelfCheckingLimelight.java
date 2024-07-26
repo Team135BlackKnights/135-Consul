@@ -11,21 +11,43 @@ import frc.robot.utils.selfCheck.SubsystemFault;
 
 public class SelfCheckingLimelight implements SelfChecking{
 	private final String label;
-	private Runnable checkThread = () ->
-	{
+	private final double pipelineID;
 
-	};
 	
 	public SelfCheckingLimelight(String label, double neuralNetworkPipelineID){
 		this.label = label;
+		this.pipelineID = neuralNetworkPipelineID;
 
 	}
 		
 	@Override 
 	public List<SubsystemFault> checkForFaults(){
-		return new ArrayList<SubsystemFault>();
+		ArrayList<SubsystemFault> faultList = new ArrayList<SubsystemFault>();
+		Runnable checkThread = () ->
+		{
+			LimelightResults firstResult = LimelightHelpers.getLatestResults(label);
+			double firstTimestamp = firstResult.targetingResults.timestamp_LIMELIGHT_publish;
+			if (firstResult.error != ""){
+				faultList.add(new SubsystemFault(firstResult.error));
+			}	
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {		
+			}
+			LimelightResults secondResult = LimelightHelpers.getLatestResults(label);
+			double secondTimestamp = secondResult.targetingResults.timestamp_LIMELIGHT_publish;
+			if (firstTimestamp == secondTimestamp){
+				faultList.add(new SubsystemFault(String.format("Limelight disconnected", label)));
+			}
+			if (LimelightHelpers.getCurrentPipelineIndex(label) != pipelineID){
+				faultList.add(new SubsystemFault(String.format("Wrong pipeline or coral disconnected", label)));
+			}
+		};
+		checkThread.run();
+		return faultList;
 	}
 	/**
+	 * This is not supported, and will throw an error.
 	 * You are trying to access the physical hardware of the Limelight, which is not possible. Why would someone need this? -N
 	 */
 	@Override
