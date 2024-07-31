@@ -5,6 +5,8 @@ import frc.robot.Robot;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Arrays;
+
+import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 import frc.robot.utils.maths.CommonMath;
 
@@ -12,6 +14,7 @@ public class GyroIOSim implements GyroIO {
 	public final GyroPhysicsSimulationResults gyroPhysicsSimulationResults = new GyroPhysicsSimulationResults();
 	public double previousAngularVelocityRadPerSec = gyroPhysicsSimulationResults.robotAngularVelocityRadPerSec;
 	public Rotation2d currentGyroDriftAmount = new Rotation2d();
+    private double lastGForce;
 
 	@Override
 	public void updateInputs(GyroIOInputs inputs) {
@@ -40,6 +43,14 @@ public class GyroIOSim implements GyroIO {
 		inputs.yawPosition = inputs.odometryYawPositions[inputs.odometryYawPositions.length
 				- 1];
 		inputs.yawVelocityRadPerSec = gyroPhysicsSimulationResults.robotAngularVelocityRadPerSec;
+		double currentGForce = gyroPhysicsSimulationResults.gForce;
+		Logger.recordOutput("diff", currentGForce - lastGForce);
+		if (Math.abs(currentGForce - lastGForce) > DriveConstants.RobotPhysicsSimulationConfigs.MAX_FAKE_G) {
+			inputs.collisionDetected = true;
+		} else {
+			inputs.collisionDetected = false;
+		}
+		lastGForce = currentGForce;
 		Logger.recordOutput("Drive/Gyro/robot true yaw (deg)",
 				gyroPhysicsSimulationResults.odometryYawPositions[gyroPhysicsSimulationResults.odometryYawPositions.length
 						- 1].getDegrees());
@@ -64,12 +75,13 @@ public class GyroIOSim implements GyroIO {
 			/ Math.sqrt(60.0 / Robot.defaultPeriodSecs);
 
 	public static class GyroPhysicsSimulationResults {
-		public double robotAngularVelocityRadPerSec;
+		public double robotAngularVelocityRadPerSec, gForce;
 		public boolean hasReading;
 		public final Rotation2d[] odometryYawPositions = new Rotation2d[RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD];
 
 		public GyroPhysicsSimulationResults() {
 			robotAngularVelocityRadPerSec = 0.0;
+			gForce = 0.0;
 			hasReading = false;
 			Arrays.fill(odometryYawPositions, new Rotation2d());
 		}
