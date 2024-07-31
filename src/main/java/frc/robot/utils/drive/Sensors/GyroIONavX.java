@@ -64,7 +64,8 @@ public class GyroIONavX implements GyroIO {
 		if ((Math.abs(currentJerkX) > DriveConstants.MAX_G)
 				|| (Math.abs(currentJerkY) > DriveConstants.MAX_G)) {
 			inputs.collisionDetected = true;
+		}else{
+			inputs.collisionDetected = false;
 		}
-		inputs.collisionDetected = false;
 	}
 }

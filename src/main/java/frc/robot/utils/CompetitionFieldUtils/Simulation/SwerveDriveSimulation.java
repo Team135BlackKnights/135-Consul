@@ -32,7 +32,7 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 	private final ModuleIOSim[] modules;
 	private final SwerveDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
-
+	private double gForce = 0.0; //G
 	public SwerveDriveSimulation(RobotProfile robotProfile, GyroIOSim gyroIOSim,
 			ModuleIOSim frontLeft, ModuleIOSim frontRight, ModuleIOSim backLeft,
 			ModuleIOSim backRight, SwerveDriveKinematics kinematics,
@@ -69,7 +69,7 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 				.toSwerveModuleStates(instantVelocityRobotRelative);
 		updateGyroSimulationResults(gyroIOSim,
 				super.getObjectOnFieldPose2d().getRotation(),
-				super.getAngularVelocity(), iterationNum);
+				super.getAngularVelocity(), gForce, iterationNum);
 		for (int moduleIndex = 0; moduleIndex < modules.length; moduleIndex++)
 			updateModuleSimulationResults(modules[moduleIndex],
 					actualModuleFloorSpeeds[moduleIndex], profile.robotMaxVelocity,
@@ -93,14 +93,18 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 				MathUtil.clamp(centripetalForce, -profile.frictionForce,
 						profile.frictionForce),
 				getLinearVelocity().getDirection() + Math.toRadians(90)));
+		//calculate gForce
+		gForce = Math.sqrt(Math.pow(getLinearVelocity().x, 2) + Math.pow(getLinearVelocity().y, 2)) / DriveConstants.RobotPhysicsSimulationConfigs.FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ;
 		previousDesiredLinearMotionPercent.set(desiredLinearMotionPercent);
 	}
 
 	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
-			Rotation2d currentFacing, double angularVelocityRadPerSec,
+			Rotation2d currentFacing, double angularVelocityRadPerSec, double gForce,
 			int iterationNum) {
 		final GyroIOSim.GyroPhysicsSimulationResults results = gyroIOSim.gyroPhysicsSimulationResults;
 		results.robotAngularVelocityRadPerSec = angularVelocityRadPerSec;
+		results.gForce = gForce;
+		Logger.recordOutput("GForce", gForce);
 		results.odometryYawPositions[iterationNum] = currentFacing;
 		results.hasReading = true;
 	}

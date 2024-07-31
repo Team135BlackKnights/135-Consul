@@ -70,7 +70,7 @@ public class DriveConstants {
 			kFrontLeftAbsEncoderOffsetRad = 0, kFrontRightAbsEncoderOffsetRad = 0,
 			kBackLeftAbsEncoderOffsetRad = 0, kBackRightAbsEncoderOffsetRad = 0,
 			SKID_THRESHOLD = .5, //Meters per second
-			MAX_G = .5;
+			MAX_G = 0.5;
 	public static PathConstraints pathConstraints = new PathConstraints(
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get());
@@ -145,8 +145,9 @@ public class DriveConstants {
 		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
 		public static final DCMotor DRIVE_MOTOR = DCMotor.getKrakenX60Foc(1),
 				STEER_MOTOR = DCMotor.getKrakenX60Foc(1);
-		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.05;
+		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.0012;
 		public static final double STEER_INERTIA = 0.015;
+		public static final double MAX_FAKE_G = 0.1;
 		public static final double FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ = 10;
 		public static final double MAX_ANGULAR_ACCELERATION_RAD_PER_SEC_SQ = Math
 				.toRadians(1200);
