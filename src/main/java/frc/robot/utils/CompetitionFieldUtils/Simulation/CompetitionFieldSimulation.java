@@ -28,9 +28,9 @@ import java.util.Set;
 public abstract class CompetitionFieldSimulation {
 	private final World<Body> physicsWorld;
 	private final CompField competitionField;
-	private final Set<HolonomicChassisSimulation> robotSimulations = new HashSet<>();
+	private final static Set<HolonomicChassisSimulation> robotSimulations = new HashSet<>();
 	private final HolonomicChassisSimulation mainRobot;
-	private final Set<GamePieceInSimulation> gamePieces;
+	private final static Set<GamePieceInSimulation> gamePieces = new HashSet<>();;
 
 	public CompetitionFieldSimulation(HolonomicChassisSimulation mainRobot,
 			FieldObstaclesMap obstaclesMap) {
@@ -40,9 +40,8 @@ public abstract class CompetitionFieldSimulation {
 		this.physicsWorld.setGravity(PhysicsWorld.ZERO_GRAVITY);
 		for (Body obstacle : obstaclesMap.obstacles)
 			this.physicsWorld.addBody(obstacle);
-		this.gamePieces = new HashSet<>();
 		this.physicsWorld.addBody(mainRobot);
-		this.robotSimulations.add(mainRobot);
+		robotSimulations.add(mainRobot);
 	}
 
 	public void updateSimulationWorld() {
@@ -63,27 +62,52 @@ public abstract class CompetitionFieldSimulation {
 
 	public void addRobot(HolonomicChassisSimulation chassisSimulation) {
 		this.physicsWorld.addBody(chassisSimulation);
-		this.robotSimulations.add(chassisSimulation);
+		robotSimulations.add(chassisSimulation);
 		this.competitionField.addObject(chassisSimulation);
 	}
 
 	public void addGamePiece(GamePieceInSimulation gamePieceInSimulation) {
 		this.physicsWorld.addBody(gamePieceInSimulation);
 		this.competitionField.addObject(gamePieceInSimulation);
-		this.gamePieces.add(gamePieceInSimulation);
+		gamePieces.add(gamePieceInSimulation);
 	}
 
 	public CompField getCompetitionField() { return competitionField; }
 
 	public void clearGamePieces() {
-		for (GamePieceInSimulation gamePiece : this.gamePieces) {
+		for (GamePieceInSimulation gamePiece : gamePieces) {
 			this.physicsWorld.removeBody(gamePiece);
 			this.competitionField
 					.clearObjectsWithGivenType(gamePiece.getTypeName());
 		}
-		this.gamePieces.clear();
+		gamePieces.clear();
 	}
-
+	public static Translation2d getClosestGamePiece(Translation2d robotPosition) {
+		GamePieceInSimulation closestGamePiece = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (GamePieceInSimulation gamePiece : gamePieces) {
+		
+			double distance = gamePiece.getPose3d().getTranslation().toTranslation2d()
+					.getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestGamePiece = gamePiece;
+				closestDistance = distance;
+			}
+		}
+		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
+	}
+	public static Pose2d getClosestRobotPose(Translation2d robotPosition){
+		HolonomicChassisSimulation closestRobot = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (HolonomicChassisSimulation robot : robotSimulations) {
+			double distance = robot.getPose3d().getTranslation().toTranslation2d().getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestRobot = robot;
+				closestDistance = distance;
+			}
+		}
+		return closestRobot.getPose3d().toPose2d();
+	}
 	public void resetFieldForAuto() {
 		clearGamePieces();
 		placeGamePiecesOnField();

@@ -14,7 +14,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
-import frc.robot.utils.SimGamePiece;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
 
@@ -32,7 +32,7 @@ public class BotAborter extends Command{
 		isFinished = false;
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
-			this.targetPieceLocation = SimGamePiece.getClosestGamePiece();
+			this.targetPieceLocation = CompetitionFieldSimulation.getClosestGamePiece(drive.getPose().getTranslation());
 		}
 	}
 	@Override
@@ -59,14 +59,15 @@ public class BotAborter extends Command{
 			gamePieceTy = Units.radiansToDegrees(tyRad);
 			gamePieceTv = true;
 			if (Constants.currentMatchState == FRCMatchState.AUTO) {
-				double robotDeltaX = RobotContainer.opposingBotPose.getX()
+				Pose2d opposingBotPose = CompetitionFieldSimulation.getClosestRobotPose(currentPose.getTranslation());
+				double robotDeltaX = opposingBotPose.getX()
 						- currentPose.getX();
-				double robotDeltaY = RobotContainer.opposingBotPose.getY()
+				double robotDeltaY = opposingBotPose.getY()
 						- currentPose.getY();
 				robotTx = Units.radiansToDegrees(Math.atan2(robotDeltaY, robotDeltaX)); // Use atan2 instead of atan
 				robotTx -= currentPose.getRotation().getDegrees(); 
 				robotTx = GeomUtil.closerAngleToZero(robotTx);
-				double robotD = RobotContainer.opposingBotPose.getTranslation()
+				double robotD = opposingBotPose.getTranslation()
 						.getDistance(currentPose.getTranslation());
 				double robotTyRad = Math.PI
 						- Units.degreesToRadians(

@@ -21,7 +21,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.commands.drive.DriveToPose;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
-import frc.robot.utils.SimGamePiece;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.drive.DriveConstants;
 
 /**
@@ -57,7 +57,7 @@ public class DriveToAITarget extends Command {
 	public void initialize() {
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
-			this.targetPieceLocation = SimGamePiece.getClosestGamePiece();
+			this.targetPieceLocation = CompetitionFieldSimulation.getClosestGamePiece(swerveS.getPose().getTranslation());
 		}
 		isFinished = false;
 		LimelightHelpers.setPipelineIndex(VisionConstants.limelightName, 1);
@@ -194,14 +194,15 @@ if (gamePieceDistance <= Units.inchesToMeters(4.5)) { //less than 4.5 inches awa
 		timer.reset();
 		speeds = new ChassisSpeeds(0, 0, 0);
 		swerveS.setChassisSpeeds(speeds);
-		if (Constants.currentMode == Mode.SIM && close) {
+		//TODO: Intake the game piece within new physics sim
+		/*if (Constants.currentMode == Mode.SIM && close) {
 			if (SimGamePiece.currentPieces.get(0).getZ() > Units
 					.inchesToMeters(1)) { //if another game piece is off the ground, properly update the simArray
 				SimGamePiece.intake(SimGamePiece.closestPieceIndex - 1);
 			} else {
 				SimGamePiece.intake(SimGamePiece.closestPieceIndex);
 			}
-		}
+		}*/
 		close = false;
 	}
 
