@@ -28,6 +28,9 @@ import frc.robot.subsystems.drive.Tank.TankIOTalonFXNavx;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFXPigeon;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.OpponentRobotSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.commands.drive.vision.DriveToAITarget;
 import frc.robot.subsystems.vision.Vision;
@@ -40,6 +43,7 @@ import frc.robot.utils.drive.PathFinder;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
+import frc.robot.utils.drive.Sensors.GyroIOSim;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -90,7 +94,8 @@ public class RobotContainer {
 	public static Optional<Rotation2d> angleOverrider = Optional.empty();
 	public static double angularSpeed = 0;
 	static JoystickButton xButtonDrive = new JoystickButton(driveController, 3),
-			//yButtonDrive = new JoystickButton(driveController, 4), //used for Aim/Drive to pose
+			yButtonDrive = new JoystickButton(driveController, 4), //used for Aim/Drive to pose
+			bButtonDrive = new JoystickButton(driveController, 2),
 			aButtonTest = new JoystickButton(testingController, 1),
 			bButtonTest = new JoystickButton(testingController, 2),
 			xButtonTest = new JoystickButton(testingController, 3),
@@ -102,7 +107,11 @@ public class RobotContainer {
 	public static int currentTest = 0, currentGamePieceStatus = 0;
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	public static Pose2d opposingBotPose;
+	// Simulation
+	public static Crescendo2024FieldSimulation fieldSimulation = null;
+	private OpponentRobotSimulation testOpponentRobot = new OpponentRobotSimulation(
+			0);
+	public static Command currentAuto;
 
 	// POVButton manipPOVZero = new POVButton(manipController, 0);
 	// POVButton manipPOV180 = new POVButton(manipController, 180);
@@ -118,15 +127,16 @@ public class RobotContainer {
 			switch (DriveConstants.driveType) {
 			case SWERVE:
 				switch (DriveConstants.robotMotorController) {
-				case CTRE_MOTORS:
+				case CTRE_ON_RIO:
+				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case NAVX:
-						drivetrainS = new Swerve(new GyroIONavX(true),
+						drivetrainS = new Swerve(new GyroIONavX(),
 								new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
 								new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
 						break;
 					case PIGEON:
-						drivetrainS = new Swerve(new GyroIOPigeon2(true),
+						drivetrainS = new Swerve(new GyroIOPigeon2(),
 								new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
 								new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
 						break;
@@ -138,12 +148,12 @@ public class RobotContainer {
 				case VORTEX_SPARK_FLEX:
 					switch (DriveConstants.gyroType) {
 					case NAVX:
-						drivetrainS = new Swerve(new GyroIONavX(false),
+						drivetrainS = new Swerve(new GyroIONavX(),
 								new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
 								new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
 						break;
 					case PIGEON:
-						drivetrainS = new Swerve(new GyroIOPigeon2(true),
+						drivetrainS = new Swerve(new GyroIOPigeon2(),
 								new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
 								new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
 					default:
@@ -156,7 +166,8 @@ public class RobotContainer {
 				break;
 			case TANK:
 				switch (DriveConstants.robotMotorController) {
-				case CTRE_MOTORS:
+				case CTRE_ON_RIO:
+				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
 						drivetrainS = new Tank(new TankIOTalonFXPigeon());
@@ -181,7 +192,8 @@ public class RobotContainer {
 				break;
 			case MECANUM:
 				switch (DriveConstants.robotMotorController) {
-				case CTRE_MOTORS:
+				case CTRE_ON_RIO:
+				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
 						drivetrainS = new Mecanum(new MecanumIOTalonFXPigeon());
@@ -216,8 +228,20 @@ public class RobotContainer {
 		case SIM:
 			switch (DriveConstants.driveType) {
 			case SWERVE:
-				drivetrainS = new Swerve(new GyroIO() {}, new ModuleIOSim(0),
-						new ModuleIOSim(1), new ModuleIOSim(2), new ModuleIOSim(3));
+				final ModuleIOSim frontLeft = new ModuleIOSim(0),
+						frontRight = new ModuleIOSim(1),
+						backLeft = new ModuleIOSim(2), backRight = new ModuleIOSim(3);
+				final GyroIOSim gyroIOSim = new GyroIOSim();
+				drivetrainS = new Swerve(gyroIOSim, frontLeft, frontRight, backLeft,
+						backRight);
+				fieldSimulation = new Crescendo2024FieldSimulation(
+						new SwerveDriveSimulation(DriveConstants.mainRobotProfile,
+								gyroIOSim, frontLeft, frontRight, backLeft, backRight,
+								drivetrainS.getKinematics(),
+								new Pose2d(3, 3, new Rotation2d()),
+								drivetrainS::resetPose));
+				fieldSimulation.placeGamePiecesOnField();
+				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
@@ -270,7 +294,7 @@ public class RobotContainer {
 				.andThen(PathFinder.goToPose(
 						new Pose2d(1.9, 7.7,
 								new Rotation2d(Units.degreesToRadians(90))),
-						DriveConstants.pathConstraints, drivetrainS, false, 0))
+						() -> DriveConstants.pathConstraints, drivetrainS, false, 0))
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
@@ -279,6 +303,7 @@ public class RobotContainer {
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 		autoChooser.onChange(auto -> {
 			try {
+				currentAuto = auto;
 				field.getObject("path")
 						.setPoses(PathFinder.parseAutoToPose2dList(auto.getName()));
 			}
@@ -315,7 +340,7 @@ public class RobotContainer {
 				new RunTest(SysIdRoutine.Direction.kReverse, false, drivetrainS));
 
 		//Example Drive To 2024 Amp Pose, Bind to what you need.
-		/*yButtonDrive
+		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
 				.whileTrue(PathFinder.goToPose(new Pose2d(1.9, 7.7,new Rotation2d(Units.degreesToRadians(90))),DriveConstants.pathConstraints, drivetrainS, false,0));
@@ -324,9 +349,16 @@ public class RobotContainer {
 		//Example Aim To 2024 Amp Pose, Bind to what you need.
 		//yButtonDrive.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest).negate()).whileTrue(new AimToPose(drivetrainS,new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(90)))));
 
-		*/
+		
 		VisionConstants.Controls.autoIntake.whileTrue(new DriveToAITarget(drivetrainS));
+				.whileTrue(PathFinder.goToPose(
+						new Pose2d(1.9, 7.7,
+								new Rotation2d(Units.degreesToRadians(90))),
+						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
+		
+						testOpponentRobot.getAutoCyleCommand().schedule();
 		//swerve DRIVE tests
+		bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		//When user hits right bumper, go to next test, or wrap back to starting test for SysID.
 		rightBumperTest.onTrue(new InstantCommand(() -> {
 			if (currentTest == Constants.SysIdRoutines.values().length - 1) {
@@ -422,5 +454,10 @@ public class RobotContainer {
 		Subsystem[] subsystems = new Subsystem[1];
 		subsystems[0] = drivetrainS;
 		return subsystems;
+	}
+
+	public static void updateSimulationWorld() {
+		if (fieldSimulation != null)
+			fieldSimulation.updateSimulationWorld();
 	}
 }

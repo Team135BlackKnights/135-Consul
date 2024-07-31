@@ -14,6 +14,7 @@ public interface ModuleIO {
 		public boolean driveMotorConnected = true;
 		public boolean turnMotorConnected = true;
 		public boolean hasCurrentControl = false;
+		public boolean negateFF = false;
 		public double drivePositionRads = 0.0;
 		public double driveVelocityRadsPerSec = 0.0;
 		public double driveAppliedVolts = 0.0;
@@ -54,7 +55,7 @@ public interface ModuleIO {
 	default void setDrivePID(double kP, double kI, double kD) {}
 
 	/** Configure turn PID */
-	default void setTurnPID(double kP, double kI, double kD) {}
+	default void setTurnPID(double kP, double kI, double kD, double kS) {}
 
 	/** Enable or disable brake mode on the drive motor. */
 	default void setDriveBrakeMode(boolean enable) {}

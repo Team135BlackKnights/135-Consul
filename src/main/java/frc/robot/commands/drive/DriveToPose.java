@@ -90,9 +90,9 @@ public class DriveToPose extends Command {
 	public DriveToPose(DrivetrainS drive, boolean slowMode, Pose2d pose) {
 		this(drive, slowMode, () -> pose,
 				new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
-						DriveConstants.kTeleDriveMaxAcceleration,
+						DriveConstants.maxTranslationalAcceleration.get(),
 						DriveConstants.kMaxTurningSpeedRadPerSec,
-						DriveConstants.kTeleTurningMaxAcceleration));
+						DriveConstants.maxRotationalAcceleration.get()));
 	}
 
 	/** Drives to the specified pose under full software control. */
@@ -105,9 +105,9 @@ public class DriveToPose extends Command {
 	public DriveToPose(DrivetrainS drive, Supplier<Pose2d> poseSupplier) {
 		this(drive, false, poseSupplier,
 				new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
-						DriveConstants.kTeleDriveMaxAcceleration,
+						DriveConstants.maxTranslationalAcceleration.get(),
 						DriveConstants.kMaxTurningSpeedRadPerSec,
-						DriveConstants.kTeleTurningMaxAcceleration));
+						DriveConstants.maxRotationalAcceleration.get()));
 	}
 
 	/** Drives to the specified pose under full software control. */

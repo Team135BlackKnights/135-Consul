@@ -17,7 +17,6 @@ import frc.robot.utils.selfCheck.SubsystemFault;
  */
 public class SelfCheckingCanivore implements SelfChecking {
 	//That value is used pls stop gaslighting me
-	@SuppressWarnings("unused")
 	private final String label;
 	private final CANBusStatus busStatus;
 	private final boolean isNetworkCANFD;

@@ -29,11 +29,12 @@ public class BranchAuto extends Command {
 			path = AutoBuilder
 					.followPath(PathPlannerPath.fromChoreoTrajectory(choreoTraj))
 					.andThen(PathFinder.goToPose(backupPose,
-							DriveConstants.pathConstraints, RobotContainer.drivetrainS,
-							true, endSpeed));
+							() -> DriveConstants.pathConstraints,
+							RobotContainer.drivetrainS, true, endSpeed));
 		} else {
-			path = PathFinder.goToPose(backupPose, DriveConstants.pathConstraints,
-					RobotContainer.drivetrainS, true, endSpeed);
+			path = PathFinder.goToPose(backupPose,
+					() -> DriveConstants.pathConstraints, RobotContainer.drivetrainS,
+					true, endSpeed);
 		}
 		path.initialize();
 	}

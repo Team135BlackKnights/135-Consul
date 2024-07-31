@@ -46,7 +46,7 @@ public class SimDefenseBot extends Command {
 			timer.start();
 			return Commands.run(() -> {
 				botPose = startPose.interpolate(endPose, timer.get() / duration);
-				RobotContainer.opposingBotPose = botPose;
+				//RobotContainer.opposingBotPose = botPose;
 				Logger.recordOutput("BOTSIM", botPose);
 			}).until(() -> timer.hasElapsed(duration));
 		}, Set.of()));

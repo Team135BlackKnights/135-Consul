@@ -9,6 +9,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
@@ -157,10 +159,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnPosition = turnTalon.getPosition();
 		BaseStatusSignal.setUpdateFrequencyForAll(250, drivePosition,
 				turnPosition);
-		drivePositionQueue = PhoenixOdometryThread.getInstance()
-				.registerSignal(driveTalon, drivePosition);
-		turnPositionQueue = PhoenixOdometryThread.getInstance()
-				.registerSignal(turnTalon, turnPosition);
+		drivePositionQueue = OdometryThread.registerSignalInput(driveTalon.getPosition());
+		turnPositionQueue = OdometryThread.registerSignalInput(turnAbsoluteEncoder.getPosition());
 		// Get signals and set update rate
 		// 100hz signals
 		driveVelocity = driveTalon.getVelocity();
@@ -265,10 +265,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD) {
+	public void setTurnPID(double kP, double kI, double kD, double kS) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
+		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
+		turnTalonConfig.Slot0.kS = kS;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 

@@ -153,12 +153,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				DriveConstants.kModuleTranslations);
 		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setChassisSpeeds,
-				new HolonomicPathFollowerConfig(
-					new PIDConstants(5, 2.4, 0.006),
-										new PIDConstants(5,0,0.006),
+				new HolonomicPathFollowerConfig(new PIDConstants(2, 0, 0.006),
+						new PIDConstants(5, 0, 0.006),
 						DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.kDriveBaseRadius,
-						new ReplanningConfig(true, true),.02),
+						new ReplanningConfig(true, true), .02),
 				() -> Robot.isRed, this);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
@@ -261,6 +260,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public void addVelocityData(Twist2d robotVelocity) {
 		this.robotVelocity = robotVelocity;
 	}
+
+	@Override
+	public SwerveDriveKinematics getKinematics() { return kinematics; }
 
 	public boolean[] calculateSkidding() {
 		SwerveModuleState[] moduleStates = getModuleStates();
@@ -445,17 +447,16 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// Generate feasible next setpoint
 			SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
 			SwerveModuleState[] optimizedSetpointTorques = new SwerveModuleState[4];
-
-				currentSetpoint = setpointGenerator.generateSetpoint(
-						currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
-				for (int i = 0; i < modules.length; i++) {
-					// Optimize setpoints
-					optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
-					optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
-							optimizedSetpointStates[i].angle);
-					modules[i].runSetpoint(optimizedSetpointStates[i],
-							optimizedSetpointTorques[i]);
-				}
+			currentSetpoint = setpointGenerator.generateSetpoint(
+					currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
+			for (int i = 0; i < modules.length; i++) {
+				// Optimize setpoints
+				optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
+				optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
+						optimizedSetpointStates[i].angle);
+				modules[i].runSetpoint(optimizedSetpointStates[i],
+						optimizedSetpointTorques[i]);
+			}
 			Logger.recordOutput("Drive/SwerveStates/Setpoints",
 					optimizedSetpointStates);
 			Logger.recordOutput("Drive/SwerveStates/Torques",
@@ -473,6 +474,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		desiredSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 	}
+
 	@Override
 	public void setDiscreteChassisSpeeds(ChassisSpeeds speeds) {
 		desiredSpeeds = speeds;
@@ -483,11 +485,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * set.
 	 */
 	private void setBrakeMode(boolean enabled) {
-		if (brakeModeEnabled != enabled){
+		if (brakeModeEnabled != enabled) {
 			System.out.println("modul");
-						Arrays.stream(modules).forEach(module -> module.setBrakeMode(enabled));
+			Arrays.stream(modules).forEach(module -> module.setBrakeMode(enabled));
 		}
-		
 		brakeModeEnabled = enabled;
 	}
 
@@ -650,9 +651,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	@Override
-	public void zeroHeading() {
-		gyroIO.reset();
-	}
+	public void zeroHeading() { gyroIO.reset(); }
 
 	@Override
 	public boolean isConnected() { return gyroInputs.connected; }
@@ -690,8 +689,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public Command sysIdDynamicDrive(SysIdRoutine.Direction direction) {
 		return sysId.dynamic(direction);
 	}
+
 	@Override
-	public void setDriveCurrentLimit(int amps) { Arrays.stream(modules).forEach(module -> module.setCurrentLimit(amps)); }
+	public void setDriveCurrentLimit(int amps) {
+		Arrays.stream(modules).forEach(module -> module.setCurrentLimit(amps));
+	}
 
 	@Override
 	public void setCurrentLimit(int amps) { setDriveCurrentLimit(amps); }

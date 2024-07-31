@@ -12,9 +12,8 @@ import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
-import frc.robot.subsystems.drive.FastSwerve.PhoenixOdometryThread;
-import frc.robot.subsystems.drive.FastSwerve.SparkMaxOdometryThread;
 import frc.robot.utils.selfCheck.drive.SelfCheckingPigeon2;
+import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.ArrayList;
@@ -29,7 +28,7 @@ public class GyroIOPigeon2 implements GyroIO {
 	private final Queue<Double> yawPositionQueue;
 	private final StatusSignal<Double> yawVelocity;
 
-	public GyroIOPigeon2(boolean phoenixDrive) {
+	public GyroIOPigeon2() {
 		pigeon = new Pigeon2(id, "rio");
 		yaw = pigeon.getYaw();
 		yawVelocity = pigeon.getAngularVelocityZWorld();
@@ -37,14 +36,8 @@ public class GyroIOPigeon2 implements GyroIO {
 		pigeon.getConfigurator().setYaw(0.0);
 		yaw.setUpdateFrequency(250);
 		yawVelocity.setUpdateFrequency(100.0);
-		//pigeon.optimizeBusUtilization();
-		if (phoenixDrive) {
-			yawPositionQueue = PhoenixOdometryThread.getInstance()
-					.registerSignal(pigeon, pigeon.getYaw());
-		} else {
-			yawPositionQueue = SparkMaxOdometryThread.getInstance()
-					.registerSignal(yaw::getValueAsDouble);
-		}
+		pigeon.optimizeBusUtilization();
+		yawPositionQueue = OdometryThread.registerSignalInput(yaw);
 	}
 
 	@Override
