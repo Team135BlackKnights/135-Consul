@@ -37,10 +37,18 @@ public class Module {
 			"Drive/Module/TurnkP",
 			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
 					.getP());
+	private static final LoggableTunedNumber turnkI = new LoggableTunedNumber(
+			"Drive/Module/TurnkI",
+			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+					.getI());
 	private static final LoggableTunedNumber turnkD = new LoggableTunedNumber(
 			"Drive/Module/TurnkD",
 			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
 					.getD());
+	private static final LoggableTunedNumber turnkS = new LoggableTunedNumber(
+			"Drive/Module/TurnkS",
+			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+					.getKs());
 	private SwerveModuleState setpointState = new SwerveModuleState();
 	private final int index;
 	private final ModuleIO io;
@@ -70,7 +78,8 @@ public class Module {
 				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
 				drivekP, drivekI, drivekD);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setTurnPID(turnkP.get(), 0, turnkD.get()), turnkP, turnkD);
+				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(),turnkS.get()),
+				turnkP, turnkI, turnkD,turnkS);
 	}
 
 	/** Runs to {@link SwerveModuleState} */
@@ -82,7 +91,7 @@ public class Module {
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
 		io.runDriveVelocitySetpoint(
 				setpoint.speedMetersPerSecond
-						/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
+						/ (DriveConstants.TrainConstants.kWheelDiameter / 2),(inputs.negateFF ? 0 : 1)*
 				ff.calculate(setpoint.speedMetersPerSecond
 						/ (DriveConstants.TrainConstants.kWheelDiameter / 2))
 						+ ((wheelTorqueNm

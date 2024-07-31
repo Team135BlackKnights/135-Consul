@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -64,6 +65,10 @@ public interface DrivetrainS extends Subsystem {
 	 * @return the pose of the robot
 	 */
 	Pose2d getPose();
+	/**
+	 * @apiNote This method is used to get the pose of the robot in the simulation for SWERVE ONLY.
+	 */
+	default SwerveDriveKinematics getKinematics() {return null;}
 
 	/**
 	 * Stops the drivetrain

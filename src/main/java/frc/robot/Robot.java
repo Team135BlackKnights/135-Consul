@@ -6,6 +6,8 @@ package frc.robot;
 import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -17,12 +19,16 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.SysIdRoutines;
-import frc.robot.utils.SimGamePiece;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
+import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.PathFinder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -43,7 +49,7 @@ public class Robot extends LoggedRobot {
 	private Command m_autonomousCommand;
 	private RobotContainer m_robotContainer;
 	public static boolean isRed;
-	private boolean hasBeenEnabled, isPracticeDSMode = false;
+	private boolean isPracticeDSMode = false;
 	private double lastMatchTime = 0;
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
@@ -120,7 +126,26 @@ public class Robot extends LoggedRobot {
 	@Override
 	public void robotPeriodic() {
 		double startTime = Logger.getRealTimestamp();
+		LoggableTunedNumber.ifChanged(hashCode(), () -> {
+			DriveConstants.pathConstraints = new PathConstraints(
+				DriveConstants.pathConstraints.getMaxVelocityMps(),
+					DriveConstants.maxTranslationalAcceleration.get(),
+					DriveConstants.pathConstraints.getMaxAngularVelocityRps(),
+					DriveConstants.maxRotationalAcceleration.get());
+			DriveConstants.moduleLimitsFree = new ModuleLimits(
+					DriveConstants.kMaxSpeedMetersPerSecond,
+					DriveConstants.maxTranslationalAcceleration.get(),
+					DriveConstants.maxRotationalAcceleration.get());
+		}, DriveConstants.maxTranslationalAcceleration,
+				DriveConstants.maxRotationalAcceleration);
 		DataHandler.updateHandlerState();
+				RobotContainer.yButtonDrive
+				.and(RobotContainer.aButtonTest.or(RobotContainer.bButtonTest).or(RobotContainer.xButtonTest).or(RobotContainer.yButtonTest)
+						.negate())
+				.whileTrue(PathFinder.goToPose(
+						new Pose2d(1.9, 7.7,
+								new Rotation2d(Units.degreesToRadians(90))),
+						() -> DriveConstants.pathConstraints, RobotContainer.drivetrainS, false, 0));
 		SmartDashboard.putString("Match State",
 				Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
@@ -176,10 +201,18 @@ public class Robot extends LoggedRobot {
 	public void autonomousInit() {
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		RobotContainer.drivetrainS.zeroHeading();
+
 		RobotContainer.drivetrainS.zeroHeading(); //ENSURE gyro is reset.
 		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
+			if (Constants.currentMode == frc.robot.Constants.Mode.SIM){
+				if (RobotContainer.currentAuto != null){
+					RobotContainer.fieldSimulation.resetFieldForAuto();
+					RobotContainer.fieldSimulation.getSwerveDriveSimulation().setSimulationWorldPose(PathPlannerAuto.getStaringPoseFromAutoFile(RobotContainer.currentAuto.getName()));
+					RobotContainer.fieldSimulation.getSwerveDriveSimulation().resetOdometryToActualRobotPose();
+				}
+			}
 			m_autonomousCommand.schedule();
 		}
 	}
@@ -276,19 +309,11 @@ public class Robot extends LoggedRobot {
 	/** This function is called periodically whilst in simulation. */
 	@Override
 	public void simulationPeriodic() {
+      RobotContainer.updateSimulationWorld();
 		RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(
 				RobotContainer.getCurrentDraw()));
 		SmartDashboard.putNumber("Robot Voltage",
 				RobotController.getBatteryVoltage());
-		SimGamePiece.updateStates(); //update position of gamePieces
-		if (Constants.currentMatchState == Constants.FRCMatchState.AUTO
-				&& !hasBeenEnabled) {
-			SimGamePiece.resetPieces();
-			hasBeenEnabled = true;
-		} else if (Constants.currentMatchState == Constants.FRCMatchState.DISABLED) {
-			hasBeenEnabled = false;
-		}
-		//DataHandler.updateHandlerState();
 	}
 
 	public static void addPeriodic(Runnable callback, double period) {

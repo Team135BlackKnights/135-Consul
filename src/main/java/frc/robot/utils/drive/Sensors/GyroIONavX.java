@@ -7,8 +7,7 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.SerialPort.Port;
-import frc.robot.subsystems.drive.FastSwerve.PhoenixOdometryThread;
-import frc.robot.subsystems.drive.FastSwerve.SparkMaxOdometryThread;
+import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -28,14 +27,8 @@ public class GyroIONavX implements GyroIO {
 	private double last_world_linear_accel_x, last_world_linear_accel_y,
 			current_angle_position, last_angle_position = 0;
 
-	public GyroIONavX(boolean phoenixDrive) {
-		if (phoenixDrive) {
-			yawPositionQueue = PhoenixOdometryThread.getInstance()
-					.registerSignal(() -> navX.getAngle() * (DriveConstants.kGyroReversed ? -1 : 1));
-		} else {
-			yawPositionQueue = SparkMaxOdometryThread.getInstance()
-					.registerSignal(() -> navX.getAngle() * (DriveConstants.kGyroReversed ? -1 : 1));
-		}
+	public GyroIONavX() {
+		yawPositionQueue =  OdometryThread.registerInput(navX::getAngle);
 	}
 
 	@Override

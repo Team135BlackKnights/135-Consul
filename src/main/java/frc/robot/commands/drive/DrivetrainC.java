@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 
 /*
@@ -17,17 +18,17 @@ import frc.robot.utils.drive.DriveConstants;
 public class DrivetrainC extends Command {
 	public ChassisSpeeds chassisSpeeds;
 	private final DrivetrainS drivetrainS;
-	private final SlewRateLimiter xLimiter, yLimiter, turningLimiter;
+	private SlewRateLimiter xLimiter, yLimiter, turningLimiter;
 
 	public DrivetrainC(DrivetrainS drivetrainS) {
 		this.drivetrainS = drivetrainS;
 		// These guys limit acceleration, they aren't the most necessary but it makes movement smoother
 		this.xLimiter = new SlewRateLimiter(
-				DriveConstants.kTeleDriveMaxAcceleration);
+				DriveConstants.maxTranslationalAcceleration.get());
 		this.yLimiter = new SlewRateLimiter(
-				DriveConstants.kTeleDriveMaxAcceleration);
+				DriveConstants.maxTranslationalAcceleration.get());
 		this.turningLimiter = new SlewRateLimiter(
-				DriveConstants.kTeleTurningMaxAcceleration);
+				DriveConstants.maxTranslationalAcceleration.get());
 		addRequirements(drivetrainS);
 	}
 
@@ -36,6 +37,15 @@ public class DrivetrainC extends Command {
 
 	@Override
 	public void execute() {
+		LoggableTunedNumber.ifChanged(hashCode(), () -> {
+			this.xLimiter = new SlewRateLimiter(
+					DriveConstants.maxTranslationalAcceleration.get());
+			this.yLimiter = new SlewRateLimiter(
+					DriveConstants.maxTranslationalAcceleration.get());
+			this.turningLimiter = new SlewRateLimiter(
+					DriveConstants.maxTranslationalAcceleration.get());
+		}, DriveConstants.maxTranslationalAcceleration,
+				DriveConstants.maxRotationalAcceleration);
 		// Get desired ChassisSpeeds from controller
 		double xSpeed = -RobotContainer.driveController.getLeftY();
 		double ySpeed = -RobotContainer.driveController.getLeftX();

@@ -10,10 +10,12 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
+import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.HolonomicChassisSimulation.RobotProfile;
 
 public class DriveConstants {
-	public static MotorVendor robotMotorController = MotorVendor.CTRE_MOTORS;
+	public static MotorVendor robotMotorController = MotorVendor.CTRE_ON_RIO;
 	public static DriveTrainType driveType = DriveTrainType.SWERVE;
 	public static GyroType gyroType = GyroType.PIGEON;
 
@@ -21,7 +23,7 @@ public class DriveConstants {
 	 * What motors and motorContollers are we using
 	 */
 	public enum MotorVendor {
-		NEO_SPARK_MAX, VORTEX_SPARK_FLEX, CTRE_MOTORS
+		NEO_SPARK_MAX, VORTEX_SPARK_FLEX, CTRE_ON_RIO, CTRE_ON_CANIVORE
 	}
 
 	/**
@@ -40,18 +42,22 @@ public class DriveConstants {
 		NAVX, PIGEON
 	}
 
+	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
+			"Drive/MaxTranslationalAcceleration", Units.feetToMeters(50));
+	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
+			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50);
 	public static boolean fieldOriented = true;
 	//135-Blocks was tested on a chassis with all CANSparkMaxes, as well as all Kraken-x60s.
 	public static final double kChassisWidth = Units.inchesToMeters(24.25), // Distance between Left and Right wheels
 			kChassisLength = Units.inchesToMeters(24.25), // Distance betwwen Front and Back wheels
+			kBumperToBumperWidth = Units.inchesToMeters(35.5), // Distance between bumpers
+			kBumperToBumperLength = Units.inchesToMeters(35.5), // Distance between bumpers
 			kDriveBaseRadius = Math.sqrt(
 					kChassisLength * kChassisLength + kChassisWidth * kChassisWidth)
 					/ 2,
 			// Distance from center of robot to the farthest module
 			kMaxSpeedMetersPerSecond = Units.feetToMeters(15.1), //15.1
 			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI, // 1.33655 *2 *Math.PI
-			kTeleDriveMaxAcceleration = Units.feetToMeters(50), // guess
-			kTeleTurningMaxAcceleration = 2 * Math.PI * 50, // guess
 			// To find these set them to zero, then turn the robot on and manually set the
 			// wheels straight.
 			// The encoder values being read are then your new Offset values
@@ -66,8 +72,8 @@ public class DriveConstants {
 			SKID_THRESHOLD = .5, //Meters per second
 			MAX_G = .5;
 	public static PathConstraints pathConstraints = new PathConstraints(
-			kMaxSpeedMetersPerSecond, kTeleDriveMaxAcceleration,
-			kMaxTurningSpeedRadPerSec, kTeleTurningMaxAcceleration);
+			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
+			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get());
 	// kP = 0.1, kI = 0, kD = 0, kDistanceMultipler = .2; //for autoLock
 	// Declare the position of each module
 	public static final Translation2d[] kModuleTranslations = {
@@ -96,10 +102,9 @@ public class DriveConstants {
 			kBackLeftTurningReversed = true, kBackLeftAbsEncoderReversed = false,
 			kBackRightDriveReversed = false, kBackRightTurningReversed = true,
 			kBackRightAbsEncoderReversed = false, kGyroReversed = true;
-	public static final ModuleLimits moduleLimitsFree = new ModuleLimits(
+	public static ModuleLimits moduleLimitsFree = new ModuleLimits(
 			DriveConstants.kMaxSpeedMetersPerSecond,
-			DriveConstants.kTeleDriveMaxAcceleration,
-			Units.degreesToRadians(1080.0));
+			maxTranslationalAcceleration.get(), maxRotationalAcceleration.get());
 
 	public static class TrainConstants {
 		/**
@@ -113,20 +118,62 @@ public class DriveConstants {
 				VecBuilder.fill(0.003, 0.003, 0.0002));
 		public static double kWheelDiameter = Units.inchesToMeters(3.873),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
-				kDriveEncoderRot2Meter = kDriveMotorGearRatio * Math.PI, //Test if wheelDiameter should be here..?
-				kDriveEncoderRPM2MeterPerSec = kDriveEncoderRot2Meter / 60,
-				kTurningEncoderRot2Rad = kTurningMotorGearRatio * 2 * Math.PI,
-				kTurningEncoderRPM2RadPerSec = kTurningEncoderRot2Rad / 60,
 				kT = 1.0 / DCMotor.getKrakenX60Foc(1).KtNMPerAmp, kDeadband = 0.05,
-				weight = Units.lbsToKilograms(40);
-		public static final MotorConstantContainer
-		//rev 
-		/*overallTurningMotorConstantContainer = new MotorConstantContainer(0.001,
-				0.001, 0.001, 5, 0.001), //Average the turning motors for these vals.*/
-		//ctre
-		overallTurningMotorConstantContainer = new MotorConstantContainer(0.001,
-				0.001, 0.001, 50,0, .1), //Average the turning motors for these vals.	
+				weight = Units.lbsToKilograms(110);
+		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
+				0.001, 0.001, 0.001, 5, 2.4, 0.006),
+				pathplannerRotationConstantContainer = new MotorConstantContainer(
+						0.001, 0.001, 0.001, 5, 0, 0.006),
+				//rev 
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
+				//ctre
+				/*overallTurningMotorConstantContainer = new MotorConstantContainer(
+						0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
 				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
-						.13, 0.001, 0.05,0, 0.000);
+						.13, 0.001, 0.05, 0, 0.000);
+	}
+
+	public static RobotProfile mainRobotProfile = new RobotProfile(
+			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
+			kMaxTurningSpeedRadPerSec, TrainConstants.weight, kBumperToBumperWidth,
+			kBumperToBumperLength);
+
+	public static final class RobotPhysicsSimulationConfigs {
+		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
+		/* Swerve Module Simulation */
+		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
+		public static final DCMotor DRIVE_MOTOR = DCMotor.getKrakenX60Foc(1),
+				STEER_MOTOR = DCMotor.getKrakenX60Foc(1);
+		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.05;
+		public static final double STEER_INERTIA = 0.015;
+		public static final double FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ = 10;
+		public static final double MAX_ANGULAR_ACCELERATION_RAD_PER_SEC_SQ = Math
+				.toRadians(1200);
+		public static final double TIME_CHASSIS_STOPS_ROTATING_NO_POWER_SEC = 0.3;
+		public static final double DEFAULT_ROBOT_MASS = 110;
+		public static final double DEFAULT_BUMPER_WIDTH_METERS = Units
+				.inchesToMeters(35.5);
+		public static final double DEFAULT_BUMPER_LENGTH_METERS = Units
+				.inchesToMeters(35.5);
+		/* https://en.wikipedia.org/wiki/Friction#Coefficient_of_friction */
+		public static final double ROBOT_BUMPER_COEFFICIENT_OF_FRICTION = 0.85;
+		/* https://en.wikipedia.org/wiki/Coefficient_of_restitution */
+		public static final double ROBOT_BUMPER_COEFFICIENT_OF_RESTITUTION = 0.05;
+		/* Gyro Sim */
+		public static final double GYRO_ANGULAR_ACCELERATION_THRESHOLD_SKIDDING_RAD_PER_SEC_SQ = 100;
+		public static final double SKIDDING_AMOUNT_AT_THRESHOLD_RAD = Math
+				.toRadians(1.2);
+		/*
+		* https://store.ctr-electronics.com/pigeon-2/
+		* for a well-installed one with vibration reduction, only 0.4 degree
+		* but most teams just install it directly on the rigid chassis frame (including my team :D)
+		* so at least 1.2 degrees of drifting in 1 minutes for an average angular velocity of 60 degrees/second
+		* which is the average velocity during normal swerve-circular-offense
+		* */
+		public static final double NORMAL_GYRO_DRIFT_IN_1_MIN_Std_Dev_RAD = Math
+				.toRadians(1.2);
+		public static final double AVERAGE_VELOCITY_RAD_PER_SEC_DURING_TEST = Math
+				.toRadians(60);
 	}
 }

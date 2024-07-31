@@ -14,6 +14,7 @@ import frc.robot.commands.drive.DriveToPose;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.RobotContainer;
 import java.util.List;
+import java.util.function.Supplier;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -31,15 +32,17 @@ public class PathFinder {
 	 * @param drive       drivetrain type.
 	 * @return pre-made command
 	 */
-	public static Command goToPose(Pose2d pose, PathConstraints constraints,
-			DrivetrainS drive, boolean isAuto, double endVelocity) {
+	public static Command goToPose(Pose2d pose,
+			Supplier<PathConstraints> constraints, DrivetrainS drive,
+			boolean isAuto, double endVelocity) {
 		if (isAuto) { //skip accuracy for speed
-			return AutoBuilder.pathfindToPose((pose), constraints, endVelocity)
+			return AutoBuilder
+					.pathfindToPose((pose), constraints.get(), endVelocity)
 					.finallyDo(() -> RobotContainer.field.getObject("target pose")
 							.setPose(new Pose2d(-50, -50, new Rotation2d()))); //the void		));
 		}
-		return AutoBuilder.pathfindToPose((pose), constraints)
-				.andThen(new DriveToPose(drive, pose, constraints))
+		return AutoBuilder.pathfindToPose((pose), constraints.get(), endVelocity)
+				.andThen(new DriveToPose(drive, pose, constraints.get()))
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d()))); //the void		));
 	}
