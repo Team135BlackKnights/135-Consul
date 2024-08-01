@@ -228,4 +228,14 @@ public class GeomUtil {
 		return currentPose.getTranslation()
 				.getDistance(objectPose.getTranslation().toTranslation2d());
 	}
+
+	/**
+	 * @param currentTranslation the robot translation
+	 * @param objectTranslation  the object, as a translation2d
+	 * @return distance in meters
+	 */
+	public static double calculateDistanceFromTranslation2d(
+			Translation2d currentTranslation, Translation2d objectTranslation) {
+		return currentTranslation.getDistance(objectTranslation);
+	}
 }

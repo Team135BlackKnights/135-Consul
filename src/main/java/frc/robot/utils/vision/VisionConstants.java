@@ -18,7 +18,7 @@ public class VisionConstants {
 
 	public static class Controls {
 		public static JoystickButton autoIntake = new JoystickButton(
-				RobotContainer.driveController, 4); //y
+				RobotContainer.driveController, 1); //a
 	}
 
 	//We put the cameras into an enum to make iteration easier

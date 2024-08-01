@@ -17,11 +17,11 @@ import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.FRCMatchState;
+import frc.robot.Constants.GeometryConstants;
 import frc.robot.Constants.Mode;
 import frc.robot.commands.drive.DriveToPose;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.drive.DriveConstants;
 
 /**
@@ -57,7 +57,9 @@ public class DriveToAITarget extends Command {
 	public void initialize() {
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
-			this.targetPieceLocation = CompetitionFieldSimulation.getClosestGamePiece(swerveS.getPose().getTranslation());
+			this.targetPieceLocation = RobotContainer.fieldSimulation
+					.getClosestGamePieceOnGround().getPose3d().toPose2d()
+					.getTranslation();
 		}
 		isFinished = false;
 		LimelightHelpers.setPipelineIndex(VisionConstants.limelightName, 1);
@@ -79,6 +81,9 @@ public class DriveToAITarget extends Command {
 		if (Constants.currentMode == Mode.SIM) {
 			//In simulation, get the current pose, and set the degree value to 
 			currentPose = swerveS.getPose();
+			this.targetPieceLocation = RobotContainer.fieldSimulation
+			.getClosestGamePieceOnGround().getPose3d().toPose2d()
+			.getTranslation();
 			double deltaX = targetPieceLocation.getX() - currentPose.getX();
 			double deltaY = targetPieceLocation.getY() - currentPose.getY();
 			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
@@ -111,28 +116,27 @@ public class DriveToAITarget extends Command {
 				}
 			}
 		}
-		Pose3d estimatedgamePiecePose3d = GeomUtil
-		.calculateFieldRelativePose3d(currentPose, gamePieceTx,
-				gamePieceTy,
+		Pose3d estimatedgamePiecePose3d = GeomUtil.calculateFieldRelativePose3d(
+				currentPose, gamePieceTx, gamePieceTy,
 				Units.inchesToMeters(
 						VisionConstants.limelightLensHeightoffFloorInches),
 				Units.inchesToMeters(2),
 				VisionConstants.limeLightAngleOffsetDegrees);
-Logger.recordOutput("SIMINTAKEgamePiece", estimatedgamePiecePose3d);
-gamePieceDistance = GeomUtil.calculateDistanceFromPose3d(currentPose,
-		estimatedgamePiecePose3d);
-if (VisionConstants.debug) {
-	SmartDashboard.putNumber("tx", gamePieceTx);
-	SmartDashboard.putNumber("ty", gamePieceTy);
-	SmartDashboard.putNumber("DISTANCE", gamePieceDistance);
-}
-// SmartDashboard.putBoolean("Piece Loaded?", IntakeS.PieceIsLoaded());
-if (gamePieceDistance <= Units.inchesToMeters(4.5)) { //less than 4.5 inches away, STOP!
-	if (Constants.currentMode == Constants.Mode.SIM) {
-		isFinished = true;
-	}
-	close = true;
-}
+		Logger.recordOutput("SIMINTAKEgamePiece", estimatedgamePiecePose3d);
+		gamePieceDistance = GeomUtil.calculateDistanceFromTranslation2d(currentPose.getTranslation(),
+				estimatedgamePiecePose3d.getTranslation().toTranslation2d())-GeometryConstants.intakeOffset;
+		if (VisionConstants.debug) {
+			SmartDashboard.putNumber("tx", gamePieceTx);
+			SmartDashboard.putNumber("ty", gamePieceTy);
+			SmartDashboard.putNumber("DISTANCE", gamePieceDistance);
+		}
+		// SmartDashboard.putBoolean("Piece Loaded?", IntakeS.PieceIsLoaded());
+		if (gamePieceDistance <= GeometryConstants.ObjectDistanceZeroSpeed) { //less than x inches away, STOP!
+			if (Constants.currentMode == Constants.Mode.SIM) {
+				isFinished = true;
+			}
+			close = true;
+		}
 		if (Constants.currentMatchState == FRCMatchState.AUTO
 				&& timer.get() > 1) {
 			isFinished = true; //if in auto, and greater than max time, STOP ENTIRE COMMAND
@@ -194,15 +198,11 @@ if (gamePieceDistance <= Units.inchesToMeters(4.5)) { //less than 4.5 inches awa
 		timer.reset();
 		speeds = new ChassisSpeeds(0, 0, 0);
 		swerveS.setChassisSpeeds(speeds);
-		//TODO: Intake the game piece within new physics sim
-		/*if (Constants.currentMode == Mode.SIM && close) {
-			if (SimGamePiece.currentPieces.get(0).getZ() > Units
-					.inchesToMeters(1)) { //if another game piece is off the ground, properly update the simArray
-				SimGamePiece.intake(SimGamePiece.closestPieceIndex - 1);
-			} else {
-				SimGamePiece.intake(SimGamePiece.closestPieceIndex);
+		if (Constants.currentMode == Mode.SIM) {
+			if (!interrupted) {
+				RobotContainer.fieldSimulation.intakeNote();
 			}
-		}*/
+		}
 		close = false;
 	}
 
