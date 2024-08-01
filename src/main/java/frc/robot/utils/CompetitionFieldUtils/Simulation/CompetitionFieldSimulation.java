@@ -2,11 +2,15 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
+import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.Constants.GeometryConstants;
+import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.GamePieceInSimulation;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.CompetitionFieldUtils.CompField;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.maths.GeometryConvertor;
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
@@ -15,6 +19,7 @@ import org.dyn4j.geometry.Geometry;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.world.PhysicsWorld;
 import org.dyn4j.world.World;
+import org.littletonrobotics.junction.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -67,6 +72,71 @@ public abstract class CompetitionFieldSimulation {
 		this.competitionField.addObject(chassisSimulation);
 	}
 
+	public void intakeNote() {
+		GamePieceInSimulation gamePiece = getClosestGamePieceOnGround();
+		if (gamePiece != null) {
+			this.physicsWorld.removeBody(gamePiece);
+			this.competitionField.deleteObject(gamePiece);
+			gamePieces.remove(gamePiece);
+			gamePiece = new Crescendo2024FieldObjects.NoteOnManipulator(
+					Logger.getTimestamp(), GeometryConstants.intakeSpeed,
+					gamePiece.getPose3d(), GeometryConstants.launcherTransform);
+			this.addGamePiece(gamePiece);
+			this.competitionField.addObject(gamePiece);
+		}
+	}
+
+	public void shootNote() {
+		GamePieceInSimulation gamePiece = getClosestGamePieceOnRobot();
+		if (gamePiece != null) {
+			this.physicsWorld.removeBody(gamePiece);
+			this.competitionField.deleteObject(gamePiece);
+			gamePieces.remove(gamePiece);
+			gamePiece = new Crescendo2024FieldObjects.NoteInFly(
+					Logger.getTimestamp(), Constants.GeometryConstants.shotSpeed,
+					gamePiece.getPose3d(), Robot.isRed ? FieldConstants.RED_SPEAKER
+							: FieldConstants.BLUE_SPEAKER);
+			this.addGamePiece(gamePiece);
+			this.competitionField.addObject(gamePiece);
+		}
+	}
+
+	private GamePieceInSimulation getClosestGamePiece(GamePieceTag tag) {
+		GamePieceInSimulation closestGamePiece = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (GamePieceInSimulation gamePiece : gamePieces) {
+			if (gamePiece.getTag() != tag)
+				continue;
+			double distance = gamePiece.getPose3d().getTranslation()
+					.getDistance(mainRobot.getPose3d().getTranslation());
+			if (distance < closestDistance) {
+				closestGamePiece = gamePiece;
+				closestDistance = distance;
+			}
+		}
+		return closestGamePiece;
+	}
+
+	/**
+	 * @return the game piece that is closest to the robot and is on the ground
+	 */
+	public GamePieceInSimulation getClosestGamePieceOnGround() {
+		GamePieceInSimulation closestGamePiece = getClosestGamePiece(
+				GamePieceTag.ON_GROUND);
+		if (closestGamePiece == null) {
+			resetField(false); // if there are no game pieces on the ground, reset the field
+			return getClosestGamePieceOnGround(); // try again   (I am aware this could be an infinite loop - G)
+		}
+		return closestGamePiece;
+	}
+
+	/**
+	 * @return the game piece that is closest to the robot and is on the robot
+	 */
+	public GamePieceInSimulation getClosestGamePieceOnRobot() {
+		return getClosestGamePiece(GamePieceTag.IN_ROBOT);
+	}
+
 	public void addGamePiece(GamePieceInSimulation gamePieceInSimulation) {
 		this.physicsWorld.addBody(gamePieceInSimulation);
 		this.competitionField.addObject(gamePieceInSimulation);
@@ -84,15 +154,15 @@ public abstract class CompetitionFieldSimulation {
 		this.gamePieces.clear();
 	}
 
-	public void resetFieldForAuto() {
+	public void resetField(boolean preload) {
 		clearGamePieces();
-		placeGamePiecesOnField();
+		placeGamePiecesOnField(preload);
 	}
 
 	/**
 	 * place all game pieces on the field (for autonomous)
 	 */
-	public abstract void placeGamePiecesOnField();
+	public abstract void placeGamePiecesOnField(boolean preload);
 
 	/**
 	 * stores the obstacles on a competition field, which includes the border and

@@ -44,7 +44,6 @@ public class GyroIOSim implements GyroIO {
 				- 1];
 		inputs.yawVelocityRadPerSec = gyroPhysicsSimulationResults.robotAngularVelocityRadPerSec;
 		double currentGForce = gyroPhysicsSimulationResults.gForce;
-		Logger.recordOutput("diff", currentGForce - lastGForce);
 		if (Math.abs(currentGForce - lastGForce) > DriveConstants.RobotPhysicsSimulationConfigs.MAX_FAKE_G) {
 			inputs.collisionDetected = true;
 		} else {

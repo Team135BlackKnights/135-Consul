@@ -92,6 +92,7 @@ public class RobotContainer {
 	static JoystickButton xButtonDrive = new JoystickButton(driveController, 3),
 			yButtonDrive = new JoystickButton(driveController, 4), //used for Aim/Drive to pose
 			bButtonDrive = new JoystickButton(driveController, 2),
+			aButtonDrive = new JoystickButton(driveController, 1),
 			aButtonTest = new JoystickButton(testingController, 1),
 			bButtonTest = new JoystickButton(testingController, 2),
 			xButtonTest = new JoystickButton(testingController, 3),
@@ -236,7 +237,7 @@ public class RobotContainer {
 								drivetrainS.getKinematics(),
 								new Pose2d(3, 3, new Rotation2d()),
 								drivetrainS::resetPose));
-				fieldSimulation.placeGamePiecesOnField();
+				fieldSimulation.placeGamePiecesOnField(true);
 				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);

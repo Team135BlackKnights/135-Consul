@@ -2,6 +2,7 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.maths.GeometryConvertor;
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
@@ -22,25 +23,28 @@ public abstract class GamePieceInSimulation extends Body
 	public static final double DEFAULT_MASS = 0.2, LINEAR_DAMPING = 2.5,
 			ANGULAR_DAMPING = 5, EDGE_COEFFICIENT_OF_FRICTION = 0.8,
 			EDGE_COEFFICIENT_OF_RESTITUTION = 0.3;
-
-	public GamePieceInSimulation(Translation2d initialPosition, Convex shape) {
-		this(initialPosition, shape, DEFAULT_MASS);
+	public final GamePieceTag tag;
+	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag) {
+		this(initialPosition, shape, DEFAULT_MASS,tag);
 	}
 
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape,
-			double mass) {
+			double mass, GamePieceTag tag) {
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
 		bodyFixture.setFriction(EDGE_COEFFICIENT_OF_FRICTION);
 		bodyFixture.setFriction(EDGE_COEFFICIENT_OF_RESTITUTION);
 		bodyFixture.setDensity(mass / shape.getArea());
+		this.tag = tag;
 		super.setMass(MassType.NORMAL);
 		super.translate(GeometryConvertor.toDyn4jVector2(initialPosition));
 		super.setLinearDamping(LINEAR_DAMPING);
 		super.setAngularDamping(ANGULAR_DAMPING);
 		super.setBullet(true);
 	}
-
+	public GamePieceTag getTag() {
+		return tag;
+	}
 	@Override
 	public Pose2d getObjectOnFieldPose2d() {
 		return GeometryConvertor.toWpilibPose2d(super.getTransform());

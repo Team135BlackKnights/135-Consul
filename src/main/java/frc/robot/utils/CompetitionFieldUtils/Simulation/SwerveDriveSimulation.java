@@ -33,6 +33,7 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 	private final SwerveDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
 	private double gForce = 0.0; //G
+
 	public SwerveDriveSimulation(RobotProfile robotProfile, GyroIOSim gyroIOSim,
 			ModuleIOSim frontLeft, ModuleIOSim frontRight, ModuleIOSim backLeft,
 			ModuleIOSim backRight, SwerveDriveKinematics kinematics,
@@ -73,7 +74,7 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 		for (int moduleIndex = 0; moduleIndex < modules.length; moduleIndex++)
 			updateModuleSimulationResults(modules[moduleIndex],
 					actualModuleFloorSpeeds[moduleIndex], profile.robotMaxVelocity,
-					iterationNum, subPeriodSeconds,instantVelocityRobotRelative);
+					iterationNum, subPeriodSeconds, instantVelocityRobotRelative);
 	}
 
 	private final Vector2 previousDesiredLinearMotionPercent = new Vector2();
@@ -94,24 +95,27 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 						profile.frictionForce),
 				getLinearVelocity().getDirection() + Math.toRadians(90)));
 		//calculate gForce
-		gForce = Math.sqrt(Math.pow(getLinearVelocity().x, 2) + Math.pow(getLinearVelocity().y, 2)) / DriveConstants.RobotPhysicsSimulationConfigs.FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ;
+		gForce = Math
+				.sqrt(Math.pow(getLinearVelocity().x, 2)
+						+ Math.pow(getLinearVelocity().y, 2))
+				/ DriveConstants.RobotPhysicsSimulationConfigs.FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ;
 		previousDesiredLinearMotionPercent.set(desiredLinearMotionPercent);
 	}
 
 	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
-			Rotation2d currentFacing, double angularVelocityRadPerSec, double gForce,
-			int iterationNum) {
+			Rotation2d currentFacing, double angularVelocityRadPerSec,
+			double gForce, int iterationNum) {
 		final GyroIOSim.GyroPhysicsSimulationResults results = gyroIOSim.gyroPhysicsSimulationResults;
 		results.robotAngularVelocityRadPerSec = angularVelocityRadPerSec;
 		results.gForce = gForce;
-		Logger.recordOutput("GForce", gForce);
 		results.odometryYawPositions[iterationNum] = currentFacing;
 		results.hasReading = true;
 	}
 
 	private static void updateModuleSimulationResults(ModuleIOSim module,
 			SwerveModuleState actualModuleFloorSpeed, double robotMaxVelocity,
-			int simulationIteration, double periodSeconds, ChassisSpeeds instantSpeed) {
+			int simulationIteration, double periodSeconds,
+			ChassisSpeeds instantSpeed) {
 		final SwerveModuleState moduleFreeSwerveSpeed = module
 				.getFreeSwerveSpeed(robotMaxVelocity);
 		final ModuleIOSim.SwerveModulePhysicsSimulationResults results = module.physicsSimulationResults;
@@ -121,9 +125,12 @@ public class SwerveDriveSimulation extends HolonomicChassisSimulation {
 				projectedModuleFloorSpeedMetersPerSecond,
 				moduleFreeSwerveSpeed.speedMetersPerSecond);
 		results.odometrySteerPositions[simulationIteration] = moduleFreeSwerveSpeed.angle;
-		if ((Math.sqrt(Math.pow(instantSpeed.vxMetersPerSecond,2) +Math.pow(instantSpeed.vyMetersPerSecond,2)) > 0.1) || (Math.sqrt(Math.pow(instantSpeed.omegaRadiansPerSecond,2)) > 0.05)) {
+		if ((Math.sqrt(Math.pow(instantSpeed.vxMetersPerSecond, 2)
+				+ Math.pow(instantSpeed.vyMetersPerSecond, 2)) > 0.1)
+				|| (Math.sqrt(
+						Math.pow(instantSpeed.omegaRadiansPerSecond, 2)) > 0.05)) {
 			results.negateFF = false;
-		}else{
+		} else {
 			results.negateFF = true;
 		}
 		results.driveWheelFinalRevolutions += results.driveWheelFinalVelocityRevolutionsPerSec

@@ -208,7 +208,7 @@ public class Robot extends LoggedRobot {
 		if (m_autonomousCommand != null) {
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM){
 				if (RobotContainer.currentAuto != null){
-					RobotContainer.fieldSimulation.resetFieldForAuto();
+					RobotContainer.fieldSimulation.resetField(true);
 					RobotContainer.fieldSimulation.getSwerveDriveSimulation().setSimulationWorldPose(PathPlannerAuto.getStaringPoseFromAutoFile(RobotContainer.currentAuto.getName()));
 					RobotContainer.fieldSimulation.getSwerveDriveSimulation().resetOdometryToActualRobotPose();
 				}
