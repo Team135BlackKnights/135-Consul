@@ -5,11 +5,8 @@ package frc.robot;
 
 import java.util.HashMap;
 import java.util.Map;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 
 /**
@@ -86,41 +83,11 @@ public final class Constants {
 		return map;
 	}
 
-	public static class DriveSimConstants {
-		//id 1 is topmost leftmost. goes in order down, right.
-		//Speaker translations
-		public static Translation3d blueShootLocation = new Translation3d(0.225,
-				5.55, 2.1);
-		public static Translation3d redShootLocation = new Translation3d(16.317,
-				5.55, 2.1); //in meters!
+	public static class GeometryConstants {
 		public static double shotSpeed = 15;
 		public static double intakeSpeed = 3;
 		//Launcher position compared to the robot
 		public static Transform3d launcherTransform = new Transform3d(0.292, 0,
 				0.1225, new Rotation3d(0, 0, 0.0));
-		public static Pose3d[] fieldPieceTranslations = new Pose3d[] {
-				new Pose3d(Units.inchesToMeters(325.625), Units.inchesToMeters(162),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //center
-				new Pose3d(Units.inchesToMeters(325.625), Units.inchesToMeters(228),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //center up 1
-				new Pose3d(Units.inchesToMeters(325.625), Units.inchesToMeters(294),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //center up 2
-				new Pose3d(Units.inchesToMeters(325.625), Units.inchesToMeters(96),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //center down 1
-				new Pose3d(Units.inchesToMeters(325.625), Units.inchesToMeters(30),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //center down 2
-				new Pose3d(Units.inchesToMeters(114), Units.inchesToMeters(162),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //BLUE CENTER
-				new Pose3d(Units.inchesToMeters(114), Units.inchesToMeters(219),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //BLUE CENTER + 1
-				new Pose3d(Units.inchesToMeters(114), Units.inchesToMeters(276),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //BUE TOP 
-				new Pose3d(Units.inchesToMeters(534.5), Units.inchesToMeters(162),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //RED CENTER
-				new Pose3d(Units.inchesToMeters(534.5), Units.inchesToMeters(219),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //RED CENTER + 1
-				new Pose3d(Units.inchesToMeters(534.5), Units.inchesToMeters(276),
-						Units.inchesToMeters(1), new Rotation3d(0, 0, 0)), //RED TOP 
-		};
 	}
 }

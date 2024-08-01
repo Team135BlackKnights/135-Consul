@@ -106,7 +106,9 @@ public class OpponentRobotSimulation extends HolonomicChassisSimulation
 
 	@Override
 	public ChassisSpeeds getChassisSpeeds() {
-		return ChassisSpeeds.fromFieldRelativeSpeeds(getMeasuredChassisSpeedsFieldRelative(), getObjectOnFieldPose2d().getRotation());
+		return ChassisSpeeds.fromFieldRelativeSpeeds(
+				getMeasuredChassisSpeedsFieldRelative(),
+				getObjectOnFieldPose2d().getRotation());
 	}
 
 	@Override
