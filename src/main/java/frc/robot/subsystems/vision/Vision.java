@@ -28,6 +28,7 @@ import frc.robot.RobotContainer;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.VisionConstants;
@@ -166,12 +167,12 @@ public class Vision extends SubsystemChecker {
 		if (newEst.getTranslation()
 				.getX() < -VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
-						.getX() > VisionConstants.FieldConstants.kFieldLength
+						.getX() > FieldConstants.FIELD_HEIGHT
 								+ VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
 						.getY() < -VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
-						.getY() > VisionConstants.FieldConstants.kFieldWidth
+						.getY() > FieldConstants.FIELD_WIDTH
 								+ VisionConstants.FieldConstants.kFieldBorderMargin) {
 			SmartDashboard.putString("Vision validation", "Outside field");
 			return "Outside field";

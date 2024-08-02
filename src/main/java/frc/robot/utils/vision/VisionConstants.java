@@ -110,8 +110,6 @@ public class VisionConstants {
 	public static final double kMaxPoseAmbiguity = .6;
     public static final double kMaxPoseAmbiguitySkid = .8;
 	public static class FieldConstants {
-		public static final double kFieldLength = Units.inchesToMeters(651.223);
-		public static final double kFieldWidth = Units.inchesToMeters(323.277);
 		public static final double kFieldBorderMargin = 0.5;
 		public static final double kFieldTagMinTrust = .8;
 		public static double[] aprilTagOffsets = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
