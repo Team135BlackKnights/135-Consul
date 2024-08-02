@@ -43,7 +43,7 @@ public class DriveConstants {
 	}
 
 	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
-			"Drive/MaxTranslationalAcceleration", Units.feetToMeters(50));
+			"Drive/MaxTranslationalAcceleration", Units.feetToMeters(37.5));
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50);
 	public static boolean fieldOriented = true;
@@ -145,13 +145,13 @@ public class DriveConstants {
 		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
 		public static final DCMotor DRIVE_MOTOR = DCMotor.getKrakenX60Foc(1),
 				STEER_MOTOR = DCMotor.getKrakenX60Foc(1);
-		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.0012;
+		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.012;
 		public static final double STEER_INERTIA = 0.015;
 		public static final double MAX_FAKE_G = 0.1;
-		public static final double FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ = 10;
+		public static final double FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ = 30;
 		public static final double MAX_ANGULAR_ACCELERATION_RAD_PER_SEC_SQ = Math
-				.toRadians(1200);
-		public static final double TIME_CHASSIS_STOPS_ROTATING_NO_POWER_SEC = 0.3;
+				.toRadians(1800);
+		public static final double TIME_CHASSIS_STOPS_ROTATING_NO_POWER_SEC = 0.1;
 		public static final double DEFAULT_ROBOT_MASS = 110;
 		public static final double DEFAULT_BUMPER_WIDTH_METERS = Units
 				.inchesToMeters(35.5);
