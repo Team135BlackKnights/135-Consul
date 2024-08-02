@@ -24,6 +24,11 @@ import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.Constants;
 
+/**
+ * Contains all cameras and estimators for the robot, and updates the vision
+ * (simulation or real) based on the robot's current pose (either expected or
+ * physics result).
+ */
 public class VisionIOPhotonVision implements VisionIO {
 	public static VisionSystemSim visionSim;
 	//These estimate pose based on april tag location
@@ -157,7 +162,8 @@ public class VisionIOPhotonVision implements VisionIO {
 	public void updateInputs(VisionIOInputs inputs) {
 		//If code's in sim update the simulated pose estimator
 		if (Constants.currentMode == Mode.SIM) {
-			visionSim.update(RobotContainer.fieldSimulation.getSwerveDriveSimulation().getPose3d().toPose2d());
+			visionSim.update(RobotContainer.fieldSimulation
+					.getSwerveDriveSimulation().getPose3d().toPose2d());
 		}
 		//Update the global pose for each camera
 		for (int i = 0; i < cams.length; i++) {

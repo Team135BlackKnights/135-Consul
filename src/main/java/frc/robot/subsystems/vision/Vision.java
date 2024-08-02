@@ -23,7 +23,9 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -40,6 +42,21 @@ public class Vision extends SubsystemChecker {
 	public Vision(VisionIO io) {
 		this.io = io;
 		registerSelfCheckHardware();
+		System.out.println(
+				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 2"
+						+ "\n" + getEstimationStdDevs(10, 5, .9, .15, 2));
+		System.out.println(
+				"Results from avgDist of 20, lowestDist of 10, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 2"
+						+ "\n" + getEstimationStdDevs(20, 10, .9, .15, 2));
+		System.out.println(
+				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 4"
+						+ "\n" + getEstimationStdDevs(10, 5, .9, .15, 4));
+		System.out.println(
+				"Results from avgDist of 10, lowestDist of 5, weightAverage of .5, avgPoseAmbiguity of .15, and numTags of 2"
+						+ "\n" + getEstimationStdDevs(10, 5, .5, .15, 2));
+		System.out.println(
+				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .5, and numTags of 2"
+						+ "\n" + getEstimationStdDevs(10, 5, .9, .5, 2));
 	}
 
 	@Override
@@ -100,6 +117,12 @@ public class Vision extends SubsystemChecker {
 							aprilTagList.length);
 					addVisionMeasurement(inputs.estPose[i], inputs.time[i],
 							estStdDevs);
+					Logger.recordOutput("ResultingStdDev", estStdDevs.get(0, 0));
+					Logger.recordOutput("InputtedAvgDist", inputs.avgDist[i]);
+					Logger.recordOutput("InputtedLowestDist", inputs.lowestDist[i]);
+					Logger.recordOutput("InputtedWeightAverage", inputs.weightAverage[i]);
+					Logger.recordOutput("InputtedAvgPoseAmbiguity", inputs.avgPoseAmbiguity[i]);
+					Logger.recordOutput("InputtedNumTags", aprilTagList.length);
 					for (int tag : aprilTagList) {
 						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 								.min(1,
@@ -162,7 +185,6 @@ public class Vision extends SubsystemChecker {
 			SmartDashboard.putString("Vision validation", "Outside field");
 			return "Outside field";
 		}
-		double overallChange;
 		boolean[] moduleSkids = RobotContainer.drivetrainS.isSkidding();
 		if (moduleSkids[0] || moduleSkids[1] || moduleSkids[2] || moduleSkids[3]
 				|| RobotContainer.drivetrainS.isCollisionDetected() || override) {
@@ -170,10 +192,12 @@ public class Vision extends SubsystemChecker {
 				override = true;
 				timer.restart();
 			}
-			if (GeomUtil.distancePose(lastPosition,
-					newEst) > VisionConstants.kMaxVisionCorrectionSkid) {
-				SmartDashboard.putString("Vision validation", "Max correction");
-				return "Max correction";
+			if (Constants.currentMatchState == FRCMatchState.AUTO) {
+				if (GeomUtil.distancePose(lastPosition,
+						newEst) > VisionConstants.kMaxVisionCorrectionSkid) {
+					SmartDashboard.putString("Vision validation", "Max correction");
+					return "Max correction";
+				}
 			}
 			if (Math
 					.abs(newEst.getRotation().minus(lastPosition.getRotation())
@@ -182,29 +206,20 @@ public class Vision extends SubsystemChecker {
 				SmartDashboard.putString("Vision validation", "Max rotation");
 				return "Max rotation";
 			}
-			if (averagePoseAmbig > .5) {
+			if (averagePoseAmbig > VisionConstants.kMaxPoseAmbiguitySkid) {
 				SmartDashboard.putString("Vision validation", "Max ambiguity");
 				return "Max ambiguity";
 			}
 			SmartDashboard.putString("Vision validation", "Override");
 			return "OK";
 		}
-		//The following check for velocity MAY be unneeded!
-		if (robotVelocity.vyMetersPerSecond == 0) {
-			overallChange = Math.abs(robotVelocity.vxMetersPerSecond);
-		} else {
-			overallChange = Math.hypot(robotVelocity.vxMetersPerSecond,
-					robotVelocity.vyMetersPerSecond);
-		}
-		if (overallChange > VisionConstants.kMaxVelocity) {
-			SmartDashboard.putString("Vision validation", "Max velocity");
-			return "Max velocity";
-		}
 		// Check max correction
-		if (GeomUtil.distancePose(lastPosition,
-				newEst) > VisionConstants.kMaxVisionCorrection) {
-			SmartDashboard.putString("Vision validation", "Max correction");
-			return "Max correction";
+		if (Constants.currentMatchState == FRCMatchState.AUTO) {
+			if (GeomUtil.distancePose(lastPosition,
+					newEst) > VisionConstants.kMaxVisionCorrection) {
+				SmartDashboard.putString("Vision validation", "Max correction");
+				return "Max correction";
+			}
 		}
 		if (Math
 				.abs(newEst.getRotation().minus(lastPosition.getRotation())
@@ -218,7 +233,7 @@ public class Vision extends SubsystemChecker {
 				SmartDashboard.putString("Vision validation", "Min trust");
 			}
 		}
-		if (averagePoseAmbig > .3) {
+		if (averagePoseAmbig > VisionConstants.kMaxPoseAmbiguity) {
 			SmartDashboard.putString("Vision validation", "Max ambiguity");
 			return "Max ambiguity";
 		}
@@ -257,13 +272,15 @@ public class Vision extends SubsystemChecker {
 	 */
 	private double calculateXYStdDev(double avgDist, double lowestDist,
 			double weighAverage, double avgPoseAmbiguity, int numTags) {
-		double distWeight = Math.pow(lowestDist / 2.0, 2.0);
-		double avgDistWeight = Math.pow(avgDist / 3.5, 2.0);
-		double poseWeight = Math.pow(avgPoseAmbiguity / 0.2, 2.0);
-		double weighAverageWeight = 1 - weighAverage;
+		double distWeight = lowestDist * VisionConstants.lowestDistErrorStdDev;
+		double avgDistWeight = avgDist * VisionConstants.avgDistErrorStdDev;
+		double poseWeight = avgPoseAmbiguity
+				* VisionConstants.poseAmbiguityErrorStdDev;
+		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
+				/ (0.00001 + weighAverage); //divide by zero protection
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
-				/ (numTags * 2);
+				/ (numTags * VisionConstants.numTagsMultiplier);
 	}
 
 	/**
@@ -272,13 +289,15 @@ public class Vision extends SubsystemChecker {
 	 */
 	private double calculateThetaStdDev(double avgDist, double lowestDist,
 			double weighAverage, double avgPoseAmbiguity, int numTags) {
-		double distWeight = Math.pow(lowestDist / 2.0, 2.0);
-		double avgDistWeight = Math.pow(avgDist / 3.5, 2.0);
-		double poseWeight = Math.pow(avgPoseAmbiguity / 0.2, 2.0);
-		double weighAverageWeight = Math.pow(1 - weighAverage, 2.0);
+		double distWeight = lowestDist * VisionConstants.lowestDistErrorStdDev;
+		double avgDistWeight = avgDist * VisionConstants.avgDistErrorStdDev;
+		double poseWeight = avgPoseAmbiguity
+				* VisionConstants.poseAmbiguityErrorStdDev;
+		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
+				/ (0.00001 + weighAverage); //divide by zero protection
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
-				/ (numTags * 2);
+				/ (numTags * VisionConstants.numTagsMultiplier);
 	}
 
 	/**

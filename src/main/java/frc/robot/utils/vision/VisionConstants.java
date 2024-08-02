@@ -101,10 +101,16 @@ public class VisionConstants {
 	public static final double std_dev_multiplier = 1;
 	public static final double std_dev_steepness = 10;
 	public static final double kMaxRotationCorrection = Units
-			.degreesToRadians(2);
+			.degreesToRadians(10);
 	public static final double kMaxRotationCorrectionSkid = Units
-			.degreesToRadians(6);
-
+			.degreesToRadians(20);
+    public static final double lowestDistErrorStdDev = .25; //for every 1 m away from robot, inc std dev by...
+    public static final double avgDistErrorStdDev = .4;
+    public static final double poseAmbiguityErrorStdDev = 0;
+    public static final double weighAverageErrorStdDev = 0;
+	 public static final double numTagsMultiplier = 1;
+	public static final double kMaxPoseAmbiguity = .5;
+    public static final double kMaxPoseAmbiguitySkid = .8;
 	public static class FieldConstants {
 		public static final double kFieldLength = Units.inchesToMeters(651.223);
 		public static final double kFieldWidth = Units.inchesToMeters(323.277);
