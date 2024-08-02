@@ -189,7 +189,7 @@ public class VisionIOPhotonVision implements VisionIO {
 					for (int j = 0; j < aprilTagList.size(); j++) {
 						aprilTags[j] = aprilTagList.get(j);
 					}
-					inputs.time[index] = est.timestampSeconds * 1.0e6;
+					inputs.time[index] = est.timestampSeconds;
 					double[] factors = getEstimationFactors(estPose, cEstimator,
 							cCam, aprilTagList);
 					inputs.avgDist[index] = factors[0];

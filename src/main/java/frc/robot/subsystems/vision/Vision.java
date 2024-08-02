@@ -117,12 +117,6 @@ public class Vision extends SubsystemChecker {
 							aprilTagList.length);
 					addVisionMeasurement(inputs.estPose[i], inputs.time[i],
 							estStdDevs);
-					Logger.recordOutput("ResultingStdDev", estStdDevs.get(0, 0));
-					Logger.recordOutput("InputtedAvgDist", inputs.avgDist[i]);
-					Logger.recordOutput("InputtedLowestDist", inputs.lowestDist[i]);
-					Logger.recordOutput("InputtedWeightAverage", inputs.weightAverage[i]);
-					Logger.recordOutput("InputtedAvgPoseAmbiguity", inputs.avgPoseAmbiguity[i]);
-					Logger.recordOutput("InputtedNumTags", aprilTagList.length);
 					for (int tag : aprilTagList) {
 						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 								.min(1,
@@ -130,22 +124,19 @@ public class Vision extends SubsystemChecker {
 												+ .001);
 					}
 				} else {
-					if (response == "Max correction") {
-						if (inputs.avgDist[i] < VisionConstants.offsetMaxDistance) {
-							for (int tag : aprilTagList) {
-								VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
-										.max(0,
-												VisionConstants.FieldConstants.aprilTagOffsets[tag]
-														- .001);
-							}
-						}
-					}
 					if (response == "Min trust") {
 						for (int tag : aprilTagList) {
 							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 									.min(1,
 											VisionConstants.FieldConstants.aprilTagOffsets[tag]
 													+ .001);
+						}
+					} else if (response != "Max ambiguity") {
+						for (int tag : aprilTagList) {
+							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
+									.max(0,
+											VisionConstants.FieldConstants.aprilTagOffsets[tag]
+													- .001);
 						}
 					}
 				}

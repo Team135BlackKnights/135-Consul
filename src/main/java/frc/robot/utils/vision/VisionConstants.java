@@ -97,19 +97,17 @@ public class VisionConstants {
 	public static final double kMaxVisionCorrectionSkid = Units
 			.inchesToMeters(15); // Jump from fused pose
 	public static final double offsetMaxDistance = 4; //in meters
-	public static final double kMaxVelocity = Units.feetToMeters(4);
 	public static final double std_dev_multiplier = 1;
-	public static final double std_dev_steepness = 10;
 	public static final double kMaxRotationCorrection = Units
 			.degreesToRadians(10);
 	public static final double kMaxRotationCorrectionSkid = Units
 			.degreesToRadians(20);
-    public static final double lowestDistErrorStdDev = .25; //for every 1 m away from robot, inc std dev by...
-    public static final double avgDistErrorStdDev = .4;
-    public static final double poseAmbiguityErrorStdDev = 0;
-    public static final double weighAverageErrorStdDev = 0;
+    public static final double lowestDistErrorStdDev = 0; //at .125, (5,.3125) (10,.625), at .25 (5,.625) (10,1.125)
+    public static final double avgDistErrorStdDev = .025; // at .2, (10, 1) (20, 2), at .4 (10, 2) (20, 4)   SET : .025
+    public static final double poseAmbiguityErrorStdDev = .25; //at 4, (.15, .3) (.5, 1), at 8 (.15, .6) (.5, 2) SET : .5
+    public static final double weighAverageErrorStdDev = .05; // at .25, (.9, .1389) (.5, .25), at .5 (.9, .2777) (.5, .5) SET : .05
 	 public static final double numTagsMultiplier = 1;
-	public static final double kMaxPoseAmbiguity = .5;
+	public static final double kMaxPoseAmbiguity = .6;
     public static final double kMaxPoseAmbiguitySkid = .8;
 	public static class FieldConstants {
 		public static final double kFieldLength = Units.inchesToMeters(651.223);
