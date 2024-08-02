@@ -167,12 +167,12 @@ public class Vision extends SubsystemChecker {
 		if (newEst.getTranslation()
 				.getX() < -VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
-						.getX() > FieldConstants.FIELD_HEIGHT
+						.getX() > FieldConstants.FIELD_WIDTH
 								+ VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
 						.getY() < -VisionConstants.FieldConstants.kFieldBorderMargin
 				|| newEst.getTranslation()
-						.getY() > FieldConstants.FIELD_WIDTH
+						.getY() > FieldConstants.FIELD_HEIGHT
 								+ VisionConstants.FieldConstants.kFieldBorderMargin) {
 			SmartDashboard.putString("Vision validation", "Outside field");
 			return "Outside field";
