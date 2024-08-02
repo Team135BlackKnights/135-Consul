@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import frc.robot.Constants.Mode;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.subsystems.SubsystemChecker;
@@ -27,6 +28,7 @@ import frc.robot.subsystems.drive.Tank.TankIOTalonFXNavx;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFXPigeon;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.OpponentRobotSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
@@ -85,8 +87,6 @@ public class RobotContainer {
 	public static DrivetrainS drivetrainS;
 	private static Vision visionS;
 	private final SendableChooser<Command> autoChooser;
-	//TODO: read PDH
-	//static PowerDistribution PDH = Logged
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
 	public static XboxController testingController = new XboxController(5);
@@ -109,8 +109,7 @@ public class RobotContainer {
 	public static Field2d field = new Field2d();
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
-	private OpponentRobotSimulation testOpponentRobot = new OpponentRobotSimulation(
-			0);
+	private OpponentRobotSimulation testOpponentRobot = null;
 	public static Command currentAuto;
 
 	// POVButton manipPOVZero = new POVButton(manipController, 0);
@@ -237,10 +236,10 @@ public class RobotContainer {
 				fieldSimulation = new Crescendo2024FieldSimulation(
 						new SwerveDriveSimulation(DriveConstants.mainRobotProfile,
 								gyroIOSim, frontLeft, frontRight, backLeft, backRight,
-								drivetrainS.getKinematics(),
-								new Pose2d(3, 3, new Rotation2d()),
+								drivetrainS.getKinematics(), FieldConstants.START_POSE,
 								drivetrainS::resetPose));
 				fieldSimulation.placeGamePiecesOnField(true);
+				testOpponentRobot = new OpponentRobotSimulation(0);
 				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);
@@ -274,6 +273,7 @@ public class RobotContainer {
 			}
 			visionS = new Vision(new VisionIO() {});
 		}
+		drivetrainS.resetPose(FieldConstants.START_POSE);
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
 		List<Pair<String, Command>> autoCommands = Arrays.asList(
 				//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -348,9 +348,7 @@ public class RobotContainer {
 		//yButtonDrive.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest).negate()).whileTrue(new AimToPose(drivetrainS,new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(90)))));
 		VisionConstants.Controls.autoIntake
 				.whileTrue(new DriveToAITarget(drivetrainS));
-		testOpponentRobot.getAutoCyleCommand().schedule();
 		//swerve DRIVE tests
-		bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		//When user hits right bumper, go to next test, or wrap back to starting test for SysID.
 		rightBumperTest.onTrue(new InstantCommand(() -> {
 			if (currentTest == Constants.SysIdRoutines.values().length - 1) {
@@ -372,6 +370,9 @@ public class RobotContainer {
 		//When using CTRE, be sure to hit Start so that the motors are logged via CTRE (For SysId)
 		selectButtonTest.onTrue(Commands.runOnce(SignalLogger::stop));
 		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
+		if (Constants.currentMode == Mode.SIM) {
+			bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
+		}
 	}
 
 	/**

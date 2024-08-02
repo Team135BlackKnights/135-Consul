@@ -1,5 +1,7 @@
 package frc.robot.utils.CompetitionFieldUtils;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
@@ -13,6 +15,8 @@ public class FieldConstants {
 	public static final double FIELD_HEIGHT = 8.21;
 	//id 1 is topmost leftmost. goes in order down, right.
 	//Speaker translations
+	public static final Pose2d START_POSE = new Pose2d(1.5, 1.5,
+			new Rotation2d());
 	public static final Translation3d BLUE_SPEAKER = new Translation3d(0.225,
 			5.55, 2.1);
 	public static final Translation3d RED_SPEAKER = new Translation3d(16.317,
