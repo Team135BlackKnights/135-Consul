@@ -6,6 +6,7 @@ package frc.robot;
 import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
 
@@ -22,13 +23,11 @@ import frc.robot.Constants.SysIdRoutines;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.PathFinder;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
@@ -67,6 +66,7 @@ public class Robot extends LoggedRobot {
 		}
 		// Instantiate our RobotContainer.  This will perform all our button bindings, and put our
 		// autonomous chooser on the dashboard
+		//TODO: CONFIRM AKIT logs and SignalLogger logs are going to the USB stick
 		Logger.recordMetadata("ProjectName", "The Chef"); // Set a metadata value
 		Logger.recordMetadata("TuningMode",
 				Boolean.toString(Constants.isTuningPID));
@@ -76,7 +76,6 @@ public class Robot extends LoggedRobot {
 		Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
 		Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
 		Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
-		//TODO: Test the Git integration by making a local change (not commited) and then trying to Deploy Robot Code (Event) in an event branch.
 		switch (BuildConstants.DIRTY) {
 		case 0:
 			Logger.recordMetadata("GitDirty", "All changes committed");
@@ -93,6 +92,7 @@ public class Robot extends LoggedRobot {
 			// Running on a real robot, log to a USB stick ("/U/logs")
 			Logger.addDataReceiver(new WPILOGWriter());
 			Logger.addDataReceiver(new NT4Publisher());
+			SignalLogger.setPath("/media/sda1/");
 			break;
 		case SIM:
 			// Running a physics simulator, log to NT
@@ -139,13 +139,6 @@ public class Robot extends LoggedRobot {
 		}, DriveConstants.maxTranslationalAcceleration,
 				DriveConstants.maxRotationalAcceleration);
 		DataHandler.updateHandlerState();
-				RobotContainer.yButtonDrive
-				.and(RobotContainer.aButtonTest.or(RobotContainer.bButtonTest).or(RobotContainer.xButtonTest).or(RobotContainer.yButtonTest)
-						.negate())
-				.whileTrue(PathFinder.goToPose(
-						new Pose2d(1.9, 7.7,
-								new Rotation2d(Units.degreesToRadians(90))),
-						() -> DriveConstants.pathConstraints, RobotContainer.drivetrainS, false, 0));
 		SmartDashboard.putString("Match State",
 				Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
@@ -167,14 +160,6 @@ public class Robot extends LoggedRobot {
 				RobotController.getBatteryVoltage());
 		CANBus.CANBusStatus canBusStatus = CANBus.getStatus("rio");
 		Logger.recordOutput("CANUtil", canBusStatus.BusUtilization * 100.0);
-		//    List<LidarDetection> robots = RobotContainer.lidar.getCurrentRobotDetections();
-		//    List<Pair<Translation2d, Translation2d>> obs = new ArrayList<>();
-		//    for (LidarDetection robotDet : robots) {
-		//      Translation2d robot = robotDet.boundingBoxCenter().toTranslation2d();
-		//      obs.add(Pair.of(robot.plus(new Translation2d(1, 1)), robot.minus(new Translation2d(1,
-		// 1))));
-		//    }
-		//    Pathfinding.setDynamicObstacles(obs, RobotContainer.swerve.getPose2d().getTranslation());
 		double runtimeMS = (Logger.getRealTimestamp() - startTime) / 1000.0;
 		Logger.recordOutput("RobotPeriodicMS", runtimeMS);
 	}

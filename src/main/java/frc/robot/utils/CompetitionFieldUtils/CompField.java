@@ -3,7 +3,6 @@ package frc.robot.utils.CompetitionFieldUtils;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.RobotOnFieldDisplay;
 import org.littletonrobotics.junction.Logger;
 
@@ -49,7 +48,7 @@ public class CompField {
 		this.mainRobot = mainRobot;
 		objectsOnFieldWithGivenType = new HashMap<>();
 		dashboardField2d = new Field2d();
-		SmartDashboard.putData("FieldPhysics", dashboardField2d);
+		//SmartDashboard.putData("FieldPhysics", dashboardField2d);
 	}
 
 	public ObjectOnFieldDisplay addObject(ObjectOnFieldDisplay object) {

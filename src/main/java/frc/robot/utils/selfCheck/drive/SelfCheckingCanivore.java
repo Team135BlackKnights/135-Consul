@@ -16,7 +16,6 @@ import frc.robot.utils.selfCheck.SubsystemFault;
  * Does not technically ping the CANivore, instead looks at the CAN bus.
  */
 public class SelfCheckingCanivore implements SelfChecking {
-	//That value is used pls stop gaslighting me
 	private final String label;
 	private final CANBusStatus busStatus;
 	private final boolean isNetworkCANFD;
@@ -37,19 +36,19 @@ public class SelfCheckingCanivore implements SelfChecking {
 		@SuppressWarnings("type safety")
 		List<SubsystemFault> hardwareFaultList = new ArrayList<>();
 		if (!isNetworkCANFD){
-			hardwareFaultList.add(new SubsystemFault(String.format("Canivore is not CanFD", label)));
+			hardwareFaultList.add(new SubsystemFault(String.format("Canivore is not CanFD ", label)));
 		}
 		if (busStatus.Status == StatusCode.InvalidNetwork){
-			hardwareFaultList.add(new SubsystemFault(String.format("Invalid network", label)));
+			hardwareFaultList.add(new SubsystemFault(String.format("Invalid network ", label)));
 		}
 		if (busStatus.BusUtilization >= .9) {
-			hardwareFaultList.add(new SubsystemFault(String.format("High CAN Utilization", label)));
+			hardwareFaultList.add(new SubsystemFault(String.format("High CAN Utilization ", label)));
 		}
 		if (busStatus.REC > 0){
-			hardwareFaultList.add(new SubsystemFault("There are "+ busStatus.REC + " recieve error(s)", true));
+			hardwareFaultList.add(new SubsystemFault("There are "+ busStatus.REC + " recieve error(s) ", true));
 		}
 		if (busStatus.TEC > 0){
-			hardwareFaultList.add(new SubsystemFault("There are" + busStatus.TEC + " transmit error(s)", true));
+			hardwareFaultList.add(new SubsystemFault("There are" + busStatus.TEC + " transmit error(s) ", true));
 		}
 		return hardwareFaultList;
 	}

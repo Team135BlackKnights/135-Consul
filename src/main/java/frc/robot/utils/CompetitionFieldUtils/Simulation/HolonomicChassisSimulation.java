@@ -2,6 +2,7 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.Robot;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.RobotOnFieldDisplay;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.GeometryConvertor;
@@ -10,6 +11,8 @@ import org.dyn4j.dynamics.Force;
 import org.dyn4j.geometry.Geometry;
 import org.dyn4j.geometry.MassType;
 import org.dyn4j.geometry.Vector2;
+
+import com.pathplanner.lib.util.GeometryUtil;
 
 import static frc.robot.utils.maths.CommonMath.constrainMagnitude;
 
@@ -40,6 +43,9 @@ public abstract class HolonomicChassisSimulation extends Body
 	}
 
 	public void setSimulationWorldPose(Pose2d robotPose) {
+		if (Robot.isRed){
+			robotPose = GeometryUtil.flipFieldPose(robotPose);
+		}
 		super.transform.set(GeometryConvertor.toDyn4jTransform(robotPose));
 		super.linearVelocity.set(0, 0);
 	}
