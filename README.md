@@ -25,7 +25,7 @@ This is designed so that the only files that need changing to combine different 
   - Prevent mistakes/crash-causing errors from SysID via checks
   - Put all SysID in ONE place
 
-![Simulation with vision and physics](Documentation\physics_plus_vision.gif)
+![Simulation with vision and physics](Documentation/physics_plus_vision.gif)
 - FULL Sim Support
 - Swerve physics, including field collision
 - Dynamic PID Tuning 
@@ -44,7 +44,7 @@ This is designed so that the only files that need changing to combine different 
   - Orchestra for CTRE
   - Plays a given `.chrp` file to ALL connected TalonFXs
 
-![Branching Auto](Documentation\branching_auto_no_physics.gif)
+![Branching Auto](Documentation/branching_auto_no_physics.gif)
 - Branching Autos
   - Automatically updates the auto based off game state, and what happened in the last path
   - Has to FOLLOW a race command group, which has the prior auto path and an interrupt command based off game status
@@ -146,7 +146,7 @@ For more details on State Space, refer to the [WPILib State Space Documentation]
 For more details on Orange Pi Server, refer to the [OrangePi code in PyDriverStation](https://github.com/Team135BlackKnights/PyDriverStation/tree/main/OrangePi).
 
 ### Cameras, Photon-Vision, and Limelight
-![Vision Wireframe view from Photon Vision](Documentation\photonvision_wireframe.gif)
+![Vision Wireframe view from Photon Vision](Documentation/photonvision_wireframe.gif)
 
 This block contains:
 - 4 built-in bot-pose cameras.
