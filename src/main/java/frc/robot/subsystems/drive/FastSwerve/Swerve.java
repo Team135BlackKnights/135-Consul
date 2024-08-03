@@ -572,7 +572,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	protected Command systemCheckCommand() {
 		return Commands
-				.sequence(run(() -> setChassisSpeeds(new ChassisSpeeds(1.5, 0, 0)))
+				.sequence(run(() -> setChassisSpeeds(new ChassisSpeeds(1, 0, 0)))
 						.withTimeout(1.0), runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
 								// Retrieve the corresponding REVSwerveModule from the hashmap
@@ -587,11 +587,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 									name = "Back Left";
 								if (i == 3)
 									name = "Back Right";
-								if (Math.abs(moduleState.speedMetersPerSecond) < 1.3
+								if (Math.abs(moduleState.speedMetersPerSecond) < .8
 										|| Math.abs(
-												moduleState.speedMetersPerSecond) > 1.7) {
+												moduleState.speedMetersPerSecond) > 1.2) {
 									addFault(
-											"[System Check] Drive motor encoder velocity too slow for "
+											"[System Check] Drive motor encoder velocity too slow (wanted 1) for "
 													+ name
 													+ moduleState.speedMetersPerSecond,
 											false, true);
@@ -602,15 +602,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 										&& Math.abs(Math.abs(angle) - 180) >= 10) {
 									addFault(
 											"[System Check] Turn angle off for " + name
-													+ moduleState.angle.getDegrees(),
+													+ String.format("%.2f", angle),
 											false, true);
 								}
 							}
-							System.out.println("COMPLETED X 1.5");
-						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 1.5, 0)))
+						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 1, 0)))
 								.withTimeout(1.0),
 						runOnce(() -> {
-							System.out.println("STARTING Y CHECK...");
 							for (int i = 0; i < modules.length; i++) {
 								SwerveModuleState moduleState = modules[i].getState();
 								String name = "";
@@ -622,11 +620,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 									name = "Back Left";
 								if (i == 3)
 									name = "Back Right";
-								if (Math.abs(moduleState.speedMetersPerSecond) < 1.3
+								if (Math.abs(moduleState.speedMetersPerSecond) < .8
 										|| Math.abs(
-												moduleState.speedMetersPerSecond) > 1.7) {
+												moduleState.speedMetersPerSecond) > 1.2) {
 									addFault(
-											"[System Check] Drive motor encoder velocity too slow for "
+											"[System Check] Drive motor encoder velocity too slow (wanted 1) for "
 													+ name
 													+ moduleState.speedMetersPerSecond,
 											false, true);
@@ -637,15 +635,107 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 										&& Math.abs(Math.abs(angle) - 270) >= 10) {
 									addFault(
 											"[System Check] Turn angle off for " + name
-													+ moduleState.angle.getDegrees(),
+													+ String.format("%.2f", angle),
 											false, true);
 								}
 							}
-						}),
-						run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, -0.5)))
+						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, -0.5)))
 								.withTimeout(2.0),
-						run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0.5)))
-								.withTimeout(2.0))
+						runOnce(() -> {
+							for (int i = 0; i < modules.length; i++) {
+								SwerveModuleState moduleState = modules[i].getState();
+								String name = "";
+								double angle = moduleState.angle.getDegrees();
+								if (i == 0) {
+									name = "Front Left";
+									if (Math.abs(Math.abs(angle) - 135) >= 10
+											&& Math.abs(Math.abs(angle) - 315) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 1) {
+									name = "Front Right";
+									if (Math.abs(Math.abs(angle) - 45) >= 10
+											&& Math.abs(Math.abs(angle) - 225) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 2) {
+									name = "Back Left";
+									if (Math.abs(Math.abs(angle) - 135) >= 10
+											&& Math.abs(Math.abs(angle) - 315) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 3) {
+									name = "Back Right";
+									if (Math.abs(Math.abs(angle) - 45) >= 10
+											&& Math.abs(Math.abs(angle) - 225) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+							}
+						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0.5)))
+								.withTimeout(2.0),
+						runOnce(() -> {
+							for (int i = 0; i < modules.length; i++) {
+								SwerveModuleState moduleState = modules[i].getState();
+								String name = "";
+								double angle = moduleState.angle.getDegrees();
+								if (i == 0) {
+									name = "Front Left";
+									if (Math.abs(Math.abs(angle) - 135) >= 10
+											&& Math.abs(Math.abs(angle) - 315) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 1) {
+									name = "Front Right";
+									if (Math.abs(Math.abs(angle) - 45) >= 10
+											&& Math.abs(Math.abs(angle) - 225) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 2) {
+									name = "Back Left";
+									if (Math.abs(Math.abs(angle) - 135) >= 10
+											&& Math.abs(Math.abs(angle) - 315) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+								if (i == 3) {
+									name = "Back Right";
+									if (Math.abs(Math.abs(angle) - 45) >= 10
+											&& Math.abs(Math.abs(angle) - 225) >= 10) {
+										addFault(
+												"[System Check] Turn angle off for " + name
+														+ String.format("%.2f", angle),
+												false, true);
+									}
+								}
+							}
+						}))
 				.until(() -> !getFaults().isEmpty()).andThen(
 						runOnce(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0))));
 	}

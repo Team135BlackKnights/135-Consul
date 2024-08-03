@@ -24,7 +24,10 @@ This is designed so that the only files that need changing to combine different 
 - Motor Constant Container
   - Prevent mistakes/crash-causing errors from SysID via checks
   - Put all SysID in ONE place
+
+![Simulation with vision and physics](Documentation\physics_plus_vision.gif)
 - FULL Sim Support
+- Swerve physics, including field collision
 - Dynamic PID Tuning 
   - Loggable Tuning Numbers allow updates
 - SysId Selector
@@ -33,18 +36,22 @@ This is designed so that the only files that need changing to combine different 
 - Drive to Pose Command
   - Slow/Fast mode, where each has custom max accel/velocity
   - Go to a given Pose2d
-  - Pathfinds on its own using ADStar planning.
+  - Pathfinds on its own using ADStar planning
 - Aim to Pose Command
   - Aim at a given Pose2d
-  - Works IN PARALLEL with both TeleOp drive/Pathplanner drive
-- Branching Autos
-  - Automatically updates the auto based off game state, and what happened in the last path.
-  - Has to FOLLOW a race command group, which has the prior auto path and an interrupt command based off game status.
-  - Will run the given Choreo trajectory UNLESS the GamePiece status is not zero.
-  - Will pathfind to a given Pose2d if gamepiece status is not zero. 
+  - Works IN PARALLEL with both TeleOp drive/Pathplanner drive  
 - Orchestra
   - Orchestra for CTRE
   - Plays a given `.chrp` file to ALL connected TalonFXs
+
+![Branching Auto](Documentation\branching_auto_no_physics.gif)
+- Branching Autos
+  - Automatically updates the auto based off game state, and what happened in the last path
+  - Has to FOLLOW a race command group, which has the prior auto path and an interrupt command based off game status
+  - Will run the given Choreo trajectory UNLESS the GamePiece status is not zero
+  - Will pathfind to a given Pose2d if gamepiece status is not zero
+
+
 
 ### SubsystemChecker Overhaul: 
 The base branch includes an overhauled Subsystem system named `SubsystemChecker`. It provides system checking and outputs data to our Pit Display, where all of this data is visible. All Subsystems should extend `SubsystemChecker` and supply their own TestCommand to confirm ALL functionality of that subsystem, that way the Pit Display can run everything on its own. 
@@ -93,6 +100,20 @@ An example branch directory could be:
 Refer to the [PyDriverStation](https://github.com/Team135BlackKnights/PyDriverStation) repository for instructions on how to use the API for the neural network.
 Refer to the [135_Pit_Display](https://github.com/Team135BlackKnights/135_Pit_Display) repository for instructions on how to use the Pit Display testing and diagnostics.
 
+
+## Credits
+
+We'd like to extend our deepest gratitude to FRC teams 254, 449, 1678, 1690, 3015, 5516, 6328 and so many others for their code and ideas. Links to their codebases are here:  
+[254  (The Cheesy Poofs)](https://github.com/Team254): Setpoint Generator (accel limiting)  
+[1678 (Citrus Circuits)](https://github.com/frc1678): Idea for vision filtering  
+[1690 (Orbit)](https://github.com/team1690): Skid Detection Algorithm  
+[3015 (Ranger Robotics)](https://github.com/3015rangerrobotics): Pathplanner, Pit Display (event panel)  
+[5516 (Shenzhen Robotics Alliance)](https://github.com/Shenzhen-Robotics-Alliance): Simulation physics logic  
+[6328 (Mechanical Advantage)](https://github.com/Mechanical-Advantage): Advantage Kit, Advantage Scope, 250 Hz Advanced Skeleton Swerve, URCL, DriveToPose  
+[PhotonVision](https://photonvision.org): Photon Vision
+[Dyn4j](https://github.com/dyn4j/dyn4j): Base physics engine for simulation  
+[ChatGPT](https://chat.openai.com/): For helping us feel not alone
+
 ## Blocks
 
 ### CTRE State Space
@@ -125,6 +146,7 @@ For more details on State Space, refer to the [WPILib State Space Documentation]
 For more details on Orange Pi Server, refer to the [OrangePi code in PyDriverStation](https://github.com/Team135BlackKnights/PyDriverStation/tree/main/OrangePi).
 
 ### Cameras, Photon-Vision, and Limelight
+![Vision Wireframe view from Photon Vision](Documentation\photonvision_wireframe.gif)
 
 This block contains:
 - 4 built-in bot-pose cameras.
