@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 
@@ -76,7 +77,20 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		// Configure AutoBuilder for PathPlanner
 		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setChassisSpeeds,
-				new HolonomicPathFollowerConfig(
+				new HolonomicPathFollowerConfig(new PIDConstants(
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getP(),
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getI(),
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getD()),
+						new PIDConstants(
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getP(),
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getI(),
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getD()),
 						DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.kDriveBaseRadius,
 						new ReplanningConfig(true, true)),

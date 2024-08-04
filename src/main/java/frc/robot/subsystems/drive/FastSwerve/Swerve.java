@@ -153,8 +153,20 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				DriveConstants.kModuleTranslations);
 		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setChassisSpeeds,
-				new HolonomicPathFollowerConfig(new PIDConstants(2, 0, 0.006),
-						new PIDConstants(5, 0, 0.006),
+				new HolonomicPathFollowerConfig(new PIDConstants(
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getP(),
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getI(),
+						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
+								.getD()),
+						new PIDConstants(
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getP(),
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getI(),
+								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
+										.getD()),
 						DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.kDriveBaseRadius,
 						new ReplanningConfig(true, true), .02),
@@ -292,12 +304,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		//Step 4: Compare all of the translation vectors. If they aren't the same, skid is present.
 		Arrays.sort(xComponentList);
 		Arrays.sort(yComponentList);
-		SmartDashboard.putNumberArray("Module Skid X", xComponentList);
-		SmartDashboard.putNumberArray("Module Skid Y", yComponentList);
 		double deltaMedianX = (xComponentList[1] + xComponentList[2]) / 2;
 		double deltaMedianY = (yComponentList[1] + yComponentList[2]) / 2;
-		SmartDashboard.putNumber("Skid X Median", deltaMedianX);
-		SmartDashboard.putNumber("Skid Y Median", deltaMedianY);
 		boolean[] areModulesSkidding = new boolean[4];
 		for (int i = 0; i < 4; i++) {
 			double deltaX = xComponentList[i];
@@ -333,18 +341,28 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				robotVelocity.dtheta);
 	}
 
+	/**
+	 * Get the current pose of the robot with front being whatever front has been
+	 * set to
+	 * 
+	 * @return a VISUAL ONLY output of the robot pose
+	 * @see {@link #getPose() getPose} for the geometrically accurate pose
+	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
-	public Pose2d getEstimatedPose() { return estimatedPose; }
+	public Pose2d getEstimatedPose() {
+		return estimatedPose.plus(new Transform2d(new Translation2d(),
+				DriveConstants.TrainConstants.robotOffsetAngleDirection));
+	}
 
 	public void periodic() {
-		//Check if modules are skidding (test this)
+		//Check if modules are skidding
 		isSkidding = calculateSkidding();
 		// Update & process inputs
 		odometryLock.lock();
 		// Read timestamps from odometry thread and fake sim timestamps
 		odometryTimestampInputs.timestamps = timestampQueue.stream()
 				.mapToDouble(Double::valueOf).toArray();
-		if (odometryTimestampInputs.timestamps.length == 0) {
+		if (odometryTimestampInputs.timestamps.length == 0) { //for sim
 			odometryTimestampInputs.timestamps = new double[] {
 					Timer.getFPGATimestamp()
 			};
@@ -353,6 +371,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
 		gyroIO.updateInputs(gyroInputs);
+		gyroInputs.yawPosition = gyroInputs.yawPosition
+				.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		for (Rotation2d value : gyroInputs.odometryYawPositions) {
+			value.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		}
 		Logger.processInputs("Drive/Gyro", gyroInputs);
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
@@ -757,6 +780,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		addVisionObservation(new VisionObservation(pose, timestamp, estStdDevs));
 	}
 
+	/**
+	 * Get the current pose of the robot with front being the GEOMETRY front
+	 * 
+	 * @return an INTERNAL ONLY output of the robot pose (use this for any
+	 *         driving/turning calculations)
+	 * @see {@link #getEstimatedPose() getEstimatedPose} for the visually
+	 *      accurate pose
+	 */
 	@Override
 	public Pose2d getPose() { return estimatedPose; }
 
