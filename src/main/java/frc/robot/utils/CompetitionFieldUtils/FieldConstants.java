@@ -32,8 +32,14 @@ public class FieldConstants {
 	/* https://www.andymark.com/products/frc-2024-am-4999 */
 	public static final double NOTE_HEIGHT = Units.inchesToMeters(2),
 			NOTE_DIAMETER = Units.inchesToMeters(14);
-
+	/**
+	 * for convenience, we assume all game pieces have the following properties
+	 */
+	public static final double DEFAULT_MASS = 0.2, LINEAR_DAMPING = 2.5,
+			ANGULAR_DAMPING = 5, EDGE_COEFFICIENT_OF_FRICTION = 0.8,
+			EDGE_COEFFICIENT_OF_RESTITUTION = 0.3;
 	public enum GamePieceTag {
 		ON_GROUND, IN_ROBOT, IN_AIR
 	}
+
 }

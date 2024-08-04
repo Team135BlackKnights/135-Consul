@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
@@ -54,22 +55,19 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	private static final Executor brakeModeExecutor = Executors
 			.newFixedThreadPool(8);
 	// Control
-	private final VoltageOut voltageControl = new VoltageOut(0)
-			;
-	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0)
-			;
+	private final VoltageOut voltageControl = new VoltageOut(0);
+	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
 	private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(
 			0);
 	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(
 			0);
-	private final NeutralOut neutralControl = new NeutralOut()
-			;
+	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
 	private final boolean isDriveMotorInverted;
+
 	/**
-	 * @apiNote
-	 * CANCoder offsets SHOULD be set to zero in code due to how the user manual works
-	 * 
+	 * @apiNote CANCoder offsets SHOULD be set to zero in code due to how the
+	 *          user manual works
 	 */
 	public ModuleIOKrakenFOC(int index) {
 		// Init controllers and encoders from config constants
@@ -143,7 +141,11 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = .1;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
 		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatio;
-		turnTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
+				.getDeviceID();
+		turnTalonConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
+		turnTalonConfig.Feedback.SensorToMechanismRatio = 1;
+		turnTalonConfig.Feedback.RotorToSensorRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.ClosedLoopGeneral.ContinuousWrap = true;
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
@@ -159,8 +161,10 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnPosition = turnTalon.getPosition();
 		BaseStatusSignal.setUpdateFrequencyForAll(250, drivePosition,
 				turnPosition);
-		drivePositionQueue = OdometryThread.registerSignalInput(driveTalon.getPosition());
-		turnPositionQueue = OdometryThread.registerSignalInput(turnAbsoluteEncoder.getPosition());
+		drivePositionQueue = OdometryThread
+				.registerSignalInput(driveTalon.getPosition());
+		turnPositionQueue = OdometryThread
+				.registerSignalInput(turnTalon.getPosition());
 		// Get signals and set update rate
 		// 100hz signals
 		driveVelocity = driveTalon.getVelocity();

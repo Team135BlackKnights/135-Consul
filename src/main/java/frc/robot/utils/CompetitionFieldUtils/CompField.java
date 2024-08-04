@@ -13,7 +13,7 @@ import java.util.*;
  * the opponent robots and game pieces on field notice that this class only
  * stores and displays the field information to dashboard/advantage scope it
  * does not update the field status the field should be updated either by the
- * vision system during a real competition or by the Maple Physics Simulation
+ * vision system during a real competition or by the Physics Simulation
  * during a simulated competition
  */
 public class CompField {

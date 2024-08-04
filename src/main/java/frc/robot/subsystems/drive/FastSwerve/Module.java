@@ -68,6 +68,11 @@ public class Module {
 	/** Called while blocking odometry thread */
 	public void updateInputs() {
 		io.updateInputs(inputs);
+		inputs.turnAbsolutePosition = inputs.turnAbsolutePosition.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		inputs.turnPosition = inputs.turnPosition.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		for (Rotation2d value : inputs.odometryTurnPositions) {
+			value.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		}
 		Logger.processInputs("Drive/Module" + index, inputs);
 		// Update ff and controllers
 		LoggableTunedNumber.ifChanged(hashCode(),
