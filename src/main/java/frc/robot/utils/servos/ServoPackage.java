@@ -23,9 +23,9 @@ public class ServoPackage {
 	 * @param dtSeconds              Time delay until the periodic function is
 	 *                                  updated
 	 * @param lowerBound             The lowest value (in degrees) the servo can
-	 *                                  get to in continuous mode
+	 *                                  get to in range mode
 	 * @param upperBound             The highest value (in degrees) the servo can
-	 *                                  get to in continuous mode
+	 *                                  get to in range mode
 	 */
 	public ServoPackage(int servoPWMPort, SimServoMode servoMode,
 			ServoType servoType, double initialPositionDegrees, double dtSeconds,
