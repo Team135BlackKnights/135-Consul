@@ -33,6 +33,7 @@
       "/SmartDashboard/Mech2d": "Mechanism2d",
       "/SmartDashboard/SystemStatus/AllSystemsCheck": "Command",
       "/SmartDashboard/SystemStatus/Mecanum/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/ServoS/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Swerve/SystemCheck": "Command",
       "/SmartDashboard/VisionSystemSim-Vision Sim/Sim Field": "Field2d"
     },

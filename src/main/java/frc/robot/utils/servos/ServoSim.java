@@ -31,12 +31,12 @@ public class ServoSim {
 		switch (type) {
 		case REVSmartServo:
 			maxDegreesPerSecond = 428.571429;
-			simDtSeconds = dtSeconds;
-			deadband = maxDegreesPerSecond * simDtSeconds;
 			break;
 		default:
 			break;
 		}
+		simDtSeconds = dtSeconds;
+		deadband = maxDegreesPerSecond * simDtSeconds;
 		//Momentum is obnoxiously low, shaft doesnt have that much inertia
 	}
 
