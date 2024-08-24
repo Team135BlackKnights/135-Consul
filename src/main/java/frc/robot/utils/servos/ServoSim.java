@@ -31,7 +31,6 @@ public class ServoSim {
 		switch (type) {
 		case REVSmartServo:
 			maxDegreesPerSecond = 428.571429;
-
 			break;
 		default:
 			break;
