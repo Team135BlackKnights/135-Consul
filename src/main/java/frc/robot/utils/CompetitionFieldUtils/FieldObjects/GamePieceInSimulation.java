@@ -29,7 +29,7 @@ public abstract class GamePieceInSimulation extends Body
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
 		bodyFixture.setFriction(FieldConstants.EDGE_COEFFICIENT_OF_FRICTION);
-		bodyFixture.setFriction(FieldConstants.EDGE_COEFFICIENT_OF_RESTITUTION);
+		bodyFixture.setRestitution(FieldConstants.EDGE_COEFFICIENT_OF_RESTITUTION);
 		bodyFixture.setDensity(mass / shape.getArea());
 		this.tag = tag;
 		super.setMass(MassType.NORMAL);

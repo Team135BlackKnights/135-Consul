@@ -156,6 +156,8 @@ public class Robot extends LoggedRobot {
 		for (PeriodicFunction f : periodicFunctions) {
 			f.runIfReady();
 		}
+		Logger.recordOutput("MemoryTotal", Runtime.getRuntime().totalMemory());
+        Logger.recordOutput("MemoryFree", Runtime.getRuntime().freeMemory());
 		SmartDashboard.putNumber("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("BatteryVoltage",
 				RobotController.getBatteryVoltage());

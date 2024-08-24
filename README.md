@@ -116,11 +116,11 @@ We'd like to extend our deepest gratitude to FRC teams 254, 449, 1678, 1690, 301
 
 ## Blocks
 
-### CTRE State Space
+### State Space
 
 This block contains:
 - Pre-made configurable mechanisms:
-  - Double Jointed Arm
+  - Double Jointed Arm (For CTRE Only)
   - Elevator (cascade lifts, telescoping arms)
   - Flywheel
   - Single Jointed Arm
@@ -130,12 +130,19 @@ This block contains:
 - `CTREElevatorC`: Move the elevator to a desired macro position, or move it via a joystick, and hold there.
 - `CTREFlywheelC`: Accelerate the wheels to a desired RPM, or using a joystick, *returning to zero when let go*.
 - `CTRESingleJointedArmC`: Move the arm to a desired macro position, or move it via a joystick, and hold there.
+- `REVArmC`: Move the arm to a desired macro position, or move it via a joystick, and hold there.
+- `REVElevatorC`: Move the elevator to a desired macro position, or move it via a joystick, and hold there.
+- `REVFlywheelC`: Accelerate the wheels to a desired RPM, or using a joystick, *returning to zero when let go*.
 
 #### Tests
 - `CTREDoubleJointedArm`: Goes to a given macro, waits 5 seconds, and confirms it arrived at the position. Then go to a second macro, and repeat. Ends after second macro is confirmed. Error 5 inches for both x/y.
 - `CTREElevator`: Moves the elevator up to 2 ft, waits 2 seconds, and confirms it arrived at the position. Then go back to zero, and repeat. Ends after 0 ft is confirmed. Error 4 in
 - `CTREFlywheel`: Sets to 4000 RPM, waits 1.5 seconds, and confirms it arrived at the speed. Then go up to 6000, and repeat. Ends after 6000 is confirmed, setting to zero after. Error 50 RPM.
 - `CTRESingleJointedArm`: Moves the arm to 45 degrees, waits two seconds, and confirms it arrived at the position. Error 5 degrees.
+- `REVElevator`: Moves the elevator up to 2 ft, waits 2 seconds, and confirms it arrived at the position. Then go back to zero, and repeat. Ends after 0 ft is confirmed. Error 4 in
+- `REVFlywheel`: Sets to 4000 RPM, waits 1.5 seconds, and confirms it arrived at the speed. Then go up to 6000, and repeat. Ends after 6000 is confirmed, setting to zero after. Error 50 RPM.
+- `REVSingleJointedArm`: Moves the arm to 45 degrees, waits two seconds, and confirms it arrived at the position. Error 5 degrees.
+
 
 #### Simulation
 All mechanisms work in simulation and **require** SysId constants. For the Double Jointed Arm, the Orange Pi Server MUST be running. (Sim version supported) 
@@ -225,31 +232,6 @@ This block contains:
 
 #### Notes
 NO sim/test support. It's a solenoid!
-
-### State Space
-
-This block contains:
-- Pre-made configurable mechanisms:
-  - Single Jointed Arm
-  - Elevator (cascade lifts, telescoping arms)
-  - Flywheel
-
-#### Commands
-- `REVArmC`: Move the arm to a desired macro position, or move it via a joystick, and hold there.
-- `REVElevatorC`: Move the elevator to a desired macro position, or move it via a joystick, and hold there.
-- `REVFlywheelC`: Accelerate the wheels to a desired RPM, or using a joystick, *returning to zero when let go*.
-
-#### Tests
-- `REVElevator`: Moves the elevator up to 2 ft, waits 2 seconds, and confirms it arrived at the position. Then go back to zero, and repeat. Ends after 0 ft is confirmed. Error 4 in
-- `REVFlywheel`: Sets to 4000 RPM, waits 1.5 seconds, and confirms it arrived at the speed. Then go up to 6000, and repeat. Ends after 6000 is confirmed, setting to zero after. Error 50 RPM.
-- `REVSingleJointedArm`: Moves the arm to 45 degrees, waits two seconds, and confirms it arrived at the position. Error 5 degrees.
-
-#### Simulation
-All mechanisms work in simulation and **require** that SysId constants be identified. 
-
-#### Notes
-For more details on System Identification, refer to the [WPILib System Identification documentation](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/system-identification/index.html).
-For more details on State Space, refer to the [WPILib State Space Documentation](https://docs.wpilib.org/en/stable/docs/software/advanced-controls/state-space/state-space-intro.html).
 
 ### Wrappers
 
