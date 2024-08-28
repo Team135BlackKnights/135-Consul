@@ -163,7 +163,7 @@ public class VisionIOPhotonVision implements VisionIO {
 		//If code's in sim update the simulated pose estimator
 		if (Constants.currentMode == Mode.SIM) {
 			visionSim.update(RobotContainer.fieldSimulation
-					.getSwerveDriveSimulation().getPose3d().toPose2d());
+					.getMainDriveSimulation().getPose3d().toPose2d());
 		}
 		//Update the global pose for each camera
 		for (int i = 0; i < cams.length; i++) {
