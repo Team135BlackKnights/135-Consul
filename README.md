@@ -27,7 +27,7 @@ This is designed so that the only files that need changing to combine different 
 
 ![Simulation with vision and physics](Documentation/physics_plus_vision.gif)
 - FULL Sim Support
-- Swerve physics, including field collision
+- Interactive environment for all three drivetrains, including field collision
 - Dynamic PID Tuning 
   - Loggable Tuning Numbers allow updates
 - SysId Selector
