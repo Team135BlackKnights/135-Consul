@@ -194,10 +194,10 @@ public class Robot extends LoggedRobot {
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM){
-				if (RobotContainer.currentAuto != null){
+				if (RobotContainer.currentAuto != null) {
 					RobotContainer.fieldSimulation.resetField(true);
-					RobotContainer.fieldSimulation.getSwerveDriveSimulation().setSimulationWorldPose(PathPlannerAuto.getStaringPoseFromAutoFile(RobotContainer.currentAuto.getName()));
-					RobotContainer.fieldSimulation.getSwerveDriveSimulation().resetOdometryToActualRobotPose();
+					RobotContainer.fieldSimulation.getMainDriveSimulation().setSimulationWorldPose(PathPlannerAuto.getStaringPoseFromAutoFile(RobotContainer.currentAuto.getName()));
+					RobotContainer.fieldSimulation.getMainDriveSimulation().resetOdometryToActualRobotPose();
 				}
 			}
 			m_autonomousCommand.schedule();

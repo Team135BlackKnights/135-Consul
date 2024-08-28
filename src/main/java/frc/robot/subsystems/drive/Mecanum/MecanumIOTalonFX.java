@@ -11,23 +11,26 @@ import java.util.concurrent.Executors;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.Pigeon2;
+
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Rotation2d;
+
+import frc.robot.utils.drive.Sensors.GyroIO;
+import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
-import frc.robot.utils.selfCheck.drive.SelfCheckingPigeon2;
+
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 
-public class MecanumIOTalonFXPigeon implements MecanumIO {
+public class MecanumIOTalonFX implements MecanumIO {
+	private final GyroIO gyroIO;
+	private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getP();
@@ -76,17 +79,12 @@ public class MecanumIOTalonFXPigeon implements MecanumIO {
 	private final StatusSignal<Double> backRightCurrent = backRight
 			.getSupplyCurrent();
 	private final StatusSignal<Double> backRightTemp = backRight.getDeviceTemp();
-	private final Pigeon2 pigeon = new Pigeon2(30);
-	private final StatusSignal<Double> yaw = pigeon.getYaw();
-	private final StatusSignal<Double> accelX = pigeon.getAccelerationX();
-	private final StatusSignal<Double> accelY = pigeon.getAccelerationY();
-	private double last_world_linear_accel_x;
-	private double last_world_linear_accel_y;
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(8);
 
-	public MecanumIOTalonFXPigeon() {
+	public MecanumIOTalonFX(GyroIO gyro) {
+		this.gyroIO = gyro;
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
 		config.MotorOutput.Inverted = DriveConstants.kFrontLeftDriveReversed
@@ -109,7 +107,7 @@ public class MecanumIOTalonFXPigeon implements MecanumIO {
 				: InvertedValue.Clockwise_Positive;
 		backRight.getConfigurator().apply(config);
 		BaseStatusSignal.setUpdateFrequencyForAll(100.0, frontLeftPosition,
-				frontRightPosition, backLeftPosition, backRightPosition, yaw); // Required for odometry, use faster rate
+				frontRightPosition, backLeftPosition, backRightPosition); // Required for odometry, use faster rate
 		BaseStatusSignal.setUpdateFrequencyForAll(50.0, frontLeftVelocity,
 				frontLeftAppliedVolts, frontLeftCurrent, frontLeftTemp,
 				frontRightVelocity, frontRightAppliedVolts, frontRightCurrent,
@@ -120,11 +118,12 @@ public class MecanumIOTalonFXPigeon implements MecanumIO {
 		backLeft.optimizeBusUtilization();
 		frontRight.optimizeBusUtilization();
 		backRight.optimizeBusUtilization();
-		pigeon.optimizeBusUtilization();
 	}
 
 	@Override
 	public void updateInputs(MecanumIOInputs inputs) {
+		gyroIO.updateInputs(gyroInputs);
+		Logger.processInputs("Gyro", gyroInputs);
 		BaseStatusSignal.refreshAll(frontLeftVelocity, frontLeftAppliedVolts,
 				frontLeftCurrent, frontLeftTemp, frontRightVelocity,
 				frontRightAppliedVolts, frontRightCurrent, frontRightTemp,
@@ -164,26 +163,13 @@ public class MecanumIOTalonFXPigeon implements MecanumIO {
 		};
 		inputs.frontRightDriveTemp = frontRightTemp.getValueAsDouble();
 		inputs.backRightDriveTemp = backRightTemp.getValueAsDouble();
-		inputs.gyroConnected = BaseStatusSignal.refreshAll(yaw, accelX, accelY)
-				.equals(StatusCode.OK);
-		inputs.gyroYaw = Rotation2d.fromDegrees(yaw.getValueAsDouble());
-		double curr_world_linear_accel_x = accelX.getValueAsDouble();
-		double currentJerkX = curr_world_linear_accel_x
-				- last_world_linear_accel_x;
-		last_world_linear_accel_x = curr_world_linear_accel_x;
-		double curr_world_linear_accel_y = accelY.getValueAsDouble();
-		double currentJerkY = curr_world_linear_accel_y
-				- last_world_linear_accel_y;
-		last_world_linear_accel_y = curr_world_linear_accel_y;
-		if ((Math.abs(currentJerkX) > DriveConstants.MAX_G) //if we suddenly move .5 G's
-				|| (Math.abs(currentJerkY) > DriveConstants.MAX_G)) {
-			inputs.collisionDetected = true;
-		}
-		inputs.collisionDetected = false;
+		inputs.gyroConnected = gyroInputs.connected;
+		inputs.gyroYaw = gyroInputs.yawPosition;
+		inputs.collisionDetected = gyroInputs.collisionDetected;
 	}
 
 	@Override
-	public void reset() { pigeon.reset(); }
+	public void reset() { gyroIO.reset(); }
 
 	@Override
 	public void setVoltage(double frontLeftVolts, double frontRightVolts,
@@ -231,7 +217,7 @@ public class MecanumIOTalonFXPigeon implements MecanumIO {
 	@Override
 	public List<SelfChecking> getSelfCheckingHardware() {
 		List<SelfChecking> hardware = new ArrayList<SelfChecking>();
-		hardware.add(new SelfCheckingPigeon2("IMU", pigeon));
+		hardware.addAll(gyroIO.getSelfCheckingHardware());
 		hardware.add(new SelfCheckingTalonFX("FrontLeftDrive", frontLeft));
 		hardware.add(new SelfCheckingTalonFX("BackLeftDrive", backLeft));
 		hardware.add(new SelfCheckingTalonFX("FrontRightDrive", frontRight));

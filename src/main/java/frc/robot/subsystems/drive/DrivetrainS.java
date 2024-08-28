@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.SubsystemChecker.SystemStatus;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.Position;
+import frc.robot.utils.maths.TimeUtil;
+
 import java.util.List;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import java.util.HashMap;
@@ -154,7 +156,7 @@ public interface DrivetrainS extends Subsystem {
 	 * @return
 	 */
 	default <T> Position<T> getPositionsWithTimestamp(T positions) {
-		double timestamp = Logger.getTimestamp();
+		double timestamp = TimeUtil.getLogTimeSeconds();
 		return new Position<>(positions, timestamp);
 	}
 

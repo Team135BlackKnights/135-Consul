@@ -3,26 +3,37 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.subsystems.drive.Mecanum;
 
-import com.ctre.phoenix6.hardware.Pigeon2;
+import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
+
+import java.util.Arrays;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.Sensors.GyroIO;
+import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class MecanumIOSim implements MecanumIO {
+	public final MecanumDrivePhysicsSimResults mecanumDrivePhysicsSimResults = new MecanumDrivePhysicsSimResults();
 	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getD();
-	private DCMotorSim frontLeft = new DCMotorSim(DCMotor.getNEO(1),
+	private DCMotorSim frontLeft = new DCMotorSim(
+			DriveConstants.getDriveTrainMotors(1),
 			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim frontRight = new DCMotorSim(DCMotor.getNEO(1),
+	private DCMotorSim frontRight = new DCMotorSim(
+			DriveConstants.getDriveTrainMotors(1),
 			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim backLeft = new DCMotorSim(DCMotor.getNEO(1),
+	private DCMotorSim backLeft = new DCMotorSim(
+			DriveConstants.getDriveTrainMotors(1),
 			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim backRight = new DCMotorSim(DCMotor.getNEO(1),
+	private DCMotorSim backRight = new DCMotorSim(
+			DriveConstants.getDriveTrainMotors(1),
 			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
 	private double frontLeftAppliedVolts = 0.0;
 	private double frontRightAppliedVolts = 0.0;
@@ -37,10 +48,25 @@ public class MecanumIOSim implements MecanumIO {
 	private double frontRightFFVolts = 0.0;
 	private double backLeftFFVolts = 0.0;
 	private double backRightFFVolts = 0.0;
-	private final Pigeon2 pigeon = new Pigeon2(30);
+	private final GyroIO gyro;
+	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+			/ 2;
+
+	public MecanumIOSim(GyroIO gyroSim) { gyro = gyroSim; }
+
+	@Override
+	public void updateSim(double dtSeconds) {
+		frontLeft.update(dtSeconds);
+		frontRight.update(dtSeconds);
+		backLeft.update(dtSeconds);
+		backRight.update(dtSeconds);
+	}
 
 	@Override
 	public void updateInputs(MecanumIOInputs inputs) {
+		gyro.updateInputs(gyroInputs);
+		Logger.processInputs("Gyro", gyroInputs);
 		if (closedLoop) {
 			frontLeftAppliedVolts = MathUtil.clamp(
 					frontLeftPID.calculate(frontLeft.getAngularVelocityRadPerSec())
@@ -63,38 +89,40 @@ public class MecanumIOSim implements MecanumIO {
 			backLeft.setInputVoltage(backLeftAppliedVolts);
 			backRight.setInputVoltage(backRightAppliedVolts);
 		}
-		frontLeft.update(.02);
-		frontRight.update(.02);
-		backLeft.update(.02);
-		backRight.update(.02);
 		// Update gyro simulation (you might want to base this on your robot's movement)
 		//Pigeon2SimState simState = pigeon.getSimState();
 		//double angularVelocity = (frontLeft.getAngularVelocityRadPerSec() - frontRight.getAngularVelocityRadPerSec()
 		//	 + backLeft.getAngularVelocityRadPerSec() - backRight.getAngularVelocityRadPerSec()) / 4.0;
 		//simState.addYaw(Units.radiansToDegrees(angularVelocity));
-		inputs.leftFrontPositionRad = frontLeft.getAngularPositionRad();
-		inputs.leftFrontVelocityRadPerSec = frontLeft
-				.getAngularVelocityRadPerSec();
+		inputs.leftFrontPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[0]
+				* 2 * Math.PI * 4;
+		inputs.leftFrontVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[0]
+				* 2 * Math.PI * 4;
 		inputs.leftFrontAppliedVolts = frontLeftAppliedVolts;
-		inputs.leftBackPositionRad = backLeft.getAngularPositionRad();
-		inputs.leftBackVelocityRadPerSec = backLeft.getAngularVelocityRadPerSec();
+		inputs.leftBackPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[2]
+				* 2 * Math.PI * 4;
+		inputs.leftBackVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[2]
+				* 2 * Math.PI * 4;
 		inputs.leftBackAppliedVolts = backLeftAppliedVolts;
 		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDrawAmps(),
 				backLeft.getCurrentDrawAmps()
 		};
-		inputs.rightFrontPositionRad = frontRight.getAngularPositionRad();
-		inputs.rightFrontVelocityRadPerSec = frontRight
-				.getAngularVelocityRadPerSec();
+		inputs.rightFrontPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[1]
+				* 2 * Math.PI * 4;
+		inputs.rightFrontVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[1]
+				* 2 * Math.PI * 4;
 		inputs.rightFrontAppliedVolts = frontRightAppliedVolts;
-		inputs.rightBackPositionRad = backRight.getAngularPositionRad();
-		inputs.rightBackVelocityRadPerSec = backRight
-				.getAngularVelocityRadPerSec();
+		inputs.rightBackPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[3]
+				* 2 * Math.PI * 4;
+		inputs.rightBackVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[3]
+				* 2 * Math.PI * 4;
 		inputs.rightBackAppliedVolts = backRightAppliedVolts;
 		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDrawAmps(),
 				backRight.getCurrentDrawAmps()
 		};
-		inputs.gyroConnected = false;
-		inputs.gyroYaw = pigeon.getRotation2d();
+		inputs.gyroConnected = gyroInputs.connected;
+		inputs.gyroYaw = gyroInputs.yawPosition;
+		inputs.collisionDetected = gyroInputs.collisionDetected;
 	}
 
 	@Override
@@ -126,5 +154,32 @@ public class MecanumIOSim implements MecanumIO {
 		this.frontRightFFVolts = frontRightFFVolts;
 		this.backLeftFFVolts = backLeftFFVolts;
 		this.backRightFFVolts = backRightFFVolts;
+	}
+
+	public MecanumDriveWheelSpeeds getWheelSpeeds() {
+		return new MecanumDriveWheelSpeeds(
+				frontLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
+				frontRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
+				backLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
+				backRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS);
+	}
+
+	public static class MecanumDrivePhysicsSimResults {
+		public double[] driveWheelFinalRevolutions = { 0, 0, 0, 0
+		}, driveWheelFinalVelocityRevolutionsPerSec = { 0, 0, 0, 0
+		};
+		public boolean[] negateFF = { false, false, false, false
+		};
+		public final double[][] odometryDriveWheelRevolutions = new double[][] {
+				new double[RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD],
+				new double[RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD],
+				new double[RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD],
+				new double[RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD]
+		};
+
+		public MecanumDrivePhysicsSimResults() {
+			for (double[] odometryDriveWheelRevolution : odometryDriveWheelRevolutions)
+				Arrays.fill(odometryDriveWheelRevolution, 0);
+		}
 	}
 }

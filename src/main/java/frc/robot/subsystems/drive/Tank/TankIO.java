@@ -40,7 +40,8 @@ public interface TankIO {
 	public default void setCurrentLimit(int amps){}
 	/** Resets the Gyro */
 	public default void reset() {}
-
+	/** Sim Only */
+	public default void updateSim(double dtSeconds){}
 	/** Run closed loop at the specified velocity. */
 	public default void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {}
