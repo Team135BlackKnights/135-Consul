@@ -110,7 +110,7 @@ We'd like to extend our deepest gratitude to FRC teams 254, 449, 1678, 1690, 301
 [3015 (Ranger Robotics)](https://github.com/3015rangerrobotics): Pathplanner, Pit Display (event panel)  
 [5516 (Shenzhen Robotics Alliance)](https://github.com/Shenzhen-Robotics-Alliance): Simulation physics logic  
 [6328 (Mechanical Advantage)](https://github.com/Mechanical-Advantage): Advantage Kit, Advantage Scope, 250 Hz Advanced Skeleton Swerve, URCL, DriveToPose  
-[PhotonVision](https://photonvision.org): Photon Vision
+[PhotonVision](https://photonvision.org): April Tag Detection and Processing  /
 [Dyn4j](https://github.com/dyn4j/dyn4j): Base physics engine for simulation  
 [ChatGPT](https://chat.openai.com/): For helping us feel not alone
 
