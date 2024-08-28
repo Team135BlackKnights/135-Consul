@@ -509,7 +509,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 */
 	private void setBrakeMode(boolean enabled) {
 		if (brakeModeEnabled != enabled) {
-			System.out.println("modul");
 			Arrays.stream(modules).forEach(module -> module.setBrakeMode(enabled));
 		}
 		brakeModeEnabled = enabled;

@@ -12,10 +12,8 @@ import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
 import frc.robot.subsystems.drive.Mecanum.MecanumIO;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBaseNavx;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBasePigeon;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFXNavx;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFXPigeon;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
@@ -30,8 +28,10 @@ import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.OpponentRobotSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.commands.drive.vision.DriveToAITarget;
 import frc.robot.subsystems.vision.Vision;
@@ -60,6 +60,8 @@ import java.util.Optional;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
 import java.util.HashMap;
@@ -195,10 +197,12 @@ public class RobotContainer {
 				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Mecanum(new MecanumIOTalonFXPigeon());
+						drivetrainS = new Mecanum(
+								new MecanumIOTalonFX(new GyroIOPigeon2()));
 						break;
 					case NAVX:
-						drivetrainS = new Mecanum(new MecanumIOTalonFXNavx());
+						drivetrainS = new Mecanum(
+								new MecanumIOTalonFX(new GyroIONavX()));
 						break;
 					}
 					break;
@@ -206,10 +210,12 @@ public class RobotContainer {
 				case VORTEX_SPARK_FLEX:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Mecanum(new MecanumIOSparkBasePigeon());
+						drivetrainS = new Mecanum(
+								new MecanumIOSparkBase(new GyroIOPigeon2()));
 						break;
 					case NAVX:
-						drivetrainS = new Mecanum(new MecanumIOSparkBaseNavx());
+						drivetrainS = new Mecanum(
+								new MecanumIOSparkBase(new GyroIONavX()));
 						break;
 					}
 					break;
@@ -245,10 +251,39 @@ public class RobotContainer {
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
 			case TANK:
-				drivetrainS = new Tank(new TankIOSim());
+				final GyroIOSim tankGyroIOSim = new GyroIOSim();
+				TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
+				drivetrainS = new Tank(tankIOSim);
+				fieldSimulation = new Crescendo2024FieldSimulation(
+						new TankDriveSimulation(DriveConstants.mainRobotProfile,
+								tankGyroIOSim,
+								new DifferentialDriveKinematics(
+										DriveConstants.kChassisWidth),
+								FieldConstants.START_POSE, (Tank) drivetrainS,
+								tankIOSim, drivetrainS::resetPose));
+				fieldSimulation.placeGamePiecesOnField(true);
+				testOpponentRobot = new OpponentRobotSimulation(0);
+				fieldSimulation.addRobot(testOpponentRobot);
+				PPHolonomicDriveController
+						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
 			default:
-				drivetrainS = new Mecanum(new MecanumIOSim());
+				final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
+				MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
+				drivetrainS = new Mecanum(mecanumIOSim);
+				fieldSimulation = new Crescendo2024FieldSimulation(
+						new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
+								mecanumGyroIOSim,
+								new MecanumDriveKinematics(
+										DriveConstants.kModuleTranslations[0],
+										DriveConstants.kModuleTranslations[1],
+										DriveConstants.kModuleTranslations[2],
+										DriveConstants.kModuleTranslations[3]),
+								FieldConstants.START_POSE, (Mecanum) drivetrainS,
+								mecanumIOSim, drivetrainS::resetPose));
+				fieldSimulation.placeGamePiecesOnField(true);
+				testOpponentRobot = new OpponentRobotSimulation(0);
+				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
@@ -370,7 +405,7 @@ public class RobotContainer {
 		//When using CTRE, be sure to hit Start so that the motors are logged via CTRE (For SysId)
 		selectButtonTest.onTrue(Commands.runOnce(SignalLogger::stop));
 		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
-		if ((Constants.currentMode == Mode.SIM) && (DriveConstants.driveType != DriveConstants.DriveTrainType.TANK)) {
+		if (Constants.currentMode == Mode.SIM) {
 			bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}
 	}

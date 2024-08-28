@@ -56,7 +56,7 @@ public abstract class HolonomicChassisSimulation extends Body
 	 * runRawChassisSpeeds(), which applies forces on the chassis and accelerates
 	 * smoothly according to physics
 	 */
-	protected void setRobotSpeeds(ChassisSpeeds givenSpeeds) {
+	public void setRobotSpeeds(ChassisSpeeds givenSpeeds) {
 		super.setLinearVelocity(
 				GeometryConvertor.toDyn4jLinearVelocity(givenSpeeds));
 		super.setAngularVelocity(givenSpeeds.omegaRadiansPerSecond);
@@ -68,7 +68,8 @@ public abstract class HolonomicChassisSimulation extends Body
 				.fromRobotRelativeSpeeds(desiredChassisSpeedsRobotRelative,
 						getObjectOnFieldPose2d().getRotation()));
 	}
-
+	public void resetOdometryToActualRobotPose() {
+	}
 	protected void simulateChassisBehaviorWithFieldRelativeSpeeds(
 			ChassisSpeeds desiredChassisSpeedsFieldRelative) {
 		super.setAtRest(false);

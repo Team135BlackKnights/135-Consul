@@ -16,10 +16,27 @@ import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.HolonomicChassisSimulation.RobotProfile;
 
 public class DriveConstants {
-	public static MotorVendor robotMotorController = MotorVendor.CTRE_ON_RIO;
-	public static DriveTrainType driveType = DriveTrainType.SWERVE;
-	public static GyroType gyroType = GyroType.PIGEON;
+	public static MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
+	public static DriveTrainType driveType = DriveTrainType.MECANUM;
+	public static GyroType gyroType = GyroType.NAVX;
+	public static DCMotor getDriveTrainMotors(int number){
+		switch (robotMotorController) {
+			case NEO_SPARK_MAX:
+				return DCMotor.getNEO(number);
 
+			case VORTEX_SPARK_FLEX:
+				return DCMotor.getNeoVortex(number);
+			
+			//These cases assume that drivetrain uses kraken x60s FOC, because Grant bought 20 of those. 
+			//I had to sell my left kidney for those krakens-N
+			case CTRE_ON_CANIVORE:
+				case CTRE_ON_RIO:
+					return DCMotor.getKrakenX60Foc(number);
+			default:
+				//returns completely defunct motor
+				return new DCMotor(0, 0, 0, 0, 0, 0);
+		}
+	}
 	/**
 	 * What motors and motorContollers are we using
 	 */
@@ -108,12 +125,15 @@ public class DriveConstants {
 			maxTranslationalAcceleration.get(), maxRotationalAcceleration.get());
 
 	public static class TrainConstants {
+		
 		/**
 		 * Which swerve module it is (SWERVE EXCLUSIVE)
 		 */
 		public enum ModulePosition {
 			FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
 		}
+		//Mecanum exclusive, shows the initial offset of the wheel
+		public static double mecanumInitialAngleOffsetDegrees = 135;
 		public static Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); //90 degrees makes robot front = facing left, 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.0002));
@@ -143,9 +163,10 @@ public class DriveConstants {
 	public static final class RobotPhysicsSimulationConfigs {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
 		/* Swerve Module Simulation */
+		//TODO: See if free final speed can be dynamically calculated or if its empirically determined
 		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
-		public static final DCMotor DRIVE_MOTOR = DCMotor.getKrakenX60Foc(1),
-				STEER_MOTOR = DCMotor.getKrakenX60Foc(1);
+		public static final DCMotor DRIVE_MOTOR = getDriveTrainMotors(1),
+				STEER_MOTOR = getDriveTrainMotors(1);
 		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.012;
 		public static final double STEER_INERTIA = 0.015;
 		public static final double MAX_FAKE_G = 0.1;

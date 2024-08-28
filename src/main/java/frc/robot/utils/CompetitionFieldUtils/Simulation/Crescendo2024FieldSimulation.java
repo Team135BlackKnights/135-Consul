@@ -25,7 +25,7 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 		if (preload) {
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnManipulator(
 					Logger.getTimestamp(), 999,
-					super.getSwerveDriveSimulation().getPose3d(),
+					super.getMainDriveSimulation().getPose3d(),
 					GeometryConstants.launcherTransform));
 		}
 	}

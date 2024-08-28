@@ -47,6 +47,9 @@ public interface MecanumIO {
 	/** Resets the Gyro */
 	public default void reset() {}
 
+	/** Updates sim in SIM MODE */
+	public default void updateSim(double dtSeconds) {}
+
 	/** Update the motor controllers to a specificed max amperage */
 	public default void setCurrentLimit(int amps) {}
 

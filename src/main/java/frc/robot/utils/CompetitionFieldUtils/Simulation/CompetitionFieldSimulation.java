@@ -61,10 +61,9 @@ public abstract class CompetitionFieldSimulation {
 		competitionField.updateObjectsToDashboardAndTelemetry();
 	}
 
-	public SwerveDriveSimulation getSwerveDriveSimulation() {
-		return (SwerveDriveSimulation) mainRobot;
+	public HolonomicChassisSimulation getMainDriveSimulation() {
+		return  mainRobot;
 	}
-
 	public void addRobot(HolonomicChassisSimulation chassisSimulation) {
 		this.physicsWorld.addBody(chassisSimulation);
 		robotSimulations.add(chassisSimulation);

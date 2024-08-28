@@ -69,7 +69,7 @@ public final class Crescendo2024FieldObjects {
 		public NoteOnManipulator(double launchingTimeStampSec,
 				double launchingSpeedMetersPerSec, Pose3d currentPose,
 				Transform3d manipulatorTransform) {
-			super(RobotContainer.fieldSimulation.getSwerveDriveSimulation()
+			super(RobotContainer.fieldSimulation.getMainDriveSimulation()
 					.getPose3d().transformBy(manipulatorTransform).getTranslation()
 					.toTranslation2d(), Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.IN_ROBOT);
 			super.setEnabled(false);
@@ -80,7 +80,7 @@ public final class Crescendo2024FieldObjects {
 			// Calculate the total time to reach the manipulator
 			this.totalTimeSec = startingPose.getTranslation()
 					.getDistance(RobotContainer.fieldSimulation
-							.getSwerveDriveSimulation().getPose3d()
+							.getMainDriveSimulation().getPose3d()
 							.transformBy(manipulatorTransform).getTranslation())
 					/ launchingSpeedMetersPerSec * 1e6;
 			System.out.println("totalTimeSec: " + totalTimeSec / 1e6);
@@ -96,7 +96,7 @@ public final class Crescendo2024FieldObjects {
 		public Pose3d getPose3d() {
 			double currentTime = Logger.getTimestamp();
 			Pose3d manipulatorPose3d = RobotContainer.fieldSimulation
-					.getSwerveDriveSimulation().getPose3d()
+					.getMainDriveSimulation().getPose3d()
 					.transformBy(manipulatorTransform3d);
 			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec
 					+ totalTimeSec)) {
