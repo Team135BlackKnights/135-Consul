@@ -25,6 +25,7 @@ import frc.robot.Robot;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.littletonrobotics.junction.Logger;
 
 public abstract class SubsystemChecker extends SubsystemBase {
@@ -32,7 +33,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		OK, WARNING, ERROR
 	}
 
-	private final List<SubsystemFault> faults = new ArrayList<>();
+	private final ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 	private final List<SelfChecking> hardware = new ArrayList<>();
 	private final String statusTable;
 	private final boolean checkErrors;
@@ -84,11 +85,11 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		Logger.recordOutput(statusTable + "/Status", status.name());
 		Logger.recordOutput(statusTable + "/SystemOK", status == SystemStatus.OK);
 		String[] faultStrings = new String[this.faults.size()];
-		for (int i = 0; i < this.faults.size(); i++) {
-			SubsystemFault fault = this.faults.get(i);
-			faultStrings[i] = String.format("[%.2f] %s", fault.timestamp,
-					fault.description);
-		}
+		int i = 0;
+		for (SubsystemFault fault : this.faults) {
+			faultStrings[i] = String.format("[%.2f] %s", fault.timestamp, fault.description);
+			i++; //doing seperate from for loop to avoid concurrent modification exception
+	  }
 		Logger.recordOutput(statusTable + "/Faults", faultStrings);
 		if (faultStrings.length > 0) {
 			Logger.recordOutput(statusTable + "/LastFault",
@@ -116,7 +117,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		this.addFault(description, false);
 	}
 
-	public List<SubsystemFault> getFaults() { return this.faults; }
+	public ConcurrentLinkedQueue<SubsystemFault> getFaults() { return this.faults; }
 
 	public void clearFaults() { this.faults.clear(); }
 

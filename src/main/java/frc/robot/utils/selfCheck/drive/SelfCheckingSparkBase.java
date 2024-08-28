@@ -50,7 +50,7 @@ public class SelfCheckingSparkBase implements SelfChecking {
 			faults.add(new SubsystemFault(String
 					.format("[%s]: Device has FaultID %s", label, fault.name())));
 		}
-		short stickyFaultBits = sparkBase.getFaults(); //why isnt this built in???
+		short stickyFaultBits = sparkBase.getStickyFaults(); //why isnt this built in???
 		List<FaultID> activeStickyFaults = getActiveFaults(stickyFaultBits);
 		for (FaultID fault : activeStickyFaults) {
 			faults.add(new SubsystemFault(String.format(
