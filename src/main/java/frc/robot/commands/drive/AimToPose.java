@@ -30,9 +30,9 @@ public class AimToPose extends Command {
 			"AimToPose/ThetaTolerance");
 	// Default the TunedNumbers on boot
 	static {
-		thetaKp.initDefault(2);
+		thetaKp.initDefault(7);
 		thetaKd.initDefault(0.0);
-		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(90.0));
+		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(180.0));
 		thetaTolerance.initDefault(Units.degreesToRadians(4.0));
 	}
 
@@ -72,9 +72,9 @@ public class AimToPose extends Command {
 		}
 		RobotContainer.currentPath = "AIMTOPOSE";
 		//set Chassis to be aimed at it.
-		double targetAngle = Units.degreesToRadians(GeomUtil
-				.rotationFromCurrentToTarget(drive.getPose(), poseSupplier.get())
-				.getRadians());
+		double targetAngle = GeomUtil
+				.rotationFromCurrentToTarget(drive.getPose(), poseSupplier.get(),GeomUtil.ApproachDirection.BACK)
+				.getRadians();
 		Rotation2d currentRotation = drive.getPose().getRotation();
 		RobotContainer.angleOverrider = Optional.of(new Rotation2d(targetAngle));
 		double thetaVelocity = thetaController.getSetpoint().velocity
