@@ -22,10 +22,8 @@ import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIO;
 import frc.robot.subsystems.drive.Tank.TankIOSim;
-import frc.robot.subsystems.drive.Tank.TankIOSparkBaseNavx;
-import frc.robot.subsystems.drive.Tank.TankIOSparkBasePigeon;
-import frc.robot.subsystems.drive.Tank.TankIOTalonFXNavx;
-import frc.robot.subsystems.drive.Tank.TankIOTalonFXPigeon;
+import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
+import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
 import frc.robot.subsystems.servos.ServoS;
@@ -169,10 +167,10 @@ public class RobotContainer {
 				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Tank(new TankIOTalonFXPigeon());
+						drivetrainS = new Tank(new TankIOTalonFX(new GyroIOPigeon2()));
 						break;
 					case NAVX:
-						drivetrainS = new Tank(new TankIOTalonFXNavx());
+						drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
 						break;
 					}
 					break;
@@ -180,10 +178,10 @@ public class RobotContainer {
 				case VORTEX_SPARK_FLEX:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Tank(new TankIOSparkBasePigeon());
+						drivetrainS = new Tank(new TankIOSparkBase(new GyroIOPigeon2()));
 						break;
 					case NAVX:
-						drivetrainS = new Tank(new TankIOSparkBaseNavx());
+						drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
 						break;
 					}
 					break;

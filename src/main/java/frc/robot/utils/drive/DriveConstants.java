@@ -16,6 +16,9 @@ import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.HolonomicChassisSimulation.RobotProfile;
 
 public class DriveConstants {
+	//TODO: make a util to convert the radians per second into voltages, move robot max speed to TrainConstants
+	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
+	public static boolean enablePID = true;
 	public static MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
 	public static DriveTrainType driveType = DriveTrainType.MECANUM;
 	public static GyroType gyroType = GyroType.NAVX;
@@ -36,6 +39,7 @@ public class DriveConstants {
 				//returns completely defunct motor
 				return new DCMotor(0, 0, 0, 0, 0, 0);
 		}
+
 	}
 	/**
 	 * What motors and motorContollers are we using

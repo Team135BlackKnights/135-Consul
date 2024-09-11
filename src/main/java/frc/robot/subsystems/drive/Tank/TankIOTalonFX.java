@@ -19,16 +19,17 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.kauailabs.navx.frc.AHRS;
-
+import frc.robot.utils.drive.Sensors.GyroIO;
+import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.SerialPort.Port;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
-import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 
-public class TankIOTalonFXNavx implements TankIO {
+public class TankIOTalonFX implements TankIO {
+	private final GyroIO gyro;
+	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getP();
@@ -66,14 +67,12 @@ public class TankIOTalonFXNavx implements TankIO {
 			.getDeviceTemp();
 	private final StatusSignal<Double> rightFollowerTemp = rightFollower
 			.getDeviceTemp();
-	private final AHRS navX = new AHRS(Port.kUSB);
-	private double last_world_linear_accel_x;
-	private double last_world_linear_accel_y;
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(8);
 
-	public TankIOTalonFXNavx() {
+	public TankIOTalonFX(GyroIO gyro) {
+		this.gyro = gyro;
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
 		config.MotorOutput.Inverted = DriveConstants.kFrontLeftDriveReversed
@@ -114,6 +113,8 @@ public class TankIOTalonFXNavx implements TankIO {
 
 	@Override
 	public void updateInputs(TankIOInputs inputs) {
+		gyro.updateInputs(gyroInputs);
+		Logger.processInputs("Gyro", gyroInputs);
 		BaseStatusSignal.refreshAll(leftPosition, leftVelocity, leftAppliedVolts,
 				leftLeaderCurrent, leftFollowerCurrent, leftLeaderTemp,
 				leftFollowerTemp, rightPosition, rightVelocity, rightAppliedVolts,
@@ -141,25 +142,13 @@ public class TankIOTalonFXNavx implements TankIO {
 		};
 		inputs.frontRightDriveTemp = rightLeaderTemp.getValueAsDouble();
 		inputs.backRightDriveTemp = rightFollowerTemp.getValueAsDouble();
-		inputs.gyroConnected = navX.isConnected();
-		inputs.gyroYaw = navX.getRotation2d();
-		double curr_world_linear_accel_x = navX.getWorldLinearAccelX();
-		double currentJerkX = curr_world_linear_accel_x
-				- last_world_linear_accel_x;
-		last_world_linear_accel_x = curr_world_linear_accel_x;
-		double curr_world_linear_accel_y = navX.getWorldLinearAccelY();
-		double currentJerkY = curr_world_linear_accel_y
-				- last_world_linear_accel_y;
-		last_world_linear_accel_y = curr_world_linear_accel_y;
-		if ((Math.abs(currentJerkX) > DriveConstants.MAX_G) //if we suddenly move .5 G's
-				|| (Math.abs(currentJerkY) > DriveConstants.MAX_G)) {
-			inputs.collisionDetected = true;
-		}
-		inputs.collisionDetected = false;
+		inputs.gyroConnected = gyroInputs.connected;
+		inputs.gyroYaw = gyroInputs.yawPosition;
+		inputs.collisionDetected = gyroInputs.collisionDetected;
 	}
 
 	@Override
-	public void reset() { navX.reset(); }
+	public void reset() { gyro.reset(); }
 
 	@Override
 	public void setVoltage(double leftVolts, double rightVolts) {
@@ -184,18 +173,37 @@ public class TankIOTalonFXNavx implements TankIO {
 	@Override
 	public void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {
-		leftLeader.setControl(new VelocityVoltage(
-				Units.radiansToRotations(leftRadPerSec * GEAR_RATIO), 0.0, true,
-				leftFFVolts, 0, false, false, false));
-		rightLeader.setControl(new VelocityVoltage(
-				Units.radiansToRotations(rightRadPerSec * GEAR_RATIO), 0.0, true,
-				rightFFVolts, 0, false, false, false));
+		if (DriveConstants.enablePID) {
+			leftLeader.setControl(new VelocityVoltage(
+					Units.radiansToRotations(leftRadPerSec * GEAR_RATIO), 0.0, true,
+					leftFFVolts, 0, false, false, false));
+			rightLeader.setControl(new VelocityVoltage(
+					Units.radiansToRotations(rightRadPerSec * GEAR_RATIO), 0.0, true,
+					rightFFVolts, 0, false, false, false));
+		} else {
+			setVoltage(convertRadPerSecondToVoltage(leftRadPerSec),
+					convertRadPerSecondToVoltage(rightRadPerSec));
+		}
+	}
+
+	/**
+	 * Takes the radians per second of the motor (rad/s), multiplies it by the
+	 * gear ratio and then multiplies by the radius (diameter over 2) to get the
+	 * wheel speed. Then it divides the wheel speed by the max speed to get a
+	 * proportion, then multiplies by 12v to get a voltage
+	 * 
+	 * @param radPerSec radians per second of the motor
+	 * @return
+	 */
+	public double convertRadPerSecondToVoltage(double radPerSec) {
+		return (12 * radPerSec * GEAR_RATIO * TrainConstants.kWheelDiameter
+				/ (2 * DriveConstants.kMaxSpeedMetersPerSecond));
 	}
 
 	@Override
 	public List<SelfChecking> getSelfCheckingHardware() {
 		List<SelfChecking> hardware = new ArrayList<SelfChecking>();
-		hardware.add(new SelfCheckingNavX2("IMU", navX));
+		hardware.addAll(gyro.getSelfCheckingHardware());
 		hardware.add(new SelfCheckingTalonFX("FrontLeftDrive", leftLeader));
 		hardware.add(new SelfCheckingTalonFX("BackLeftDrive", leftFollower));
 		hardware.add(new SelfCheckingTalonFX("FrontRightDrive", rightLeader));

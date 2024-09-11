@@ -66,7 +66,6 @@ public class Robot extends LoggedRobot {
 		}
 		// Instantiate our RobotContainer.  This will perform all our button bindings, and put our
 		// autonomous chooser on the dashboard
-		//TODO: CONFIRM AKIT logs and SignalLogger logs are going to the USB stick
 		Logger.recordMetadata("ProjectName", "The Chef"); // Set a metadata value
 		Logger.recordMetadata("TuningMode",
 				Boolean.toString(Constants.isTuningPID));
