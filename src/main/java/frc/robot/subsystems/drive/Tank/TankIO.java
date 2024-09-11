@@ -30,6 +30,7 @@ public interface TankIO {
 		public boolean gyroConnected = true;
 		public boolean collisionDetected = false;
 	}
+	
 
 	/** Updates the set of loggable inputs. */
 	public default void updateInputs(TankIOInputs inputs) {}

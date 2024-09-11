@@ -20,6 +20,7 @@ import com.revrobotics.SparkPIDController;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
+import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -171,22 +172,40 @@ public class MecanumIOSparkBase implements MecanumIO {
 			double backRightRadPerSec, double frontLeftFFVolts,
 			double frontRightFFVolts, double backLeftFFVolts,
 			double backRightFFVolts) {
-		frontLeftPID.setReference(
-				Units.radiansPerSecondToRotationsPerMinute(
-						frontLeftRadPerSec * GEAR_RATIO),
-				ControlType.kVelocity, 0, frontLeftFFVolts);
-		frontRightPID.setReference(
-				Units.radiansPerSecondToRotationsPerMinute(
-						frontRightRadPerSec * GEAR_RATIO),
-				ControlType.kVelocity, 0, frontRightFFVolts);
-		backLeftPID.setReference(
-				Units.radiansPerSecondToRotationsPerMinute(
-						backLeftRadPerSec * GEAR_RATIO),
-				ControlType.kVelocity, 0, backLeftFFVolts);
-		backRightPID.setReference(
-				Units.radiansPerSecondToRotationsPerMinute(
-						backRightRadPerSec * GEAR_RATIO),
-				ControlType.kVelocity, 0, backRightFFVolts);
+		if (DriveConstants.enablePID) {
+			frontLeftPID.setReference(
+					Units.radiansPerSecondToRotationsPerMinute(
+							frontLeftRadPerSec * GEAR_RATIO),
+					ControlType.kVelocity, 0, frontLeftFFVolts);
+			frontRightPID.setReference(
+					Units.radiansPerSecondToRotationsPerMinute(
+							frontRightRadPerSec * GEAR_RATIO),
+					ControlType.kVelocity, 0, frontRightFFVolts);
+			backLeftPID.setReference(
+					Units.radiansPerSecondToRotationsPerMinute(
+							backLeftRadPerSec * GEAR_RATIO),
+					ControlType.kVelocity, 0, backLeftFFVolts);
+			backRightPID.setReference(
+					Units.radiansPerSecondToRotationsPerMinute(
+							backRightRadPerSec * GEAR_RATIO),
+					ControlType.kVelocity, 0, backRightFFVolts);
+		}else{
+			setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec), convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec), convertRadPerSecondToVoltage(backRightRadPerSec));
+		}
+	}
+
+	/**
+	 * Takes the radians per second of the motor (rad/s), multiplies it by the
+	 * gear ratio and then multiplies by the radius (diameter over 2) to get the
+	 * wheel speed. Then it divides the wheel speed by the max speed to get a
+	 * proportion, then multiplies by 12v to get a voltage
+	 * 
+	 * @param radPerSec radians per second of the motor
+	 * @return
+	 */
+	public double convertRadPerSecondToVoltage(double radPerSec) {
+		return (12 * radPerSec * GEAR_RATIO * TrainConstants.kWheelDiameter
+				/ (2 * DriveConstants.kMaxSpeedMetersPerSecond));
 	}
 
 	@Override
