@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import frc.robot.Constants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
+import frc.robot.utils.drive.DriveConstants;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -30,7 +31,7 @@ public interface OdometryThread {
 	List<BaseStatusSignal> registeredStatusSignals = new ArrayList<>();
 
 	static Queue<Double> registerSignalInput(StatusSignal<Double> signal) {
-		signal.setUpdateFrequency(250, .02);
+		signal.setUpdateFrequency(DriveConstants.TrainConstants.odomHz, .02);
 		registeredStatusSignals.add(signal);
 		return registerInput(signal.asSupplier());
 	}

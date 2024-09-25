@@ -48,11 +48,11 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
 
     private void refreshSignalsAndBlockThread() {
         switch (DriveConstants.robotMotorController) {
-				case VORTEX_SPARK_FLEX -> TimeUtil.delay(1.0 / 250);
+				case VORTEX_SPARK_FLEX -> TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
             case NEO_SPARK_MAX ->
-                    TimeUtil.delay(1.0 / 250);
+                    TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
             case CTRE_ON_RIO -> {
-                TimeUtil.delay(1.0 / 250);
+                TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
                 BaseStatusSignal.refreshAll();
             }
             case CTRE_ON_CANIVORE ->

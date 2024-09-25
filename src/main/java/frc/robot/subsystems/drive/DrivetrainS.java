@@ -1,8 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import org.littletonrobotics.junction.Logger;
-
-import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -172,19 +169,7 @@ public interface DrivetrainS extends Subsystem {
 	@Override
 	default void periodic() {
 		robotField.setRobotPose(getPose());
-		// Logging callback for target robot pose
-		PathPlannerLogging.setLogTargetPoseCallback((pose) -> {
-			// Do whatever you want with the pose here
-			Logger.recordOutput("Odometry/TrajectorySetpoint", pose);
-			robotField.getObject("target pose").setPose(pose);
-		});
-		// Logging callback for the active path, this is sent as a list of poses
-		PathPlannerLogging.setLogActivePathCallback((poses) -> {
-			// Do whatever you want with the poses here
-			Logger.recordOutput("Odometry/Trajectory",
-					poses.toArray(new Pose2d[poses.size()]));
-			robotField.getObject("path").setPoses(poses);
-		});
+		
 		SmartDashboard.putData(robotField);
 	}
 }
