@@ -2,6 +2,7 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import frc.robot.DataHandler;
 import frc.robot.Robot;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.RobotOnFieldDisplay;
 import frc.robot.utils.drive.DriveConstants;
@@ -16,6 +17,7 @@ import com.pathplanner.lib.util.GeometryUtil;
 
 import static frc.robot.utils.maths.CommonMath.constrainMagnitude;
 
+//TODO: switch these to coefficient of friction/do PROPER physics
 /**
  * simulates the physics behavior of holonomic chassis, with respect to its
  * collision space, friction and motor propelling forces
@@ -27,7 +29,6 @@ public abstract class HolonomicChassisSimulation extends Body
 	public HolonomicChassisSimulation(RobotProfile profile,
 			Pose2d startingPose) {
 		this.profile = profile;
-		/* the bumper needs to be rotated 90 degrees */
 		final double WIDTH_IN_WORLD_REFERENCE = profile.height,
 				HEIGHT_IN_WORLD_REFERENCE = profile.width;
 		super.addFixture(
@@ -40,12 +41,16 @@ public abstract class HolonomicChassisSimulation extends Body
 		super.setLinearDamping(profile.linearVelocityDamping);
 		super.setAngularDamping(profile.angularDamping);
 		setSimulationWorldPose(startingPose);
+				//sends entire profile to simulation
+		DataHandler.logData(profile.toString(), "robotProfile");
+		/* the bumper needs to be rotated 90 degrees */
 	}
 
 	public void setSimulationWorldPose(Pose2d robotPose) {
-		if (Robot.isRed){
+		if (Robot.isRed) {
 			robotPose = GeometryUtil.flipFieldPose(robotPose);
 		}
+		DataHandler.logData(robotPose.toString(),"Robot Pose");
 		super.transform.set(GeometryConvertor.toDyn4jTransform(robotPose));
 		super.linearVelocity.set(0, 0);
 	}
@@ -57,6 +62,7 @@ public abstract class HolonomicChassisSimulation extends Body
 	 * smoothly according to physics
 	 */
 	public void setRobotSpeeds(ChassisSpeeds givenSpeeds) {
+		DataHandler.logData(givenSpeeds.toString(),"ChassisSpeeds");
 		super.setLinearVelocity(
 				GeometryConvertor.toDyn4jLinearVelocity(givenSpeeds));
 		super.setAngularVelocity(givenSpeeds.omegaRadiansPerSecond);
@@ -68,8 +74,10 @@ public abstract class HolonomicChassisSimulation extends Body
 				.fromRobotRelativeSpeeds(desiredChassisSpeedsRobotRelative,
 						getObjectOnFieldPose2d().getRotation()));
 	}
+
 	public void resetOdometryToActualRobotPose() {
 	}
+
 	protected void simulateChassisBehaviorWithFieldRelativeSpeeds(
 			ChassisSpeeds desiredChassisSpeedsFieldRelative) {
 		super.setAtRest(false);

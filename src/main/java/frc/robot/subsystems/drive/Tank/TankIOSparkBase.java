@@ -165,17 +165,16 @@ public class TankIOSparkBase implements TankIO {
 		}
 	}
 
-	/**
-	 * Takes the radians per second of the motor (rad/s), multiplies it by the
-	 * gear ratio and then multiplies by the radius (diameter over 2) to get the wheel speed.
-	 * Then divides the wheel speed by the max speed to get a proportion,
-	 * 
+	/** Converts radians per second into voltage that will achieve that value in a motor.
+	 * Takes the angular velocity of the motor (radPerSec),
+	 * divides by the theoretical max angular speed (max linear speed / wheel radius)
+	 * and multiplies by 12 (the theoretical standard voltage)  
 	 * @param radPerSec radians per second of the motor
-	 * @return
+	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return (12 * radPerSec * GEAR_RATIO * TrainConstants.kWheelDiameter
-				/ (2 * DriveConstants.kMaxSpeedMetersPerSecond));
+		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+
 	}
 
 	@Override

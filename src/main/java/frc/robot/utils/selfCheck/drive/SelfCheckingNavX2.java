@@ -5,8 +5,8 @@ import com.kauailabs.navx.frc.AHRS;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 public class SelfCheckingNavX2 implements SelfChecking {
 	private final String label;
@@ -18,8 +18,8 @@ public class SelfCheckingNavX2 implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		if (!navX.isConnected()) {
 			faults.add(new SubsystemFault(
 					String.format("[%s]: No communication with device", label)));

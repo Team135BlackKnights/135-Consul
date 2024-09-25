@@ -48,10 +48,13 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import java.util.List;
 import java.util.Optional;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -64,7 +67,9 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.io.File;
 
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -101,14 +106,52 @@ public class RobotContainer {
 			rightBumperTest = new JoystickButton(testingController, 6),
 			selectButtonTest = new JoystickButton(testingController, 7),
 			startButtonTest = new JoystickButton(testingController, 8);
-	public static int currentTest = 0, currentGamePieceStatus = 0;
+	public static int currentTest = 0;
+	public static String piConnection = "DISCONNECTED";
+		@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
 	final static ServoS servoS = new ServoS();
+	
+	public enum GamePieceState {
+		NO_GAME_PIECE, HAS_NOTE, ABORT
+	}
+	public static GamePieceState currentGamePieceStatus = GamePieceState.NO_GAME_PIECE;
+
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
 	private OpponentRobotSimulation testOpponentRobot = null;
 	public static Command currentAuto;
+
+	/**
+	 * Reads every Choreo file in the deploy folder and creates a command for
+	 * each Checks within Filesystem.getDeployDirectory(), "choreo/" for all
+	 * files NOT having two . in the name (including the one . in .traj)
+	 * 
+	 * @return
+	 */
+	private Collection<Pair<String, Command>> createBranches() {
+		Collection<Pair<String, Command>> commands = new ArrayList<>();
+		File choreoDirectory = new File(Filesystem.getDeployDirectory(),
+				"choreo/");
+		for (String choreo : choreoDirectory.list()) {
+			// count number of . in the name using regex
+			int dotCount = choreo.split("\\.", -1).length - 1;
+			if (choreo.contains(".traj") && dotCount == 1) {
+				//remove the .traj from the name
+				choreo = choreo.replace(".traj", "");
+				PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreo);
+				commands.add(new Pair<String, Command>("Branch" + choreo,
+						new BranchAuto(choreo,
+								path.getPathPoses().get(path.getPathPoses().size() - 1),
+								1)));
+				System.out.println("Added Branch" + choreo);
+				//kill the path to save memory
+				path = null;
+			}
+		}
+		return commands;
+	}
 
 	// POVButton manipPOVZero = new POVButton(manipController, 0);
 	// POVButton manipPOV180 = new POVButton(manipController, 180);
@@ -119,6 +162,7 @@ public class RobotContainer {
 	public RobotContainer() {
 		//We check to see what drivetrain type we have here, and create the correct drivetrain system based on that. 
 		//If we get something wacky, throw an error
+		List<Pair<String, Command>> autoCommands = new ArrayList<>();
 		switch (Constants.currentMode) {
 		case REAL:
 			switch (DriveConstants.driveType) {
@@ -167,7 +211,8 @@ public class RobotContainer {
 				case CTRE_ON_CANIVORE:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Tank(new TankIOTalonFX(new GyroIOPigeon2()));
+						drivetrainS = new Tank(
+								new TankIOTalonFX(new GyroIOPigeon2()));
 						break;
 					case NAVX:
 						drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
@@ -178,7 +223,8 @@ public class RobotContainer {
 				case VORTEX_SPARK_FLEX:
 					switch (DriveConstants.gyroType) {
 					case PIGEON:
-						drivetrainS = new Tank(new TankIOSparkBase(new GyroIOPigeon2()));
+						drivetrainS = new Tank(
+								new TankIOSparkBase(new GyroIOPigeon2()));
 						break;
 					case NAVX:
 						drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
@@ -224,6 +270,16 @@ public class RobotContainer {
 				throw new IllegalArgumentException(
 						"Unknown implementation type, please check DriveConstants.java!");
 			}
+			autoCommands.addAll(Arrays.asList(
+					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+					new Pair<String, Command>("BranchGrabbingGamePiece",
+							new BranchAuto("Shoot",
+									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+			));
+			autoCommands.addAll(createBranches());
 			break;
 		case SIM:
 			switch (DriveConstants.driveType) {
@@ -283,6 +339,16 @@ public class RobotContainer {
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
 			}
+			autoCommands.addAll(Arrays.asList(
+					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+					new Pair<String, Command>("BranchGrabbingGamePiece",
+							new BranchAuto("Shoot",
+									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+			));
+			autoCommands.addAll(createBranches());
 			break;
 		default:
 			switch (DriveConstants.driveType) {
@@ -300,17 +366,19 @@ public class RobotContainer {
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 			}
+			autoCommands.addAll(Arrays.asList(
+					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+					new Pair<String, Command>("BranchGrabbingGamePiece",
+							new BranchAuto("Shoot",
+									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+			));
+			autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
-		List<Pair<String, Command>> autoCommands = Arrays.asList(
-				//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-				new Pair<String, Command>("BranchGrabbingGamePiece", new BranchAuto(
-						"Shoot", new Pose2d(7.4, 5.8, new Rotation2d()), 4))
-		//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
-		//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
-		//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-		);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		NamedCommands.registerCommands(autoCommands);
 		if (Constants.isCompetition) {

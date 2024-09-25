@@ -11,6 +11,8 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.drive.DriveConstants;
+
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -90,7 +92,7 @@ public class AimToPose extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.angleOverrider = Optional.empty();
 		RobotContainer.angularSpeed = 0;
-		drive.changeDeadband(.1); // Go back to normal deadband
+		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Go back to normal deadband
 		drive.stopModules();
 	}
 

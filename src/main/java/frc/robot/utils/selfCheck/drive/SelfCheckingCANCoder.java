@@ -6,8 +6,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 public class SelfCheckingCANCoder implements SelfChecking {
 	private final String label;
@@ -27,8 +27,8 @@ public class SelfCheckingCANCoder implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		if (hardwareFaultSignal.getValue()) {
 			faults.add(new SubsystemFault(
 					String.format("[%s]: Hardware fault detected", label)));

@@ -6,8 +6,8 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 public class SelfCheckingTalonFX implements SelfChecking {
 	private final String label;
@@ -29,8 +29,8 @@ public class SelfCheckingTalonFX implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		//    if (firmwareVersionSignal.getStatus() != StatusCode.OK) {
 		//      faults.add(new SubsystemFault(String.format("[%s]: No communication with device",
 		// label)));

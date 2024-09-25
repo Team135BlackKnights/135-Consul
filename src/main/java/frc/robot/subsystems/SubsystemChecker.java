@@ -8,12 +8,12 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkBase;
 
 import au.grapplerobotics.LaserCan;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -21,8 +21,6 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingPWMMotor;
 import frc.robot.utils.selfCheck.drive.SelfCheckingPigeon2;
 import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
-import frc.robot.Robot;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -34,9 +32,9 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	}
 
 	private final ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
-	private final List<SelfChecking> hardware = new ArrayList<>();
+	private final ConcurrentLinkedQueue<SelfChecking> hardware = new ConcurrentLinkedQueue<>();
 	private final String statusTable;
-	private final boolean checkErrors;
+	private boolean checkErrors;
 
 	public SubsystemChecker() {
 		this.statusTable = "SystemStatus/" + this.getName();
@@ -44,7 +42,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		systemCheck.setName(getName() + "Check");
 		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
 		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = RobotBase.isReal();
+		checkErrors = false;
 		setupCallbacks();
 	}
 
@@ -55,7 +53,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		systemCheck.setName(getName() + "Check");
 		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
 		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = RobotBase.isReal();
+		checkErrors = false;
 		setupCallbacks();
 	}
 
@@ -73,29 +71,36 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	public abstract List<ParentDevice> getOrchestraDevices();
 
 	public abstract double getCurrent();
+
 	public abstract HashMap<String, Double> getTemps();
+
 	public abstract void setCurrentLimit(int amps);
+
 	private void setupCallbacks() {
-		Robot.addPeriodic(this::checkForFaults, 0.25);
-		Robot.addPeriodic(this::publishStatus, 1.0);
+		Robot.addPeriodic(this::checkForFaults, 0.5);
+		Robot.addPeriodic(this::publishStatus, 1.5);
 	}
 
 	private void publishStatus() {
-		SystemStatus status = getSystemStatus();
-		Logger.recordOutput(statusTable + "/Status", status.name());
-		Logger.recordOutput(statusTable + "/SystemOK", status == SystemStatus.OK);
-		String[] faultStrings = new String[this.faults.size()];
-		int i = 0;
-		for (SubsystemFault fault : this.faults) {
-			faultStrings[i] = String.format("[%.2f] %s", fault.timestamp, fault.description);
-			i++; //doing seperate from for loop to avoid concurrent modification exception
-	  }
-		Logger.recordOutput(statusTable + "/Faults", faultStrings);
-		if (faultStrings.length > 0) {
-			Logger.recordOutput(statusTable + "/LastFault",
-					faultStrings[faultStrings.length - 1]);
-		} else {
-			Logger.recordOutput(statusTable + "/LastFault", "");
+		if (checkErrors) {
+			SystemStatus status = getSystemStatus();
+			Logger.recordOutput(statusTable + "/Status", status.name());
+			Logger.recordOutput(statusTable + "/SystemOK",
+					status == SystemStatus.OK);
+			String[] faultStrings = new String[this.faults.size()];
+			int i = 0;
+			for (SubsystemFault fault : this.faults) {
+				faultStrings[i] = String.format("[%.2f] %s", fault.timestamp,
+						fault.description);
+				i++; //doing seperate from for loop to avoid concurrent modification exception
+			}
+			Logger.recordOutput(statusTable + "/Faults", faultStrings);
+			if (faultStrings.length > 0) {
+				Logger.recordOutput(statusTable + "/LastFault",
+						faultStrings[faultStrings.length - 1]);
+			} else {
+				Logger.recordOutput(statusTable + "/LastFault", "");
+			}
 		}
 	}
 
@@ -116,8 +121,12 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	protected void addFault(String description) {
 		this.addFault(description, false);
 	}
-
-	public ConcurrentLinkedQueue<SubsystemFault> getFaults() { return this.faults; }
+	public void allowFaultPolling(boolean checkFaults){
+		this.checkErrors = checkFaults;
+	}
+	public ConcurrentLinkedQueue<SubsystemFault> getFaults() {
+		return this.faults;
+	}
 
 	public void clearFaults() { this.faults.clear(); }
 
@@ -175,11 +184,8 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	// Method to check for faults while the robot is operating normally
 	private void checkForFaults() {
 		if (checkErrors) {
-			for (SelfChecking device : hardware) {
-				for (SubsystemFault fault : device.checkForFaults()) {
-					addFault(fault);
-				}
-			}
+			hardware.forEach(
+					device -> device.checkForFaults().forEach(this::addFault));
 		}
 	}
 }

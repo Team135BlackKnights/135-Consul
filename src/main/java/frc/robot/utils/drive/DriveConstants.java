@@ -16,12 +16,11 @@ import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.HolonomicChassisSimulation.RobotProfile;
 
 public class DriveConstants {
-	//TODO: make a util to convert the radians per second into voltages, move robot max speed to TrainConstants
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
-	public static boolean enablePID = true;
-	public static MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
-	public static DriveTrainType driveType = DriveTrainType.MECANUM;
-	public static GyroType gyroType = GyroType.NAVX;
+	public static final boolean enablePID = true;
+	public static final MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
+	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
+	public static final GyroType gyroType = GyroType.NAVX;
 	public static DCMotor getDriveTrainMotors(int number){
 		switch (robotMotorController) {
 			case NEO_SPARK_MAX:
@@ -104,7 +103,7 @@ public class DriveConstants {
 			new Translation2d(-kChassisLength / 2, kChassisWidth / 2),
 			new Translation2d(-kChassisLength / 2, -kChassisWidth / 2)
 	};
-	public static int kFrontLeftDrivePort = 16, // REV 16 CTRE 16
+	public static final int kFrontLeftDrivePort = 16, // REV 16 CTRE 16
 			kFrontLeftTurningPort = 17, // REV 16 CTRE 17
 			kFrontLeftAbsEncoderPort = 20, // REV 2 CTRE 20
 			kFrontRightDrivePort = 10, // REV 10 CTRE 10
@@ -117,7 +116,7 @@ public class DriveConstants {
 			kBackRightTurningPort = 13, // REV 13 CTRE 13
 			kBackRightAbsEncoderPort = 24, // REV 1 CTRE 24
 			kMaxDriveCurrent = 80, kMaxTurnCurrent = 80;
-	public static boolean kFrontLeftDriveReversed = true,
+	public static final boolean kFrontLeftDriveReversed = true,
 			kFrontLeftTurningReversed = true, kFrontLeftAbsEncoderReversed = false,
 			kFrontRightDriveReversed = false, kFrontRightTurningReversed = true,
 			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = false,
@@ -137,18 +136,19 @@ public class DriveConstants {
 			FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
 		}
 		//Mecanum exclusive, shows the initial offset of the wheel
-		public static double mecanumInitialAngleOffsetDegrees = 135;
-		public static Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); //90 degrees makes robot front = facing left, 270 = right
+		public static final double mecanumInitialAngleOffsetDegrees = 135, odomHz = 250;
+		public static final Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); //90 degrees makes robot front = facing left, 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.0002));
-		public static double kWheelDiameter = Units.inchesToMeters(3.873),
+		public static double kDeadband = 0.05;
+		public static final double kWheelDiameter = Units.inchesToMeters(3.873),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
-				kT = 1.0 / DCMotor.getKrakenX60Foc(1).KtNMPerAmp, kDeadband = 0.05,
+				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(110);
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
-				0.001, 0.001, 0.001, 5, 2.4, 0.006),
+				0.001, 0.001, 0.001, 5, 0, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0.006),
+						0.001, 0.001, 0.001, 5, 0, 0),
 				//rev 
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
@@ -167,7 +167,6 @@ public class DriveConstants {
 	public static final class RobotPhysicsSimulationConfigs {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
 		/* Swerve Module Simulation */
-		//TODO: See if free final speed can be dynamically calculated or if its empirically determined
 		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
 		public static final DCMotor DRIVE_MOTOR = getDriveTrainMotors(1),
 				STEER_MOTOR = getDriveTrainMotors(1);

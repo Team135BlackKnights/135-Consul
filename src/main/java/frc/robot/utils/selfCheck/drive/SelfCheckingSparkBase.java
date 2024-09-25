@@ -2,6 +2,7 @@ package frc.robot.utils.selfCheck.drive;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.revrobotics.CANSparkBase.FaultID;
 
@@ -37,8 +38,8 @@ public class SelfCheckingSparkBase implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		REVLibError errorName = sparkBase.getLastError();
 		if (errorName != REVLibError.kOk) {
 			faults.add(new SubsystemFault(String

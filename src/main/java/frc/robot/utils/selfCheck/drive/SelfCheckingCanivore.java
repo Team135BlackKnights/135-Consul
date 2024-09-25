@@ -1,8 +1,8 @@
 package frc.robot.utils.selfCheck.drive;
 
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
@@ -32,9 +32,8 @@ public class SelfCheckingCanivore implements SelfChecking {
 		this.isNetworkCANFD = CANBus.isNetworkFD(label); 
 	}
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		@SuppressWarnings("type safety")
-		List<SubsystemFault> hardwareFaultList = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> hardwareFaultList = new ConcurrentLinkedQueue<>();
 		if (!isNetworkCANFD){
 			hardwareFaultList.add(new SubsystemFault(String.format("Canivore is not CanFD ", label)));
 		}

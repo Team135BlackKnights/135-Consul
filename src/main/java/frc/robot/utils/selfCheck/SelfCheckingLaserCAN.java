@@ -1,10 +1,9 @@
 package frc.robot.utils.selfCheck;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import au.grapplerobotics.LaserCan;
 import au.grapplerobotics.LaserCan.Measurement;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SelfCheckingLaserCAN implements SelfChecking {
 	private final String label;
@@ -31,8 +30,8 @@ public class SelfCheckingLaserCAN implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		Measurement measurement = laserCan.getMeasurement();
 		if (measurement != null) {
 			if (measurement.status != LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {

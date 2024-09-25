@@ -1,9 +1,8 @@
 package frc.robot.utils.selfCheck;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import com.revrobotics.ColorSensorV3;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SelfCheckingREVColorSensor implements SelfChecking{
 	private final String label;
@@ -13,8 +12,8 @@ public class SelfCheckingREVColorSensor implements SelfChecking{
 		this.sensor = sensor;
 	}
 	@Override
-	public List<SubsystemFault> checkForFaults() { 
-		List<SubsystemFault> faults = new ArrayList<>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		if (!sensor.isConnected()){
 			faults.add(new SubsystemFault(
 				String.format("Disconnected ", label)));

@@ -1,9 +1,9 @@
 package frc.robot.utils.selfCheck;
 
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public interface SelfChecking {
-	List<SubsystemFault> checkForFaults();
+	ConcurrentLinkedQueue<SubsystemFault> checkForFaults();
 
 	Object getHardware();
 }
