@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Java (FRC typically uses JDK 17)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      # Cache Gradle dependencies for faster builds
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      # Grant execute permission for the run_simulation.sh script
+      - name: Grant execute permission for run_simulation.sh
+        run: chmod +x run_simulation.sh
+      # Build the FRC robot code using GradleRIO
+      - name: Build with GradleRIO
+        run: ./gradlew build
+
+      # Run FRC-specific tests (optional, if you have unit tests or simulation tests)
+      - name: Run FRC unit tests
+        run: ./gradlew test
+
+      # Run FRC robot simulation for 30 seconds
+      - name: Run FRC robot simulation
+        run: ./run_simulation.sh

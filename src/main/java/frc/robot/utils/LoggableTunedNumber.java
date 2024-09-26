@@ -4,9 +4,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-
+ 
 import frc.robot.Constants;
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber; 
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns
