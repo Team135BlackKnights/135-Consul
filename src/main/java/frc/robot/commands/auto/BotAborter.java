@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
+import frc.robot.RobotContainer.GamePieceState;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
@@ -132,7 +133,7 @@ public class BotAborter extends Command{
 				double ourTimeTogamePiece = gamePieceDistance / (ourSpeedTowardsgamePiece+.001); //avoid divide/0 crash
 				double opposingRobotTimeTogamePiece = opposinggamePieceDistance / (opposingRobotSpeedTowardsgamePiece+.001);
 				if (opposingRobotTimeTogamePiece < ourTimeTogamePiece+.75) {
-					RobotContainer.currentGamePieceStatus = 1;
+					RobotContainer.currentGamePieceStatus = GamePieceState.ABORT;
 					isFinished = true;
 			   }
 		  }

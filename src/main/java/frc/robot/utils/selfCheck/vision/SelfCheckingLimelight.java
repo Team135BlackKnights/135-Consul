@@ -1,8 +1,7 @@
 package frc.robot.utils.selfCheck.vision;
 
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -25,8 +24,8 @@ public class SelfCheckingLimelight implements SelfChecking {
 	}
 
 	@Override
-	public List<SubsystemFault> checkForFaults() {
-		ArrayList<SubsystemFault> faultList = new ArrayList<SubsystemFault>();
+	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
+		ConcurrentLinkedQueue<SubsystemFault> faultList = new ConcurrentLinkedQueue<>();
 		CompletableFuture<LimelightResults> resultsFuture = fetchResults();
 		resultsFuture.thenAccept(results -> {
 			if (results != null && !results.error.isEmpty()) {
