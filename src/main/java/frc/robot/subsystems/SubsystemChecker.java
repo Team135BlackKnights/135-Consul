@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -26,7 +25,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.littletonrobotics.junction.Logger;
 
-public abstract class SubsystemChecker extends SubsystemBase {
+public abstract class SubsystemChecker extends SubsystemBase
+		implements Runnable {
 	public enum SystemStatus {
 		OK, WARNING, ERROR
 	}
@@ -35,6 +35,8 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	private final ConcurrentLinkedQueue<SelfChecking> hardware = new ConcurrentLinkedQueue<>();
 	private final String statusTable;
 	private boolean checkErrors;
+	private Thread checkerThread;
+	private volatile boolean running = true; // volatile to ensure visibility between main and checker threads
 
 	public SubsystemChecker() {
 		this.statusTable = "SystemStatus/" + this.getName();
@@ -61,9 +63,9 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		return Commands.sequence(Commands.runOnce(() -> {
 			Logger.recordOutput(statusTable + "/CheckRan", false);
 			clearFaults();
-			publishStatus();
+			publishStatus(true);
 		}), systemCheckCommand(), Commands.runOnce(() -> {
-			publishStatus();
+			publishStatus(true);
 			Logger.recordOutput(statusTable + "/CheckRan", true);
 		}));
 	}
@@ -77,12 +79,48 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	public abstract void setCurrentLimit(int amps);
 
 	private void setupCallbacks() {
+		checkerThread = new Thread(this);
+		checkerThread.setDaemon(true);
+		checkerThread.setPriority(Thread.MIN_PRIORITY);
+		checkerThread.setName(statusTable + "Checker");
+		checkerThread.start();
+		/* 
 		Robot.addPeriodic(this::checkForFaults, 0.5);
-		Robot.addPeriodic(this::publishStatus, 1.5);
+		Robot.addPeriodic(this::publishStatus, 1.5);*/
 	}
 
-	private void publishStatus() {
-		if (checkErrors) {
+	@Override
+	public void run() {
+		while (running) {
+			try {
+				//if (checkErrors){
+				checkForFaults(true);
+				Thread.sleep(250);
+				checkForFaults(true);
+				Thread.sleep(250);
+				checkForFaults(true);
+				Thread.sleep(250);
+				checkForFaults(true);
+				Thread.sleep(250);
+				publishStatus(true);
+				//}
+			}
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt(); // Restore interrupted status
+				break;
+			}
+		}
+	}
+
+	public void stopCheckerThread() {
+		running = false;
+		if (checkerThread != null) {
+			checkerThread.interrupt();
+		}
+	}
+
+	private void publishStatus(boolean override) {
+		if (checkErrors || override) {
 			SystemStatus status = getSystemStatus();
 			Logger.recordOutput(statusTable + "/Status", status.name());
 			Logger.recordOutput(statusTable + "/SystemOK",
@@ -121,9 +159,11 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	protected void addFault(String description) {
 		this.addFault(description, false);
 	}
-	public void allowFaultPolling(boolean checkFaults){
+
+	public void allowFaultPolling(boolean checkFaults) {
 		this.checkErrors = checkFaults;
 	}
+
 	public ConcurrentLinkedQueue<SubsystemFault> getFaults() {
 		return this.faults;
 	}
@@ -182,8 +222,8 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	protected abstract Command systemCheckCommand();
 
 	// Method to check for faults while the robot is operating normally
-	private void checkForFaults() {
-		if (checkErrors) {
+	private void checkForFaults(boolean override) {
+		if (checkErrors || override) {
 			hardware.forEach(
 					device -> device.checkForFaults().forEach(this::addFault));
 		}
