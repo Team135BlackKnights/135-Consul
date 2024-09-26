@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to the Constants.java file
-CONSTANTS_FILE="src/java/frc/robot/Constants.java"
+CONSTANTS_FILE="src\main\java\frc\robot\Constants.java"
 
 # Use sed to find and replace the currentMode assignment
 sed -i 's/currentMode = .*;/currentMode = Mode.SIM;/' "$CONSTANTS_FILE"
