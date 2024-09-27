@@ -2,6 +2,8 @@ package frc.robot.commands.auto;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.pathplanner.lib.pathfinding.Pathfinding;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -11,37 +13,43 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
-import frc.robot.RobotContainer.GamePieceState;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
+import java.util.List;
+import java.util.ArrayList;
+import edu.wpi.first.math.Pair;
 
-public class BotAborter extends Command{
-	final DrivetrainS drive; 
+public class BotAborter extends Command {
+	final DrivetrainS drive;
 	private Pose2d currentPose, previousOpposingBotPose = null;
-	private boolean isFinished; 
+	private boolean isFinished;
 	private Translation2d targetPieceLocation;
 	double deltaTime = .02;
-	public BotAborter(DrivetrainS drivetrainS){
-		this.drive = drivetrainS;
-	}
+	List<Pair<Translation2d, Translation2d>> obstacles = new ArrayList<>();
+	final double robotWidth = Units.inchesToMeters(30.0) // Width of the opponent robot in inches
+			, robotLength = Units.inchesToMeters(30.0); // Length of the opponent robot in inche
+
+	public BotAborter(DrivetrainS drivetrainS) { this.drive = drivetrainS; }
+
 	@Override
-	public void initialize(){
+	public void initialize() {
 		isFinished = false;
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
-			this.targetPieceLocation = RobotContainer.fieldSimulation.getClosestGamePieceOnGround().getPose3d().toPose2d().getTranslation();
+			this.targetPieceLocation = CompetitionFieldSimulation
+					.getClosestGamePiece(drive.getPose().getTranslation());
 		}
 	}
+
 	@Override
-	public void execute(){
-		 
-		double gamePieceTx = 0, gamePieceTy = 0, gamePieceDistance = 0, robotTx = 0, robotTy = 0;
+	public void execute() {
+		double gamePieceTx = 0, gamePieceTy = 0, gamePieceDistance = 0,
+				robotTx = 0, robotTy = 0;
 		boolean gamePieceTv = false, robotTv = false;
-		
 		if (Constants.currentMode == Mode.SIM) {
 			//In simulation, get the current pose, and set the degree value to 
 			currentPose = drive.getPose();
@@ -60,13 +68,14 @@ public class BotAborter extends Command{
 			gamePieceTy = Units.radiansToDegrees(tyRad);
 			gamePieceTv = true;
 			if (Constants.currentMatchState == FRCMatchState.AUTO) {
-				Pose2d opposingBotPose = CompetitionFieldSimulation.getClosestRobotPose(currentPose.getTranslation());
-				double robotDeltaX = opposingBotPose.getX()
-						- currentPose.getX();
-				double robotDeltaY = opposingBotPose.getY()
-						- currentPose.getY();
-				robotTx = Units.radiansToDegrees(Math.atan2(robotDeltaY, robotDeltaX)); // Use atan2 instead of atan
-				robotTx -= currentPose.getRotation().getDegrees(); 
+				Pose2d opposingBotPose = CompetitionFieldSimulation
+						.getClosestRobotPose(currentPose.getTranslation());
+				Logger.recordOutput("OpposingRobot/GivenPose", opposingBotPose);
+				double robotDeltaX = opposingBotPose.getX() - currentPose.getX();
+				double robotDeltaY = opposingBotPose.getY() - currentPose.getY();
+				robotTx = Units
+						.radiansToDegrees(Math.atan2(robotDeltaY, robotDeltaX)); // Use atan2 instead of atan
+				robotTx -= currentPose.getRotation().getDegrees();
 				robotTx = GeomUtil.closerAngleToZero(robotTx);
 				double robotD = opposingBotPose.getTranslation()
 						.getDistance(currentPose.getTranslation());
@@ -109,44 +118,65 @@ public class BotAborter extends Command{
 						VisionConstants.limelightLensHeightoffFloorInches),
 				Units.inchesToMeters(2),
 				VisionConstants.limeLightAngleOffsetDegrees);
-		Logger.recordOutput("SIMINTAKEgamePiece", estimatedgamePiecePose3d);
+		Logger.recordOutput("BotAborterGamePiece",
+				estimatedgamePiecePose3d);
 		gamePieceDistance = GeomUtil.calculateDistanceFromPose3d(currentPose,
 				estimatedgamePiecePose3d);
-		if (robotTv && gamePieceTv && RobotContainer.currentPath != "INTAKING"){
-			Pose3d estimatedOpposingBotPose3d = GeomUtil.calculateFieldRelativePose3d(
-				currentPose, robotTx, robotTy,
-				Units.inchesToMeters(
-						VisionConstants.limelightLensHeightoffFloorInches),
-				Units.inchesToMeters(2),
-				VisionConstants.limeLightAngleOffsetDegrees);
-			Logger.recordOutput("OPPOSING", estimatedOpposingBotPose3d);
-			double opposinggamePieceDistance = GeomUtil.calculateDistanceFromPose3d(estimatedgamePiecePose3d.toPose2d(), estimatedOpposingBotPose3d);
+		if (robotTv && gamePieceTv && RobotContainer.currentPath != "INTAKING") {
+			Pose3d estimatedOpposingBotPose3d = GeomUtil
+					.calculateFieldRelativePose3d(currentPose, robotTx, robotTy,
+							Units.inchesToMeters(
+									VisionConstants.limelightLensHeightoffFloorInches),
+							Units.inchesToMeters(2),
+							VisionConstants.limeLightAngleOffsetDegrees);
+			Logger.recordOutput("OpposingRobot/Pose", estimatedOpposingBotPose3d); //assume robot is 30x30
+			obstacles.clear();
+			Translation2d frontRightCorner = estimatedOpposingBotPose3d.toPose2d()
+					.getTranslation()
+					.plus(new Translation2d(robotLength / 2, robotWidth / 2));
+			Translation2d backLeftCorner = estimatedOpposingBotPose3d.toPose2d()
+					.getTranslation()
+					.plus(new Translation2d(-robotLength / 2, -robotWidth / 2));
+			obstacles.add(new Pair<>(frontRightCorner, backLeftCorner));
+			Logger.recordOutput("OpposingRobot/FrontRightCorner", frontRightCorner);
+			Logger.recordOutput("OpposingRobot/BackLeftCorner", backLeftCorner);
+			Pathfinding.setDynamicObstacles(obstacles,
+					drive.getPose().getTranslation());
+			double opposinggamePieceDistance = GeomUtil
+					.calculateDistanceFromPose3d(estimatedgamePiecePose3d.toPose2d(),
+							estimatedOpposingBotPose3d);
 			if (previousOpposingBotPose != null) {
-				double deltaX = estimatedOpposingBotPose3d.toPose2d().getX() - previousOpposingBotPose.getX();
-				double deltaY = estimatedOpposingBotPose3d.toPose2d().getY() - previousOpposingBotPose.getY();
-
+				double deltaX = estimatedOpposingBotPose3d.toPose2d().getX()
+						- previousOpposingBotPose.getX();
+				double deltaY = estimatedOpposingBotPose3d.toPose2d().getY()
+						- previousOpposingBotPose.getY();
 				double velocityX = deltaX / deltaTime;
 				double velocityY = deltaY / deltaTime;
-				double opposingRobotSpeedTowardsgamePiece = Math.hypot(velocityX, velocityY);
-    			Twist2d ourVelocity = drive.getFieldVelocity();
-    			double ourSpeedTowardsgamePiece = Math.hypot(ourVelocity.dx, ourVelocity.dy);
-				double ourTimeTogamePiece = gamePieceDistance / (ourSpeedTowardsgamePiece+.001); //avoid divide/0 crash
-				double opposingRobotTimeTogamePiece = opposinggamePieceDistance / (opposingRobotSpeedTowardsgamePiece+.001);
-				if (opposingRobotTimeTogamePiece < ourTimeTogamePiece+.75) {
-					RobotContainer.currentGamePieceStatus = GamePieceState.ABORT;
+				double opposingRobotSpeedTowardsgamePiece = Math.hypot(velocityX,
+						velocityY);
+				Twist2d ourVelocity = drive.getFieldVelocity();
+				double ourSpeedTowardsgamePiece = Math.hypot(ourVelocity.dx,
+						ourVelocity.dy);
+				double ourTimeTogamePiece = gamePieceDistance
+						/ (ourSpeedTowardsgamePiece + .001); //avoid divide/0 crash
+				double opposingRobotTimeTogamePiece = opposinggamePieceDistance
+						/ (opposingRobotSpeedTowardsgamePiece + .001);
+				if (opposingRobotTimeTogamePiece < ourTimeTogamePiece + .75) {
+					RobotContainer.currentGamePieceStatus = RobotContainer.GamePieceState.ABORT;
 					isFinished = true;
-			   }
-		  }
-		  previousOpposingBotPose = estimatedOpposingBotPose3d.toPose2d();
+				}
+			}
+			previousOpposingBotPose = estimatedOpposingBotPose3d.toPose2d();
 		}
 	}
-	@Override
-	public void end(boolean interrupted){
-		previousOpposingBotPose = null;
 
-	}
 	@Override
-	public boolean isFinished(){
-		return isFinished;
+	public void end(boolean interrupted) {
+		Pathfinding.setDynamicObstacles(new ArrayList<>(),
+				drive.getPose().getTranslation());
+		previousOpposingBotPose = null;
 	}
+
+	@Override
+	public boolean isFinished() { return isFinished; }
 }

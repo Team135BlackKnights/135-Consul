@@ -151,6 +151,20 @@ public abstract class CompetitionFieldSimulation {
 		}
 		gamePieces.clear();
 	}
+	public static Translation2d getClosestGamePiece(Translation2d robotPosition) {
+		GamePieceInSimulation closestGamePiece = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (GamePieceInSimulation gamePiece : gamePieces) {
+		
+			double distance = gamePiece.getPose3d().getTranslation().toTranslation2d()
+					.getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestGamePiece = gamePiece;
+				closestDistance = distance;
+			}
+		}
+		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
+	}
 	public static Pose2d getClosestRobotPose(Translation2d robotPosition){
 		HolonomicChassisSimulation closestRobot = null;
 		double closestDistance = Double.MAX_VALUE;
