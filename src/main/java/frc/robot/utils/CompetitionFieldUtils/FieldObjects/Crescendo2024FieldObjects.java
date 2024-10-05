@@ -3,6 +3,8 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotContainer;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNote;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 
 import org.dyn4j.geometry.Geometry;
@@ -34,10 +36,14 @@ public final class Crescendo2024FieldObjects {
 		}
 
 		@Override
-		public String getTypeName() { return "Note"; }
+		public String getTypeName() {
+			return "Note";
+		}
 
 		@Override
-		public double getGamePieceHeight() { return NOTE_HEIGHT; }
+		public double getGamePieceHeight() {
+			return NOTE_HEIGHT;
+		}
 	}
 
 	/**
@@ -46,14 +52,18 @@ public final class Crescendo2024FieldObjects {
 	 */
 	public static class NoteOnFieldSimulated extends GamePieceInSimulation {
 		public NoteOnFieldSimulated(Translation2d initialPosition) {
-			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.ON_GROUND);
+			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.ON_GROUND);
 		}
 
 		@Override
-		public double getGamePieceHeight() { return NOTE_HEIGHT; }
+		public double getGamePieceHeight() {
+			return NOTE_HEIGHT;
+		}
 
 		@Override
-		public String getTypeName() { return "Note"; }
+		public String getTypeName() {
+			return "Note";
+		}
 	}
 
 	/**
@@ -71,7 +81,7 @@ public final class Crescendo2024FieldObjects {
 				Transform3d manipulatorTransform) {
 			super(RobotContainer.fieldSimulation.getMainDriveSimulation()
 					.getPose3d().transformBy(manipulatorTransform).getTranslation()
-					.toTranslation2d(), Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.IN_ROBOT);
+					.toTranslation2d(), Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_ROBOT);
 			super.setEnabled(false);
 			this.currentPose = currentPose;
 			this.startingPose = currentPose;
@@ -87,10 +97,14 @@ public final class Crescendo2024FieldObjects {
 		}
 
 		@Override
-		public double getGamePieceHeight() { return NOTE_HEIGHT; }
+		public double getGamePieceHeight() {
+			return NOTE_HEIGHT;
+		}
 
 		@Override
-		public String getTypeName() { return "Note"; }
+		public String getTypeName() {
+			return "Note";
+		}
 
 		@Override
 		public Pose3d getPose3d() {
@@ -111,52 +125,55 @@ public final class Crescendo2024FieldObjects {
 	}
 
 	/**
-	 * a note that is flying from a shooter to the speaker the flight is
-	 * simulated by a simple linear animation
+	 * Uses projectile motion. Inaccuracy gets worse the more the shape of the projectile deviates from a sphere.
 	 */
 	public static class NoteInFly extends GamePieceInSimulation {
 		private final double launchingTimeStampSec;
+		private final double launchingSpeedMetersPerSec;
 		private final Pose3d speakerPosition; // The speaker's position
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
-		private double totalTimeSec;
 
 		public NoteInFly(double launchingTimeStampSec,
 				double launchingSpeedMetersPerSec, Pose3d startingPose,
 				Translation3d speakerPosition) {
 			super(startingPose.toPose2d().getTranslation(),
-					Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.IN_AIR);
+					Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_AIR);
 			super.setEnabled(false);
 			this.currentPose = startingPose;
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
+			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
 			this.speakerPosition = new Pose3d(speakerPosition, new Rotation3d());
 			// Calculate the total time to reach the speaker
-			this.totalTimeSec = startingPose.getTranslation()
-					.getDistance(speakerPosition) / launchingSpeedMetersPerSec * 1e6;
 		}
 
 		@Override
-		public String getTypeName() { return "Note"; }
+		public String getTypeName() {
+			return "Note";
+		}
 
 		@Override
 		public Pose3d getPose3d() {
-			double currentTime = Logger.getTimestamp();
-			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec
-					+ totalTimeSec)) {
-				return speakerPosition;
-			}
-			double timeProportion = (currentTime - launchingTimeStampSec)
-					/ totalTimeSec;
-			currentPose = startingPose.interpolate(speakerPosition,
-					timeProportion);
+			double deltaTSeconds = Math.abs(Logger.getTimestamp() * 1e6 - launchingTimeStampSec);
+			double updatedPosZMeters = CrescendoNote.M_OVER_K * (FieldConstants.COEFFICIENT_OF_GRAVITY * deltaTSeconds
+					+ Math.pow(Math.E, -deltaTSeconds * 1 / CrescendoNote.M_OVER_K) * (CrescendoNote.M_OVER_K
+							+ this.launchingSpeedMetersPerSec * Math.sin(startingPose.getRotation().getY())));
+			double updatedPosYMeters = Math.pow(Math.E,-1/CrescendoNote.M_OVER_K*deltaTSeconds)*launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getZ());
+			double updatedPosXMeters = Math.pow(Math.E,-1/CrescendoNote.M_OVER_K*deltaTSeconds)*launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getZ());
+			Transform3d projectileTranslationVector = new Transform3d(updatedPosXMeters, updatedPosYMeters, updatedPosZMeters, new Rotation3d(0,0,0));
+			currentPose = startingPose.transformBy(projectileTranslationVector);
 			return currentPose;
 		}
 
 		@Override
-		public Pose2d getObjectOnFieldPose2d() { return getPose3d().toPose2d(); }
+		public Pose2d getObjectOnFieldPose2d() {
+			return getPose3d().toPose2d();
+		}
 
 		@Override
-		public double getGamePieceHeight() { return NOTE_HEIGHT; }
+		public double getGamePieceHeight() {
+			return NOTE_HEIGHT;
+		}
 	}
 }
