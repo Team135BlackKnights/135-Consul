@@ -130,8 +130,6 @@ public final class Crescendo2024FieldObjects {
 	public static class NoteInFly extends GamePieceInSimulation {
 		private final double launchingTimeStampSec;
 		private final double launchingSpeedMetersPerSec;
-		@SuppressWarnings("unused")
-		private final Pose3d speakerPosition; // The speaker's position
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
 
@@ -145,7 +143,6 @@ public final class Crescendo2024FieldObjects {
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
 			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
-			this.speakerPosition = new Pose3d(speakerPosition, new Rotation3d());
 			// Calculate the total time to reach the speaker
 		}
 
