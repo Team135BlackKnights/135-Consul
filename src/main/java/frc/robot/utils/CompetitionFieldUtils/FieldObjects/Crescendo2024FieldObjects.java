@@ -130,6 +130,7 @@ public final class Crescendo2024FieldObjects {
 	public static class NoteInFly extends GamePieceInSimulation {
 		private final double launchingTimeStampSec;
 		private final double launchingSpeedMetersPerSec;
+		@SuppressWarnings("unused")
 		private final Pose3d speakerPosition; // The speaker's position
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
