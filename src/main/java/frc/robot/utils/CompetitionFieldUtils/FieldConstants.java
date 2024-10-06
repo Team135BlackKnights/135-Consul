@@ -13,16 +13,16 @@ import edu.wpi.first.math.util.Units;
 public class FieldConstants {
 	public static final double FIELD_WIDTH = 16.54;
 	public static final double FIELD_HEIGHT = 8.21;
-	//Unless something literally earth-shattering happens, do not change this -N
-	public static final double COEFFICIENT_OF_GRAVITY = 9.81;
 	//id 1 is topmost leftmost. goes in order down, right.
 	//Speaker translations
-	public static final Pose2d START_POSE = new Pose2d(1.5, 1.5,
+	public static final double COEFFICIENT_OF_GRAVITY = 9.81;
+	public static final Pose2d START_POSE = new Pose2d(1.21, 5.6,
 			new Rotation2d());
 	public static final Translation3d BLUE_SPEAKER = new Translation3d(0.225,
 			5.55, 2.1);
 	public static final Translation3d RED_SPEAKER = new Translation3d(16.317,
 			5.55, 2.1); //in meters!
+	public static final double SPEAKER_COLLISION_RADIUS = Units.inchesToMeters(14), SPEAKER_SCORE = 2;
 	public static final Translation2d[] NOTE_INITIAL_POSITIONS = new Translation2d[] {
 			new Translation2d(2.9, 4.1), new Translation2d(2.9, 5.55),
 			new Translation2d(2.9, 7), new Translation2d(8.27, 0.75),
@@ -37,16 +37,16 @@ public class FieldConstants {
 	/**
 	 * for convenience, we assume all game pieces have the following properties
 	 */
-	public static final class CrescendoNotePhysicsConstants{
+	public static final double DEFAULT_MASS = 0.2, LINEAR_DAMPING = 2.5,
+			ANGULAR_DAMPING = 5, EDGE_COEFFICIENT_OF_FRICTION = 0.8,
+			EDGE_COEFFICIENT_OF_RESTITUTION = 0.3;
+	public enum GamePieceTag {
+		ON_GROUND, IN_ROBOT, IN_AIR
+	}
+	public static final class CrescendoNote{
 		public static final double DEFAULT_MASS_KG = 0.2, LINEAR_DAMPING = 2.5,
 			ANGULAR_DAMPING = 5, EDGE_COEFFICIENT_OF_FRICTION = 0.8,
 			EDGE_COEFFICIENT_OF_RESTITUTION = 0.3, NOTE_COEFFICIENT_OF_AIR_RESISTANCE_K = .25,
 			GRAVITATIONAL_ACCELERATION_MS2 = .5, M_OVER_K = DEFAULT_MASS_KG/NOTE_COEFFICIENT_OF_AIR_RESISTANCE_K ;
 	}
-	
-	public enum GamePieceTag {
-		ON_GROUND, IN_ROBOT, IN_AIR
-	
-	}
-
 }

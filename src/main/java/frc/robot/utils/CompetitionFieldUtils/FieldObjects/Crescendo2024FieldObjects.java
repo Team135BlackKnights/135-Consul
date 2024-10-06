@@ -4,8 +4,9 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotContainer;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNotePhysicsConstants;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNote;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
+import frc.robot.utils.maths.TimeUtil;
 
 import org.dyn4j.geometry.Geometry;
 import org.littletonrobotics.junction.Logger;
@@ -115,26 +116,24 @@ public final class Crescendo2024FieldObjects {
 	}
 
 	/**
-	 * Uses projectile motion. Inaccuracy gets worse the more the shape of the
-	 * projectile deviates from a sphere.
+	 * a note that is flying from a shooter to the speaker the flight is
+	 * simulated by a simple linear animation
 	 */
 	public static class NoteInFly extends GamePieceInSimulation {
-		private final double launchingTimeStampSec;
-		private final double launchingSpeedMetersPerSec;
+		private final double launchingTimeStampSec, launchingSpeedMetersPerSec;
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
 
 		public NoteInFly(double launchingTimeStampSec,
-				double launchingSpeedMetersPerSec, Pose3d startingPose,
-				Translation3d speakerPosition) {
+				double launchingSpeedMetersPerSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
 					Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_AIR);
 			super.setEnabled(false);
 			this.currentPose = startingPose;
+			Logger.recordOutput("currentOa", startingPose);
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
 			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
-			// Calculate the total time to reach the speaker
 		}
 
 		@Override
@@ -143,19 +142,21 @@ public final class Crescendo2024FieldObjects {
 		@Override
 		public Pose3d getPose3d() {
 			double deltaTSeconds = Math
-					.abs(Logger.getTimestamp() * 1e6 - launchingTimeStampSec);
+					.abs(TimeUtil.getLogTimeSeconds() - launchingTimeStampSec);
 			//To visualize the math 
 			double vNoughtZ = launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getY());
-			double vNoughtY = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.sin(startingPose.getRotation().getZ());
-			double vNoughtX = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.cos(startingPose.getRotation().getZ());
-			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNotePhysicsConstants.M_OVER_K);
-			double updatedPosZMeters = CrescendoNotePhysicsConstants.M_OVER_K*(vNoughtZ+CrescendoNotePhysicsConstants.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)*CrescendoNotePhysicsConstants.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds;
-			double updatedPosYMeters = CrescendoNotePhysicsConstants.M_OVER_K*vNoughtY*(1-expDecay);
-			double updatedPosXMeters = CrescendoNotePhysicsConstants.M_OVER_K*vNoughtX*(1-expDecay);
+			double vNoughtY = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.sin(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
+			double vNoughtX = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.cos(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
+			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNote.M_OVER_K);
+			double updatedPosZMeters = CrescendoNote.M_OVER_K*(vNoughtZ+CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)-(CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds);
+			double updatedPosYMeters = CrescendoNote.M_OVER_K*vNoughtY*(1-expDecay);
+			double updatedPosXMeters = CrescendoNote.M_OVER_K*vNoughtX*(1-expDecay);
+			double updatedPitch = Math.atan2(updatedPosZMeters, Math.hypot(updatedPosXMeters, updatedPosYMeters));
 			Transform3d projectileTranslationVector = new Transform3d(
 					updatedPosXMeters, updatedPosYMeters, updatedPosZMeters,
-					new Rotation3d(0, 0, 0));
-			currentPose = startingPose.transformBy(projectileTranslationVector);
+					new Rotation3d(0, updatedPitch, 0));
+			// Update the current pose based on the projectile's new position
+			currentPose = startingPose.plus(projectileTranslationVector);
 			return currentPose;
 		}
 

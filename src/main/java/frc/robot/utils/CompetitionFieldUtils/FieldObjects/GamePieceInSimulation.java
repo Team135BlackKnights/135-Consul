@@ -21,21 +21,21 @@ public abstract class GamePieceInSimulation extends Body
 
 	public final GamePieceTag tag;
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag) {
-		this(initialPosition, shape, FieldConstants.CrescendoNotePhysicsConstants.DEFAULT_MASS_KG,tag);
+		this(initialPosition, shape, FieldConstants.DEFAULT_MASS,tag);
 	}
 
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape,
 			double mass, GamePieceTag tag) {
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
-		bodyFixture.setFriction(FieldConstants.CrescendoNotePhysicsConstants.EDGE_COEFFICIENT_OF_FRICTION);
-		bodyFixture.setRestitution(FieldConstants.CrescendoNotePhysicsConstants.EDGE_COEFFICIENT_OF_RESTITUTION);
+		bodyFixture.setFriction(FieldConstants.EDGE_COEFFICIENT_OF_FRICTION);
+		bodyFixture.setRestitution(FieldConstants.EDGE_COEFFICIENT_OF_RESTITUTION);
 		bodyFixture.setDensity(mass / shape.getArea());
 		this.tag = tag;
 		super.setMass(MassType.NORMAL);
 		super.translate(GeometryConvertor.toDyn4jVector2(initialPosition));
-		super.setLinearDamping(FieldConstants.CrescendoNotePhysicsConstants.LINEAR_DAMPING);
-		super.setAngularDamping(FieldConstants.CrescendoNotePhysicsConstants.ANGULAR_DAMPING);
+		super.setLinearDamping(FieldConstants.LINEAR_DAMPING);
+		super.setAngularDamping(FieldConstants.ANGULAR_DAMPING);
 		super.setBullet(true);
 	}
 	public GamePieceTag getTag() {
