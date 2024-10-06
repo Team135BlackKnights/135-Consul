@@ -14,7 +14,7 @@ public class FieldConstants {
 	public static final double FIELD_WIDTH = 16.54;
 	public static final double FIELD_HEIGHT = 8.21;
 	//Unless something literally earth-shattering happens, do not change this -N
-	public static final double COEFFICIENT_OF_GRAVITY = -9.81;
+	public static final double COEFFICIENT_OF_GRAVITY = 9.81;
 	//id 1 is topmost leftmost. goes in order down, right.
 	//Speaker translations
 	public static final Pose2d START_POSE = new Pose2d(1.5, 1.5,
@@ -37,7 +37,7 @@ public class FieldConstants {
 	/**
 	 * for convenience, we assume all game pieces have the following properties
 	 */
-	public static final class CrescendoNote{
+	public static final class CrescendoNotePhysicsConstants{
 		public static final double DEFAULT_MASS_KG = 0.2, LINEAR_DAMPING = 2.5,
 			ANGULAR_DAMPING = 5, EDGE_COEFFICIENT_OF_FRICTION = 0.8,
 			EDGE_COEFFICIENT_OF_RESTITUTION = 0.3, NOTE_COEFFICIENT_OF_AIR_RESISTANCE_K = .25,
