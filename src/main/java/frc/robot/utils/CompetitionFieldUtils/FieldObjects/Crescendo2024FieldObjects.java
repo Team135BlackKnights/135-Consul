@@ -3,7 +3,10 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotContainer;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNote;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
+import frc.robot.utils.maths.TimeUtil;
 
 import org.dyn4j.geometry.Geometry;
 import org.littletonrobotics.junction.Logger;
@@ -46,7 +49,8 @@ public final class Crescendo2024FieldObjects {
 	 */
 	public static class NoteOnFieldSimulated extends GamePieceInSimulation {
 		public NoteOnFieldSimulated(Translation2d initialPosition) {
-			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.ON_GROUND);
+			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
+					GamePieceTag.ON_GROUND);
 		}
 
 		@Override
@@ -71,7 +75,8 @@ public final class Crescendo2024FieldObjects {
 				Transform3d manipulatorTransform) {
 			super(RobotContainer.fieldSimulation.getMainDriveSimulation()
 					.getPose3d().transformBy(manipulatorTransform).getTranslation()
-					.toTranslation2d(), Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.IN_ROBOT);
+					.toTranslation2d(), Geometry.createCircle(NOTE_DIAMETER / 2),
+					GamePieceTag.IN_ROBOT);
 			super.setEnabled(false);
 			this.currentPose = currentPose;
 			this.startingPose = currentPose;
@@ -115,25 +120,20 @@ public final class Crescendo2024FieldObjects {
 	 * simulated by a simple linear animation
 	 */
 	public static class NoteInFly extends GamePieceInSimulation {
-		private final double launchingTimeStampSec;
-		private final Pose3d speakerPosition; // The speaker's position
+		private final double launchingTimeStampSec, launchingSpeedMetersPerSec;
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
-		private double totalTimeSec;
 
 		public NoteInFly(double launchingTimeStampSec,
-				double launchingSpeedMetersPerSec, Pose3d startingPose,
-				Translation3d speakerPosition) {
+				double launchingSpeedMetersPerSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
-					Geometry.createCircle(NOTE_DIAMETER / 2),GamePieceTag.IN_AIR);
+					Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_AIR);
 			super.setEnabled(false);
 			this.currentPose = startingPose;
+			Logger.recordOutput("currentOa", startingPose);
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
-			this.speakerPosition = new Pose3d(speakerPosition, new Rotation3d());
-			// Calculate the total time to reach the speaker
-			this.totalTimeSec = startingPose.getTranslation()
-					.getDistance(speakerPosition) / launchingSpeedMetersPerSec * 1e6;
+			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
 		}
 
 		@Override
@@ -141,15 +141,22 @@ public final class Crescendo2024FieldObjects {
 
 		@Override
 		public Pose3d getPose3d() {
-			double currentTime = Logger.getTimestamp();
-			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec
-					+ totalTimeSec)) {
-				return speakerPosition;
-			}
-			double timeProportion = (currentTime - launchingTimeStampSec)
-					/ totalTimeSec;
-			currentPose = startingPose.interpolate(speakerPosition,
-					timeProportion);
+			double deltaTSeconds = Math
+					.abs(TimeUtil.getLogTimeSeconds() - launchingTimeStampSec);
+			//To visualize the math 
+			double vNoughtZ = launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getY());
+			double vNoughtY = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.sin(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
+			double vNoughtX = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.cos(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
+			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNote.M_OVER_K);
+			double updatedPosZMeters = CrescendoNote.M_OVER_K*(vNoughtZ+CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)-(CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds);
+			double updatedPosYMeters = CrescendoNote.M_OVER_K*vNoughtY*(1-expDecay);
+			double updatedPosXMeters = CrescendoNote.M_OVER_K*vNoughtX*(1-expDecay);
+			double updatedPitch = Math.atan2(updatedPosZMeters, Math.hypot(updatedPosXMeters, updatedPosYMeters));
+			Transform3d projectileTranslationVector = new Transform3d(
+					updatedPosXMeters, updatedPosYMeters, updatedPosZMeters,
+					new Rotation3d(0, updatedPitch, 0));
+			// Update the current pose based on the projectile's new position
+			currentPose = startingPose.plus(projectileTranslationVector);
 			return currentPose;
 		}
 

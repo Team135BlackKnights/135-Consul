@@ -164,9 +164,13 @@ public class RobotContainer {
 				//remove the .traj from the name
 				choreo = choreo.replace(".traj", "");
 				PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreo);
+				Pose2d endPose = path.getPathPoses().get(path.getPathPoses().size() - 1);
+				if (DriveConstants.kEndingPoses.containsKey(choreo)){
+					endPose = DriveConstants.kEndingPoses.get(choreo);
+				}
 				commands.add(new Pair<String, Command>("Branch" + choreo,
 						new BranchAuto(choreo,
-								path.getPathPoses().get(path.getPathPoses().size() - 1),
+								endPose,
 								1)));
 				System.out.println("Added Branch" + choreo);
 				//kill the path to save memory

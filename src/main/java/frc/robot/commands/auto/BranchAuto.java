@@ -1,5 +1,6 @@
 package frc.robot.commands.auto;
 
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 
@@ -32,7 +33,8 @@ public class BranchAuto extends Command {
 					/*.andThen(PathFinder.goToPose(backupPose,
 							() -> DriveConstants.pathConstraints,
 							RobotContainer.drivetrainS, true, endSpeed))*/;
-			commandGroup = new ParallelCommandGroup(path); //insert custom thing here
+			commandGroup = new ParallelCommandGroup(path //add any other commands during normal (like scoring) here
+					);
 			RobotContainer.currentPath = choreoTraj;
 		} else {
 			RobotContainer.currentPath = "backup" + choreoTraj;
@@ -57,7 +59,7 @@ public class BranchAuto extends Command {
 		} else {
 			//We've lost all sense of time. End the command.
 			System.out.println("BranchAuto is finished BAD");
-			isFinished = true;
+			isFinished = false;
 		}
 	}
 
