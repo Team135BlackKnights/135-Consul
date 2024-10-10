@@ -19,6 +19,8 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.AITargets;
+
 import java.util.List;
 import java.util.ArrayList;
 import edu.wpi.first.math.Pair;
@@ -96,13 +98,13 @@ public class BotAborter extends Command {
 				if (object.confidence < .4) {
 					continue;
 				}
-				if (object.className == "gamePiece") {
+				if (object.classID == AITargets.kGamePiece.getValue()) {
 					gamePieceTx = -object.tx;
 					gamePieceTy = object.ty;
 					gamePieceTv = true;
 				} else {
 					gamePieceTv = false;
-					if (object.className == "robot") {
+					if (object.classID == AITargets.kRobot.getValue()) {
 						robotTx = -object.tx;
 						robotTy = object.ty;
 						robotTv = true;

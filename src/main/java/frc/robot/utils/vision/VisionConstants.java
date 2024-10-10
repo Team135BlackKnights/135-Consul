@@ -2,6 +2,8 @@ package frc.robot.utils.vision;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -15,7 +17,21 @@ public class VisionConstants {
 	public static boolean debug = true;
 	public static final AprilTagFieldLayout kTagLayout = AprilTagFields.kDefaultField
 			.loadAprilTagLayoutField();
-
+			//This needs to be changed year after year
+			public enum AITargets {
+				kGamePiece(0.0),
+				kRobot(1.0);
+		  
+				private final double value;
+		  
+				AITargets(double value) {
+					 this.value = value;
+				}
+		  
+				public double getValue() {
+					 return value;
+				}
+		  }
 	public static class Controls {
 		public static JoystickButton autoIntake = new JoystickButton(
 				RobotContainer.driveController, 1); //a

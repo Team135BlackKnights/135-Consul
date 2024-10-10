@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.AITargets;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
@@ -107,7 +108,7 @@ public class DriveToAITarget extends Command {
 				if (object.confidence < .4) {
 					continue;
 				}
-				if (object.className == "note") {
+				if (object.classID == AITargets.kGamePiece.getValue()) {
 					gamePieceTx = -object.tx;
 					gamePieceTy = object.ty;
 					gamePieceTv = true;
