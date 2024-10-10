@@ -14,6 +14,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -37,8 +38,9 @@ import frc.robot.utils.vision.VisionConstants.PVCameras;
 public class Vision extends SubsystemChecker {
 	private final VisionIO io;
 	private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
-	private boolean override = false;
+	private boolean override = false, staleReading = false;
 	private Timer timer = new Timer();
+	private Pose2d lastOdomPose = new Pose2d(0, 0, new Rotation2d(0));
 
 	public Vision(VisionIO io) {
 		this.io = io;
@@ -68,6 +70,8 @@ public class Vision extends SubsystemChecker {
 			timer.stop();
 			override = false;
 		}
+		Pose2d currentOdomPose = RobotContainer.drivetrainS.getPose();
+		staleReading = (Math.abs(currentOdomPose.getX()-lastOdomPose.getX()) > VisionConstants.maxStaleReadingXMeters || Math.abs(currentOdomPose.getY()-lastOdomPose.getY()) > VisionConstants.maxStaleReadingYMeters || Math.abs(currentOdomPose.getRotation().getDegrees()-lastOdomPose.getRotation().getDegrees()) > VisionConstants.maxStaleReadingRotation);
 		//Update the global pose for each camera
 		for (int i = 0; i < 4; i++) {
 			PVCameras camera = PVCameras.getCameraByIndex(i);
@@ -118,21 +122,25 @@ public class Vision extends SubsystemChecker {
 							aprilTagList.length);
 					addVisionMeasurement(inputs.estPose[i], inputs.time[i],
 							estStdDevs);
-					for (int tag : aprilTagList) {
+
+					if (!staleReading){
+						for (int tag : aprilTagList) {
 						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 								.min(1,
 										VisionConstants.FieldConstants.aprilTagOffsets[tag]
 												+ .001);
 					}
+					}
+					
 				} else {
-					if (response == "Min trust") {
+					if ((response == "Min trust") && !staleReading) {
 						for (int tag : aprilTagList) {
 							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 									.min(1,
 											VisionConstants.FieldConstants.aprilTagOffsets[tag]
 													+ .001);
 						}
-					} else if (response != "Max ambiguity") {
+					} else if ((response != "Max ambiguity") && !staleReading) {
 						for (int tag : aprilTagList) {
 							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
 									.max(0,
@@ -145,8 +153,10 @@ public class Vision extends SubsystemChecker {
 					SmartDashboard.putNumberArray("OFFSETS",
 							VisionConstants.FieldConstants.aprilTagOffsets);
 				}
+				
 			}
 		}
+		lastOdomPose = currentOdomPose;
 	}
 
 	/**
@@ -269,7 +279,7 @@ public class Vision extends SubsystemChecker {
 		double poseWeight = avgPoseAmbiguity
 				* VisionConstants.poseAmbiguityErrorStdDev;
 		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
-				/ (0.00001 + weighAverage); //divide by zero protection
+				/ (0.00001 + weighAverage); // divide by zero protection
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
 				/ (numTags * VisionConstants.numTagsMultiplier);
@@ -286,7 +296,7 @@ public class Vision extends SubsystemChecker {
 		double poseWeight = avgPoseAmbiguity
 				* VisionConstants.poseAmbiguityErrorStdDev;
 		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
-				/ (0.00001 + weighAverage); //divide by zero protection
+				/ (0.00001 + weighAverage); // divide by zero protection
 		return VisionConstants.std_dev_multiplier
 				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
 				/ (numTags * VisionConstants.numTagsMultiplier);
@@ -318,7 +328,7 @@ public class Vision extends SubsystemChecker {
 	 * Computes the distance in inches from the limelight network table entry
 	 * 
 	 * @param tY the tY measurement from the limelight network table entry (pitch
-	 *              degrees)
+	 *           degrees)
 	 * @return distance in inches
 	 */
 	public static double calculateDistanceFromtY(double tY) {
@@ -328,12 +338,13 @@ public class Vision extends SubsystemChecker {
 		// distance from the center of the Limelight lens to the floor
 		double limelightLensHeightInches = VisionConstants.limelightLensHeightoffFloorInches;
 		// distance from the target to the floor
-		double goalHeightInches = 0; //if multiple targets, make this an argument
+		double goalHeightInches = 0; // if multiple targets, make this an argument
 		double angleToGoalDegrees = limelightMountAngleDegrees + tY;
-		//calculate distance
+		// calculate distance
 		double distance = (goalHeightInches - limelightLensHeightInches)
 				/ Math.tan(Units.degreesToRadians(angleToGoalDegrees));
-		return Math.abs(distance); //incase somehow the angle became pos when the object is below the target, and vice versa.
+		return Math.abs(distance); // incase somehow the angle became pos when the object is below the target, and
+									// vice versa.
 	}
 
 	/**
@@ -356,10 +367,14 @@ public class Vision extends SubsystemChecker {
 	}
 
 	@Override
-	protected Command systemCheckCommand() { return Commands.none(); }
+	protected Command systemCheckCommand() {
+		return Commands.none();
+	}
 
 	@Override
-	public double getCurrent() { return 0; }
+	public double getCurrent() {
+		return 0;
+	}
 
 	@Override
 	public HashMap<String, Double> getTemps() {
@@ -367,5 +382,7 @@ public class Vision extends SubsystemChecker {
 	}
 
 	@Override
-	public void setCurrentLimit(int amps) { return; }
+	public void setCurrentLimit(int amps) {
+		return;
+	}
 }
