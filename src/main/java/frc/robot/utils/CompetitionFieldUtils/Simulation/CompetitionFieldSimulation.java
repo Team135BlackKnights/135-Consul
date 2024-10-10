@@ -2,6 +2,7 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.GeometryConstants;
@@ -12,6 +13,8 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.CompetitionFieldUtils.CompField;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.maths.GeometryConvertor;
+import frc.robot.utils.maths.TimeUtil;
+
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.Convex;
@@ -33,9 +36,10 @@ import java.util.Set;
 public abstract class CompetitionFieldSimulation {
 	private final World<Body> physicsWorld;
 	private final CompField competitionField;
-	private final Set<HolonomicChassisSimulation> robotSimulations = new HashSet<>();
+	private final static Set<HolonomicChassisSimulation> robotSimulations = new HashSet<>();
 	private final HolonomicChassisSimulation mainRobot;
-	private final Set<GamePieceInSimulation> gamePieces;
+	private final static Set<GamePieceInSimulation> gamePieces = new HashSet<>();
+	private static double score = 0;
 
 	public CompetitionFieldSimulation(HolonomicChassisSimulation mainRobot,
 			FieldObstaclesMap obstaclesMap) {
@@ -45,9 +49,8 @@ public abstract class CompetitionFieldSimulation {
 		this.physicsWorld.setGravity(PhysicsWorld.ZERO_GRAVITY);
 		for (Body obstacle : obstaclesMap.obstacles)
 			this.physicsWorld.addBody(obstacle);
-		this.gamePieces = new HashSet<>();
 		this.physicsWorld.addBody(mainRobot);
-		this.robotSimulations.add(mainRobot);
+		robotSimulations.add(mainRobot);
 	}
 
 	public void updateSimulationWorld() {
@@ -58,16 +61,99 @@ public abstract class CompetitionFieldSimulation {
 			this.physicsWorld.step(1, subPeriodSeconds);
 			for (HolonomicChassisSimulation robotSimulation : robotSimulations)
 				robotSimulation.updateSimulationSubPeriod(i, subPeriodSeconds);
+			//go through all game pieces
+			Set<GamePieceInSimulation> gamePiecesCopy = new HashSet<>(gamePieces); // Create a copy of the gamePieces set
+			for (GamePieceInSimulation gamePiece : gamePiecesCopy) { // Iterate over the copy
+				//if gamepiece is an air note, check if we've hit the ground
+				if (gamePiece.getTag() == GamePieceTag.IN_AIR) {
+					Translation3d position = getClosestPointOnField(
+							gamePiece.getPose3d().getTranslation());
+					//check if the note is close enough to a speaker
+					if (isCloseToSpeaker(position)) {
+						//if it is, make it a speaker note
+						score += FieldConstants.SPEAKER_SCORE;
+						Logger.recordOutput("SimScore", score);
+						this.physicsWorld.removeBody(gamePiece);
+						this.competitionField.deleteObject(gamePiece);
+						gamePieces.remove(gamePiece);
+					} else if (gamePiece.getPose3d().getTranslation()
+							.getZ() <= FieldConstants.NOTE_HEIGHT) { //collision with ground
+						//make the gamepiece a ground note
+						//check if the note is close enough to a speaker
+						//otherwise, make it a ground note
+						this.physicsWorld.removeBody(gamePiece);
+						this.competitionField.deleteObject(gamePiece);
+						gamePieces.remove(gamePiece);
+						gamePiece = new Crescendo2024FieldObjects.NoteOnFieldSimulated(
+								position.toTranslation2d());
+						this.addGamePiece(gamePiece);
+						this.competitionField.addObject(gamePiece);
+					}
+				}
+			}
+			//memory management
+			gamePiecesCopy = null;
 		}
 		competitionField.updateObjectsToDashboardAndTelemetry();
 	}
 
-	public HolonomicChassisSimulation getMainDriveSimulation() {
-		return  mainRobot;
+	private boolean isCloseToSpeaker(Translation3d position) {
+		//check if the note is close enough to a speaker
+		if (position.getDistance(
+				FieldConstants.BLUE_SPEAKER) <= FieldConstants.SPEAKER_COLLISION_RADIUS) {
+			return true;
+		}
+		if (position.getDistance(
+				FieldConstants.RED_SPEAKER) <= FieldConstants.SPEAKER_COLLISION_RADIUS) {
+			return true;
+		}
+		return false;
 	}
+
+	private Translation3d getClosestPointOnField(Translation3d position) {
+		double closestX = position.getX();
+		double closestY = position.getY();
+		if (position.getX() < FieldConstants.NOTE_DIAMETER / 2) {
+			closestX = 0 + FieldConstants.NOTE_DIAMETER / 2;
+		} else if (position.getX() > FieldConstants.FIELD_WIDTH
+				- FieldConstants.NOTE_DIAMETER / 2) {
+			closestX = FieldConstants.FIELD_WIDTH
+					- FieldConstants.NOTE_DIAMETER / 2;
+		}
+		if (position.getY() <= FieldConstants.NOTE_DIAMETER / 2) {
+			closestY = 0 + FieldConstants.NOTE_DIAMETER / 2;
+		} else if (position.getY() > FieldConstants.FIELD_HEIGHT
+				- FieldConstants.NOTE_DIAMETER / 2) {
+			closestY = FieldConstants.FIELD_HEIGHT
+					- FieldConstants.NOTE_DIAMETER / 2;
+		}
+		//now inside field, check if inside any obstacles in the field
+		for (Body obstacle : physicsWorld.getBodies()) {
+			if (obstacle.getFixture(0).getShape().contains(
+					GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)))) {
+				//if it is, move the note to the closest point on the obstacle
+				boolean collisionDetected = obstacle.getFixture(0).getShape().contains(GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)));
+				if (collisionDetected) {
+					double obstacleRadius = obstacle.getFixture(0).getShape().getRadius();
+					Translation2d obstacleCenter = GeometryConvertor.toWpilibTranslation2d(obstacle.getTransform().getTranslation());
+					//move the note that far away radially from the obstacle center, in the direction of the note
+					double angle = Math.atan2(position.getY() - obstacleCenter.getY(), position.getX() - obstacleCenter.getX());
+					closestX = obstacleCenter.getX() + Math.cos(angle) + (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
+					closestY = obstacleCenter.getY() + Math.sin(angle) + (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
+					
+				}
+			}
+		}
+		return new Translation3d(closestX, closestY, position.getZ());
+	}
+
+	public HolonomicChassisSimulation getMainDriveSimulation() {
+		return mainRobot;
+	}
+
 	public void addRobot(HolonomicChassisSimulation chassisSimulation) {
 		this.physicsWorld.addBody(chassisSimulation);
-		this.robotSimulations.add(chassisSimulation);
+		robotSimulations.add(chassisSimulation);
 		this.competitionField.addObject(chassisSimulation);
 	}
 
@@ -92,9 +178,8 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.deleteObject(gamePiece);
 			gamePieces.remove(gamePiece);
 			gamePiece = new Crescendo2024FieldObjects.NoteInFly(
-					Logger.getTimestamp(), Constants.GeometryConstants.shotSpeed,
-					gamePiece.getPose3d(), Robot.isRed ? FieldConstants.RED_SPEAKER
-							: FieldConstants.BLUE_SPEAKER);
+					TimeUtil.getLogTimeSeconds(),
+					Constants.GeometryConstants.shotSpeed, gamePiece.getPose3d());
 			this.addGamePiece(gamePiece);
 			this.competitionField.addObject(gamePiece);
 		}
@@ -139,18 +224,50 @@ public abstract class CompetitionFieldSimulation {
 	public void addGamePiece(GamePieceInSimulation gamePieceInSimulation) {
 		this.physicsWorld.addBody(gamePieceInSimulation);
 		this.competitionField.addObject(gamePieceInSimulation);
-		this.gamePieces.add(gamePieceInSimulation);
+		gamePieces.add(gamePieceInSimulation);
 	}
 
 	public CompField getCompetitionField() { return competitionField; }
 
 	public void clearGamePieces() {
-		for (GamePieceInSimulation gamePiece : this.gamePieces) {
+		for (GamePieceInSimulation gamePiece : gamePieces) {
 			this.physicsWorld.removeBody(gamePiece);
 			this.competitionField
 					.clearObjectsWithGivenType(gamePiece.getTypeName());
 		}
-		this.gamePieces.clear();
+		gamePieces.clear();
+	}
+
+	public static Translation2d getClosestGamePiece(
+			Translation2d robotPosition) {
+		GamePieceInSimulation closestGamePiece = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (GamePieceInSimulation gamePiece : gamePieces) {
+			double distance = gamePiece.getPose3d().getTranslation()
+					.toTranslation2d().getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestGamePiece = gamePiece;
+				closestDistance = distance;
+			}
+		}
+		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
+	}
+
+	public static Pose2d getClosestRobotPose(Translation2d robotPosition) {
+		HolonomicChassisSimulation closestRobot = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (HolonomicChassisSimulation robot : robotSimulations) {
+			if (!(robot instanceof OpponentRobotSimulation)) {
+				continue;
+			}
+			double distance = robot.getPose3d().getTranslation().toTranslation2d()
+					.getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestRobot = robot;
+				closestDistance = distance;
+			}
+		}
+		return closestRobot.getPose3d().toPose2d();
 	}
 
 	public void resetField(boolean preload) {
