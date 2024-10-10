@@ -22,6 +22,7 @@ import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.SysIdRoutines;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
+import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -178,7 +179,8 @@ public class Robot extends LoggedRobot {
 		isPracticeDSMode = false;
 		if (Constants.currentMatchState == FRCMatchState.ENDGAME) {
 			Constants.currentMatchState = FRCMatchState.MATCHOVER;
-		} else {
+      		DataHandler.logData(VisionConstants.FieldConstants.aprilTagOffsets,"MatchAprilTagOffsets");
+		}else{
 			Constants.currentMatchState = FRCMatchState.DISABLED;
 		}
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {

@@ -38,8 +38,10 @@ public abstract class CompetitionFieldSimulation {
 	private final CompField competitionField;
 	private final static Set<HolonomicChassisSimulation> robotSimulations = new HashSet<>();
 	private final HolonomicChassisSimulation mainRobot;
+
 	private final static Set<GamePieceInSimulation> gamePieces = new HashSet<>();
 	private static double score = 0;
+
 
 	public CompetitionFieldSimulation(HolonomicChassisSimulation mainRobot,
 			FieldObstaclesMap obstaclesMap) {
@@ -238,6 +240,7 @@ public abstract class CompetitionFieldSimulation {
 		gamePieces.clear();
 	}
 
+
 	public static Translation2d getClosestGamePiece(
 			Translation2d robotPosition) {
 		GamePieceInSimulation closestGamePiece = null;
@@ -245,6 +248,7 @@ public abstract class CompetitionFieldSimulation {
 		for (GamePieceInSimulation gamePiece : gamePieces) {
 			double distance = gamePiece.getPose3d().getTranslation()
 					.toTranslation2d().getDistance(robotPosition);
+
 			if (distance < closestDistance) {
 				closestGamePiece = gamePiece;
 				closestDistance = distance;
@@ -252,6 +256,7 @@ public abstract class CompetitionFieldSimulation {
 		}
 		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
 	}
+
 
 	public static Pose2d getClosestRobotPose(Translation2d robotPosition) {
 		HolonomicChassisSimulation closestRobot = null;
@@ -262,6 +267,7 @@ public abstract class CompetitionFieldSimulation {
 			}
 			double distance = robot.getPose3d().getTranslation().toTranslation2d()
 					.getDistance(robotPosition);
+
 			if (distance < closestDistance) {
 				closestRobot = robot;
 				closestDistance = distance;
