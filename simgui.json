@@ -34,7 +34,6 @@
       "/SmartDashboard/SystemStatus/AllSystemsCheck": "Command",
       "/SmartDashboard/SystemStatus/Mecanum/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Swerve/SystemCheck": "Command",
-      "/SmartDashboard/SystemStatus/Vision/SystemCheck": "Command",
       "/SmartDashboard/VisionSystemSim-Vision Sim/Sim Field": "Field2d"
     },
     "windows": {

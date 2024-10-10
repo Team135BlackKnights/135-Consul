@@ -32,11 +32,11 @@ public class VisionConstants {
 					 return value;
 				}
 		  }
-	//If the change in odometry is below this distance, do not adjust april tag trusts.
+	//If the change in odometry is below these, do not adjust april tag trusts.
 	public final static double 
-	maxStaleReadingXMeters = Units.inchesToMeters(4),
-	maxStaleReadingYMeters = Units.inchesToMeters(4),
-	maxStaleReadingRotation = Units.degreesToRadians(.02);
+	maxStaleFramePoseXMeters = Units.inchesToMeters(4),
+	maxStaleFramePoseYMeters = Units.inchesToMeters(4),
+	maxStaleFramePoseRotation = Units.toRadians(.02);
  
 	public static class Controls {
 		public static JoystickButton autoIntake = new JoystickButton(
