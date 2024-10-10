@@ -32,6 +32,12 @@ public class VisionConstants {
 					 return value;
 				}
 		  }
+	//If the change in odometry is below these, do not adjust april tag trusts.
+	public final static double 
+	maxStaleFramePoseXMeters = Units.inchesToMeters(4),
+	maxStaleFramePoseYMeters = Units.inchesToMeters(4),
+	maxStaleFramePoseRotation = Units.toRadians(.02);
+ 
 	public static class Controls {
 		public static JoystickButton autoIntake = new JoystickButton(
 				RobotContainer.driveController, 1); //a
