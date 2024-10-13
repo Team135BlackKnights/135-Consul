@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -160,6 +161,9 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
+		//Publish the current mode of the robot (to check in pit display)
+		Logger.recordOutput("robotMode", Constants.currentMode);
+
 		//We check to see what drivetrain type we have here, and create the correct drivetrain system based on that. 
 		//If we get something wacky, throw an error
 		List<Pair<String, Command>> autoCommands = new ArrayList<>();
