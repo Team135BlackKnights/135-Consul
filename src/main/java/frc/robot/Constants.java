@@ -14,7 +14,7 @@ import frc.robot.utils.drive.DriveConstants;
  * Utils, and their respective folder for Merge purposes.
  */
 public final class Constants {
-	public static final Mode currentMode;
+	public static Mode currentMode;
 
 	public static enum Mode {
 		/** Running on a real robot. */
@@ -25,17 +25,26 @@ public final class Constants {
 		REPLAY
 	}
 
-	static {
-		currentMode = Mode.REAL;
-		//if (Robot.isReal()) currentMode = Mode.REAL;
-		//else if (Robot.isSimulation()) currentMode = Mode.SIM;
-		//else currentMode = Mode.REPLAY;
-	}
+
 	//FRCMatchState of the robot
 	public static boolean isCompetition = false;
 	public static FRCMatchState currentMatchState = FRCMatchState.DISABLED;
 	public static boolean isTuningPID = true;
-
+		static {
+		if (isCompetition){
+			if (Robot.isReal()){
+			  currentMode = Mode.REAL;
+			}else{
+			  currentMode = Mode.REPLAY;
+		 	}
+		}else{
+			if(Robot.isReal()){
+			 currentMode = Mode.REAL;
+			}if (Robot.isSimulation()){
+			currentMode = Mode.SIM;
+		 }
+		}
+	}
 	/**
 	 * Allows the robot to utilize switch statements to efficiently figure out
 	 * the match period it's in. The current FRCMatchState is stored in
