@@ -84,7 +84,7 @@ public abstract class CompetitionFieldSimulation {
 						this.competitionField.deleteObject(gamePiece);
 						gamePieces.remove(gamePiece);
 						gamePiece = new Crescendo2024FieldObjects.NoteOnFieldSimulated(
-								position.toTranslation2d());
+								position.toTranslation2d(),gamePiece.getLinearVelocity());
 						this.addGamePiece(gamePiece);
 						this.competitionField.addObject(gamePiece);
 					}

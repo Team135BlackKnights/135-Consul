@@ -1,5 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
+import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -21,7 +22,7 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 	public void placeGamePiecesOnField(boolean preload) {
 		for (Translation2d notePosition : FieldConstants.NOTE_INITIAL_POSITIONS)
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnFieldSimulated(
-					notePosition));
+					notePosition,new Vector2()));
 		if (preload) {
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnManipulator(
 					Logger.getTimestamp(), 999,

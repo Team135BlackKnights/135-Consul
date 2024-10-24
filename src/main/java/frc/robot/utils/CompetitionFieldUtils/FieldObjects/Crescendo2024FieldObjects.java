@@ -3,13 +3,13 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotContainer;
-import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNote;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.maths.TimeUtil;
 
 import org.dyn4j.geometry.Geometry;
+import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -49,9 +49,10 @@ public final class Crescendo2024FieldObjects {
 	 * intake simulation
 	 */
 	public static class NoteOnFieldSimulated extends GamePieceInSimulation {
-		public NoteOnFieldSimulated(Translation2d initialPosition) {
-			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
-					GamePieceTag.ON_GROUND);
+		public NoteOnFieldSimulated(Translation2d initialPosition, Vector2 speedVector) {
+			//TODO: CHECK THE SPEED VECTOR PROPERLY TRANSITIONS
+			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),FieldConstants.DEFAULT_MASS,
+					GamePieceTag.ON_GROUND, speedVector);
 		}
 
 		@Override
@@ -103,11 +104,7 @@ public final class Crescendo2024FieldObjects {
 			double currentTime = Logger.getTimestamp();
 			Pose3d manipulatorPose3d = RobotContainer.fieldSimulation
 					.getMainDriveSimulation().getPose3d()
-					.transformBy(new Transform3d(manipulatorTransform3d.getTranslation(), new Rotation3d(0,0/*-RobotContainer.armS.getDistance()*/,0)));
-					//set the pose's rotation
-			manipulatorPose3d = manipulatorPose3d.transformBy(GeometryConstants.intakeTransform);
-			//manipulatorPose3d = new Pose3d(manipulatorPose3d.getTranslation(),
-			//new Rotation3d(0,-RobotContainer.armS.getDistance(),RobotContainer.drivetrainS.getPose().getRotation().getRadians()));
+					.transformBy(manipulatorTransform3d);
 			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec
 					+ totalTimeSec)) {
 				return manipulatorPose3d;
@@ -135,6 +132,7 @@ public final class Crescendo2024FieldObjects {
 					Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_AIR);
 			super.setEnabled(false);
 			this.currentPose = startingPose;
+			Logger.recordOutput("currentOa", startingPose);
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
 			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
@@ -148,11 +146,12 @@ public final class Crescendo2024FieldObjects {
 			double deltaTSeconds = Math
 					.abs(TimeUtil.getLogTimeSeconds() - launchingTimeStampSec);
 			//To visualize the math 
-			double vNoughtZ = launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getY()-Units.degreesToRadians(46));
-			double vNoughtX = -launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY()-Units.degreesToRadians(46));
+			double vNoughtZ = launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getY());
+			double vNoughtY = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.sin(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
+			double vNoughtX = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.cos(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
 			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNote.M_OVER_K);
 			double updatedPosZMeters = CrescendoNote.M_OVER_K*(vNoughtZ+CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)-(CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds);
-			double updatedPosYMeters = 0;
+			double updatedPosYMeters = CrescendoNote.M_OVER_K*vNoughtY*(1-expDecay);
 			double updatedPosXMeters = CrescendoNote.M_OVER_K*vNoughtX*(1-expDecay);
 			double updatedPitch = Math.atan2(updatedPosZMeters, Math.hypot(updatedPosXMeters, updatedPosYMeters));
 			Transform3d projectileTranslationVector = new Transform3d(
