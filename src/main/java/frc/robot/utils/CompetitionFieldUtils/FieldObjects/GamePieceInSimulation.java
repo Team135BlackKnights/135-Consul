@@ -9,6 +9,7 @@ import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
 import org.dyn4j.geometry.Convex;
 import org.dyn4j.geometry.MassType;
+import org.dyn4j.geometry.Vector2;
 
 /**
  * simulates the behavior of gamepiece on field. game pieces HAVE collision
@@ -21,11 +22,11 @@ public abstract class GamePieceInSimulation extends Body
 
 	public final GamePieceTag tag;
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag) {
-		this(initialPosition, shape, FieldConstants.DEFAULT_MASS,tag);
+		this(initialPosition, shape, FieldConstants.DEFAULT_MASS,tag,new Vector2());
 	}
 
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape,
-			double mass, GamePieceTag tag) {
+			double mass, GamePieceTag tag, Vector2 speedVector) {
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
 		bodyFixture.setFriction(FieldConstants.EDGE_COEFFICIENT_OF_FRICTION);
@@ -37,6 +38,7 @@ public abstract class GamePieceInSimulation extends Body
 		super.setLinearDamping(FieldConstants.LINEAR_DAMPING);
 		super.setAngularDamping(FieldConstants.ANGULAR_DAMPING);
 		super.setBullet(true);
+		super.setLinearVelocity(speedVector);
 	}
 	public GamePieceTag getTag() {
 		return tag;

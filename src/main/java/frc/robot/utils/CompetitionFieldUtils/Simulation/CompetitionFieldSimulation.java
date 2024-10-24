@@ -3,7 +3,6 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects;
@@ -77,7 +76,7 @@ public abstract class CompetitionFieldSimulation {
 						this.competitionField.deleteObject(gamePiece);
 						gamePieces.remove(gamePiece);
 					} else if (gamePiece.getPose3d().getTranslation()
-							.getZ() <= FieldConstants.NOTE_HEIGHT) { //collision with ground
+							.getZ() <= .03) { //collision with ground
 						//make the gamepiece a ground note
 						//check if the note is close enough to a speaker
 						//otherwise, make it a ground note
@@ -177,14 +176,41 @@ public abstract class CompetitionFieldSimulation {
 			this.physicsWorld.removeBody(gamePiece);
 			this.competitionField.deleteObject(gamePiece);
 			gamePieces.remove(gamePiece);
+			/*double speed = calculateObjectSpeed(mainRobot.getLinearVelocity().x,
+			 (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);*/
+			double speed = 0;
+			Logger.recordOutput("ShotSpeed", speed);
+			//Logger.recordOutput("ShotRPM", (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
 			gamePiece = new Crescendo2024FieldObjects.NoteInFly(
 					TimeUtil.getLogTimeSeconds(),
-					Constants.GeometryConstants.shotSpeed, gamePiece.getPose3d());
+					speed, gamePiece.getPose3d());
 			this.addGamePiece(gamePiece);
 			this.competitionField.addObject(gamePiece);
 		}
 	}
+	///example function to take RPM and robot velocity and turn it into m/s
+	/*
+	private double calculateObjectSpeed(double speedX, double flywheelRPM) {
+		// 1. Convert flywheel RPM to angular velocity in rad/s
+		double angularVelocity = (flywheelRPM * 2 * Math.PI) / 60.0;
+		// 3. Calculate the moment of inertia for the flywheel (assuming a solid disk): I = 0.5 * m * r^2
+		double momentOfInertia = 0.5 * StateSpaceConstants.Flywheel.mass * Math.pow(StateSpaceConstants.Flywheel.radius, 2);
 
+		// 4. Calculate the kinetic energy of the flywheel: KE = 0.5 * I * ω^2
+		double flywheelKineticEnergy = 0.5 * momentOfInertia * Math.pow(angularVelocity, 2);
+
+		// 5. Assume the flywheel transfers part of its kinetic energy to the object
+		// Energy transferred to the object (we'll assume full efficiency for impulse calculation)
+		double energyTransferred = StateSpaceConstants.Flywheel.efficiency * flywheelKineticEnergy;
+
+		// 6. Calculate the final velocity of the object using kinetic energy: KE = 0.5 * m * v^2 => v = sqrt(2 * KE / m)
+		double velocityDueToFlywheel = Math.sqrt(2 * energyTransferred / FieldConstants.CrescendoNote.DEFAULT_MASS_KG);
+
+		// 7. Total speed is the combination of robot speed and the flywheel-imparted speed
+		//use heading of robot to determine how to use x / y components
+		double totalSpeed = velocityDueToFlywheel + speedX; // x direction combines with flywheel velocity
+		return totalSpeed; // returns the total speed in m/s
+  }*/
 	private GamePieceInSimulation getClosestGamePiece(GamePieceTag tag) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;

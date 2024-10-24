@@ -109,12 +109,14 @@ public class RobotContainer {
 		@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	
+	public static double[] knownInputs = new double[2]; //number of inputs to AI
+	public static double[] knownOutputs = new double[2]; //number of outputs to AI
+	public static List<Double> currentAiOutputs = new ArrayList<Double>(4); //total values for AI
 	public enum GamePieceState {
 		NO_GAME_PIECE, HAS_NOTE, ABORT
 	}
 	public static GamePieceState currentGamePieceStatus = GamePieceState.NO_GAME_PIECE;
-
+	public static boolean userDrive = true;
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
 	private OpponentRobotSimulation testOpponentRobot = null;
@@ -430,13 +432,13 @@ public class RobotContainer {
 						.negate())
 				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
 		yButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, true, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kForward, true));
 		bButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, true, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kReverse, true));
 		aButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, false, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kForward, false));
 		xButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, false, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kReverse, false));
 		//Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)

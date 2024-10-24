@@ -1,7 +1,6 @@
 package frc.robot.utils;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
@@ -11,11 +10,9 @@ public class RunTest extends Command {
 	private final boolean isQuasiastic;
 	private Command test;
 
-	public RunTest(SysIdRoutine.Direction direction, boolean isQuasiastic,
-			Subsystem requirements) {
+	public RunTest(SysIdRoutine.Direction direction, boolean isQuasiastic) {
 		this.direction = direction;
 		this.isQuasiastic = isQuasiastic;
-		addRequirements(RobotContainer.getAllSubsystems());
 	}
 
 	@Override
@@ -29,9 +26,10 @@ public class RunTest extends Command {
 			}
 			break;
 		default:
-			System.err.println("NO GIVEN ROUTINE!");
+			System.err.println(Robot.runningTest + " is not a valid test");
 			break;
 		}
+		System.out.println("Running Test" + direction.toString());
 		test.schedule();
 	}
 
