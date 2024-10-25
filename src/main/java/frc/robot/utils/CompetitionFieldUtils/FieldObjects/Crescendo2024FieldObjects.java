@@ -49,10 +49,16 @@ public final class Crescendo2024FieldObjects {
 	 * intake simulation
 	 */
 	public static class NoteOnFieldSimulated extends GamePieceInSimulation {
-		public NoteOnFieldSimulated(Translation2d initialPosition, Vector2 speedVector) {
-			//TODO: CHECK THE SPEED VECTOR PROPERLY TRANSITIONS
-			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),FieldConstants.DEFAULT_MASS,
-					GamePieceTag.ON_GROUND, speedVector);
+		public NoteOnFieldSimulated(Translation2d initialPosition,
+				Vector2 speedVector) {
+			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
+					GamePieceTag.ON_GROUND);
+		}
+
+		public NoteOnFieldSimulated(Translation2d initialPosition,
+				double momentumAngle, double momentumMagnitude) {
+			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
+					GamePieceTag.ON_GROUND, momentumAngle, momentumMagnitude);
 		}
 
 		@Override
@@ -122,7 +128,7 @@ public final class Crescendo2024FieldObjects {
 	 * simulated by a simple linear animation
 	 */
 	public static class NoteInFly extends GamePieceInSimulation {
-		private final double launchingTimeStampSec, launchingSpeedMetersPerSec;
+		private final double launchingTimeStampSec;
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
 
@@ -130,12 +136,12 @@ public final class Crescendo2024FieldObjects {
 				double launchingSpeedMetersPerSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
 					Geometry.createCircle(NOTE_DIAMETER / 2), GamePieceTag.IN_AIR);
-			super.setEnabled(false);
+			super.setEnabled(true);
 			this.currentPose = startingPose;
-			Logger.recordOutput("currentOa", startingPose);
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
-			this.launchingSpeedMetersPerSec = launchingSpeedMetersPerSec;
+			this.momentumAngle = startingPose.getRotation().getZ() + Math.PI;
+			this.momentumMagnitude = launchingSpeedMetersPerSec;
 		}
 
 		@Override
@@ -146,19 +152,30 @@ public final class Crescendo2024FieldObjects {
 			double deltaTSeconds = Math
 					.abs(TimeUtil.getLogTimeSeconds() - launchingTimeStampSec);
 			//To visualize the math 
-			double vNoughtZ = launchingSpeedMetersPerSec*Math.sin(startingPose.getRotation().getY());
-			double vNoughtY = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.sin(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
-			double vNoughtX = launchingSpeedMetersPerSec*Math.cos(startingPose.getRotation().getY())*Math.cos(RobotContainer.drivetrainS.getPose().getRotation().getRadians()+Math.PI);
-			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNote.M_OVER_K);
-			double updatedPosZMeters = CrescendoNote.M_OVER_K*(vNoughtZ+CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)-(CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds);
-			double updatedPosYMeters = CrescendoNote.M_OVER_K*vNoughtY*(1-expDecay);
-			double updatedPosXMeters = CrescendoNote.M_OVER_K*vNoughtX*(1-expDecay);
-			double updatedPitch = Math.atan2(updatedPosZMeters, Math.hypot(updatedPosXMeters, updatedPosYMeters));
+			double vNoughtZ = momentumMagnitude * Math.sin(
+					startingPose.getRotation().getY() - Units.degreesToRadians(25));
+			double vNoughtX = -momentumMagnitude * Math.cos(
+					startingPose.getRotation().getY() - Units.degreesToRadians(25));
+			double expDecay = Math.pow(Math.E,
+					-deltaTSeconds / CrescendoNote.M_OVER_K);
+			double updatedPosZMeters = CrescendoNote.M_OVER_K
+					* (vNoughtZ + CrescendoNote.M_OVER_K
+							* FieldConstants.COEFFICIENT_OF_GRAVITY)
+					* (1 - expDecay)
+					- (CrescendoNote.M_OVER_K * FieldConstants.COEFFICIENT_OF_GRAVITY
+							* deltaTSeconds);
+			double updatedPosYMeters = 0;
+			double updatedPosXMeters = CrescendoNote.M_OVER_K * vNoughtX
+					* (1 - expDecay);
+			double updatedPitch = Math.atan2(updatedPosZMeters,
+					Math.hypot(updatedPosXMeters, updatedPosYMeters));
 			Transform3d projectileTranslationVector = new Transform3d(
 					updatedPosXMeters, updatedPosYMeters, updatedPosZMeters,
-					new Rotation3d(0, updatedPitch, 0));
+					new Rotation3d(0, updatedPitch, momentumAngle
+							- startingPose.getRotation().getZ() + Math.PI));
 			// Update the current pose based on the projectile's new position
 			currentPose = startingPose.plus(projectileTranslationVector);
+			momentumAngle = currentPose.getRotation().getZ() + Math.PI;
 			return currentPose;
 		}
 

@@ -6,6 +6,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects;
@@ -22,7 +23,7 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 	public void placeGamePiecesOnField(boolean preload) {
 		for (Translation2d notePosition : FieldConstants.NOTE_INITIAL_POSITIONS)
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnFieldSimulated(
-					notePosition,new Vector2()));
+					notePosition, new Vector2()));
 		if (preload) {
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnManipulator(
 					Logger.getTimestamp(), 999,
@@ -40,58 +41,99 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 			super();
 			//left wall
 			super.addBorderLine(new Translation2d(0, 1),
-					new Translation2d(0, 4.51));
+					new Translation2d(0, 4.51),
+					new double[] { 0, Units.inchesToMeters(78)
+					});
 			super.addBorderLine(new Translation2d(0, 4.51),
-					new Translation2d(0.9, 5));
+					new Translation2d(0.9, 5),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(new Translation2d(0.9, 5),
-					new Translation2d(0.9, 6.05));
+					new Translation2d(0.9, 6.05),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(new Translation2d(0.9, 6.05),
-					new Translation2d(0, 6.5));
+					new Translation2d(0, 6.5),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(new Translation2d(0, 6.5),
-					new Translation2d(0, 8.2));
+					new Translation2d(0, 8.2),
+					new double[] { 0, Units.inchesToMeters(78)
+					});
 			// upper wall
 			super.addBorderLine(new Translation2d(0, 8.12),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 8.12));
+					new Translation2d(FieldConstants.FIELD_WIDTH, 8.12),
+					new double[] { 0, Units.inchesToMeters(50)
+					});
 			// righter wall 
 			super.addBorderLine(new Translation2d(FieldConstants.FIELD_WIDTH, 1),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 4.51));
+					new Translation2d(FieldConstants.FIELD_WIDTH, 4.51),
+					new double[] { 0, Units.inchesToMeters(78)
+					});
 			super.addBorderLine(
 					new Translation2d(FieldConstants.FIELD_WIDTH, 4.51),
-					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 5));
+					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 5),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(
 					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 5),
-					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 6.05));
+					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 6.05),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(
 					new Translation2d(FieldConstants.FIELD_WIDTH - 0.9, 6.05),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 6.5));
+					new Translation2d(FieldConstants.FIELD_WIDTH, 6.5),
+					new double[] { 0, Units.inchesToMeters(12)
+					});
 			super.addBorderLine(new Translation2d(FieldConstants.FIELD_WIDTH, 6.5),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 8.2));
+					new Translation2d(FieldConstants.FIELD_WIDTH, 8.2),
+					new double[] { 0, Units.inchesToMeters(78)
+					});
 			// lower wall
 			super.addBorderLine(new Translation2d(1.92, 0),
-					new Translation2d(FieldConstants.FIELD_WIDTH - 1.92, 0));
+					new Translation2d(FieldConstants.FIELD_WIDTH - 1.92, 0),
+					new double[] { 0, Units.inchesToMeters(20)
+					});
 			// red source wall
 			super.addBorderLine(new Translation2d(1.92, 0),
-					new Translation2d(0, 1));
+					new Translation2d(0, 1),
+					new double[] { 0, Units.inchesToMeters(60)
+					});
 			// blue source wall
 			super.addBorderLine(
 					new Translation2d(FieldConstants.FIELD_WIDTH - 1.92, 0),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 1));
+					new Translation2d(FieldConstants.FIELD_WIDTH, 1),
+					new double[] { 0, Units.inchesToMeters(60)
+					});
 			// blue stage
 			super.addRectangularObstacle(0.35, 0.35,
-					new Pose2d(3.4, 4.1, new Rotation2d()));
+					new Pose2d(3.4, 4.1, new Rotation2d()),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 			super.addRectangularObstacle(0.35, 0.35,
-					new Pose2d(5.62, 4.1 - 1.28, Rotation2d.fromDegrees(30)));
+					new Pose2d(5.62, 4.1 - 1.28, Rotation2d.fromDegrees(30)),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 			super.addRectangularObstacle(0.35, 0.35,
-					new Pose2d(5.62, 4.1 + 1.28, Rotation2d.fromDegrees(60)));
+					new Pose2d(5.62, 4.1 + 1.28, Rotation2d.fromDegrees(60)),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 			// red stage
-			super.addRectangularObstacle(0.35, 0.35, new Pose2d(
-					FieldConstants.FIELD_WIDTH - 3.4, 4.1, new Rotation2d()));
+			super.addRectangularObstacle(0.35, 0.35,
+					new Pose2d(FieldConstants.FIELD_WIDTH - 3.4, 4.1,
+							new Rotation2d()),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 			super.addRectangularObstacle(0.35, 0.35,
 					new Pose2d(FieldConstants.FIELD_WIDTH - 5.62, 4.1 - 1.28,
-							Rotation2d.fromDegrees(60)));
+							Rotation2d.fromDegrees(60)),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 			super.addRectangularObstacle(0.35, 0.35,
 					new Pose2d(FieldConstants.FIELD_WIDTH - 5.62, 4.1 + 1.28,
-							Rotation2d.fromDegrees(30)));
+							Rotation2d.fromDegrees(30)),
+					new double[] { 0, Units.inchesToMeters(75)
+					});
 		}
 	}
 }

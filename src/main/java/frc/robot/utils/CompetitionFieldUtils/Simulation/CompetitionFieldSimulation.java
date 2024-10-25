@@ -1,6 +1,8 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.Robot;
@@ -16,6 +18,7 @@ import frc.robot.utils.maths.TimeUtil;
 
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
+import org.dyn4j.dynamics.contact.ContactConstraint;
 import org.dyn4j.geometry.Convex;
 import org.dyn4j.geometry.Geometry;
 import org.dyn4j.geometry.MassType;
@@ -80,13 +83,43 @@ public abstract class CompetitionFieldSimulation {
 						//make the gamepiece a ground note
 						//check if the note is close enough to a speaker
 						//otherwise, make it a ground note
+						double momentumAngle = gamePiece.momentumAngle;
+						double momentumMagnitude = gamePiece.momentumMagnitude;
 						this.physicsWorld.removeBody(gamePiece);
 						this.competitionField.deleteObject(gamePiece);
 						gamePieces.remove(gamePiece);
 						gamePiece = new Crescendo2024FieldObjects.NoteOnFieldSimulated(
-								position.toTranslation2d(),gamePiece.getLinearVelocity());
+								getClosestPointOnField(position).toTranslation2d(),
+								momentumAngle, momentumMagnitude);
 						this.addGamePiece(gamePiece);
 						this.competitionField.addObject(gamePiece);
+					} else if (hasContact(gamePiece) && gamePiece.isEnabled()) {
+						// Flip the note velocity by Math.PI to simulate a bounce.
+						//Relaunch the note from it's current position, just math.pi radians away
+						double momentumMagnitude = gamePiece.momentumMagnitude
+								* FieldConstants.EDGE_COEFFICIENT_OF_RESTITUTION;
+						this.physicsWorld.removeBody(gamePiece);
+						this.competitionField.deleteObject(gamePiece);
+						gamePieces.remove(gamePiece);
+						gamePiece = new Crescendo2024FieldObjects.NoteInFly(
+								TimeUtil.getLogTimeSeconds(), momentumMagnitude,
+								gamePiece.getPose3d().transformBy(
+										new Transform3d(new Translation3d(0, 0, 0),
+												new Rotation3d(0, 0, Math.PI))));
+						this.addGamePiece(gamePiece);
+						this.competitionField.addObject(gamePiece);
+						final GamePieceInSimulation finalGamePiece = gamePiece;
+						//disable the game piece collision for a short time
+						new Thread(() -> {
+							finalGamePiece.setEnabled(false);
+							try {
+								Thread.sleep(250);
+							}
+							catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							finalGamePiece.setEnabled(true);
+						}).start();
 					}
 				}
 			}
@@ -94,6 +127,33 @@ public abstract class CompetitionFieldSimulation {
 			gamePiecesCopy = null;
 		}
 		competitionField.updateObjectsToDashboardAndTelemetry();
+	}
+
+	private boolean hasContact(GamePieceInSimulation gamePiece) {
+		gamePiece.setTransform(GeometryConvertor
+				.toDyn4jTransform(gamePiece.getPose3d().toPose2d()));
+		Logger.recordOutput("PhysicsLocation",
+				GeometryConvertor.toWpilibPose2d(gamePiece.getTransform()));
+		for (ContactConstraint<Body> contact : this.physicsWorld
+				.getContacts(gamePiece)) {
+			// Check if either body in the contact is the game piece
+			if (contact.getOtherBody(gamePiece) != null) {
+				// Make sure it isn't the ground
+				if (contact.getOtherBody(gamePiece).getUserData() != null) {
+					Object userData = contact.getOtherBody(gamePiece).getUserData();
+					if (userData instanceof double[]) {
+						double[] userDataArray = (double[]) userData;
+						if (gamePiece.getPose3d().getZ() <= userDataArray[1]) {
+							System.out.println("Contact with "
+									+ contact.getOtherBody(gamePiece).getFixture(0)
+											.getShape().getClass().getName());
+							return true; // Contact found
+						}
+					}
+				}
+			}
+		}
+		return false; // No contacts found
 	}
 
 	private boolean isCloseToSpeaker(Translation3d position) {
@@ -128,18 +188,26 @@ public abstract class CompetitionFieldSimulation {
 		}
 		//now inside field, check if inside any obstacles in the field
 		for (Body obstacle : physicsWorld.getBodies()) {
-			if (obstacle.getFixture(0).getShape().contains(
-					GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)))) {
+			if (obstacle.getFixture(0).getShape().contains(GeometryConvertor
+					.toDyn4jVector2(new Translation2d(closestX, closestY)))) {
 				//if it is, move the note to the closest point on the obstacle
-				boolean collisionDetected = obstacle.getFixture(0).getShape().contains(GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)));
+				boolean collisionDetected = obstacle.getFixture(0).getShape()
+						.contains(GeometryConvertor
+								.toDyn4jVector2(new Translation2d(closestX, closestY)));
 				if (collisionDetected) {
-					double obstacleRadius = obstacle.getFixture(0).getShape().getRadius();
-					Translation2d obstacleCenter = GeometryConvertor.toWpilibTranslation2d(obstacle.getTransform().getTranslation());
+					double obstacleRadius = obstacle.getFixture(0).getShape()
+							.getRadius();
+					Translation2d obstacleCenter = GeometryConvertor
+							.toWpilibTranslation2d(
+									obstacle.getTransform().getTranslation());
 					//move the note that far away radially from the obstacle center, in the direction of the note
-					double angle = Math.atan2(position.getY() - obstacleCenter.getY(), position.getX() - obstacleCenter.getX());
-					closestX = obstacleCenter.getX() + Math.cos(angle) + (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
-					closestY = obstacleCenter.getY() + Math.sin(angle) + (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
-					
+					double angle = Math.atan2(
+							position.getY() - obstacleCenter.getY(),
+							position.getX() - obstacleCenter.getX());
+					closestX = obstacleCenter.getX() + Math.cos(angle)
+							+ (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
+					closestY = obstacleCenter.getY() + Math.sin(angle)
+							+ (obstacleRadius + FieldConstants.NOTE_DIAMETER / 2);
 				}
 			}
 		}
@@ -182,12 +250,12 @@ public abstract class CompetitionFieldSimulation {
 			Logger.recordOutput("ShotSpeed", speed);
 			//Logger.recordOutput("ShotRPM", (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
 			gamePiece = new Crescendo2024FieldObjects.NoteInFly(
-					TimeUtil.getLogTimeSeconds(),
-					speed, gamePiece.getPose3d());
+					TimeUtil.getLogTimeSeconds(), speed, gamePiece.getPose3d());
 			this.addGamePiece(gamePiece);
 			this.competitionField.addObject(gamePiece);
 		}
 	}
+
 	///example function to take RPM and robot velocity and turn it into m/s
 	/*
 	private double calculateObjectSpeed(double speedX, double flywheelRPM) {
@@ -195,22 +263,22 @@ public abstract class CompetitionFieldSimulation {
 		double angularVelocity = (flywheelRPM * 2 * Math.PI) / 60.0;
 		// 3. Calculate the moment of inertia for the flywheel (assuming a solid disk): I = 0.5 * m * r^2
 		double momentOfInertia = 0.5 * StateSpaceConstants.Flywheel.mass * Math.pow(StateSpaceConstants.Flywheel.radius, 2);
-
+	
 		// 4. Calculate the kinetic energy of the flywheel: KE = 0.5 * I * ω^2
 		double flywheelKineticEnergy = 0.5 * momentOfInertia * Math.pow(angularVelocity, 2);
-
+	
 		// 5. Assume the flywheel transfers part of its kinetic energy to the object
 		// Energy transferred to the object (we'll assume full efficiency for impulse calculation)
 		double energyTransferred = StateSpaceConstants.Flywheel.efficiency * flywheelKineticEnergy;
-
+	
 		// 6. Calculate the final velocity of the object using kinetic energy: KE = 0.5 * m * v^2 => v = sqrt(2 * KE / m)
 		double velocityDueToFlywheel = Math.sqrt(2 * energyTransferred / FieldConstants.CrescendoNote.DEFAULT_MASS_KG);
-
+	
 		// 7. Total speed is the combination of robot speed and the flywheel-imparted speed
 		//use heading of robot to determine how to use x / y components
 		double totalSpeed = velocityDueToFlywheel + speedX; // x direction combines with flywheel velocity
 		return totalSpeed; // returns the total speed in m/s
-  }*/
+	}*/
 	private GamePieceInSimulation getClosestGamePiece(GamePieceTag tag) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;
@@ -314,18 +382,20 @@ public abstract class CompetitionFieldSimulation {
 		private final List<Body> obstacles = new ArrayList<>();
 
 		protected void addBorderLine(Translation2d startingPoint,
-				Translation2d endingPoint) {
+				Translation2d endingPoint, double[] obstacleData) {
 			final Body obstacle = getObstacle(Geometry.createSegment(
 					GeometryConvertor.toDyn4jVector2(startingPoint),
 					GeometryConvertor.toDyn4jVector2(endingPoint)));
+			obstacle.setUserData(obstacleData);
 			obstacles.add(obstacle);
 		}
 
 		protected void addRectangularObstacle(double width, double height,
-				Pose2d pose) {
+				Pose2d pose, double[] obstacleData) {
 			final Body obstacle = getObstacle(
 					Geometry.createRectangle(width, height));
 			obstacle.getTransform().set(GeometryConvertor.toDyn4jTransform(pose));
+			obstacle.setUserData(obstacleData);
 			obstacles.add(obstacle);
 		}
 
