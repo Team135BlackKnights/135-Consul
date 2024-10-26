@@ -14,6 +14,7 @@
 // https://github.com/Shenzhen-Robotics-Alliance/maple-sim
 package frc.robot.subsystems.drive.FastSwerve;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -84,9 +85,9 @@ public class ModuleIOSim implements ModuleIO {
 	@Override
 	public void runDriveVelocitySetpoint(double velocityRadsPerSec,
 			double feedForward) {
-		runDriveVolts(driveFeedback.calculate(
+		runDriveVolts(MathUtil.clamp(driveFeedback.calculate(
 				moduleSimulation.getDriveWheelFinalSpeedRadPerSec(),
-				velocityRadsPerSec) + feedForward);
+				velocityRadsPerSec) + feedForward,-12,12));
 	}
 
 	@Override
