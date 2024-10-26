@@ -11,10 +11,12 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Robot;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.HolonomicChassisSimulation.RobotProfile;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation.DriveTrainSimulationProfile;
+
 import java.util.HashMap;
 
 public class DriveConstants {
@@ -191,47 +193,16 @@ public class DriveConstants {
 						.13, 0.001, 0.05, 0, 0.000);
 	}
 
-	public static RobotProfile mainRobotProfile = new RobotProfile(
+	public static DriveTrainSimulationProfile mainRobotProfile = new DriveTrainSimulationProfile(
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
-			kMaxTurningSpeedRadPerSec, TrainConstants.weight, kBumperToBumperWidth,
+			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get(),TrainConstants.weight, kBumperToBumperWidth,
 			kBumperToBumperLength);
 
-	public static final class RobotPhysicsSimulationConfigs {
+		public static final class RobotPhysicsSimulationConfigs {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
-		/* Swerve Module Simulation */
-		public static final double DRIVE_MOTOR_FREE_FINAL_SPEED_RPM = 859;
-		public static final DCMotor DRIVE_MOTOR = getDriveTrainMotors(1),
-				STEER_MOTOR = getDriveTrainMotors(1);
-		public static final double DRIVE_WHEEL_ROTTER_INERTIA = 0.012;
-		public static final double STEER_INERTIA = 0.015;
+		public static final double SIMULATION_DT = Robot.defaultPeriodSecs / SIM_ITERATIONS_PER_ROBOT_PERIOD;
 		public static final double MAX_FAKE_G = 0.1;
-		public static final double FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ = 30;
-		public static final double MAX_ANGULAR_ACCELERATION_RAD_PER_SEC_SQ = Math
-				.toRadians(1800);
-		public static final double TIME_CHASSIS_STOPS_ROTATING_NO_POWER_SEC = 0.1;
-		public static final double DEFAULT_ROBOT_MASS = 110;
-		public static final double DEFAULT_BUMPER_WIDTH_METERS = Units
-				.inchesToMeters(35.5);
-		public static final double DEFAULT_BUMPER_LENGTH_METERS = Units
-				.inchesToMeters(35.5);
-		/* https://en.wikipedia.org/wiki/Friction#Coefficient_of_friction */
-		public static final double ROBOT_BUMPER_COEFFICIENT_OF_FRICTION = 0.85;
-		/* https://en.wikipedia.org/wiki/Coefficient_of_restitution */
-		public static final double ROBOT_BUMPER_COEFFICIENT_OF_RESTITUTION = 0.05;
-		/* Gyro Sim */
-		public static final double GYRO_ANGULAR_ACCELERATION_THRESHOLD_SKIDDING_RAD_PER_SEC_SQ = 100;
-		public static final double SKIDDING_AMOUNT_AT_THRESHOLD_RAD = Math
-				.toRadians(1.2);
-		/*
-		* https://store.ctr-electronics.com/pigeon-2/
-		* for a well-installed one with vibration reduction, only 0.4 degree
-		* but most teams just install it directly on the rigid chassis frame (including my team :D)
-		* so at least 1.2 degrees of drifting in 1 minutes for an average angular velocity of 60 degrees/second
-		* which is the average velocity during normal swerve-circular-offense
-		* */
-		public static final double NORMAL_GYRO_DRIFT_IN_1_MIN_Std_Dev_RAD = Math
-				.toRadians(1.2);
-		public static final double AVERAGE_VELOCITY_RAD_PER_SEC_DURING_TEST = Math
-				.toRadians(60);
+		public static final double SIM_LINEAR_SPEED_DAMPING = 0.0;
+		public static final double SIM_ANGULAR_SPEED_DAMPING = 0.0; 
 	}
 }

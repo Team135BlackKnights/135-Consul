@@ -16,7 +16,7 @@ public class FieldConstants {
 	//id 1 is topmost leftmost. goes in order down, right.
 	//Speaker translations
 	public static final double COEFFICIENT_OF_GRAVITY = 9.81;
-	public static final Pose2d START_POSE = new Pose2d(1.21, 5.6,
+	public static final Pose2d START_POSE = new Pose2d(1.4, 5.6,
 			new Rotation2d());
 	public static final Translation3d BLUE_SPEAKER = new Translation3d(0.225,
 			5.55, 2.1);

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 
 /**
@@ -14,7 +15,7 @@ import frc.robot.utils.drive.DriveConstants;
  * Utils, and their respective folder for Merge purposes.
  */
 public final class Constants {
-	public static final Mode currentMode;
+	public static Mode currentMode;
 
 	public static enum Mode {
 		/** Running on a real robot. */
@@ -25,17 +26,27 @@ public final class Constants {
 		REPLAY
 	}
 
-	static {
-		currentMode = Mode.REAL;
-		//if (Robot.isReal()) currentMode = Mode.REAL;
-		//else if (Robot.isSimulation()) currentMode = Mode.SIM;
-		//else currentMode = Mode.REPLAY;
-	}
+
 	//FRCMatchState of the robot
 	public static boolean isCompetition = false;
 	public static FRCMatchState currentMatchState = FRCMatchState.DISABLED;
 	public static boolean isTuningPID = true;
-
+		static {
+			//MUST BE "AT EVENT" TO REPLAY!
+		if (isCompetition){
+			if (Robot.isReal()){
+			  currentMode = Mode.REAL;
+			}else{
+			  currentMode = Mode.REPLAY;
+		 	}
+		}else{
+			if(Robot.isReal()){
+			 currentMode = Mode.REAL;
+			}if (Robot.isSimulation()){
+			currentMode = Mode.SIM;
+		 }
+		}
+	}
 	/**
 	 * Allows the robot to utilize switch statements to efficiently figure out
 	 * the match period it's in. The current FRCMatchState is stored in
@@ -86,10 +97,14 @@ public final class Constants {
 	}
 
 	public static class GeometryConstants {
-		public static double shotSpeed = 15;
-		public static double intakeSpeed = 3;
+		public static final double shotSpeed = 15;
+		public static final double intakeSpeed = 3;
+		public static double intakeOffset = Units.inchesToMeters(17.5);
+		public static double ObjectDistanceZeroSpeed = Units.inchesToMeters(1.5);
 		//Launcher position compared to the robot
-		public static Transform3d launcherTransform = new Transform3d(0.292, 0,
-				0.1225, new Rotation3d(0, 0, 0.0));
+		public static final Transform3d launcherTransform = new Transform3d(0,0,0, new Rotation3d(0, 0, 0.0));
+		//Intake position compared to the robot
+		public static final Transform3d intakeTransform = new Transform3d(0.14, -0.015,
+		0.16, new Rotation3d(0,Units.degreesToRadians(12),0));
 	}
 }
