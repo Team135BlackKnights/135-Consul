@@ -524,7 +524,7 @@ public class RobotContainer {
 		selectButtonTest.onTrue(Commands.runOnce(SignalLogger::stop));
 		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
 		if (Constants.currentMode == Mode.SIM) {
-			bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
+			//bButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}
 	}
 
