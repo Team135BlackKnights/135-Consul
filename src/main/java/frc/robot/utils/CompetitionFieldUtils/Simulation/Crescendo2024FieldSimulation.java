@@ -1,6 +1,5 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -10,12 +9,13 @@ import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 
 /**
  * field simulation for 2024 competition
  */
 public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
-	public Crescendo2024FieldSimulation(HolonomicChassisSimulation robot) {
+	public Crescendo2024FieldSimulation(AbstractDriveTrainSimulation robot) {
 		super(robot, new CrescendoFieldObstaclesMap());
 	}
 
@@ -23,7 +23,7 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 	public void placeGamePiecesOnField(boolean preload) {
 		for (Translation2d notePosition : FieldConstants.NOTE_INITIAL_POSITIONS)
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnFieldSimulated(
-					notePosition, new Vector2()));
+					notePosition));
 		if (preload) {
 			super.addGamePiece(new Crescendo2024FieldObjects.NoteOnManipulator(
 					Logger.getTimestamp(), 999,

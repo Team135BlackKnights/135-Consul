@@ -3,7 +3,7 @@ package frc.robot.subsystems.drive.FastSwerve;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import frc.robot.Constants;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 import frc.robot.utils.drive.DriveConstants;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -48,7 +48,7 @@ public interface OdometryThread {
 		case REAL -> new OdometryThreadReal(
 				registeredInputs.toArray(new OdometryDoubleInput[0]),
 				registeredStatusSignals.toArray(new BaseStatusSignal[0]));
-		case SIM -> new SwerveDriveSimulation.OdometryThreadSim();
+		case SIM -> new AbstractDriveTrainSimulation.OdometryTimeStampsSim.OdometryThreadSim();
 		case REPLAY -> inputs -> {
 		};
 		};

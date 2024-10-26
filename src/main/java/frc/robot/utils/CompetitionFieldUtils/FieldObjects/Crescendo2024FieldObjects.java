@@ -3,13 +3,13 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.CrescendoNote;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.maths.TimeUtil;
 
 import org.dyn4j.geometry.Geometry;
-import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -49,18 +49,14 @@ public final class Crescendo2024FieldObjects {
 	 * intake simulation
 	 */
 	public static class NoteOnFieldSimulated extends GamePieceInSimulation {
-		public NoteOnFieldSimulated(Translation2d initialPosition,
-				Vector2 speedVector) {
+		public NoteOnFieldSimulated(Translation2d initialPosition) {
 			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
 					GamePieceTag.ON_GROUND);
 		}
-
-		public NoteOnFieldSimulated(Translation2d initialPosition,
-				double momentumAngle, double momentumMagnitude) {
+		public NoteOnFieldSimulated(Translation2d initialPosition, double momentumAngle, double momentumMagnitude) {
 			super(initialPosition, Geometry.createCircle(NOTE_DIAMETER / 2),
 					GamePieceTag.ON_GROUND, momentumAngle, momentumMagnitude);
 		}
-
 		@Override
 		public double getGamePieceHeight() { return NOTE_HEIGHT; }
 
@@ -110,7 +106,11 @@ public final class Crescendo2024FieldObjects {
 			double currentTime = Logger.getTimestamp();
 			Pose3d manipulatorPose3d = RobotContainer.fieldSimulation
 					.getMainDriveSimulation().getPose3d()
-					.transformBy(manipulatorTransform3d);
+					.transformBy(new Transform3d(manipulatorTransform3d.getTranslation(), new Rotation3d(0,0/*-RobotContainer.armS.getDistance()*/,0)));
+					//set the pose's rotation
+			manipulatorPose3d = manipulatorPose3d.transformBy(GeometryConstants.intakeTransform);
+			//manipulatorPose3d = new Pose3d(manipulatorPose3d.getTranslation(),
+			//new Rotation3d(0,-RobotContainer.armS.getDistance(),RobotContainer.drivetrainS.getPose().getRotation().getRadians()));
 			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec
 					+ totalTimeSec)) {
 				return manipulatorPose3d;
@@ -131,7 +131,6 @@ public final class Crescendo2024FieldObjects {
 		private final double launchingTimeStampSec;
 		private Pose3d currentPose;
 		private final Pose3d startingPose;
-
 		public NoteInFly(double launchingTimeStampSec,
 				double launchingSpeedMetersPerSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
@@ -140,7 +139,7 @@ public final class Crescendo2024FieldObjects {
 			this.currentPose = startingPose;
 			this.startingPose = startingPose;
 			this.launchingTimeStampSec = launchingTimeStampSec;
-			this.momentumAngle = startingPose.getRotation().getZ() + Math.PI;
+			this.momentumAngle = startingPose.getRotation().getZ()+Math.PI;
 			this.momentumMagnitude = launchingSpeedMetersPerSec;
 		}
 
@@ -152,30 +151,19 @@ public final class Crescendo2024FieldObjects {
 			double deltaTSeconds = Math
 					.abs(TimeUtil.getLogTimeSeconds() - launchingTimeStampSec);
 			//To visualize the math 
-			double vNoughtZ = momentumMagnitude * Math.sin(
-					startingPose.getRotation().getY() - Units.degreesToRadians(25));
-			double vNoughtX = -momentumMagnitude * Math.cos(
-					startingPose.getRotation().getY() - Units.degreesToRadians(25));
-			double expDecay = Math.pow(Math.E,
-					-deltaTSeconds / CrescendoNote.M_OVER_K);
-			double updatedPosZMeters = CrescendoNote.M_OVER_K
-					* (vNoughtZ + CrescendoNote.M_OVER_K
-							* FieldConstants.COEFFICIENT_OF_GRAVITY)
-					* (1 - expDecay)
-					- (CrescendoNote.M_OVER_K * FieldConstants.COEFFICIENT_OF_GRAVITY
-							* deltaTSeconds);
+			double vNoughtZ = momentumMagnitude*Math.sin(startingPose.getRotation().getY()-Units.degreesToRadians(25));
+			double vNoughtX = -momentumMagnitude*Math.cos(startingPose.getRotation().getY()-Units.degreesToRadians(25));
+			double expDecay = Math.pow(Math.E,-deltaTSeconds/CrescendoNote.M_OVER_K);
+			double updatedPosZMeters = CrescendoNote.M_OVER_K*(vNoughtZ+CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY)*(1-expDecay)-(CrescendoNote.M_OVER_K*FieldConstants.COEFFICIENT_OF_GRAVITY*deltaTSeconds);
 			double updatedPosYMeters = 0;
-			double updatedPosXMeters = CrescendoNote.M_OVER_K * vNoughtX
-					* (1 - expDecay);
-			double updatedPitch = Math.atan2(updatedPosZMeters,
-					Math.hypot(updatedPosXMeters, updatedPosYMeters));
+			double updatedPosXMeters = CrescendoNote.M_OVER_K*vNoughtX*(1-expDecay);
+			double updatedPitch = Math.atan2(updatedPosZMeters, Math.hypot(updatedPosXMeters, updatedPosYMeters));
 			Transform3d projectileTranslationVector = new Transform3d(
 					updatedPosXMeters, updatedPosYMeters, updatedPosZMeters,
-					new Rotation3d(0, updatedPitch, momentumAngle
-							- startingPose.getRotation().getZ() + Math.PI));
+					new Rotation3d(0, updatedPitch, momentumAngle-startingPose.getRotation().getZ()+Math.PI));
 			// Update the current pose based on the projectile's new position
 			currentPose = startingPose.plus(projectileTranslationVector);
-			momentumAngle = currentPose.getRotation().getZ() + Math.PI;
+			momentumAngle = currentPose.getRotation().getZ()+Math.PI;
 			return currentPose;
 		}
 
