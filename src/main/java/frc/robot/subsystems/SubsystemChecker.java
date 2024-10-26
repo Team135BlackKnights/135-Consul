@@ -93,7 +93,7 @@ public abstract class SubsystemChecker extends SubsystemBase
 	public void run() {
 		while (running) {
 			try {
-				//if (checkErrors){
+				if (checkErrors){
 				checkForFaults(true);
 				Thread.sleep(250);
 				checkForFaults(true);
@@ -103,7 +103,7 @@ public abstract class SubsystemChecker extends SubsystemBase
 				checkForFaults(true);
 				Thread.sleep(250);
 				publishStatus(true);
-				//}
+				}
 			}
 			catch (InterruptedException e) {
 				Thread.currentThread().interrupt(); // Restore interrupted status

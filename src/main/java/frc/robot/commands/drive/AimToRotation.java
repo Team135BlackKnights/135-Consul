@@ -10,8 +10,6 @@ import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.drive.DriveConstants;
-
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -22,20 +20,13 @@ public class AimToRotation extends Command {
 			0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), .02);
 	// Allow live updating via LoggableTunedNumbers
 	private static final LoggableTunedNumber thetaKp = new LoggableTunedNumber(
-			"AimToRotation/ThetaKp");
+			"AimToRotation/ThetaKp", 3);
 	private static final LoggableTunedNumber thetaKd = new LoggableTunedNumber(
-			"AimToRotation/ThetaKd");
+			"AimToRotation/ThetaKd", 0);
 	private static final LoggableTunedNumber thetaMaxVelocitySlow = new LoggableTunedNumber(
-			"AimToRotation/ThetaMaxVelocitySlow");
+			"AimToRotation/ThetaMaxVelocitySlow", Units.degreesToRadians(360.0));
 	private static final LoggableTunedNumber thetaTolerance = new LoggableTunedNumber(
-			"AimToRotation/ThetaTolerance");
-	// Default the TunedNumbers on boot
-	static {
-		thetaKp.initDefault(3);
-		thetaKd.initDefault(0.0);
-		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(360.0));
-		thetaTolerance.initDefault(Units.degreesToRadians(2.0));
-	}
+			"AimToRotation/ThetaTolerance", Units.degreesToRadians(2.0));
 
 	/** Aims to the specified pose under full software control. */
 	public AimToRotation(DrivetrainS drive, Rotation2d angle) {
@@ -62,15 +53,13 @@ public class AimToRotation extends Command {
 	@Override
 	public void execute() {
 		// Update from tunable numbers
-		if (thetaKp.hasChanged(hashCode()) || thetaKd.hasChanged(hashCode())
-				|| thetaMaxVelocitySlow.hasChanged(hashCode())
-				|| thetaTolerance.hasChanged(hashCode())) {
+		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			thetaController.setP(thetaKp.get());
 			thetaController.setD(thetaKd.get());
 			thetaController.setConstraints(new TrapezoidProfile.Constraints(
 					thetaMaxVelocitySlow.get(), Double.POSITIVE_INFINITY));
 			thetaController.setTolerance(thetaTolerance.get());
-		}
+		}, thetaKp, thetaKd, thetaMaxVelocitySlow, thetaTolerance);
 		RobotContainer.currentPath = "AIMTOROTATION";
 		Rotation2d currentRotation = drive.getPose().getRotation();
 		RobotContainer.angleOverrider = Optional.of(angleSupplier.get());
@@ -87,7 +76,7 @@ public class AimToRotation extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.angleOverrider = Optional.empty();
 		RobotContainer.angularSpeed = 0;
-		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Go back to normal deadband
+		drive.changeDeadband(.1); // Go back to normal deadband
 		drive.stopModules();
 	}
 

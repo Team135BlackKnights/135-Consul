@@ -35,6 +35,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +53,7 @@ public class Robot extends LoggedRobot {
 	private Command m_autonomousCommand;
 	private RobotContainer m_robotContainer;
 	public static boolean isRed;
-	private boolean isPracticeDSMode = false;
+	private boolean isPracticeDSMode = false, loggerStarted = false;
 	private double lastMatchTime = 0;
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
@@ -66,6 +69,36 @@ public class Robot extends LoggedRobot {
 			PortForwarder.add(22, "orangepi@photonvision.local", 22);
 			PortForwarder.add(22, "photonvision.local", 22);
 		}
+		//execute PushOrangePiCode.java
+		System.out.println("Pushing code to Orange Pi");
+		//run a new thread where we run the script to push code to the Orange Pi
+		new Thread(() -> {
+			try {
+				// Check the current user
+				ProcessBuilder whoamiPb = new ProcessBuilder("whoami");
+				Process whoamiProcess = whoamiPb.start();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(whoamiProcess.getInputStream()));
+				String user = reader.readLine();
+				System.out.println("Current user: " + user);
+				// Run the script with sudo
+				ProcessBuilder pb = new ProcessBuilder("bash", "-c",
+						"/home/lvuser/deploy/OrangePi/PushOrangePiCode.sh");
+				pb.redirectErrorStream(true); // Redirect error stream to output stream
+				Process process = pb.start();
+				BufferedReader scriptOutputReader = new BufferedReader(
+						new InputStreamReader(process.getInputStream()));
+				String line;
+				while ((line = scriptOutputReader.readLine()) != null) {
+					System.out.println(line);
+				}
+				int exitCode = process.waitFor();
+				System.out.println("Process exited with code: " + exitCode);
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}).start();
 		// Instantiate our RobotContainer.  This will perform all our button bindings, and put our
 		// autonomous chooser on the dashboard
 		Logger.recordMetadata("ProjectName", "The Chef"); // Set a metadata value
@@ -111,14 +144,16 @@ public class Robot extends LoggedRobot {
 		}
 		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
+		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
-		DataHandler.startHandler("C:");
+		DataHandler.startHandler();
 		SmartDashboard.putString("QUEUED TEST", runningTest.toString()); //Put what Test we're going to run on the test controller.
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
+		SmartDashboard.putBoolean("ShouldEndLog", false);
 	}
 
 	/**
@@ -189,7 +224,13 @@ public class Robot extends LoggedRobot {
 	}
 
 	@Override
-	public void disabledPeriodic() {}
+	public void disabledPeriodic() {
+		if (loggerStarted && SmartDashboard.getBoolean("ShouldEndLog", false)) {
+			Logger.end();
+			loggerStarted = false; //debonuces
+			System.out.println("ENDING LOG");
+		}
+	}
 
 	/**
 	 * This autonomous runs the autonomous command selected by your
