@@ -1,6 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import edu.wpi.first.math.MathUtil;
+/*import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -20,13 +20,13 @@ import frc.robot.utils.maths.GeometryConvertor;
 import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
 
-import java.util.function.Consumer;
+import java.util.function.Consumer;*/
 
 /**
  * Simulates the dynamics of a tank robot. This class is meant to be used in
  * simulation only.
  */
-public class TankDriveSimulation extends HolonomicChassisSimulation {
+/*public class TankDriveSimulation extends HolonomicChassisSimulation {
 	private final Tank tank;
 	private final TankIOSim tankIOSim;
 	private final GyroIOSim gyroIOSim;
@@ -195,3 +195,4 @@ public class TankDriveSimulation extends HolonomicChassisSimulation {
 		}
 	}
 }
+*/

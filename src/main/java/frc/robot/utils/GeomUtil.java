@@ -54,12 +54,12 @@ public class GeomUtil {
 	 */
 	public static double speedMapper(double x) {
 		// Define the parameters for the sigmoid function
-		double x0 = 30; // Inches where the function starts to rise significantly
+		double x0 = 20; // Inches where the function starts to rise significantly
 		double k = 0.1; // Steepness of the curve
 		// Apply the sigmoid function to map x to the range [0, 1]
 		double y = 1 / (1 + Math.exp(-k * (x - x0)));
 		// Adjust the output to meet your specific points
-		if (x >= 50) {
+		if (x >= 40) {
 			y = 1;
 		}
 		return y;
@@ -69,8 +69,8 @@ public class GeomUtil {
 		return other.getTranslation().minus(current.getTranslation()).getNorm();
 	}
 
-	public static Rotation2d rotationFromCurrentToTarget(Pose2d currentPose,
-			Pose2d targetPose, ApproachDirection direction) {
+	public static Rotation2d rotationFromCurrentToTarget(Translation2d currentPose,
+	Translation2d targetPose, ApproachDirection direction) {
 		// Extract positions
 		double dx = targetPose.getX() - currentPose.getX();
 		double dy = targetPose.getY() - currentPose.getY();

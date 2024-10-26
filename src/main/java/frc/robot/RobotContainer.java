@@ -11,7 +11,6 @@ import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
 import frc.robot.subsystems.drive.Mecanum.MecanumIO;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
@@ -19,17 +18,17 @@ import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIO;
-import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.OpponentRobotSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.SwerveDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SimplifiedHolonomicDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.commands.drive.vision.DriveToAITarget;
 import frc.robot.subsystems.vision.Vision;
@@ -55,14 +54,14 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
 import java.util.HashMap;
@@ -114,15 +113,17 @@ public class RobotContainer {
 		@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	
+	public static double[] knownInputs = new double[2]; //number of inputs to AI
+	public static double[] knownOutputs = new double[2]; //number of outputs to AI
+	public static List<Double> currentAiOutputs = new ArrayList<Double>(4); //total values for AI
 	public enum GamePieceState {
 		NO_GAME_PIECE, HAS_NOTE, ABORT
 	}
 	public static GamePieceState currentGamePieceStatus = GamePieceState.NO_GAME_PIECE;
-
+	public static boolean userDrive = true;
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
-	private OpponentRobotSimulation testOpponentRobot = null;
+	private SimplifiedHolonomicDriveSimulation testOpponentRobot = null;
 	public static Command currentAuto;
 
 	/**
@@ -166,6 +167,9 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
+		//Publish the current mode of the robot (to check in pit display)
+		Logger.recordOutput("robotMode", Constants.currentMode);
+
 		//We check to see what drivetrain type we have here, and create the correct drivetrain system based on that. 
 		//If we get something wacky, throw an error
 		List<Pair<String, Command>> autoCommands = new ArrayList<>();
@@ -291,25 +295,69 @@ public class RobotContainer {
 		case SIM:
 			switch (DriveConstants.driveType) {
 			case SWERVE:
-				final ModuleIOSim frontLeft = new ModuleIOSim(0),
-						frontRight = new ModuleIOSim(1),
-						backLeft = new ModuleIOSim(2), backRight = new ModuleIOSim(3);
-				final GyroIOSim gyroIOSim = new GyroIOSim();
-				drivetrainS = new Swerve(gyroIOSim, frontLeft, frontRight, backLeft,
-						backRight);
-				fieldSimulation = new Crescendo2024FieldSimulation(
-						new SwerveDriveSimulation(DriveConstants.mainRobotProfile,
-								gyroIOSim, frontLeft, frontRight, backLeft, backRight,
-								drivetrainS.getKinematics(), FieldConstants.START_POSE,
-								drivetrainS::resetPose));
+				GyroSimulation gyroSimulation = null;
+				switch (DriveConstants.gyroType) {
+				case PIGEON:
+					gyroSimulation = GyroSimulation.createPigeon2();
+					break;
+				case NAVX:
+					gyroSimulation = GyroSimulation.createNav2X();
+					break;
+				}
+				SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
+						.getMark4i(DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.kMaxDriveCurrent,
+								DRIVE_WHEEL_TYPE.RUBBER, 2)
+						.get();
+				SwerveModuleSimulation frontRightSim = SwerveModuleSimulation
+						.getMark4i(DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.kMaxDriveCurrent,
+								DRIVE_WHEEL_TYPE.RUBBER, 2)
+						.get();
+				SwerveModuleSimulation backLeftSim = SwerveModuleSimulation
+						.getMark4i(DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.kMaxDriveCurrent,
+								DRIVE_WHEEL_TYPE.RUBBER, 2)
+						.get();
+				SwerveModuleSimulation backRightSim = SwerveModuleSimulation
+						.getMark4i(DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.kMaxDriveCurrent,
+								DRIVE_WHEEL_TYPE.RUBBER, 2)
+						.get();
+				ModuleIOSim frontLeft = new ModuleIOSim(frontLeftSim);
+				ModuleIOSim frontRight = new ModuleIOSim(frontRightSim);
+				ModuleIOSim backLeft = new ModuleIOSim(backLeftSim);
+				ModuleIOSim backRight = new ModuleIOSim(backRightSim);
+				drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), frontLeft,
+						frontRight, backLeft, backRight);
+				SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
+						DriveConstants.mainRobotProfile.robotMass,
+						DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
+						new SwerveModuleSimulation[] { frontLeftSim, frontRightSim,
+								backLeftSim, backRightSim
+						}, DriveConstants.kModuleTranslations, gyroSimulation,
+						FieldConstants.START_POSE, drivetrainS::resetPose);
+				fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
 				fieldSimulation.placeGamePiecesOnField(true);
-				testOpponentRobot = new OpponentRobotSimulation(0);
+				testOpponentRobot = new SimplifiedHolonomicDriveSimulation(
+						DriveConstants.mainRobotProfile,
+						new Pose2d(-50, -50, new Rotation2d()),
+						new Consumer<Pose2d>() {
+							@Override
+							public void accept(Pose2d pose) {
+								// do nothing
+							}
+						});
 				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
 						.setRotationTargetOverride(this::getRotationTargetOverride);
 				break;
 			case TANK:
-				final GyroIOSim tankGyroIOSim = new GyroIOSim();
+				/*final GyroIOSim tankGyroIOSim = new GyroIOSim();
 				TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
 				drivetrainS = new Tank(tankIOSim);
 				fieldSimulation = new Crescendo2024FieldSimulation(
@@ -323,10 +371,10 @@ public class RobotContainer {
 				testOpponentRobot = new OpponentRobotSimulation(0);
 				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+						.setRotationTargetOverride(this::getRotationTargetOverride);*/
 				break;
 			default:
-				final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
+				/*final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
 				MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
 				drivetrainS = new Mecanum(mecanumIOSim);
 				fieldSimulation = new Crescendo2024FieldSimulation(
@@ -343,7 +391,7 @@ public class RobotContainer {
 				testOpponentRobot = new OpponentRobotSimulation(0);
 				fieldSimulation.addRobot(testOpponentRobot);
 				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+						.setRotationTargetOverride(this::getRotationTargetOverride);*/
 				break;
 			}
 			visionS = new Vision(new VisionIOPhotonVision()); //yes, they're the same!
@@ -434,13 +482,13 @@ public class RobotContainer {
 						.negate())
 				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
 		yButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, true, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kForward, true));
 		bButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, true, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kReverse, true));
 		aButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, false, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kForward, false));
 		xButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, false, drivetrainS));
+				new RunTest(SysIdRoutine.Direction.kReverse, false));
 		//Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
