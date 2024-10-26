@@ -33,7 +33,6 @@ import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.IntStream;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -67,9 +66,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public enum CoastRequest {
 		AUTOMATIC, ALWAYS_BRAKE, ALWAYS_COAST
 	}
-
-	public static final Queue<Double> timestampQueue = new ArrayBlockingQueue<>(
-			20);
 	private final OdometryThreadInputsAutoLogged odometryTimestampInputs;
 	private final GyroIO gyroIO;
 	private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
@@ -89,7 +85,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private CoastRequest coastRequest = CoastRequest.AUTOMATIC;
 	private boolean lastEnabled = false;
 	private ChassisSpeeds desiredSpeeds = new ChassisSpeeds();
-	private static final double poseBufferSizeSeconds = 1.0;
+	private static final double poseBufferSizeSeconds = 2.0;
 	private Pose2d odometryPose = new Pose2d();
 	private Pose2d estimatedPose = new Pose2d();
 	private SwerveSetpoint currentSetpoint = new SwerveSetpoint(
@@ -358,15 +354,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Update & process inputs
 		odometryThread.lockOdometry();
 		odometryThread.updateInputs(odometryTimestampInputs);
-		// Read timestamps from odometry thread and fake sim timestamps
-		odometryTimestampInputs.measurementTimeStamps = timestampQueue.stream()
-				.mapToDouble(Double::valueOf).toArray();
-		if (odometryTimestampInputs.measurementTimeStamps.length == 0) { //for sim
-			odometryTimestampInputs.measurementTimeStamps = new double[] {
-					Timer.getFPGATimestamp()
-			};
-		}
-		timestampQueue.clear();
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
 		gyroIO.updateInputs(gyroInputs);
