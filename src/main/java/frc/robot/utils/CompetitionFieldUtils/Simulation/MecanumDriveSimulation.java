@@ -1,6 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import edu.wpi.first.math.MathUtil;
+/*import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -12,37 +12,43 @@ import frc.robot.Robot;
 import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim.MecanumDrivePhysicsSimResults;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
+import frc.robot.utils.maths.GeometryConvertor;
 
+import org.dyn4j.dynamics.Force;
 import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
-
-import java.util.function.Consumer;
+import frc.robot.utils.maths.CommonMath;
+import java.util.function.Consumer;*/
 
 /**
- * Simulates the dynamics of a mecanum robot. Uses essentially the same code as
+ * TODO Simulates the dynamics of a mecanum robot. Uses essentially the same code as
  * a swerve drive sim (physics included). Takes motor behaviors from ModuleIOSim
  * and feeds the values back as simulated "encoder readings"
  */
-public class MecanumDriveSimulation extends HolonomicChassisSimulation {
+/*
+public class MecanumDriveSimulation extends AbstractDriveTrainSimulation {
 	private final  Mecanum mecanum;
 	private final  MecanumIOSim mecanumIOSim;
 	private final GyroIOSim gyroIOSim;
 	private final MecanumDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
 	private double gForce = 0.0; //G
+	private ChassisSpeeds desiredFieldRelativeSpeeds = new ChassisSpeeds();
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
 		return radPerSecond * TrainConstants.kDriveMotorGearRatio
 				* TrainConstants.kWheelDiameter / 2;
 	}
 
-	public MecanumDriveSimulation(RobotProfile robotProfile, GyroIOSim gyroIOSim,
+	public MecanumDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroIOSim gyroIOSim,
 			MecanumDriveKinematics kinematics, Pose2d startingPose,
 			Mecanum mecanum, MecanumIOSim ioSim,Consumer<Pose2d> resetOdometryCallBack) {
-		super(robotProfile, startingPose);
+    	super(robotProfile, startingPose, resetOdometryCallBack);
 		this.gyroIOSim = gyroIOSim;
 		this.mecanum = mecanum;
 		this.mecanumIOSim = ioSim;
@@ -56,49 +62,48 @@ public class MecanumDriveSimulation extends HolonomicChassisSimulation {
 	}
 
 	@Override
-	public void updateSimulationSubPeriod(int iterationNum,
-			double subPeriodSeconds) {
-		mecanum.updateSim(subPeriodSeconds);
+	public void simulationSubTick() {
+		mecanum.updateSim(RobotPhysicsSimulationConfigs.SIMULATION_DT);
 		//should do the actual motion calculations
-		final ChassisSpeeds mecanumTheoreticalSpeeds = kinematics
-				.toChassisSpeeds(mecanumIOSim.getWheelSpeeds());
-		super.simulateChassisBehaviorWithRobotRelativeSpeeds(
-				mecanumTheoreticalSpeeds);
-		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
-		final MecanumDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
-				.toWheelSpeeds(instantVelocityRobotRelative);
+		simulateChassisBehaviorWithFieldRelativeSpeeds(desiredFieldRelativeSpeeds);
 		updateGyroSimulationResults(gyroIOSim,
-				super.getObjectOnFieldPose2d().getRotation(),
+				getObjectOnFieldPose2d().getRotation(),
 				super.getAngularVelocity(), gForce, iterationNum);
 		updateMecanumSimulationResults(mecanum, mecanumIOSim, actualModuleFloorSpeeds,
-				profile.robotMaxVelocity, iterationNum, subPeriodSeconds,
+				profile.robotMaxVelocity, iterationNum, RobotPhysicsSimulationConfigs.SIMULATION_DT,
 				instantVelocityRobotRelative);
 	}
+	private void simulateChassisRotationalBehavior(double desiredRotationalMotionPercent) {
+		final double maximumTorque = this.profile.maxAngularAcceleration * super.getMass().getInertia();
+		super.applyTorque(desiredRotationalMotionPercent * maximumTorque);
+		simulateChassisAngularFriction(desiredRotationalMotionPercent);
+	 }
+private void simulateChassisBehaviorWithFieldRelativeSpeeds(
+      ChassisSpeeds desiredChassisSpeedsFieldRelative) {
+    super.setAtRest(false);
 
-	private final Vector2 previousDesiredLinearMotionPercent = new Vector2();
+    final Vector2 desiredLinearMotionPercent =
+        GeometryConvertor.toDyn4jLinearVelocity(desiredChassisSpeedsFieldRelative)
+            .multiply(1.0 / profile.maxLinearVelocity);
+    simulateChassisTranslationalBehavior(
+        Vector2.create(
+            CommonMath.constrainMagnitude(desiredLinearMotionPercent.getMagnitude(), 1),
+            desiredLinearMotionPercent.getDirection()));
 
-	@Override
-	protected void simulateChassisTranslationalBehavior(
-			Vector2 desiredLinearMotionPercent) {
-		super.simulateChassisTranslationalBehavior(desiredLinearMotionPercent);
-		final double dTheta = previousDesiredLinearMotionPercent
-				.getAngleBetween(desiredLinearMotionPercent),
-				desiredMotionDirectionChangingRateOmega = dTheta
-						/ (Robot.defaultPeriodSecs
-								/ DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD),
-				centripetalForce = desiredMotionDirectionChangingRateOmega
-						* getLinearVelocity().getMagnitude() * profile.robotMass;
-		super.applyForce(Vector2.create(
-				MathUtil.clamp(centripetalForce, -profile.frictionForce,
-						profile.frictionForce),
-				getLinearVelocity().getDirection() + Math.toRadians(90)));
-		//calculate gForce
-		gForce = Math
-				.sqrt(Math.pow(getLinearVelocity().x, 2)
-						+ Math.pow(getLinearVelocity().y, 2))
-				/ DriveConstants.RobotPhysicsSimulationConfigs.FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ;
-		previousDesiredLinearMotionPercent.set(desiredLinearMotionPercent);
-	}
+    final double desiredRotationalMotionPercent =
+        desiredChassisSpeedsFieldRelative.omegaRadiansPerSecond / profile.maxAngularVelocity;
+    simulateChassisRotationalBehavior(CommonMath.constrainMagnitude(desiredRotationalMotionPercent, 1));
+  }
+	 private void simulateChassisTranslationalBehavior(Vector2 desiredLinearMotionPercent) {
+    final boolean robotRequestedToMoveLinearly = desiredLinearMotionPercent.getMagnitude() > 0.03;
+    final Vector2 forceVec =
+        desiredLinearMotionPercent
+            .copy()
+            .multiply(this.profile.robotMass * this.profile.maxLinearAcceleration);
+
+    if (robotRequestedToMoveLinearly) super.applyForce(new Force(forceVec));
+    else simulateChassisLinearFriction();
+  }
 
 	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
 			Rotation2d currentFacing, double angularVelocityRadPerSec,
@@ -177,3 +182,4 @@ public class MecanumDriveSimulation extends HolonomicChassisSimulation {
 		}
 	}
 }
+*/
