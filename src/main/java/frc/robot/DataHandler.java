@@ -304,7 +304,7 @@ public class DataHandler {
 				String rawData = receivedData.get("outputs").getAsString();
 				List<Double> list = makeDoubleList(rawData); //index 0 = velocity of topShooter, index 1 = velocity of bottomShooter, index 2 = angle of shooter
 				list.add(0, TimeUtil.getLogTimeSeconds()); //those above shifted 1
-				//RobotContainer.currentAutoOutputs = list;
+				RobotContainer.currentAiOutputs = list;
 				//Remove brackets
 			}
 			/* Interaction with Double Jointed Arm
