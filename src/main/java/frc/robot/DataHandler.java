@@ -19,7 +19,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.maths.TimeUtil;
 
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.BindException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import java.lang.reflect.Type;
 
@@ -301,7 +304,7 @@ public class DataHandler {
 				String rawData = receivedData.get("outputs").getAsString();
 				List<Double> list = makeDoubleList(rawData); //index 0 = velocity of topShooter, index 1 = velocity of bottomShooter, index 2 = angle of shooter
 				list.add(0, TimeUtil.getLogTimeSeconds()); //those above shifted 1
-				RobotContainer.currentAiOutputs = list;
+				//RobotContainer.currentAutoOutputs = list;
 				//Remove brackets
 			}
 			/* Interaction with Double Jointed Arm
