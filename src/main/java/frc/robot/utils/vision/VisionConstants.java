@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.RobotContainer;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.drive.DriveConstants;
 
 public class VisionConstants {
 	// Field layout, fed to the PV cameras in order to work properly
@@ -66,6 +65,7 @@ public class VisionConstants {
 	public final static String frontCamName = "Front_Camera",
 			backCamName = "Back_Camera", leftCamName = "Left_Camera",
 			rightCamName = "Right_Camera";
+	// Check WPILIB Coordinate System
 	// Translations should be in inches, Rotations should be in degrees
 	public static LoggableTunedNumber
 
