@@ -103,21 +103,23 @@ public class Module {
 		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
 		if (DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) {
+			double wheelTorqueAmps = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
-					(inputs.negateFF ? 0 : 1) * ((wheelTorqueNm
-							/ DriveConstants.TrainConstants.kDriveMotorGearRatio)
-							* DriveConstants.TrainConstants.kT));
+					(inputs.negateFF ? 0 : 1) * 
+							(wheelTorqueAmps));
 		} else {
+			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2))
+        / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;
+			double torqueResistanceVoltage = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp * DriveConstants.getDriveTrainMotors(1).rOhms;
+			double wheelTorqueVolts = speedVoltage + torqueResistanceVoltage;
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
 					(inputs.negateFF ? 0 : 1) *
 							ff.calculate(currentVelocity, setpointVelocity).magnitude()
-							+ ((wheelTorqueNm
-									/ DriveConstants.TrainConstants.kDriveMotorGearRatio)
-									* DriveConstants.TrainConstants.kT));
+							+ ((wheelTorqueVolts)));
 		}
 		io.runTurnPositionSetpoint(setpoint.angle.getRadians());
 	}
