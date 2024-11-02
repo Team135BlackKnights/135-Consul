@@ -59,6 +59,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 
 import java.util.HashMap;
@@ -517,6 +518,8 @@ public class RobotContainer {
 		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
 		if (Constants.currentMode == Mode.SIM) {
 			//ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
+
+			bButtonDrive.whileTrue(testOpponentRobot.runAutoCycleCommand());
 		}
 	}
 
