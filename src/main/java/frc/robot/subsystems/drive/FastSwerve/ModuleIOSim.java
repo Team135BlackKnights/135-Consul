@@ -14,8 +14,8 @@
 // https://github.com/Shenzhen-Robotics-Alliance/maple-sim
 package frc.robot.subsystems.drive.FastSwerve;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.utils.drive.DriveConstants;
 
@@ -31,10 +31,6 @@ public class ModuleIOSim implements ModuleIO {
 			.02);
 	private final PIDController turnFeedback = new PIDController(0.0, 0.0, 0.0,
 			.02);
-	private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
-					.getKs(),
-			0);
 
 	public ModuleIOSim(SwerveModuleSimulation moduleSimulation) {
 		this.moduleSimulation = moduleSimulation;
@@ -84,9 +80,9 @@ public class ModuleIOSim implements ModuleIO {
 	@Override
 	public void runDriveVelocitySetpoint(double velocityRadsPerSec,
 			double feedForward) {
-		runDriveVolts(driveFeedback.calculate(
+		runDriveVolts(MathUtil.clamp(driveFeedback.calculate(
 				moduleSimulation.getDriveWheelFinalSpeedRadPerSec(),
-				velocityRadsPerSec) + feedForward);
+				velocityRadsPerSec) + feedForward,-12,12));
 	}
 
 	@Override
@@ -98,7 +94,7 @@ public class ModuleIOSim implements ModuleIO {
 		} else if (difference < -Math.PI) {
 			angleRads += 2 * Math.PI;
 		}
-		runTurnVolts(turnFeedback.calculate(currentAngle, angleRads) + ff.calculate(angleRads));
+		runTurnVolts(turnFeedback.calculate(currentAngle, angleRads));
 	}
 	@Override
 	public void setDrivePID(double kP, double kI, double kD) {
@@ -108,7 +104,6 @@ public class ModuleIOSim implements ModuleIO {
 	@Override
 	public void setTurnPID(double kP, double kI, double kD, double kS) {
 		turnFeedback.setPID(kP, kI, kD);
-		ff = new SimpleMotorFeedforward(kS, 0);
 	}
 
 	@Override
