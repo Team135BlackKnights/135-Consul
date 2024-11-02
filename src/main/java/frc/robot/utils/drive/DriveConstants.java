@@ -202,7 +202,5 @@ public class DriveConstants {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
 		public static final double SIMULATION_DT = Robot.defaultPeriodSecs / SIM_ITERATIONS_PER_ROBOT_PERIOD;
 		public static final double MAX_FAKE_G = 0.1;
-		public static final double SIM_LINEAR_SPEED_DAMPING = 0.0;
-		public static final double SIM_ANGULAR_SPEED_DAMPING = 0.0; 
 	}
 }

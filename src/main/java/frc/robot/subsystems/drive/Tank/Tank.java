@@ -33,10 +33,12 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.Time;
-import edu.wpi.first.units.Velocity;
-import edu.wpi.first.units.Voltage;
+import edu.wpi.first.units.*;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -105,9 +107,9 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 					2));
 		}
 		// Configure SysId
-		Measure<Velocity<Voltage>> rampRate = Volts.of(1).per(Seconds.of(1)); //for going FROM ZERO PER SECOND
-		Measure<Voltage> holdVoltage = Volts.of(4);
-		Measure<Time> timeout = Seconds.of(10);
+		Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); //for going FROM ZERO PER SECOND
+		Voltage holdVoltage = Volts.of(4);
+		Time timeout = Seconds.of(10);
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
 						(state) -> Logger.recordOutput("Drive/SysIdState",
@@ -261,9 +263,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds) {
 		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
 		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
+		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
+		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
 		io.setVelocity(leftRadPerSec, rightRadPerSec,
-				feedforward.calculate(leftRadPerSec),
-				feedforward.calculate(rightRadPerSec));
+				feedforward.calculate(leftVelocity,MetersPerSecond.of(leftRadPerSec)).magnitude(),
+				feedforward.calculate(rightVelocity,MetersPerSecond.of(rightRadPerSec)).magnitude());
 	}
 
 	/** Stops the drive. */
