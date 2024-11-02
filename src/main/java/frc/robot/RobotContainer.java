@@ -49,11 +49,13 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
+import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -67,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.io.File;
+import java.io.IOException;
 
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
@@ -142,8 +145,10 @@ public class RobotContainer {
 			if (choreo.contains(".traj") && dotCount == 1) {
 				//remove the .traj from the name
 				choreo = choreo.replace(".traj", "");
-				PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreo);
-				Pose2d endPose = path.getPathPoses().get(path.getPathPoses().size() - 1);
+				PathPlannerPath path;
+				try {
+					path = PathPlannerPath.fromChoreoTrajectory(choreo);
+					Pose2d endPose = path.getPathPoses().get(path.getPathPoses().size() - 1);
 				if (DriveConstants.kEndingPoses.containsKey(choreo)){
 					endPose = DriveConstants.kEndingPoses.get(choreo);
 				}
@@ -154,6 +159,10 @@ public class RobotContainer {
 				System.out.println("Added Branch" + choreo);
 				//kill the path to save memory
 				path = null;
+				} catch (FileVersionException | IOException | ParseException e) {
+					e.printStackTrace();
+				}
+				
 			}
 		}
 		return commands;
@@ -211,8 +220,7 @@ public class RobotContainer {
 					}
 					break;
 				}
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 				break;
 			case TANK:
 				switch (DriveConstants.robotMotorController) {
@@ -271,8 +279,7 @@ public class RobotContainer {
 					}
 					break;
 				}
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 				break;
 			//Placeholder values
 			default:
@@ -351,8 +358,7 @@ public class RobotContainer {
 							}
 						});
 				fieldSimulation.addRobot(testOpponentRobot);
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 				break;
 			case TANK:
 				/*final GyroIOSim tankGyroIOSim = new GyroIOSim();
@@ -408,16 +414,14 @@ public class RobotContainer {
 			case SWERVE:
 				drivetrainS = new Swerve(new GyroIO() {}, new ModuleIO() {},
 						new ModuleIO() {}, new ModuleIO() {}, new ModuleIO() {});
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 				break;
 			case TANK:
 				drivetrainS = new Tank(new TankIO() {});
 				break;
 			case MECANUM:
 				drivetrainS = new Mecanum(new MecanumIO() {});
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);
+				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 			}
 			autoCommands.addAll(Arrays.asList(
 					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),

@@ -108,7 +108,6 @@ Temporary Items
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-!.vscode/java-formatter.xml
 !.vscode/extensions.json
 
 ### Windows ###
@@ -163,13 +162,15 @@ bin/
 *.iml
 *.ipr
 *.iws
-#.idea/
+.idea/
 out/
 
 # Fleet
 .fleet
 
 # Simulation GUI and other tools window save file
+networktables.json
+simgui.json
 *-window.json
 
 # Simulation data log directory
@@ -177,5 +178,8 @@ logs/
 
 # Folder that has CTRE Phoenix Sim device config storage
 ctre_sim/
-.vscode/settings.json
+
+# clangd
+/.cache
+compile_commands.json
 src/main/java/frc/robot/BuildConstants.java

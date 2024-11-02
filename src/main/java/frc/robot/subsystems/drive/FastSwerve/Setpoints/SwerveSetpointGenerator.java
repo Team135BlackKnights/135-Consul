@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.drive.SecondOrderKinematics;
 
 /**
  * "Inspired" by FRC team 254. See the license file in the root directory of
@@ -30,6 +31,7 @@ import frc.robot.utils.GeomUtil;
  */
 public class SwerveSetpointGenerator {
 	private final SwerveDriveKinematics kinematics;
+	private final SecondOrderKinematics advancedKinematics;
 	private final Translation2d[] moduleLocations;
 
 	public record SwerveSetpoint(ChassisSpeeds chassisSpeeds,
@@ -38,6 +40,7 @@ public class SwerveSetpointGenerator {
 	public SwerveSetpointGenerator(SwerveDriveKinematics kinematics,
 			Translation2d[] moduleLocations) {
 		this.kinematics = kinematics;
+		this.advancedKinematics = new SecondOrderKinematics(moduleLocations);
 		this.moduleLocations = moduleLocations;
 	}
 
@@ -178,13 +181,13 @@ public class SwerveSetpointGenerator {
 			final SwerveSetpoint prevSetpoint, ChassisSpeeds desiredState,
 			double dt) {
 		final Translation2d[] modules = moduleLocations;
-		SwerveModuleState[] desiredModuleState = kinematics
-				.toSwerveModuleStates(desiredState);
+		SwerveModuleState[] desiredModuleState = advancedKinematics
+				.toSwerveModuleStates(SecondOrderKinematics.correctForDynamics(desiredState));
 		// Make sure desiredState respects velocity limits.
 		if (limits.maxDriveVelocity() > 0.0) {
 			SwerveDriveKinematics.desaturateWheelSpeeds(desiredModuleState,
 					limits.maxDriveVelocity());
-			desiredState = kinematics.toChassisSpeeds(desiredModuleState);
+			desiredState = SecondOrderKinematics.correctForDynamics(kinematics.toChassisSpeeds(desiredModuleState));
 		}
 		// Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so
 		// just use the previous angle.
@@ -347,7 +350,7 @@ public class SwerveSetpointGenerator {
 				prevSetpoint.chassisSpeeds().vyMetersPerSecond + min_s * dy,
 				prevSetpoint.chassisSpeeds().omegaRadiansPerSecond
 						+ min_s * dtheta);
-		var retStates = kinematics.toSwerveModuleStates(retSpeeds);
+		var retStates = advancedKinematics.toSwerveModuleStates(SecondOrderKinematics.correctForDynamics(retSpeeds));
 		for (int i = 0; i < modules.length; ++i) {
 			final var maybeOverride = overrideSteering.get(i);
 			if (maybeOverride.isPresent()) {
