@@ -14,8 +14,7 @@ import frc.robot.utils.LoggableTunedNumber;
 public class VisionConstants {
 	// Field layout, fed to the PV cameras in order to work properly
 	public static boolean debug = true;
-	public static final AprilTagFieldLayout kTagLayout = AprilTagFields.kDefaultField
-			.loadAprilTagLayoutField();
+	public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
 	// This needs to be changed year after year
 	public enum AITargets {
