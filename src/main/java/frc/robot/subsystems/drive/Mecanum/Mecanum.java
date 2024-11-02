@@ -14,10 +14,8 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
-import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
@@ -35,7 +33,6 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelPositions;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -97,25 +94,10 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	public Mecanum(MecanumIO io) {
 		this.io = io;
 		// Configure AutoBuilder for PathPlanner
-		AutoBuilder.configureHolonomic(this::getPose, this::resetPose,
-				this::getChassisSpeeds, this::setChassisSpeeds,
-				new HolonomicPathFollowerConfig(new PIDConstants(
-						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
-								.getP(),
-						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
-								.getI(),
-						DriveConstants.TrainConstants.pathplannerTranslationConstantContainer
-								.getD()),
-						new PIDConstants(
-								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
-										.getP(),
-								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
-										.getI(),
-								DriveConstants.TrainConstants.pathplannerRotationConstantContainer
-										.getD()),
-						DriveConstants.kMaxSpeedMetersPerSecond,
-						DriveConstants.kDriveBaseRadius,
-						new ReplanningConfig(true, true)),
+		AutoBuilder.configure(this::getPose, this::resetPose,
+				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
+				DriveConstants.mainController,
+				DriveConstants.mainConfig,
 				() -> Robot.isRed, this);
 
 		for (int i = 0; i < 3; ++i) {
@@ -287,6 +269,34 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 			double backLeftVolts, double backRightVolts) {
 		io.setVoltage(frontLeftVolts, frontRightVolts, backLeftVolts,
 				backRightVolts);
+	}
+
+	@Override
+
+	/**
+	 * Run closed loop given speeds + feedforwards, sends feedforward volt to motor
+	 */
+	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+		MecanumDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(speeds);
+		// make the wheel speeds into a list, FL FR BL BR
+		double[] wheelRadSpeedsArray = { wheelSpeeds.frontLeftMetersPerSecond / WHEEL_RADIUS,
+				wheelSpeeds.frontRightMetersPerSecond / WHEEL_RADIUS,
+				wheelSpeeds.rearLeftMetersPerSecond / WHEEL_RADIUS,
+				wheelSpeeds.rearRightMetersPerSecond / WHEEL_RADIUS };
+		// for loop, getting each motor NM, then converting to volts
+		double[] feedForwardVolts = new double[4];
+		for (int i = 0; i < 4; i++) {
+			double current = feedforwards.torqueCurrentsAmps()[i]; // Current needed for torque
+			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage from speed
+			double resistanceVoltage = current * DriveConstants.getDriveTrainMotors(1).rOhms; // Voltage due to resistance
+		
+			// Total voltage required considering both speed and resistance
+			feedForwardVolts[i] = resistanceVoltage + speedVoltage;
+		}
+		// send the volts to the motors
+		io.setVelocity(wheelSpeeds.frontLeftMetersPerSecond, wheelSpeeds.frontRightMetersPerSecond,
+				wheelSpeeds.rearLeftMetersPerSecond, wheelSpeeds.rearRightMetersPerSecond, feedForwardVolts[0],
+				feedForwardVolts[1], feedForwardVolts[2], feedForwardVolts[3]);
 	}
 
 	/** Run closed loop at the specified voltage. */
