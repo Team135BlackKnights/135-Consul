@@ -23,9 +23,9 @@ import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SimplifiedHolonomicDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
@@ -55,7 +55,6 @@ import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -126,7 +125,6 @@ public class RobotContainer {
 	public static boolean userDrive = true;
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
-	private SimplifiedHolonomicDriveSimulation testOpponentRobot = null;
 	public static Command currentAuto;
 
 	/**
@@ -350,16 +348,7 @@ public class RobotContainer {
 						FieldConstants.START_POSE, drivetrainS::resetPose);
 				fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
 				fieldSimulation.placeGamePiecesOnField(true);
-				testOpponentRobot = new SimplifiedHolonomicDriveSimulation(
-						DriveConstants.mainRobotProfile,
-						new Pose2d(-50, -50, new Rotation2d()),
-						new Consumer<Pose2d>() {
-							@Override
-							public void accept(Pose2d pose) {
-								// do nothing
-							}
-						});
-				fieldSimulation.addRobot(testOpponentRobot);
+				AIRobotInSimulation.startOpponentRobotSimulations(); //Start your engines...
 				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
 				break;
 			case TANK:
