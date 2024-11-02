@@ -108,9 +108,9 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
                 DriveConstants.maxRotationalAcceleration.get(),
                 robotMassWithBumpersKg,
                 bumperWidthMeters,
-                bumperLengthMeters)
-            .withAngularVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_ANGULAR_SPEED_DAMPING)
-            .withLinearVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_LINEAR_SPEED_DAMPING),
+                bumperLengthMeters),
+           // .withAngularVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_ANGULAR_SPEED_DAMPING)
+            //.withLinearVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_LINEAR_SPEED_DAMPING),
         initialPoseOnField, resetOdometryCallBack);
 
     this.moduleSimulations = moduleSimulations;

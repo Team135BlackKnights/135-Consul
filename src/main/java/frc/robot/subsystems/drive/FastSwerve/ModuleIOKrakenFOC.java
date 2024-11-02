@@ -14,6 +14,11 @@ import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -33,19 +38,19 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	private final String driveName;
 	private final String turnName;
 	// Status Signals
-	private final StatusSignal<Double> drivePosition;
-	private final StatusSignal<Double> driveVelocity;
-	private final StatusSignal<Double> driveAppliedVolts;
-	private final StatusSignal<Double> driveSupplyCurrent;
-	private final StatusSignal<Double> driveTorqueCurrent;
-	private final StatusSignal<Double> driveTemp;
-	private final StatusSignal<Double> turnPosition;
-	private final StatusSignal<Double> turnAbsolutePosition;
-	private final StatusSignal<Double> turnVelocity;
-	private final StatusSignal<Double> turnAppliedVolts;
-	private final StatusSignal<Double> turnSupplyCurrent;
-	private final StatusSignal<Double> turnTorqueCurrent;
-	private final StatusSignal<Double> turnTemp;
+	private final StatusSignal<Angle> drivePosition;
+	private final StatusSignal<AngularVelocity> driveVelocity;
+	private final StatusSignal<Voltage> driveAppliedVolts;
+	private final StatusSignal<Current> driveSupplyCurrent;
+	private final StatusSignal<Current> driveTorqueCurrent;
+	private final StatusSignal<Temperature> driveTemp;
+	private final StatusSignal<Angle> turnPosition;
+	private final StatusSignal<Angle> turnAbsolutePosition;
+	private final StatusSignal<AngularVelocity> turnVelocity;
+	private final StatusSignal<Voltage> turnAppliedVolts;
+	private final StatusSignal<Current> turnSupplyCurrent;
+	private final StatusSignal<Current> turnTorqueCurrent;
+	private final StatusSignal<Temperature> turnTemp;
 	// Odometry Queues
 	private final Queue<Double> drivePositionQueue;
 	private final Queue<Double> turnPositionQueue;

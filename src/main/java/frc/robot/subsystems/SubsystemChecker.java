@@ -4,7 +4,7 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.kauailabs.navx.frc.AHRS;
+import com.studica.frc.AHRS;
 import com.revrobotics.CANSparkBase;
 
 import au.grapplerobotics.LaserCan;

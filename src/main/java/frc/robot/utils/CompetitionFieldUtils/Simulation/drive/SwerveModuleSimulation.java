@@ -455,7 +455,6 @@ public class SwerveModuleSimulation {
       Rotation2d robotFacing,
       double gravityForceOnModuleNewtons) {
     updateSteerSimulation();
-
     /* the maximum gripping force that the wheel can generate */
     final double grippingForceNewtons = getGrippingForceNewtons(gravityForceOnModuleNewtons);
     final Rotation2d moduleWorldFacing = this.steerAbsoluteFacing.plus(robotFacing);
@@ -516,21 +515,17 @@ public class SwerveModuleSimulation {
       double grippingForceNewtons,
       Rotation2d moduleWorldFacing,
       Vector2 moduleCurrentGroundVelocity) {
-    final double driveWheelTorque = getDriveWheelTorque(),
-        theoreticalMaxPropellingForceNewtons = driveWheelTorque / WHEEL_RADIUS_METERS;
+    final double driveWheelTorque = getDriveWheelTorque();
+	 final double theoreticalMaxPropellingForceNewtons = driveWheelTorque / WHEEL_RADIUS_METERS;
     final boolean skidding = Math.abs(theoreticalMaxPropellingForceNewtons) > grippingForceNewtons;
-    final double propellingForceNewtons;
-    if (skidding)
-      propellingForceNewtons =
-          Math.copySign(grippingForceNewtons, theoreticalMaxPropellingForceNewtons);
-    else propellingForceNewtons = theoreticalMaxPropellingForceNewtons;
-
+    final double propellingForceNewtons = skidding ?  Math.copySign(grippingForceNewtons, theoreticalMaxPropellingForceNewtons) 
+	 					: theoreticalMaxPropellingForceNewtons;
+	
     final double floorVelocityProjectionOnWheelDirectionMPS =
         moduleCurrentGroundVelocity.getMagnitude()
             * Math.cos(
                 moduleCurrentGroundVelocity.getAngleBetween(
                     new Vector2(moduleWorldFacing.getRadians())));
-
     // if the chassis is tightly gripped on floor, the floor velocity is projected to the wheel
     this.driveEncoderUnGearedSpeedRadPerSec =
         floorVelocityProjectionOnWheelDirectionMPS / WHEEL_RADIUS_METERS * DRIVE_GEAR_RATIO;
@@ -562,7 +557,6 @@ public class SwerveModuleSimulation {
             driveEncoderUnGearedSpeedRadPerSec,
             DRIVE_CURRENT_LIMIT,
             driveMotorRequestedVolts);
-
     /* calculate the actual supply current */
     driveMotorSupplyCurrentAmps =
         DRIVE_MOTOR.getCurrent(
@@ -637,8 +631,8 @@ public class SwerveModuleSimulation {
 
   private static double getWheelGripping(DRIVE_WHEEL_TYPE type) {
     return switch (type) {
-      case RUBBER -> 1.25;
-      case TIRE -> 1.15;
+      case RUBBER -> .6;
+      case TIRE -> .5;
     };
   }
 

@@ -31,7 +31,7 @@ import org.dyn4j.geometry.Vector2;
  * {@link SwerveDriveSimulation}.
  */
 public abstract class AbstractDriveTrainSimulation extends Body implements RobotOnFieldDisplay{
-	public static final double BUMPER_COEFFICIENT_OF_FRICTION = 0.65, // https://en.wikipedia.org/wiki/Friction#Coefficient_of_friction
+	public static final double BUMPER_COEFFICIENT_OF_FRICTION = .65, // https://en.wikipedia.org/wiki/Friction#Coefficient_of_friction
 			BUMPER_COEFFICIENT_OF_RESTITUTION = 0.08; // https://simple.wikipedia.org/wiki/Coefficient_of_restitution
 	/**
 	 * <h2>Properties of the drive train simulation</h2>
@@ -261,7 +261,7 @@ public abstract class AbstractDriveTrainSimulation extends Body implements Robot
 			this.width = width;
 			this.length = length;
 			final double GRAVITY_CONSTANT = 9.8,
-					WHEEL_COEFFICIENT_OF_FRICTION = 0.8,
+					WHEEL_COEFFICIENT_OF_FRICTION = 1.25, //rubber on carpet
 					DRIVE_BASE_RADIUS = Math.hypot(width / 2, length / 2);
 			this.frictionForceMagnitudeNewtons = GRAVITY_CONSTANT
 					* WHEEL_COEFFICIENT_OF_FRICTION * robotMass;
