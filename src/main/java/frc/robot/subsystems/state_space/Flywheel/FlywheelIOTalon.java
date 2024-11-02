@@ -13,6 +13,11 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -20,13 +25,13 @@ import frc.robot.utils.state_space.StateSpaceConstants;
 public class FlywheelIOTalon implements FlywheelIO {
 	private double appliedVolts = 0.0;
 	private TalonFX flywheel;
-	private final StatusSignal<Double> flywheelPosition = flywheel.getPosition();
-	private final StatusSignal<Double> flywheelVelocity = flywheel.getVelocity();
-	private final StatusSignal<Double> flywheelAppliedVolts = flywheel
+	private final StatusSignal<Angle> flywheelPosition = flywheel.getPosition();
+	private final StatusSignal<AngularVelocity> flywheelVelocity = flywheel.getVelocity();
+	private final StatusSignal<Voltage> flywheelAppliedVolts = flywheel
 			.getMotorVoltage();
-	private final StatusSignal<Double> flywheelCurrent = flywheel
+	private final StatusSignal<Current> flywheelCurrent = flywheel
 			.getSupplyCurrent();
-	private final StatusSignal<Double> flywheelTemp = flywheel.getDeviceTemp();
+	private final StatusSignal<Temperature> flywheelTemp = flywheel.getDeviceTemp();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(1);
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
@@ -53,15 +58,15 @@ public class FlywheelIOTalon implements FlywheelIO {
 		BaseStatusSignal.refreshAll(flywheelPosition, flywheelVelocity,
 				flywheelAppliedVolts, flywheelCurrent, flywheelTemp);
 		flywheel.setVoltage(appliedVolts);
-		inputs.appliedVolts = flywheelAppliedVolts.getValue();
-		inputs.positionRad = Units.rotationsToRadians(flywheelPosition.getValue()
+		inputs.appliedVolts = flywheelAppliedVolts.getValueAsDouble();
+		inputs.positionRad = Units.rotationsToRadians(flywheelPosition.getValueAsDouble()
 				* StateSpaceConstants.Flywheel.flywheelGearing);
 		inputs.velocityRadPerSec = Units
-				.rotationsToRadians(flywheelVelocity.getValue()
+				.rotationsToRadians(flywheelVelocity.getValueAsDouble()
 						* StateSpaceConstants.Flywheel.flywheelGearing);
-		inputs.currentAmps = new double[] { flywheelCurrent.getValue()
+		inputs.currentAmps = new double[] { flywheelCurrent.getValueAsDouble()
 		};
-		inputs.flywheelTemp = flywheelTemp.getValue();
+		inputs.flywheelTemp = flywheelTemp.getValueAsDouble();
 	}
 
 	@Override

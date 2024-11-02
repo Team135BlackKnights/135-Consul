@@ -72,7 +72,8 @@ public class StateSpaceConstants {
 				.001, .001, .001, 0,0, 0); //must have position set in SysId
 		public static double m_KalmanModelPosition = .015,
 				statorCurrentLimit = 150, m_KalmanModelVelocity = .17,
-				m_KalmanEncoder = 0.003,
+				m_KalmanEncoderPosition = 0.003, //in rads
+				m_KalmanEncoderVelocity = 0.003, //in rad per sec
 				m_LQRQelmsPosition = Units.degreesToRadians(1),
 				m_LQRQelmsVelocity = Units.degreesToRadians(45.0), m_LQRRVolts = 12,
 				armGearing = 200,
@@ -98,7 +99,7 @@ public class StateSpaceConstants {
 				.001, .001, .001, 0,0, 0); //must have position set in SysId
 		public static double m_KalmanModelPosition = Units.inchesToMeters(1),
 				m_KalmanModelVelocity = Units.inchesToMeters(40),
-				m_KalmanEncoder = 0.001, m_LQRQelmsPosition = 1,
+				m_KalmanEncoderPosition = 0.001, m_KalmanEncoderVelocity = 0.001, m_LQRQelmsPosition = 1,
 				m_LQRQelmsVelocity = 10, m_LQRRVolts = 12, elevatorGearing = 1.5,
 				carriageMass = Units.lbsToKilograms(10),
 				drumRadius = Units.inchesToMeters(.75),

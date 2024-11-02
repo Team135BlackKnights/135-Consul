@@ -13,6 +13,11 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -22,17 +27,17 @@ public class DoubleJointedArmIOTalon implements DoubleJointedArmIO {
 	private double elbowVolts = 0.0;
 	private TalonFX arm;
 	private TalonFX elbow;
-	private final StatusSignal<Double> armPosition = arm.getPosition();
-	private final StatusSignal<Double> armVelocity = arm.getVelocity();
-	private final StatusSignal<Double> armAppliedVolts = arm.getMotorVoltage();
-	private final StatusSignal<Double> armCurrent = arm.getSupplyCurrent();
-	private final StatusSignal<Double> armTemp = arm.getDeviceTemp();
-	private final StatusSignal<Double> elbowPosition = elbow.getPosition();
-	private final StatusSignal<Double> elbowVelocity = elbow.getVelocity();
-	private final StatusSignal<Double> elbowAppliedVolts = elbow
+	private final StatusSignal<Angle> armPosition = arm.getPosition();
+	private final StatusSignal<AngularVelocity> armVelocity = arm.getVelocity();
+	private final StatusSignal<Voltage> armAppliedVolts = arm.getMotorVoltage();
+	private final StatusSignal<Current> armCurrent = arm.getSupplyCurrent();
+	private final StatusSignal<Temperature> armTemp = arm.getDeviceTemp();
+	private final StatusSignal<Angle> elbowPosition = elbow.getPosition();
+	private final StatusSignal<AngularVelocity> elbowVelocity = elbow.getVelocity();
+	private final StatusSignal<Voltage> elbowAppliedVolts = elbow
 			.getMotorVoltage();
-	private final StatusSignal<Double> elbowCurrent = elbow.getSupplyCurrent();
-	private final StatusSignal<Double> elbowTemp = elbow.getDeviceTemp();
+	private final StatusSignal<Current> elbowCurrent = elbow.getSupplyCurrent();
+	private final StatusSignal<Temperature> elbowTemp = elbow.getDeviceTemp();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(2);
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
@@ -71,25 +76,25 @@ public class DoubleJointedArmIOTalon implements DoubleJointedArmIO {
 				armCurrent, armTemp, elbowPosition, elbowVelocity,
 				elbowAppliedVolts, elbowCurrent, elbowTemp);
 		arm.setVoltage(armVolts);
-		inputs.appliedArmVolts = armAppliedVolts.getValue();
+		inputs.appliedArmVolts = armAppliedVolts.getValueAsDouble();
 		inputs.positionArmRads = Units.rotationsToRadians(BaseStatusSignal
-				.getLatencyCompensatedValue(armPosition, armVelocity)
+				.getLatencyCompensatedValue(armPosition, armVelocity).magnitude()
 				* StateSpaceConstants.DoubleJointedArm.armGearing);
 		inputs.velocityArmRadsPerSec = Units
-				.rotationsToRadians(armVelocity.getValue()
+				.rotationsToRadians(armVelocity.getValueAsDouble()
 						* StateSpaceConstants.DoubleJointedArm.armGearing);
-		inputs.armTemp = armTemp.getValue();
+		inputs.armTemp = armTemp.getValueAsDouble();
 		elbow.setVoltage(elbowVolts);
-		inputs.appliedElbowVolts = elbowAppliedVolts.getValue();
+		inputs.appliedElbowVolts = elbowAppliedVolts.getValueAsDouble();
 		inputs.positionElbowRads = Units.rotationsToRadians(BaseStatusSignal
-				.getLatencyCompensatedValue(elbowPosition, elbowVelocity)
+				.getLatencyCompensatedValue(elbowPosition, elbowVelocity).magnitude()
 				* StateSpaceConstants.DoubleJointedArm.elbowGearing);
 		inputs.velocityElbowRadsPerSec = Units
-				.rotationsToRadians(elbowVelocity.getValue()
+				.rotationsToRadians(elbowVelocity.getValueAsDouble()
 						* StateSpaceConstants.DoubleJointedArm.elbowGearing);
-		inputs.elbowTemp = elbowTemp.getValue();
-		inputs.currentAmps = new double[] { armCurrent.getValue(),
-				elbowCurrent.getValue()
+		inputs.elbowTemp = elbowTemp.getValueAsDouble();
+		inputs.currentAmps = new double[] { armCurrent.getValueAsDouble(),
+				elbowCurrent.getValueAsDouble()
 		};
 	}
 

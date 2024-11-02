@@ -13,6 +13,11 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -20,11 +25,11 @@ import frc.robot.utils.state_space.StateSpaceConstants;
 public class SingleJointedArmIOTalon implements SingleJointedArmIO {
 	private double appliedVolts = 0.0;
 	private TalonFX arm;
-	private final StatusSignal<Double> armPosition = arm.getPosition();
-	private final StatusSignal<Double> armVelocity = arm.getVelocity();
-	private final StatusSignal<Double> armAppliedVolts = arm.getMotorVoltage();
-	private final StatusSignal<Double> armCurrent = arm.getSupplyCurrent();
-	private final StatusSignal<Double> armTemp = arm.getDeviceTemp();
+	private final StatusSignal<Angle> armPosition = arm.getPosition();
+	private final StatusSignal<AngularVelocity> armVelocity = arm.getVelocity();
+	private final StatusSignal<Voltage> armAppliedVolts = arm.getMotorVoltage();
+	private final StatusSignal<Current> armCurrent = arm.getSupplyCurrent();
+	private final StatusSignal<Temperature> armTemp = arm.getDeviceTemp();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(1);
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
@@ -51,13 +56,13 @@ public class SingleJointedArmIOTalon implements SingleJointedArmIO {
 				armCurrent, armTemp);
 		arm.setVoltage(appliedVolts);
 		inputs.appliedVolts = appliedVolts;
-		inputs.armTemp = armTemp.getValue();
+		inputs.armTemp = armTemp.getValueAsDouble();
 		inputs.positionRad = Units.rotationsToRadians(BaseStatusSignal
-				.getLatencyCompensatedValue(armPosition, armVelocity, .2)
+				.getLatencyCompensatedValue(armPosition, armVelocity, .2).magnitude()
 				* StateSpaceConstants.SingleJointedArm.armGearing);;
-		inputs.velocityRadPerSec = Units.rotationsToRadians(armVelocity.getValue()
+		inputs.velocityRadPerSec = Units.rotationsToRadians(armVelocity.getValueAsDouble()
 				* StateSpaceConstants.SingleJointedArm.armGearing);
-		inputs.currentAmps = new double[] { armCurrent.getValue()
+		inputs.currentAmps = new double[] { armCurrent.getValueAsDouble()
 		};
 	}
 

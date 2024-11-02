@@ -1,7 +1,6 @@
 package frc.robot.subsystems.state_space.SingleJointedArm;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 
@@ -31,16 +30,18 @@ public class SingleJointedArmIOSim implements SingleJointedArmIO {
 	 *                                   velocity, and voltage outputs for
 	 *                                   monitoring and control purposes.
 	 */
-	private SingleJointedArmSim simArm = new SingleJointedArmSim(
+	private final SingleJointedArmSim simArm;
+
+	public SingleJointedArmIOSim() {
+		simArm= new SingleJointedArmSim(
 			SingleJointedArmS.m_SingleJointedArmPlant, DCMotor.getNEO(1),
 			StateSpaceConstants.SingleJointedArm.armGearing,
 			StateSpaceConstants.SingleJointedArm.armLength,
 			StateSpaceConstants.SingleJointedArm.startingPosition,
 			StateSpaceConstants.SingleJointedArm.maxPosition, false,
 			StateSpaceConstants.SingleJointedArm.startingPosition,
-			VecBuilder.fill(StateSpaceConstants.SingleJointedArm.m_KalmanEncoder));
-
-	public SingleJointedArmIOSim() {}
+			StateSpaceConstants.SingleJointedArm.m_KalmanEncoderPosition);
+	}
 
 	@Override
 	public void updateInputs(SingleJointedArmIOInputs inputs) {

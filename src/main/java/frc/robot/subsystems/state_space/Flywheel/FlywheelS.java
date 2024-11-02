@@ -16,10 +16,10 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.Time;
-import edu.wpi.first.units.Velocity;
-import edu.wpi.first.units.Voltage;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -37,9 +37,9 @@ public class FlywheelS extends SubsystemChecker {
 	private final FlywheelIO io;
 	private final FlywheelIOInputsAutoLogged inputs = new FlywheelIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
-	Measure<Velocity<Voltage>> rampRate = Volts.of(1).per(Seconds.of(1)); // for going FROM ZERO PER SECOND, this is 1v per 1sec.
-	Measure<Voltage> holdVoltage = Volts.of(4); //what voltage should I hold during Quas test?
-	Measure<Time> timeout = Seconds.of(10); //how many total seconds should I run the test, unless interrupted?
+	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
+	Voltage holdVoltage = Volts.of(4);
+	Time timeout = Seconds.of(10);
 	/**
 	 * This Plant holds a state-space model of our flywheel. It has the following
 	 * properties: States: Velocity, in Rad/s. (will match Output) Inputs: Volts.
@@ -47,7 +47,7 @@ public class FlywheelS extends SubsystemChecker {
 	 * which are found using SysId.
 	 */
 	public final static LinearSystem<N1, N1, N1> flywheelPlant = LinearSystemId
-			//.createFlywheelSystem(DCMotor.getNEO(1),StateSpaceConstants.Flywheel.MOI,StateSpaceConstants.Flywheel.flywheelGearing);
+			// .createFlywheelSystem(DCMotor.getNEO(1),StateSpaceConstants.Flywheel.MOI,StateSpaceConstants.Flywheel.flywheelGearing);
 			.identifyVelocitySystem(
 					StateSpaceConstants.Flywheel.flywheelValueHolder.getKv(),
 					StateSpaceConstants.Flywheel.flywheelValueHolder.getKa());
@@ -92,7 +92,7 @@ public class FlywheelS extends SubsystemChecker {
 								state.toString())),
 				new SysIdRoutine.Mechanism((voltage) -> runVolts(voltage.in(Volts)),
 						null, this));
-		m_loop.setNextR(0); //go to zero
+		m_loop.setNextR(0); // go to zero
 		m_loop.reset(VecBuilder.fill(0));
 		registerSelfCheckHardware();
 	}
@@ -153,7 +153,9 @@ public class FlywheelS extends SubsystemChecker {
 	}
 
 	@Override
-	public double getCurrent() { return Math.abs(inputs.currentAmps[0]); }
+	public double getCurrent() {
+		return Math.abs(inputs.currentAmps[0]);
+	}
 
 	/** Returns the current velocity in radians per second. */
 	public double getCharacterizationVelocity() {
@@ -184,7 +186,9 @@ public class FlywheelS extends SubsystemChecker {
 	}
 
 	@Override
-	public void setCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+	public void setCurrentLimit(int amps) {
+		io.setCurrentLimit(amps);
+	}
 
 	@Override
 	protected Command systemCheckCommand() {

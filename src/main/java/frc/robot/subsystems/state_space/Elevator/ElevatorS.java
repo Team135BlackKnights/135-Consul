@@ -5,10 +5,10 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.Time;
-import edu.wpi.first.units.Velocity;
-import edu.wpi.first.units.Voltage;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -44,36 +44,38 @@ public class ElevatorS extends SubsystemChecker {
 	private final ElevatorIO io;
 	private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
-	Measure<Velocity<Voltage>> rampRate = Volts.of(1).per(Seconds.of(1)); // for going FROM ZERO PER SECOND, this is 1v per 1sec.
-	Measure<Voltage> holdVoltage = Volts.of(4); //what voltage should I hold during Quas test?
-	Measure<Time> timeout = Seconds.of(10); //how many total seconds should I run the test, unless interrupted?
+	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
+	Voltage holdVoltage = Volts.of(4);
+	Time timeout = Seconds.of(10);
 	private static double m_velocity, m_position;
-	//using sysId
+	// using sysId
 	/*
-	 * All Elevator Statespace uses an N2 at the first position, because we care about velocity AND position of the Elevator.
+	 * All Elevator Statespace uses an N2 at the first position, because we care
+	 * about velocity AND position of the Elevator.
 	 * First position in the Nat is for Position, second is Velocity.
 	 */
-	public static final LinearSystem<N2, N1, N1> m_elevatorPlant = LinearSystemId
+	public static final LinearSystem<N2, N1, N2> m_elevatorPlant = LinearSystemId
 			.createElevatorSystem(DCMotor.getNEO(1),
 					StateSpaceConstants.Elevator.carriageMass,
 					StateSpaceConstants.Elevator.drumRadius,
 					StateSpaceConstants.Elevator.elevatorGearing);
-	private final KalmanFilter<N2, N1, N1> m_observer = new KalmanFilter<>(
-			Nat.N2(), Nat.N1(), m_elevatorPlant,
+	private final KalmanFilter<N2, N1, N2> m_observer = new KalmanFilter<>(
+			Nat.N2(), Nat.N2(), m_elevatorPlant,
 			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanModelPosition,
 					StateSpaceConstants.Elevator.m_KalmanModelVelocity), // How accurate we
 			// think our model is, in meters and meters/second.
-			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanEncoder), // How accurate we think our encoder position
+			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanEncoderPosition, StateSpaceConstants.Elevator.m_KalmanEncoderVelocity), // How accurate we think our encoder position
 			// data is. In this case we very highly trust our encoder position reading.
 			.02);
-	private final LinearQuadraticRegulator<N2, N1, N1> m_controller = new LinearQuadraticRegulator<>(
+	private final LinearQuadraticRegulator<N2, N1, N2> m_controller = new LinearQuadraticRegulator<>(
 			m_elevatorPlant,
 			VecBuilder.fill(Units.inchesToMeters(1.0), Units.inchesToMeters(10.0)), // qelms. Position
-			// and velocity error tolerances, in meters and meters per second. We care about pos more than velocity.
+			// and velocity error tolerances, in meters and meters per second. We care about
+			// pos more than velocity.
 			VecBuilder.fill(12.0), // relms. Control effort (voltage) tolerance. Decrease this to more
 			// heavily penalize control effort
 			.02);
-	private final LinearSystemLoop<N2, N1, N1> m_loop = new LinearSystemLoop<>(
+	private final LinearSystemLoop<N2, N1, N2> m_loop = new LinearSystemLoop<>(
 			m_elevatorPlant, m_controller, m_observer, 12.0, .02);
 	/**
 	 * Create a TrapezoidProfile, which holds constraints and states of our
@@ -82,25 +84,32 @@ public class ElevatorS extends SubsystemChecker {
 	 * system, try tuning these.
 	 */
 	private final TrapezoidProfile m_profile = new TrapezoidProfile(
-			new TrapezoidProfile.Constraints(StateSpaceConstants.Elevator.maxSpeed, //placeholder
+			new TrapezoidProfile.Constraints(StateSpaceConstants.Elevator.maxSpeed, // placeholder
 					StateSpaceConstants.Elevator.maxAcceleration));
 	private TrapezoidProfile.State m_lastProfiledReference = new TrapezoidProfile.State();
-	//set our starting position for the Elevator
+	// set our starting position for the Elevator
 	/*
-	 * TrapezoidProfile States are basically just a position in rads with a velocity in Rad/s
+	 * TrapezoidProfile States are basically just a position in rads with a velocity
+	 * in Rad/s
 	 * Here, we provide our starting position.
 	 */
 	private TrapezoidProfile.State goal = new TrapezoidProfile.State(
 			StateSpaceConstants.Elevator.startingPosition, 0);
-	// Create a Mechanism2d display of an Elevator with a fixed ElevatorTower and moving Elevator.
+	// Create a Mechanism2d display of an Elevator with a fixed ElevatorTower and
+	// moving Elevator.
 	/*
-	 * Mechanism2d is really just an output of the robot, used to debug Elevator movement in simulation.
-	 * the Mech2d itself is the "canvas" the mechanisms (like Elevators) are put on. It will always be your chassis.
-	 * A Root2d is the point at which the mechanism rotates, or starts at. Elevators are different, but here we
+	 * Mechanism2d is really just an output of the robot, used to debug Elevator
+	 * movement in simulation.
+	 * the Mech2d itself is the "canvas" the mechanisms (like Elevators) are put on.
+	 * It will always be your chassis.
+	 * A Root2d is the point at which the mechanism rotates, or starts at. Elevators
+	 * are different, but here we
 	 * simply get it's X and Y according to the robot, then make that the root.
-	 * Finally, we make the Ligament itself, and append this to the root point, basically putting an object at
+	 * Finally, we make the Ligament itself, and append this to the root point,
+	 * basically putting an object at
 	 * an origin point RELATIVE to the robot
-	 * It takes the current position of the Elevator, and is the only thing updated constantly because of that
+	 * It takes the current position of the Elevator, and is the only thing updated
+	 * constantly because of that
 	 */
 	private final Mechanism2d m_mech2d = new Mechanism2d(
 			StateSpaceConstants.Elevator.maxPosition + .25,
@@ -130,12 +139,13 @@ public class ElevatorS extends SubsystemChecker {
 		m_position = inputs.positionMeters;
 		m_velocity = inputs.velocityMetersPerSec;
 		m_lastProfiledReference = m_profile.calculate(.02,
-				m_lastProfiledReference, goal); //calculate where it SHOULD be.
+				m_lastProfiledReference, goal); // calculate where it SHOULD be.
 		m_loop.setNextR(m_lastProfiledReference.position,
-				m_lastProfiledReference.velocity); //Tell our motors to get there
+				m_lastProfiledReference.velocity); // Tell our motors to get there
 		// Correct our Kalman filter's state vector estimate with encoder data
-		m_loop.correct(VecBuilder.fill(m_position));
-		// Update our LQR to generate new voltage commands and use the voltages to predict the next
+		m_loop.correct(VecBuilder.fill(m_position,m_velocity));
+		// Update our LQR to generate new voltage commands and use the voltages to
+		// predict the next
 		// state with out Kalman filter.
 		m_loop.predict(.02);
 		// Send the new calculated voltage to the motors.
@@ -144,9 +154,9 @@ public class ElevatorS extends SubsystemChecker {
 		io.updateInputs(inputs);
 		Logger.processInputs("ElevatorS", inputs);
 		m_elevatorMech2d.setLength(m_loop.getXHat(0));
-		//Push the mechanism to AdvantageScope
+		// Push the mechanism to AdvantageScope
 		Logger.recordOutput("ElevatorMechanism", m_mech2d);
-		//calcualate arm pose
+		// calcualate arm pose
 		var elevatorPose = new Pose3d(StateSpaceConstants.Elevator.simX,
 				StateSpaceConstants.Elevator.simY,
 				StateSpaceConstants.Elevator.simZ, new Rotation3d(0, 0, 0.0));
@@ -185,7 +195,7 @@ public class ElevatorS extends SubsystemChecker {
 		return new TrapezoidProfile.State(position, 0);
 	}
 
-	//Also overload the function to accept both angle in METERS and METER/s
+	// Also overload the function to accept both angle in METERS and METER/s
 	/**
 	 * @param position in METERS
 	 * @param velocity in METES/SECOND
@@ -224,13 +234,21 @@ public class ElevatorS extends SubsystemChecker {
 	}
 
 	/** Stops the arm. */
-	public void stop() { io.stop(); }
+	public void stop() {
+		io.stop();
+	}
 
-	public double getDistance() { return m_loop.getXHat(0); }
+	public double getDistance() {
+		return m_loop.getXHat(0);
+	}
 
-	public double getSetpoint() { return goal.position; }
+	public double getSetpoint() {
+		return goal.position;
+	}
 
-	public double getVelocity() { return inputs.velocityMetersPerSec; }
+	public double getVelocity() {
+		return m_loop.getXHat(1);
+	}
 
 	/**
 	 * @param direction forward/reverse ("kForward" or "kReverse")
@@ -267,14 +285,15 @@ public class ElevatorS extends SubsystemChecker {
 				return returnVal;
 			}
 		}
-		//second set of conditionals (below) checks to see if the Elevator is within the hard limits, and stops it if it is
+		// second set of conditionals (below) checks to see if the Elevator is within
+		// the hard limits, and stops it if it is
 		if (direction.toString() == "kForward") {
 			if (getDistance() > StateSpaceConstants.Elevator.maxPosition) {
 				returnVal = () -> false;
 				return returnVal;
 			}
 		}
-		//otherwise, we're in bounds!
+		// otherwise, we're in bounds!
 		returnVal = () -> true;
 		return returnVal;
 	}
@@ -303,10 +322,14 @@ public class ElevatorS extends SubsystemChecker {
 	}
 
 	@Override
-	public void setCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+	public void setCurrentLimit(int amps) {
+		io.setCurrentLimit(amps);
+	}
 
 	@Override
-	public double getCurrent() { return inputs.currentAmps[0]; }
+	public double getCurrent() {
+		return inputs.currentAmps[0];
+	}
 
 	@Override
 	protected Command systemCheckCommand() {
