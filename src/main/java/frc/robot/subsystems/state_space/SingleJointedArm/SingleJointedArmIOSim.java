@@ -40,7 +40,7 @@ public class SingleJointedArmIOSim implements SingleJointedArmIO {
 			StateSpaceConstants.SingleJointedArm.startingPosition,
 			StateSpaceConstants.SingleJointedArm.maxPosition, false,
 			StateSpaceConstants.SingleJointedArm.startingPosition,
-			StateSpaceConstants.SingleJointedArm.m_KalmanEncoderPosition);
+			StateSpaceConstants.SingleJointedArm.m_KalmanEncoderPosition, StateSpaceConstants.SingleJointedArm.m_KalmanEncoderVelocity);
 	}
 
 	@Override
