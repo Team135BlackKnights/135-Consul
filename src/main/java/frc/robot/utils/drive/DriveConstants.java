@@ -1,5 +1,11 @@
 package frc.robot.utils.drive;
 
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.controllers.PPLTVController;
+import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.Matrix;
@@ -19,12 +25,13 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrain
 
 import java.util.HashMap;
 
+@SuppressWarnings("unused")
 public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
 	public static final boolean enablePID = true;
-	public static final MotorVendor robotMotorController = MotorVendor.NEO_SPARK_MAX;
+	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
-	public static final GyroType gyroType = GyroType.NAVX;
+	public static final GyroType gyroType = GyroType.PIGEON;
 	public static DCMotor getDriveTrainMotors(int number){
 		switch (robotMotorController) {
 			case NEO_SPARK_MAX:
@@ -41,6 +48,25 @@ public class DriveConstants {
 			default:
 				//returns completely defunct motor
 				return new DCMotor(0, 0, 0, 0, 0, 0);
+		}
+
+	}
+	public static DCMotor getDriveTrainMotors(int number, double reduction){
+		switch (robotMotorController) {
+			case NEO_SPARK_MAX:
+				return DCMotor.getNEO(number).withReduction(reduction);
+
+			case VORTEX_SPARK_FLEX:
+				return DCMotor.getNeoVortex(number).withReduction(reduction);
+			
+			//These cases assume that drivetrain uses kraken x60s FOC, because Grant bought 20 of those. 
+			//I had to sell my left kidney for those krakens-N
+			case CTRE_ON_CANIVORE:
+				case CTRE_ON_RIO:
+					return DCMotor.getKrakenX60Foc(number).withReduction(reduction);
+			default:
+				//returns completely defunct motor
+				return new DCMotor(0, 0, 0, 0, 0, 0).withReduction(reduction);
 		}
 
 	}
@@ -178,21 +204,35 @@ public class DriveConstants {
 		public static final double kWheelDiameter = Units.inchesToMeters(3.873),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
-				weight = Units.lbsToKilograms(110);
+				weight = Units.lbsToKilograms(40); //test chassis
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
 				0.001, 0.001, 0.001, 5, 0, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0),
 				//rev 
-				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
-				//ctre
 				/*overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
+						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.*/
+				//ctre
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	
 				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
 						.13, 0.001, 0.05, 0, 0.000);
 	}
+	public static ModuleConfig mainModuleConfig;
+	public static RobotConfig mainConfig;
+	public static PathFollowingController mainController;
+	static{
+		if (driveType == DriveTrainType.TANK){
 
+			ModuleConfig mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
+			RobotConfig mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
+			mainController = new PPLTVController(null, null, kBumperToBumperWidth, MAX_G);
+		}else{
+			ModuleConfig mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
+			RobotConfig mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
+			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
+		}
+	}
 	public static DriveTrainSimulationProfile mainRobotProfile = new DriveTrainSimulationProfile(
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get(),TrainConstants.weight, kBumperToBumperWidth,

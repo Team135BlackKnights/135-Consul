@@ -21,6 +21,8 @@ import frc.robot.utils.maths.TimeUtil;
 
 import java.util.List;
 import com.ctre.phoenix6.hardware.ParentDevice;
+import com.pathplanner.lib.util.DriveFeedforwards;
+
 import java.util.HashMap;
 
 public interface DrivetrainS extends Subsystem {
@@ -159,7 +161,7 @@ public interface DrivetrainS extends Subsystem {
 
 	default double getCurrent() { return 0; }
 
-	default void setDiscreteChassisSpeeds(ChassisSpeeds speeds) {}
+	void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards);
 
 	default boolean[] isSkidding() {
 		return new boolean[] { false, false, false, false
