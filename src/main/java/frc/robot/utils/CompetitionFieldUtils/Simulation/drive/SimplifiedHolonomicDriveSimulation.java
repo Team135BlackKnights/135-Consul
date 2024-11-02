@@ -61,15 +61,16 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
     super(profile, initialPoseOnField, resetOdometryCallBack);
   }
   public SimplifiedHolonomicDriveSimulation(
-      DriveTrainSimulationProfile profile, Pose2d initialPoseOnField, PathPlannerPath path) {
+      DriveTrainSimulationProfile profile, Pose2d initialPoseOnField, int id) {
     super(profile, initialPoseOnField, new Consumer<Pose2d>() {
       @Override
       public void accept(Pose2d t) {
       }
     });
-    this.path = path;
+    this.id = id;
   }
-  private PathPlannerPath path;
+  @SuppressWarnings("unused")
+  private int id;
   private ChassisSpeeds desiredFieldRelativeSpeeds = new ChassisSpeeds();
 
   /**
@@ -212,6 +213,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
   }
   private void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
     runChassisSpeeds(speeds, true);}
+    @SuppressWarnings("unused")
    private Command opponentRobotFollowPath(PathPlannerPath path) {
         return new FollowPathCommand(
                 path,
@@ -223,12 +225,6 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
                 () -> Robot.isRed,this
         );
     }
-  public Command runAutoCycleCommand(){
-    if (path == null) return null;
-    final Pose2d startingPose = path.getStartingDifferentialPose();
-    setSimulationWorldPose(startingPose);
-    return opponentRobotFollowPath(path);
-  }
 @Override
 public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();
