@@ -56,7 +56,6 @@ import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
