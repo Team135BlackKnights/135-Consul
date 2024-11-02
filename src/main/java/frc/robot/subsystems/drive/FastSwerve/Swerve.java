@@ -73,7 +73,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
 			DriveConstants.kModuleTranslations);
 	// Store previous positions and time for filtering odometry data
-	private SwerveDriveWheelPositions lastPositions = null;
+	private SwerveModulePosition[] lastPositions = null;
 	private double lastTime = 0.0;
 	/** Active drive mode. */
 	private DriveMode currentDriveMode = DriveMode.TELEOP;
@@ -97,7 +97,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer
 			.createBuffer(poseBufferSizeSeconds);
 
-	public record OdometryObservation(SwerveDriveWheelPositions wheelPositions,
+	public record OdometryObservation(SwerveModulePosition[] wheelPositions,
 			Rotation2d gyroAngle, double timestamp) {}
 
 	private final Matrix<N3, N1> qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
@@ -109,11 +109,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			Matrix<N3, N1> stdDevs) {}
 
 	private final SysIdRoutine sysId;
-	private SwerveDriveWheelPositions lastWheelPositions = new SwerveDriveWheelPositions(
+	private SwerveModulePosition[] lastWheelPositions = 
 			new SwerveModulePosition[] { new SwerveModulePosition(),
 					new SwerveModulePosition(), new SwerveModulePosition(),
-					new SwerveModulePosition()
-			});
+					new SwerveModulePosition()};
+			
 	private Rotation2d lastGyroAngle = new Rotation2d();
 	private Twist2d robotVelocity = new Twist2d();
 	private final SwerveSetpointGenerator setpointGenerator;
@@ -386,19 +386,19 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					: null;
 			// Get all four swerve module positions at that odometry update
 			// and store in SwerveDriveWheelPositions object
-			SwerveDriveWheelPositions wheelPositions = new SwerveDriveWheelPositions(
+			SwerveModulePosition[] wheelPositions = 
 					Arrays.stream(modules)
 							.map(module -> module.getModulePositions()[odometryIndex])
-							.toArray(SwerveModulePosition[]::new));
+							.toArray(SwerveModulePosition[]::new);
 			// Filtering based on delta wheel positions
 			boolean includeMeasurement = true;
 			if (lastPositions != null) {
 				double dt = odometryTimestampInputs.measurementTimeStamps[i] - lastTime;
 				for (int j = 0; j < modules.length; j++) {
-					double velocity = (wheelPositions.positions[j].distanceMeters
-							- lastPositions.positions[j].distanceMeters) / dt;
-					double omega = wheelPositions.positions[j].angle
-							.minus(lastPositions.positions[j].angle).getRadians() / dt;
+					double velocity = (wheelPositions[j].distanceMeters
+							- lastPositions[j].distanceMeters) / dt;
+					double omega = wheelPositions[j].angle
+							.minus(lastPositions[j].angle).getRadians() / dt;
 					// Check if delta is too large
 					if (Math.abs(omega) > currentModuleLimits.maxSteeringVelocity()
 							* 5.0

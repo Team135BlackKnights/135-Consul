@@ -22,6 +22,11 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -43,29 +48,29 @@ public class TankIOTalonFX implements TankIO {
 			DriveConstants.kFrontRightDrivePort);
 	private final TalonFX rightFollower = new TalonFX(
 			DriveConstants.kBackRightDrivePort);
-	private final StatusSignal<Double> leftPosition = leftLeader.getPosition();
-	private final StatusSignal<Double> leftVelocity = leftLeader.getVelocity();
-	private final StatusSignal<Double> leftAppliedVolts = leftLeader
+	private final StatusSignal<Angle> leftPosition = leftLeader.getPosition();
+	private final StatusSignal<AngularVelocity> leftVelocity = leftLeader.getVelocity();
+	private final StatusSignal<Voltage> leftAppliedVolts = leftLeader
 			.getMotorVoltage();
-	private final StatusSignal<Double> leftLeaderCurrent = leftLeader
+	private final StatusSignal<Current> leftLeaderCurrent = leftLeader
 			.getSupplyCurrent();
-	private final StatusSignal<Double> leftFollowerCurrent = leftFollower
+	private final StatusSignal<Current> leftFollowerCurrent = leftFollower
 			.getSupplyCurrent();
-	private final StatusSignal<Double> leftLeaderTemp = leftLeader
+	private final StatusSignal<Temperature> leftLeaderTemp = leftLeader
 			.getDeviceTemp();
-	private final StatusSignal<Double> leftFollowerTemp = leftFollower
+	private final StatusSignal<Temperature> leftFollowerTemp = leftFollower
 			.getDeviceTemp();
-	private final StatusSignal<Double> rightPosition = rightLeader.getPosition();
-	private final StatusSignal<Double> rightVelocity = rightLeader.getVelocity();
-	private final StatusSignal<Double> rightAppliedVolts = rightLeader
+	private final StatusSignal<Angle> rightPosition = rightLeader.getPosition();
+	private final StatusSignal<AngularVelocity> rightVelocity = rightLeader.getVelocity();
+	private final StatusSignal<Voltage> rightAppliedVolts = rightLeader
 			.getMotorVoltage();
-	private final StatusSignal<Double> rightLeaderCurrent = rightLeader
+	private final StatusSignal<Current> rightLeaderCurrent = rightLeader
 			.getSupplyCurrent();
-	private final StatusSignal<Double> rightFollowerCurrent = rightFollower
+	private final StatusSignal<Current> rightFollowerCurrent = rightFollower
 			.getSupplyCurrent();
-	private final StatusSignal<Double> rightLeaderTemp = rightLeader
+	private final StatusSignal<Temperature> rightLeaderTemp = rightLeader
 			.getDeviceTemp();
-	private final StatusSignal<Double> rightFollowerTemp = rightFollower
+	private final StatusSignal<Temperature> rightFollowerTemp = rightFollower
 			.getDeviceTemp();
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
 	private static final Executor currentExecutor = Executors
@@ -148,7 +153,9 @@ public class TankIOTalonFX implements TankIO {
 	}
 
 	@Override
-	public void reset() { gyro.reset(); }
+	public void reset() {
+		gyro.reset();
+	}
 
 	@Override
 	public void setVoltage(double leftVolts, double rightVolts) {
@@ -174,27 +181,31 @@ public class TankIOTalonFX implements TankIO {
 	public void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {
 		if (DriveConstants.enablePID) {
-			leftLeader.setControl(new VelocityVoltage(
-					Units.radiansToRotations(leftRadPerSec * GEAR_RATIO), 0.0, true,
-					leftFFVolts, 0, false, false, false));
-			rightLeader.setControl(new VelocityVoltage(
-					Units.radiansToRotations(rightRadPerSec * GEAR_RATIO), 0.0, true,
-					rightFFVolts, 0, false, false, false));
+			leftLeader.setControl(new VelocityVoltage(Units.radiansToRotations(leftRadPerSec * GEAR_RATIO)).withEnableFOC(true)
+					.withFeedForward(leftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
+					.withLimitForwardMotion(false).withLimitReverseMotion(false));
+			rightLeader.setControl(new VelocityVoltage(Units.radiansToRotations(rightRadPerSec * GEAR_RATIO)).withEnableFOC(true)
+					.withFeedForward(rightFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
+					.withLimitForwardMotion(false).withLimitReverseMotion(false));
 		} else {
 			setVoltage(convertRadPerSecondToVoltage(leftRadPerSec),
 					convertRadPerSecondToVoltage(rightRadPerSec));
 		}
 	}
 
-	/** Converts radians per second into voltage that will achieve that value in a motor.
+	/**
+	 * Converts radians per second into voltage that will achieve that value in a
+	 * motor.
 	 * Takes the angular velocity of the motor (radPerSec),
-	 * divides by the theoretical max angular speed (max linear speed / wheel radius)
-	 * and multiplies by 12 (the theoretical standard voltage)  
+	 * divides by the theoretical max angular speed (max linear speed / wheel
+	 * radius)
+	 * and multiplies by 12 (the theoretical standard voltage)
+	 * 
 	 * @param radPerSec radians per second of the motor
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+		return 12 * radPerSec * (TrainConstants.kWheelDiameter / 2) / DriveConstants.kMaxSpeedMetersPerSecond;
 
 	}
 

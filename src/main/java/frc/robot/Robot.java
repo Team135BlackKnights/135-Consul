@@ -6,6 +6,7 @@ package frc.robot;
 import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
@@ -61,7 +62,7 @@ public class Robot extends LoggedRobot {
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-
+	public static final CANBus canBus = new CANBus("rio");
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
@@ -188,9 +189,9 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("AccumulatedCharge", accumulatedCharge);
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
-					DriveConstants.pathConstraints.getMaxVelocityMps(),
+					DriveConstants.pathConstraints.maxVelocityMPS(),
 					DriveConstants.maxTranslationalAcceleration.get(),
-					DriveConstants.pathConstraints.getMaxAngularVelocityRps(),
+					DriveConstants.pathConstraints.maxAngularVelocityRadPerSec(),
 					DriveConstants.maxRotationalAcceleration.get());
 			DriveConstants.moduleLimitsFree = new ModuleLimits(
 					DriveConstants.kMaxSpeedMetersPerSecond,
@@ -220,7 +221,7 @@ public class Robot extends LoggedRobot {
 		SmartDashboard.putNumber("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("BatteryVoltage",
 				RobotController.getBatteryVoltage());
-		CANBus.CANBusStatus canBusStatus = CANBus.getStatus("rio");
+		CANBusStatus canBusStatus = canBus.getStatus();
 		Logger.recordOutput("CANUtil", canBusStatus.BusUtilization * 100.0);
 		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("RobotPeriodicMS", runtimeMS);
@@ -271,10 +272,14 @@ public class Robot extends LoggedRobot {
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				if (RobotContainer.currentAuto != null) {
 					RobotContainer.fieldSimulation.resetField(true);
-					RobotContainer.fieldSimulation.getMainDriveSimulation()
-							.setSimulationWorldPose(
-									PathPlannerAuto.getStaringPoseFromAutoFile(
-											RobotContainer.currentAuto.getName()));
+					try {
+						RobotContainer.fieldSimulation.getMainDriveSimulation()
+								.setSimulationWorldPose(
+										PathPlannerAuto.getPathGroupFromAutoFile(
+												RobotContainer.currentAuto.getName()).get(0).getStartingDifferentialPose());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					RobotContainer.fieldSimulation.getMainDriveSimulation()
 							.resetOdometryToActualRobotPose();
 				}

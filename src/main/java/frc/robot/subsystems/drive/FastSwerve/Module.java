@@ -6,8 +6,11 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.*;
+import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import org.littletonrobotics.junction.Logger;
@@ -68,7 +71,8 @@ public class Module {
 	/** Called while blocking odometry thread */
 	public void updateInputs() {
 		io.updateInputs(inputs);
-		inputs.turnAbsolutePosition = inputs.turnAbsolutePosition.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		inputs.turnAbsolutePosition = inputs.turnAbsolutePosition
+				.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
 		inputs.turnPosition = inputs.turnPosition.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
 		for (Rotation2d value : inputs.odometryTurnPositions) {
 			value.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
@@ -83,8 +87,8 @@ public class Module {
 				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
 				drivekP, drivekI, drivekD);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(),turnkS.get()),
-				turnkP, turnkI, turnkD,turnkS);
+				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get()),
+				turnkP, turnkI, turnkD, turnkS);
 	}
 
 	/** Runs to {@link SwerveModuleState} */
@@ -94,14 +98,27 @@ public class Module {
 		Logger.recordOutput("Drive/SwerveSetpoint",
 				setpointState.speedMetersPerSecond);
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
-		io.runDriveVelocitySetpoint(
-				setpoint.speedMetersPerSecond
-						/ (DriveConstants.TrainConstants.kWheelDiameter / 2),(inputs.negateFF ? 0 : 1)*
-				ff.calculate(setpoint.speedMetersPerSecond
-						/ (DriveConstants.TrainConstants.kWheelDiameter / 2))
-						+ ((wheelTorqueNm
-								/ DriveConstants.TrainConstants.kDriveMotorGearRatio)
-								* DriveConstants.TrainConstants.kT));
+		// get current setpoint as Measure<? extends PerUnit<U, TimeUnit>>
+		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond);
+		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
+		if (DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
+				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) {
+			io.runDriveVelocitySetpoint(
+					setpoint.speedMetersPerSecond
+							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
+					(inputs.negateFF ? 0 : 1) * ((wheelTorqueNm
+							/ DriveConstants.TrainConstants.kDriveMotorGearRatio)
+							* DriveConstants.TrainConstants.kT));
+		} else {
+			io.runDriveVelocitySetpoint(
+					setpoint.speedMetersPerSecond
+							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
+					(inputs.negateFF ? 0 : 1) *
+							ff.calculate(currentVelocity, setpointVelocity).magnitude()
+							+ ((wheelTorqueNm
+									/ DriveConstants.TrainConstants.kDriveMotorGearRatio)
+									* DriveConstants.TrainConstants.kT));
+		}
 		io.runTurnPositionSetpoint(setpoint.angle.getRadians());
 	}
 
@@ -120,10 +137,14 @@ public class Module {
 		io.setTurnBrakeMode(enabled);
 	}
 
-	public void setCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+	public void setCurrentLimit(int amps) {
+		io.setCurrentLimit(amps);
+	}
 
 	/** Stops motors. */
-	public void stop() { io.stop(); }
+	public void stop() {
+		io.stop();
+	}
 
 	/** Get all latest {@link SwerveModulePosition}'s from last cycle. */
 	public SwerveModulePosition[] getModulePositions() {
@@ -190,7 +211,9 @@ public class Module {
 		return inputs.turnMotorTemp;
 	}
 
-	public SwerveModuleState getSetpointState() { return setpointState; }
+	public SwerveModuleState getSetpointState() {
+		return setpointState;
+	}
 
 	public List<SelfChecking> getSelfCheckingHardware() {
 		return io.getSelfCheckingHardware();
