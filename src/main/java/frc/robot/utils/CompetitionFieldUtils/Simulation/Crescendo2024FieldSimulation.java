@@ -61,8 +61,8 @@ public class Crescendo2024FieldSimulation extends CompetitionFieldSimulation {
 					new double[] { 0, Units.inchesToMeters(78)
 					});
 			// upper wall
-			super.addBorderLine(new Translation2d(0, 8.12),
-					new Translation2d(FieldConstants.FIELD_WIDTH, 8.12),
+			super.addBorderLine(new Translation2d(0, 8.2),
+					new Translation2d(FieldConstants.FIELD_WIDTH, 8.2),
 					new double[] { 0, Units.inchesToMeters(50)
 					});
 			// righter wall 

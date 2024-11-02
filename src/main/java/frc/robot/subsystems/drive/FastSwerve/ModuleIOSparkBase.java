@@ -7,7 +7,6 @@ import com.revrobotics.CANSparkLowLevel.PeriodicFrame;
 import com.revrobotics.SparkAnalogSensor.Mode;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
@@ -45,10 +44,6 @@ public class ModuleIOSparkBase implements ModuleIO {
 	private final boolean isTurnAbsInverted;
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(8);
-	private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
-					.getKs(),
-			0);
 
 	public ModuleIOSparkBase(int index) {
 		// Init motor & encoder objects
@@ -242,7 +237,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 	public void runTurnPositionSetpoint(double angleRads) {
 		runTurnVolts(
 				turnController.calculate(absoluteEncoderValue.get().getRadians(),
-						angleRads) + ff.calculate(angleRads));
+						angleRads));
 	}
 
 	@Override
@@ -253,7 +248,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 	@Override
 	public void setTurnPID(double kP, double kI, double kD, double kS) {
 		turnController.setPID(kP, kI, kD);
-		ff = new SimpleMotorFeedforward(kS, 0);
+		//kS is dep'd for REV, as it was doing .0001 * kS
 	}
 
 	@Override

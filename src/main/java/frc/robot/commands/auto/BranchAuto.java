@@ -28,11 +28,17 @@ public class BranchAuto extends Command {
 		isFinished = false;
 		if (RobotContainer.currentGamePieceStatus == RobotContainer.GamePieceState.HAS_NOTE) {
 			//PathPlannerPath.fromChoreoTrajectory will automatically execute any event markers in the choreo Traj.
-			Command path = AutoBuilder
-					.followPath(PathPlannerPath.fromChoreoTrajectory(choreoTraj))
-					/*.andThen(PathFinder.goToPose(backupPose,
-							() -> DriveConstants.pathConstraints,
-							RobotContainer.drivetrainS, true, endSpeed))*/;
+			Command path = null;
+			try{
+				path = AutoBuilder
+				.followPath(PathPlannerPath.fromChoreoTrajectory(choreoTraj))
+				/*.andThen(PathFinder.goToPose(backupPose,
+						() -> DriveConstants.pathConstraints,
+						RobotContainer.drivetrainS, true, endSpeed))*/;
+			}catch(Exception e){
+				System.out.println("ABOUT TO CRASH!\nError in BranchAuto: " + e);
+			}
+			
 			commandGroup = new ParallelCommandGroup(path //add any other commands during normal (like scoring) here
 					);
 			RobotContainer.currentPath = choreoTraj;

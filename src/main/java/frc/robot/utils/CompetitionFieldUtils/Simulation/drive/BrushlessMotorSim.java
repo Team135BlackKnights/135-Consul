@@ -24,6 +24,7 @@
 
 package frc.robot.utils.CompetitionFieldUtils.Simulation.drive;
 
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -247,11 +248,11 @@ public class BrushlessMotorSim {
       double requestedOutputVoltage) {
     final double currentAtRequestedVolts =
         motor.getCurrent(motorCurrentVelocityRadPerSec, requestedOutputVoltage);
-
     /* normally, motor controller starts cutting the supply voltage when the current exceed 120% the current limit */
     final boolean currentTooHigh = Math.abs(currentAtRequestedVolts) > 1.2 * currentLimitAmps;
     double limitedVoltage = requestedOutputVoltage;
     if (currentTooHigh) {
+		System.out.println("Current too high");
       final double limitedCurrent = Math.copySign(currentLimitAmps, currentAtRequestedVolts);
       limitedVoltage =
           motor.getVoltage(motor.getTorque(limitedCurrent), motorCurrentVelocityRadPerSec);

@@ -30,15 +30,15 @@ public interface OdometryThread {
 	List<OdometryDoubleInput> registeredInputs = new ArrayList<>();
 	List<BaseStatusSignal> registeredStatusSignals = new ArrayList<>();
 
-	static Queue<Double> registerSignalInput(StatusSignal<Double> signal) {
-		signal.setUpdateFrequency(DriveConstants.TrainConstants.odomHz, .02);
+	static Queue<Double> registerSignalInput(StatusSignal<?> signal) {
+		// Set the update frequency for the signal; assuming all signal values can be cast to Double.
+		signal.setUpdateFrequency(DriveConstants.TrainConstants.odomHz, 0.02);
 		registeredStatusSignals.add(signal);
-		return registerInput(signal.asSupplier());
+		return registerInput(() -> (Double) signal.getValueAsDouble());
 	}
-
+	
 	static Queue<Double> registerInput(Supplier<Double> supplier) {
-		final OdometryDoubleInput odometryDoubleInput = new OdometryDoubleInput(
-				supplier);
+		final OdometryDoubleInput odometryDoubleInput = new OdometryDoubleInput(supplier);
 		registeredInputs.add(odometryDoubleInput);
 		return odometryDoubleInput.queue;
 	}
