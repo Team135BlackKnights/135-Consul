@@ -6,6 +6,7 @@ package frc.robot;
 import frc.robot.Constants.Mode;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
+import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
@@ -453,6 +454,10 @@ public class RobotContainer {
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
 		autoChooser = AutoBuilder.buildAutoChooser();
+		if (drivetrainS instanceof Swerve){
+			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
+			autoChooser.addOption("Wheel Radius Characterization", orientBeforeData.andThen(new WheelRadiusCharacterization((Swerve) drivetrainS, WheelRadiusCharacterization.Direction.CLOCKWISE)).withName("DRIVE wheel radius characterization"));
+		}
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 		autoChooser.onChange(auto -> {
