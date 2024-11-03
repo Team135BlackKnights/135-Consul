@@ -83,36 +83,36 @@ public class AIRobotInSimulation {
                                         ROBOT_QUEENING_POSITIONS[0],
                                         1, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[0]));
                         instances[1] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 1"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 1"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 1 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 1 backwards"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[1],
                                         2, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[1]));
                         instances[2] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 2"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 2"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 2 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 2 backwards"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[2],
                                         3, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[2]));
                         instances[3] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 3"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 3"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 3 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 3 backwards"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[3],
                                         4, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[3]));
                         instances[4] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 4"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 4"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 4 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 4 backwards"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[4],
                                         5, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[4]));
                 } catch (Exception e) {
                         DriverStation.reportError(
-                                        "failed to load opponent robot simulation path, error:" + e.getMessage(),
+                                        "failed to load opponent cycle path, error:" + e.getMessage(),
                                         false);
                 }
         }

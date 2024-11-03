@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+
 public class AimToPose extends Command {
 	private final DrivetrainS drive;
 	private final Supplier<Pose2d> poseSupplier;
@@ -81,6 +83,7 @@ public class AimToPose extends Command {
 				+ thetaController.calculate(currentRotation.getRadians(),
 						targetAngle); //Go to target rotation using FF.
 		Logger.recordOutput("THETA", thetaVelocity);
+		PPHolonomicDriveController.overrideRotationFeedback(() -> thetaVelocity);
 		if (Constants.currentMatchState == Constants.FRCMatchState.TELEOP) {
 			RobotContainer.angularSpeed = thetaVelocity;
 		}
@@ -90,6 +93,7 @@ public class AimToPose extends Command {
 	public void end(boolean interrupted) {
 		RobotContainer.currentPath = "";
 		RobotContainer.angleOverrider = Optional.empty();
+		PPHolonomicDriveController.clearRotationFeedbackOverride();
 		RobotContainer.angularSpeed = 0;
 		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Go back to normal deadband
 		//drive.stopModules();
