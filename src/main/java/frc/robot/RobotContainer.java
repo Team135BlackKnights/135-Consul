@@ -440,6 +440,7 @@ public class RobotContainer {
 		autoChooser.onChange(auto -> {
 			try {
 				currentAuto = auto;
+				Logger.recordOutput("RobotState/autoPath", PathFinder.parseAutoToPose2dList(auto.getName()).toArray(Pose2d[]::new));
 				field.getObject("path")
 						.setPoses(PathFinder.parseAutoToPose2dList(auto.getName()));
 			}
