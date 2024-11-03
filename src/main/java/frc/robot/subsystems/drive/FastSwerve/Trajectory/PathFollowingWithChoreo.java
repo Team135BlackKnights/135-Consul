@@ -181,12 +181,25 @@ public class PathFollowingWithChoreo extends Command {
     timer.start();
   }
 
+  private boolean movingRight = false;
+
   public List<DriveFeedforwards> loadChoreoFeedforwards(String trajectoryName)
       throws IOException, ParseException, FileVersionException {
     List<DriveFeedforwards> feedforwards = new ArrayList<>();
+    // if it ends in something like mainAuto.0.traj, remove the .0
+    String pathName = trajectoryName;
+    // store the value of the index after the dot (using example above, this would
+    // be 0)
+    int dotIndex = -1;
+    if (trajectoryName.contains(".")) {
+      pathName = trajectoryName.substring(0, trajectoryName.indexOf("."));
+      dotIndex = Character.getNumericValue(
+          trajectoryName.substring(trajectoryName.indexOf(".") + 1, trajectoryName.indexOf(".") + 2).charAt(0));
+      System.out.println("Dot index: " + dotIndex);
+    }
 
     try (BufferedReader br = new BufferedReader(
-        new FileReader(new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
+        new FileReader(new File(Filesystem.getDeployDirectory(), "choreo/" + pathName + ".traj")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -200,71 +213,93 @@ public class PathFollowingWithChoreo extends Command {
       String version = json.get("version").toString();
       String[] versions = version.split("\\.");
       if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
-        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
+        throw new FileVersionException(version, "v2025.0.X", pathName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");
-      int sampleCount = 0;
-      boolean movingRight = false;
-      // Loop through each sample in the trajectory
-      for (Object s : (JSONArray) trajJson.get("samples")) {
-        sampleCount++;
-        JSONObject sample = (JSONObject) s;
-        // Extract the fx and fy values
-        JSONArray moduleForcesXArray = (JSONArray) sample.get("fx");
-        double[] moduleForcesX = new double[4];
-        int i = 0;
-        for (Object force : moduleForcesXArray) {
-          moduleForcesX[i] = (((Number) force).doubleValue());
-          i++;
-        }
-        JSONArray moduleForcesYArray = (JSONArray) sample.get("fy");
-        double[] moduleForcesY = new double[4];
-        i = 0;
-        for (Object force : moduleForcesYArray) {
-          moduleForcesY[i] = (((Number) force).doubleValue());
-          i++;
-        }
-        double[] linearForces = new double[4];
-        double xVel = ((Number) sample.get("vx")).doubleValue();
-        double yVel = ((Number) sample.get("vy")).doubleValue();
-        if (sampleCount == 2) {
+      JSONArray splitsJson = (JSONArray) trajJson.get("splits");
+      List<Integer> splits = new ArrayList<>();
+      for (Object o : splitsJson) {
+        splits.add(((Number) o).intValue());
+      }
 
-          // Calculate the angle of the vector
-          double angle = Math.atan2(moduleForcesY[0], moduleForcesX[0]);
-          // if between -90 and 90, then the force is in the direction of the velocity
-          if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
-            movingRight = true;
-          } else {
-            movingRight = false;
-          }
+      if (splits.isEmpty() || splits.get(0) != 0) {
+        splits.add(0, 0);
+      }
+      JSONArray samples = (JSONArray) trajJson.get("samples");
+      if (dotIndex == -1) {
+        int sampleCount = 0;
+        for (Object s : samples) {
+          sampleCount++;
+          feedforwards.add(processSample((JSONObject) s, sampleCount));
         }
-        for (int j = 0; j < moduleForcesX.length; j++) {
-          double forceMagnitude = Math.hypot(moduleForcesX[j], moduleForcesY[j]);
-          double velocityMagnitude = Math.hypot(xVel, yVel);
-
-          // Calculate the dot product to determine if force aligns with velocity
-          double dotProduct = (moduleForcesX[j] * xVel + moduleForcesY[j] * yVel);
-
-          // Sign adjustment based on alignment with velocity direction
-          double signAdjustment = Math.signum(dotProduct / (forceMagnitude * velocityMagnitude));
-          if (Double.isNaN(signAdjustment)) {
-            signAdjustment = 1;
-          }
-          // Assign the adjusted force magnitude
-          linearForces[j] = forceMagnitude * signAdjustment * (movingRight ? 1 : -1);
+      } else {
+        // Handle split case based on dotIndex
+        int splitStartIdx = splits.get(dotIndex);
+        int splitEndIdx = (dotIndex < splits.size() - 1) ? splits.get(dotIndex + 1) : samples.size();
+        int sampleCount = 0;
+        for (int i = splitStartIdx; i < splitEndIdx; i++) {
+          sampleCount++;
+          JSONObject sample = (JSONObject) samples.get(i);
+          feedforwards.add(processSample(sample, sampleCount));
         }
-        // Assuming DriveFeedforwards constructor takes fx and fy as parameters
-        DriveFeedforwards feedforward = new DriveFeedforwards(
-            new double[4],
-            linearForces,
-            new double[4],
-            moduleForcesX,
-            moduleForcesY);
-        feedforwards.add(feedforward);
       }
     }
+
     return feedforwards;
+  }
+
+  private DriveFeedforwards processSample(JSONObject sample, int sampleCount) {
+    JSONArray moduleForcesXArray = (JSONArray) sample.get("fx");
+    double[] moduleForcesX = new double[4];
+    int i = 0;
+    for (Object force : moduleForcesXArray) {
+      moduleForcesX[i] = (((Number) force).doubleValue());
+      i++;
+    }
+    JSONArray moduleForcesYArray = (JSONArray) sample.get("fy");
+    double[] moduleForcesY = new double[4];
+    i = 0;
+    for (Object force : moduleForcesYArray) {
+      moduleForcesY[i] = (((Number) force).doubleValue());
+      i++;
+    }
+    double[] linearForces = new double[4];
+    double xVel = ((Number) sample.get("vx")).doubleValue();
+    double yVel = ((Number) sample.get("vy")).doubleValue();
+    if (sampleCount == 2) {
+
+      // Calculate the angle of the vector
+      double angle = Math.atan2(moduleForcesY[0], moduleForcesX[0]);
+      // if between -90 and 90, then the force is in the direction of the velocity
+      if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
+        movingRight = true;
+      } else {
+        movingRight = false;
+      }
+    }
+    for (int j = 0; j < moduleForcesX.length; j++) {
+      double forceMagnitude = Math.hypot(moduleForcesX[j], moduleForcesY[j]);
+      double velocityMagnitude = Math.hypot(xVel, yVel);
+
+      // Calculate the dot product to determine if force aligns with velocity
+      double dotProduct = (moduleForcesX[j] * xVel + moduleForcesY[j] * yVel);
+
+      // Sign adjustment based on alignment with velocity direction
+      double signAdjustment = Math.signum(dotProduct / (forceMagnitude * velocityMagnitude));
+      if (Double.isNaN(signAdjustment)) {
+        signAdjustment = 1;
+      }
+      // Assign the adjusted force magnitude
+      linearForces[j] = forceMagnitude * signAdjustment * (movingRight ? 1 : -1);
+    }
+    // Assuming DriveFeedforwards constructor takes fx and fy as parameters
+    return new DriveFeedforwards(
+        new double[4],
+        linearForces,
+        new double[4],
+        moduleForcesX,
+        moduleForcesY);
   }
 
   @Override
@@ -277,7 +312,7 @@ public class PathFollowingWithChoreo extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
-
+    
     ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
     double currentVel = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
