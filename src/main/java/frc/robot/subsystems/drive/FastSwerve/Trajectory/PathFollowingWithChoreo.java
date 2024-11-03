@@ -267,7 +267,7 @@ public class PathFollowingWithChoreo extends Command {
     double[] linearForces = new double[4];
     double xVel = ((Number) sample.get("vx")).doubleValue();
     double yVel = ((Number) sample.get("vy")).doubleValue();
-    if (sampleCount == 2) {
+    if (sampleCount == 1) {
 
       // Calculate the angle of the vector
       double angle = Math.atan2(moduleForcesY[0], moduleForcesX[0]);
