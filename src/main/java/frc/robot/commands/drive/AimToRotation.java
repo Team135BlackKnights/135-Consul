@@ -13,6 +13,8 @@ import frc.robot.utils.LoggableTunedNumber;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+
 public class AimToRotation extends Command {
 	private final DrivetrainS drive;
 	private final Supplier<Rotation2d> angleSupplier;
@@ -66,6 +68,7 @@ public class AimToRotation extends Command {
 		double thetaVelocity = thetaController.getSetpoint().velocity
 				+ thetaController.calculate(currentRotation.getRadians(),
 						angleSupplier.get().getRadians()); //Go to target rotation using FF.
+		PPHolonomicDriveController.overrideRotationFeedback(() -> thetaVelocity);
 		if (Constants.currentMatchState == Constants.FRCMatchState.TELEOP) {
 			RobotContainer.angularSpeed = thetaVelocity;
 		}
@@ -76,6 +79,7 @@ public class AimToRotation extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.angleOverrider = Optional.empty();
 		RobotContainer.angularSpeed = 0;
+		PPHolonomicDriveController.clearRotationFeedbackOverride();
 		drive.changeDeadband(.1); // Go back to normal deadband
 		drive.stopModules();
 	}
