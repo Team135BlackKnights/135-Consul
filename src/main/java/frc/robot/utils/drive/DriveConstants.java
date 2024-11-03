@@ -174,12 +174,15 @@ public class DriveConstants {
 				0.001, 0.001, 0.001, 5, 0, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0),
-				//rev 
+				//sim
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						0.02, 0.001, 0.001, 12, 0.01, 0.001),
+				/*//rev 
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
 				//ctre
 				//overallTurningMotorConstantContainer = new MotorConstantContainer(
-				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	
+				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
 				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
 						.13, 0.001, 0.05, 0, 0.000);
 	}

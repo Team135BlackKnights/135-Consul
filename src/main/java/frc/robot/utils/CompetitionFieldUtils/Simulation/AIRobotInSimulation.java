@@ -75,6 +75,7 @@ public class AIRobotInSimulation {
 
         public static void startOpponentRobotSimulations() {
                 try {
+                        
                         instances[0] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 0"),
                                         Commands.none(),
@@ -97,12 +98,12 @@ public class AIRobotInSimulation {
                                         ROBOT_QUEENING_POSITIONS[2],
                                         3, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[2]));
                         instances[3] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent cycle path 3"),
-                                        doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent cycle path 3 backwards"),
-                                        Commands.none(),
-                                        ROBOT_QUEENING_POSITIONS[3],
-                                        4, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[3]));
+                                                PathPlannerPath.fromPathFile("opponent cycle path 3"),
+                                                doNothing(),
+                                                PathPlannerPath.fromPathFile("opponent cycle path 3 backwards"),
+                                                Commands.none(),
+                                                ROBOT_QUEENING_POSITIONS[3],
+                                                4, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[3]));
                         instances[4] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 4"),
                                         doNothing(),
@@ -194,9 +195,20 @@ public class AIRobotInSimulation {
                                 -joystick.getLeftY() * 3.5,
                                 -joystick.getLeftX() * 3.5,
                                 -joystick.getRightX() * Math.toRadians(360));
-                final Supplier<Rotation2d> opponentDriverStationFacing = () -> (Robot.isRed ? new Rotation2d(Math.PI)
-                                : new Rotation2d())
-                                .plus(Rotation2d.fromDegrees(180));
+                final Supplier<Rotation2d> opponentDriverStationFacing;
+                if (Robot.isRed){
+                        if (id == 4 || id == 5){
+                                opponentDriverStationFacing = () -> new Rotation2d(Math.PI);
+                        }else{
+                                opponentDriverStationFacing = () -> new Rotation2d();
+                        }
+                }else{
+                        if (id == 4 || id == 5){
+                                opponentDriverStationFacing = () -> new Rotation2d();
+                        }else{
+                                opponentDriverStationFacing = () -> new Rotation2d(Math.PI);
+                        }
+                }
                 return Commands.run(() -> {
                         driveSimulation.runChassisSpeeds(
                                         ChassisSpeeds.fromRobotRelativeSpeeds(joystickSpeeds.get(),
