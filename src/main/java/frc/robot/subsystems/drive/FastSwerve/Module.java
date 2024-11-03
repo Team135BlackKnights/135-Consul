@@ -8,6 +8,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.*;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -99,10 +101,10 @@ public class Module {
 				setpointState.speedMetersPerSecond);
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
 		// get current setpoint as Measure<? extends PerUnit<U, TimeUnit>>
-		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond);
+		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2));
 		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
-		if (DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
-				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) {
+		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
+				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) && Constants.currentMode != Mode.SIM) {
 			double wheelTorqueAmps = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond

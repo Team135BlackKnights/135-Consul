@@ -76,9 +76,9 @@ public class AIRobotInSimulation {
         public static void startOpponentRobotSimulations() {
                 try {
                         instances[0] = new AIRobotInSimulation(
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 0"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 0"),
                                         Commands.none(),
-                                        PathPlannerPath.fromPathFile("opponent robot cycle path 0 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 0").flipPath(),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[0],
                                         1, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[0]));
