@@ -24,6 +24,7 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator.SwerveSetpoint;
+import frc.robot.subsystems.drive.FastSwerve.Trajectory.PathFollowingWithChoreo;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
@@ -139,11 +140,15 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configure(this::getPose, this::resetPose,
-				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
-				DriveConstants.mainController,
+		AutoBuilder.configureCustom( (path) ->
+		new PathFollowingWithChoreo(
+			path,
+			this::getPose,
+			this::getChassisSpeeds,
+			this::setPathplannerChassisSpeeds,
+			DriveConstants.mainController,
 				DriveConstants.mainConfig,
-				() -> Robot.isRed, this);
+				() -> Robot.isRed, this), this::getPose, this::resetPose, () -> Robot.isRed, true);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
 			Logger.recordOutput("Odometry/Trajectory",
@@ -492,7 +497,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
 		for (int i = 0; i < 4; i++) {
-			pathPlannerNM[i] = feedforwards.torqueCurrentsAmps()[i] * DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
+			
+			pathPlannerNM[i] = feedforwards.linearForcesNewtons()[i] * DriveConstants.TrainConstants.kWheelDiameter/2;
 		}
 	}
 

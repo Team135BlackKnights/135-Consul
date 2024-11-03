@@ -157,7 +157,7 @@ public class RobotContainer {
 				System.out.println("Added Branch" + choreo);
 				//kill the path to save memory
 				path = null;
-				} catch (FileVersionException | IOException | ParseException e) {
+				} catch (FileVersionException | IOException | ParseException | NullPointerException e) {
 					e.printStackTrace();
 				}
 				

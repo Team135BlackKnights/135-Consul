@@ -261,7 +261,7 @@ public class BrushlessMotorSim {
     if (Math.abs(limitedVoltage) > Math.abs(requestedOutputVoltage))
       limitedVoltage = requestedOutputVoltage;
 
-    return MathUtil.clamp(limitedVoltage, -RoboRioSim.getVInVoltage(), RoboRioSim.getVInVoltage());
+    return MathUtil.clamp(limitedVoltage, -12, 12); //DO NOT use RoboRioSim.getVInVoltage() here, since voltage is being set from this, we can't since it'd flicker!
   }
 
   /**

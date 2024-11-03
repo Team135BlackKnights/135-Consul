@@ -28,6 +28,7 @@
       "/AdvantageKit/RealOutputs/MyMechanism": "Mechanism2d",
       "/FMSInfo": "FMSInfo",
       "/Field": "Field2d",
+      "/SmartDashboard/AIRobotBehaviors/Opponent Robot 1 Behavior": "String Chooser",
       "/SmartDashboard/Auto Chooser": "String Chooser",
       "/SmartDashboard/Field": "Field2d",
       "/SmartDashboard/Mech2d": "Mechanism2d",
@@ -68,9 +69,6 @@
     }
   },
   "NetworkTables Info": {
-    "Connections": {
-      "open": true
-    },
     "Server": {
       "Publishers": {
         "open": true
