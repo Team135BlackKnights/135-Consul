@@ -25,7 +25,6 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrain
 
 import java.util.HashMap;
 
-@SuppressWarnings("unused")
 public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
 	public static final boolean enablePID = true;
@@ -94,7 +93,7 @@ public class DriveConstants {
 	}
 
 	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
-			"Drive/MaxTranslationalAcceleration", Units.feetToMeters(37.5));
+			"Drive/MaxTranslationalAcceleration", 15);
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50);
 	public static boolean fieldOriented = true;
