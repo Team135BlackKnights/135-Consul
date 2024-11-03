@@ -145,7 +145,7 @@ public class DriveConstants {
 			kBackRightDrivePort = 12, // REV 12 CTRE 12
 			kBackRightTurningPort = 13, // REV 13 CTRE 13
 			kBackRightAbsEncoderPort = 24, // REV 1 CTRE 24
-			kMaxDriveCurrent = 80, kMaxTurnCurrent = 80;
+			kMaxDriveCurrent = 180, kMaxTurnCurrent = 80;
 	public static final boolean kFrontLeftDriveReversed = true,
 			kFrontLeftTurningReversed = true, kFrontLeftAbsEncoderReversed = false,
 			kFrontRightDriveReversed = false, kFrontRightTurningReversed = true,
@@ -158,7 +158,8 @@ public class DriveConstants {
 			maxTranslationalAcceleration.get(), maxRotationalAcceleration.get());
 	public static HashMap<String, Pose2d> kEndingPoses = new HashMap<>() {};
 	static {
-		kEndingPoses.put("Spike3To5", new Pose2d(7.097, .716, new Rotation2d()));
+		kEndingPoses.put("New Path", new Pose2d(1.39, 5.53, new Rotation2d()));
+		/*kEndingPoses.put("Spike3To5", new Pose2d(7.097, .716, new Rotation2d()));
 		kEndingPoses.put("5To4", new Pose2d(7.3, 2.413, new Rotation2d()));
 		kEndingPoses.put("4To3", new Pose2d(6.959, 4.072, new Rotation2d()));
 		kEndingPoses.put("CenterTo3", new Pose2d(7.235, 4.097, new Rotation2d()));
@@ -185,7 +186,7 @@ public class DriveConstants {
 		kEndingPoses.put("CenterToSpike2",
 				new Pose2d(1.993, 5.56, new Rotation2d()));
 		kEndingPoses.put("TopToSpike1",
-				new Pose2d(2.021, 7.03, new Rotation2d()));
+				new Pose2d(2.021, 7.03, new Rotation2d()));*/
 	}
 	public static class TrainConstants {
 		
@@ -201,7 +202,7 @@ public class DriveConstants {
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.0002));
 		public static double kDeadband = 0.05;
-		public static final double kWheelDiameter = Units.inchesToMeters(3.873),
+		public static final double kWheelDiameter = Units.inchesToMeters(4),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(40); //test chassis
@@ -210,11 +211,11 @@ public class DriveConstants {
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0),
 				//rev 
-				/*overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.*/
-				//ctre
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	
+						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
+				//ctre
+				//overallTurningMotorConstantContainer = new MotorConstantContainer(
+				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	
 				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
 						.13, 0.001, 0.05, 0, 0.000);
 	}
@@ -224,12 +225,12 @@ public class DriveConstants {
 	static{
 		if (driveType == DriveTrainType.TANK){
 
-			ModuleConfig mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
-			RobotConfig mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
+			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
+			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(null, null, kBumperToBumperWidth, MAX_G);
 		}else{
-			ModuleConfig mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
-			RobotConfig mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
+		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
+			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
 			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
 		}
 	}
