@@ -10,6 +10,7 @@ import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -28,6 +29,7 @@ import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -147,7 +149,7 @@ public class Robot extends LoggedRobot {
 					new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
 			break;
 		}
-		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
+		//Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
@@ -275,10 +277,18 @@ public class Robot extends LoggedRobot {
 				if (RobotContainer.currentAuto != null) {
 					RobotContainer.fieldSimulation.resetField(true);
 					try {
-						RobotContainer.fieldSimulation.getMainDriveSimulation()
-								.setSimulationWorldPose(
-										PathPlannerAuto.getPathGroupFromAutoFile(
-												RobotContainer.currentAuto.getName()).get(0).getStartingDifferentialPose());
+						PathPlannerPath path = PathPlannerAuto
+								.getPathGroupFromAutoFile(
+										RobotContainer.currentAuto.getName()).get(0);
+						if (DriveConstants.driveType == DriveTrainType.TANK){
+							RobotContainer.fieldSimulation.getMainDriveSimulation().setSimulationWorldPose(path.getStartingDifferentialPose());
+						}else{
+							RobotContainer.fieldSimulation.getMainDriveSimulation()
+							.setSimulationWorldPose(
+								new Pose2d(
+									path.getPoint(0).position,
+									path.getIdealStartingState().rotation()));
+						}		
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
