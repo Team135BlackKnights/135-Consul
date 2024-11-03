@@ -65,8 +65,8 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.FileVersionException;
@@ -103,8 +103,10 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.utils.state_space.StateSpaceConstants;
 /**
- * THIS CODE REQUIRES WPILIB 2024 AND PATHPLANNER 2024 IT WILL NOT WORK
- * OTHERWISE
+ * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
+ * Phoenix-6 2025 (non-replay), REVLib 2025, URCL, GrappleLib 2025, AKit 2025,
+ * and PathplannerLib 2025.
+ * IT WILL NOT WORK WITHOUT ANY OF THESE!
  */
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
@@ -120,7 +122,7 @@ public class RobotContainer {
 	public static Optional<Rotation2d> angleOverrider = Optional.empty();
 	public static double angularSpeed = 0;
 	static JoystickButton xButtonDrive = new JoystickButton(driveController, 3),
-			yButtonDrive = new JoystickButton(driveController, 4), //used for Aim/Drive to pose
+			yButtonDrive = new JoystickButton(driveController, 4), // used for Aim/Drive to pose
 			bButtonDrive = new JoystickButton(driveController, 2),
 			aButtonDrive = new JoystickButton(driveController, 1),
 			aButtonTest = new JoystickButton(testingController, 1),
@@ -133,15 +135,17 @@ public class RobotContainer {
 			startButtonTest = new JoystickButton(testingController, 8);
 	public static int currentTest = 0;
 	public static String piConnection = "DISCONNECTED";
-		@AutoLogOutput(key = "RobotState/currentPath")
+	@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	public static double[] knownInputs = new double[2]; //number of inputs to AI
-	public static double[] knownOutputs = new double[2]; //number of outputs to AI
-	public static List<Double> currentAiOutputs = new ArrayList<Double>(4); //total values for AI
+	public static double[] knownInputs = new double[2]; // number of inputs to AI
+	public static double[] knownOutputs = new double[2]; // number of outputs to AI
+	public static List<Double> currentAiOutputs = new ArrayList<Double>(4); // total values for AI
+
 	public enum GamePieceState {
 		NO_GAME_PIECE, HAS_NOTE, ABORT
 	}
+
 	public static GamePieceState currentGamePieceStatus = GamePieceState.NO_GAME_PIECE;
 	public static boolean userDrive = true;
 	// Simulation
@@ -152,7 +156,6 @@ public class RobotContainer {
 	 * Reads every Choreo file in the deploy folder and creates a command for
 	 * each Checks within Filesystem.getDeployDirectory(), "choreo/" for all
 	 * files NOT having two . in the name (including the one . in .traj)
-	 * 
 	 * @return
 	 */
 	private Collection<Pair<String, Command>> createBranches() {
@@ -163,26 +166,25 @@ public class RobotContainer {
 			// count number of . in the name using regex
 			int dotCount = choreo.split("\\.", -1).length - 1;
 			if (choreo.contains(".traj") && dotCount == 1) {
-				//remove the .traj from the name
+				// remove the .traj from the name
 				choreo = choreo.replace(".traj", "");
-				PathPlannerPath path;
 				try {
-					path = PathPlannerPath.fromChoreoTrajectory(choreo);
-					Pose2d endPose = path.getPathPoses().get(path.getPathPoses().size() - 1);
-				if (DriveConstants.kEndingPoses.containsKey(choreo)){
-					endPose = DriveConstants.kEndingPoses.get(choreo);
-				}
-				commands.add(new Pair<String, Command>("Branch" + choreo,
-						new BranchAuto(choreo,
-								endPose,
-								1)));
-				System.out.println("Added Branch" + choreo);
-				//kill the path to save memory
-				path = null;
+					List<PathPlannerPath> auto = PathPlannerAuto.getPathGroupFromAutoFile(choreo);
+					for (PathPlannerPath path : auto) {
+						commands.add(new Pair<String, Command>("Branch" + path.name,
+								new BranchAuto(path.name,
+								new Pose2d(
+									path.getPoint(path.getAllPathPoints().size()-1).position,
+									path.getGoalEndState().rotation()),
+										path.getGoalEndState().velocity().magnitude())));
+						System.out.println("Added Branch" + path.name);
+					}
+					auto.clear();
+					auto = null;
 				} catch (FileVersionException | IOException | ParseException | NullPointerException e) {
 					e.printStackTrace();
 				}
-				
+
 			}
 		}
 		return commands;
@@ -195,296 +197,311 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
-		//Publish the current mode of the robot (to check in pit display)
+		// Publish the current mode of the robot (to check in pit display)
 		Logger.recordOutput("robotMode", Constants.currentMode);
 
-		//We check to see what drivetrain type we have here, and create the correct drivetrain system based on that. 
-		//If we get something wacky, throw an error
+		// We check to see what drivetrain type we have here, and create the correct
+		// drivetrain system based on that.
+		// If we get something wacky, throw an error
 		List<Pair<String, Command>> autoCommands = new ArrayList<>();
 		switch (Constants.currentMode) {
-		case REAL:
-			switch (DriveConstants.driveType) {
-			case SWERVE:
-				switch (DriveConstants.robotMotorController) {
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-					switch (DriveConstants.gyroType) {
-					case NAVX:
-						drivetrainS = new Swerve(new GyroIONavX(),
-								new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-								new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+			case REAL:
+				switch (DriveConstants.driveType) {
+					case SWERVE:
+						switch (DriveConstants.robotMotorController) {
+							case CTRE_ON_RIO:
+							case CTRE_ON_CANIVORE:
+								switch (DriveConstants.gyroType) {
+									case NAVX:
+										drivetrainS = new Swerve(new GyroIONavX(),
+												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										break;
+									case PIGEON:
+										drivetrainS = new Swerve(new GyroIOPigeon2(),
+												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										break;
+									default:
+										break;
+								}
+								break;
+							case NEO_SPARK_MAX:
+							case VORTEX_SPARK_FLEX:
+								switch (DriveConstants.gyroType) {
+									case NAVX:
+										drivetrainS = new Swerve(new GyroIONavX(),
+												new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
+												new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
+										break;
+									case PIGEON:
+										drivetrainS = new Swerve(new GyroIOPigeon2(),
+												new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
+												new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
+									default:
+										break;
+								}
+								break;
+						}
 						break;
-					case PIGEON:
-						drivetrainS = new Swerve(new GyroIOPigeon2(),
-								new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-								new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+					case TANK:
+						switch (DriveConstants.robotMotorController) {
+							case CTRE_ON_RIO:
+							case CTRE_ON_CANIVORE:
+								switch (DriveConstants.gyroType) {
+									case PIGEON:
+										drivetrainS = new Tank(
+												new TankIOTalonFX(new GyroIOPigeon2()));
+										break;
+									case NAVX:
+										drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
+										break;
+								}
+								break;
+							case NEO_SPARK_MAX:
+							case VORTEX_SPARK_FLEX:
+								switch (DriveConstants.gyroType) {
+									case PIGEON:
+										drivetrainS = new Tank(
+												new TankIOSparkBase(new GyroIOPigeon2()));
+										break;
+									case NAVX:
+										drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
+										break;
+								}
+								break;
+						}
+						break;
+					case MECANUM:
+						switch (DriveConstants.robotMotorController) {
+							case CTRE_ON_RIO:
+							case CTRE_ON_CANIVORE:
+								switch (DriveConstants.gyroType) {
+									case PIGEON:
+										drivetrainS = new Mecanum(
+												new MecanumIOTalonFX(new GyroIOPigeon2()));
+										break;
+									case NAVX:
+										drivetrainS = new Mecanum(
+												new MecanumIOTalonFX(new GyroIONavX()));
+										break;
+								}
+								break;
+							case NEO_SPARK_MAX:
+							case VORTEX_SPARK_FLEX:
+								switch (DriveConstants.gyroType) {
+									case PIGEON:
+										drivetrainS = new Mecanum(
+												new MecanumIOSparkBase(new GyroIOPigeon2()));
+										break;
+									case NAVX:
+										drivetrainS = new Mecanum(
+												new MecanumIOSparkBase(new GyroIONavX()));
+										break;
+								}
+								break;
+						}
+						break;
+					// Placeholder values
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check DriveConstants.java!");
+				}
+				autoCommands.addAll(Arrays.asList(
+						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+						new Pair<String, Command>("BranchGrabbingGamePiece",
+								new BranchAuto("Shoot",
+										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
+				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
+				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+				));
+				autoCommands.addAll(createBranches());
+				switch (StateSpaceConstants.Flywheel.motorVendor){
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+					flywheelS = new FlywheelS(new FlywheelIOTalon());
+	
+					break;
+					default:
+					flywheelS = new FlywheelS(new FlywheelIOSpark());
+					break;
+				}
+				switch (StateSpaceConstants.SingleJointedArm.motorVendor){
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+					armS = new SingleJointedArmS(new SingleJointedArmIOTalon());
+	
+					break;
+					default:
+					armS = new SingleJointedArmS(new SingleJointedArmIOSpark());
+					break;
+				}
+				switch (StateSpaceConstants.Elevator.motorVendor){
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+					elevatorS = new ElevatorS(new ElevatorIOTalon());
+	
+					break;
+					default:
+					elevatorS = new ElevatorS(new ElevatorIOSpark());
+					break;
+				}
+				doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon());
+				break;
+			case SIM:
+				switch (DriveConstants.driveType) {
+					case SWERVE:
+						GyroSimulation gyroSimulation = null;
+						switch (DriveConstants.gyroType) {
+							case PIGEON:
+								gyroSimulation = GyroSimulation.createPigeon2();
+								break;
+							case NAVX:
+								gyroSimulation = GyroSimulation.createNav2X();
+								break;
+						}
+						SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
+								.getMark4i(DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.kMaxDriveCurrent,
+										DRIVE_WHEEL_TYPE.RUBBER, 2)
+								.get();
+						SwerveModuleSimulation frontRightSim = SwerveModuleSimulation
+								.getMark4i(DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.kMaxDriveCurrent,
+										DRIVE_WHEEL_TYPE.RUBBER, 2)
+								.get();
+						SwerveModuleSimulation backLeftSim = SwerveModuleSimulation
+								.getMark4i(DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.kMaxDriveCurrent,
+										DRIVE_WHEEL_TYPE.RUBBER, 2)
+								.get();
+						SwerveModuleSimulation backRightSim = SwerveModuleSimulation
+								.getMark4i(DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.kMaxDriveCurrent,
+										DRIVE_WHEEL_TYPE.RUBBER, 2)
+								.get();
+						ModuleIOSim frontLeft = new ModuleIOSim(frontLeftSim);
+						ModuleIOSim frontRight = new ModuleIOSim(frontRightSim);
+						ModuleIOSim backLeft = new ModuleIOSim(backLeftSim);
+						ModuleIOSim backRight = new ModuleIOSim(backRightSim);
+						drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), frontLeft,
+								frontRight, backLeft, backRight);
+						SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
+								DriveConstants.mainRobotProfile.robotMass,
+								DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
+								new SwerveModuleSimulation[] { frontLeftSim, frontRightSim,
+										backLeftSim, backRightSim
+								}, DriveConstants.kModuleTranslations, gyroSimulation,
+								FieldConstants.START_POSE, drivetrainS::resetPose);
+						fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
+						fieldSimulation.placeGamePiecesOnField(true);
+						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
+						break;
+					case TANK:
+						/*
+						 * final GyroIOSim tankGyroIOSim = new GyroIOSim();
+						 * TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
+						 * drivetrainS = new Tank(tankIOSim);
+						 * fieldSimulation = new Crescendo2024FieldSimulation(
+						 * new TankDriveSimulation(DriveConstants.mainRobotProfile,
+						 * tankGyroIOSim,
+						 * new DifferentialDriveKinematics(
+						 * DriveConstants.kChassisWidth),
+						 * FieldConstants.START_POSE, (Tank) drivetrainS,
+						 * tankIOSim, drivetrainS::resetPose));
+						 * fieldSimulation.placeGamePiecesOnField(true);
+						 * testOpponentRobot = new OpponentRobotSimulation(0);
+						 * fieldSimulation.addRobot(testOpponentRobot);
+						 */
 						break;
 					default:
+						/*
+						 * final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
+						 * MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
+						 * drivetrainS = new Mecanum(mecanumIOSim);
+						 * fieldSimulation = new Crescendo2024FieldSimulation(
+						 * new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
+						 * mecanumGyroIOSim,
+						 * new MecanumDriveKinematics(
+						 * DriveConstants.kModuleTranslations[0],
+						 * DriveConstants.kModuleTranslations[1],
+						 * DriveConstants.kModuleTranslations[2],
+						 * DriveConstants.kModuleTranslations[3]),
+						 * FieldConstants.START_POSE, (Mecanum) drivetrainS,
+						 * mecanumIOSim, drivetrainS::resetPose));
+						 * fieldSimulation.placeGamePiecesOnField(true);
+						 * testOpponentRobot = new OpponentRobotSimulation(0);
+						 * fieldSimulation.addRobot(testOpponentRobot);
+						 * PPHolonomicDriveController
+						 * .setRotationTargetOverride(this::getRotationTargetOverride);
+						 */
 						break;
-					}
-					break;
-				case NEO_SPARK_MAX:
-				case VORTEX_SPARK_FLEX:
-					switch (DriveConstants.gyroType) {
-					case NAVX:
-						drivetrainS = new Swerve(new GyroIONavX(),
-								new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
-								new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
-						break;
-					case PIGEON:
-						drivetrainS = new Swerve(new GyroIOPigeon2(),
-								new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
-								new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
-					default:
-						break;
-					}
-					break;
 				}
-				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
-				break;
-			case TANK:
-				switch (DriveConstants.robotMotorController) {
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-					switch (DriveConstants.gyroType) {
-					case PIGEON:
-						drivetrainS = new Tank(
-								new TankIOTalonFX(new GyroIOPigeon2()));
-						break;
-					case NAVX:
-						drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
-						break;
-					}
-					break;
-				case NEO_SPARK_MAX:
-				case VORTEX_SPARK_FLEX:
-					switch (DriveConstants.gyroType) {
-					case PIGEON:
-						drivetrainS = new Tank(
-								new TankIOSparkBase(new GyroIOPigeon2()));
-						break;
-					case NAVX:
-						drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
-						break;
-					}
-					break;
-				}
-				break;
-			case MECANUM:
-				switch (DriveConstants.robotMotorController) {
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-					switch (DriveConstants.gyroType) {
-					case PIGEON:
-						drivetrainS = new Mecanum(
-								new MecanumIOTalonFX(new GyroIOPigeon2()));
-						break;
-					case NAVX:
-						drivetrainS = new Mecanum(
-								new MecanumIOTalonFX(new GyroIONavX()));
-						break;
-					}
-					break;
-				case NEO_SPARK_MAX:
-				case VORTEX_SPARK_FLEX:
-					switch (DriveConstants.gyroType) {
-					case PIGEON:
-						drivetrainS = new Mecanum(
-								new MecanumIOSparkBase(new GyroIOPigeon2()));
-						break;
-					case NAVX:
-						drivetrainS = new Mecanum(
-								new MecanumIOSparkBase(new GyroIONavX()));
-						break;
-					}
-					break;
-				}
-				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
-				break;
-			//Placeholder values
-			default:
-				throw new IllegalArgumentException(
-						"Unknown implementation type, please check DriveConstants.java!");
-			}
-			
-			switch (StateSpaceConstants.Flywheel.motorVendor){
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-				flywheelS = new FlywheelS(new FlywheelIOTalon());
-
-				break;
-				default:
-				flywheelS = new FlywheelS(new FlywheelIOSpark());
-				break;
-			}
-			switch (StateSpaceConstants.SingleJointedArm.motorVendor){
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-				armS = new SingleJointedArmS(new SingleJointedArmIOTalon());
-
-				break;
-				default:
-				armS = new SingleJointedArmS(new SingleJointedArmIOSpark());
-				break;
-			}
-			switch (StateSpaceConstants.Elevator.motorVendor){
-				case CTRE_ON_RIO:
-				case CTRE_ON_CANIVORE:
-				elevatorS = new ElevatorS(new ElevatorIOTalon());
-
-				break;
-				default:
-				elevatorS = new ElevatorS(new ElevatorIOSpark());
-				break;
-			}
-			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon());
-			autoCommands.addAll(Arrays.asList(
-					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-					new Pair<String, Command>("BranchGrabbingGamePiece",
-							new BranchAuto("Shoot",
-									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
-			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
-			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
-			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-			));
-			autoCommands.addAll(createBranches());
-			break;
-		case SIM:
-			switch (DriveConstants.driveType) {
-			case SWERVE:
-				GyroSimulation gyroSimulation = null;
-				switch (DriveConstants.gyroType) {
-				case PIGEON:
-					gyroSimulation = GyroSimulation.createPigeon2();
-					break;
-				case NAVX:
-					gyroSimulation = GyroSimulation.createNav2X();
-					break;
-				}
-				SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
-						.getMark4i(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2)
-						.get();
-				SwerveModuleSimulation frontRightSim = SwerveModuleSimulation
-						.getMark4i(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2)
-						.get();
-				SwerveModuleSimulation backLeftSim = SwerveModuleSimulation
-						.getMark4i(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2)
-						.get();
-				SwerveModuleSimulation backRightSim = SwerveModuleSimulation
-						.getMark4i(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2)
-						.get();
-				ModuleIOSim frontLeft = new ModuleIOSim(frontLeftSim);
-				ModuleIOSim frontRight = new ModuleIOSim(frontRightSim);
-				ModuleIOSim backLeft = new ModuleIOSim(backLeftSim);
-				ModuleIOSim backRight = new ModuleIOSim(backRightSim);
-				drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), frontLeft,
-						frontRight, backLeft, backRight);
-				SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
-						DriveConstants.mainRobotProfile.robotMass,
-						DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
-						new SwerveModuleSimulation[] { frontLeftSim, frontRightSim,
-								backLeftSim, backRightSim
-						}, DriveConstants.kModuleTranslations, gyroSimulation,
-						FieldConstants.START_POSE, drivetrainS::resetPose);
-				fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
-				fieldSimulation.placeGamePiecesOnField(true);
-				AIRobotInSimulation.startOpponentRobotSimulations(); //Start your engines...
-				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
-				break;
-			case TANK:
-				/*final GyroIOSim tankGyroIOSim = new GyroIOSim();
-				TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
-				drivetrainS = new Tank(tankIOSim);
-				fieldSimulation = new Crescendo2024FieldSimulation(
-						new TankDriveSimulation(DriveConstants.mainRobotProfile,
-								tankGyroIOSim,
-								new DifferentialDriveKinematics(
-										DriveConstants.kChassisWidth),
-								FieldConstants.START_POSE, (Tank) drivetrainS,
-								tankIOSim, drivetrainS::resetPose));
-				fieldSimulation.placeGamePiecesOnField(true);
-				testOpponentRobot = new OpponentRobotSimulation(0);
-				fieldSimulation.addRobot(testOpponentRobot);
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);*/
-				break;
-			default:
-				/*final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
-				MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
-				drivetrainS = new Mecanum(mecanumIOSim);
-				fieldSimulation = new Crescendo2024FieldSimulation(
-						new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
-								mecanumGyroIOSim,
-								new MecanumDriveKinematics(
-										DriveConstants.kModuleTranslations[0],
-										DriveConstants.kModuleTranslations[1],
-										DriveConstants.kModuleTranslations[2],
-										DriveConstants.kModuleTranslations[3]),
-								FieldConstants.START_POSE, (Mecanum) drivetrainS,
-								mecanumIOSim, drivetrainS::resetPose));
-				fieldSimulation.placeGamePiecesOnField(true);
-				testOpponentRobot = new OpponentRobotSimulation(0);
-				fieldSimulation.addRobot(testOpponentRobot);
-				PPHolonomicDriveController
-						.setRotationTargetOverride(this::getRotationTargetOverride);*/
-				break;
-			}
-			
-			flywheelS = new FlywheelS(new FlywheelIOSim());
+				flywheelS = new FlywheelS(new FlywheelIOSim());
 			armS = new SingleJointedArmS(new SingleJointedArmIOSim());
 			elevatorS = new ElevatorS(new ElevatorIOSim());
 			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim());
-			autoCommands.addAll(Arrays.asList(
-					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-					new Pair<String, Command>("BranchGrabbingGamePiece",
-							new BranchAuto("Shoot",
-									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
-			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
-			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
-			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-			));
-			autoCommands.addAll(createBranches());
-			break;
-		default:
-			switch (DriveConstants.driveType) {
-			case SWERVE:
-				drivetrainS = new Swerve(new GyroIO() {}, new ModuleIO() {},
-						new ModuleIO() {}, new ModuleIO() {}, new ModuleIO() {});
-				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
+				autoCommands.addAll(Arrays.asList(
+						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+						new Pair<String, Command>("SmartShoot", Commands.none()),
+						new Pair<String, Command>("SmartIntake", Commands.none()),
+						new Pair<String, Command>("BranchGrabbingGamePiece",
+								new BranchAuto("Shoot",
+										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
+				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
+				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+				));
+
+				autoCommands.addAll(createBranches());
 				break;
-			case TANK:
-				drivetrainS = new Tank(new TankIO() {});
-				break;
-			case MECANUM:
-				drivetrainS = new Mecanum(new MecanumIO() {});
-				PPHolonomicDriveController.overrideRotationFeedback(() -> angularSpeed);
-			}
-			flywheelS = new FlywheelS(new FlywheelIO(){});
-			armS = new SingleJointedArmS(new SingleJointedArmIO(){});
-			elevatorS = new ElevatorS(new ElevatorIO(){});
-			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){});
-			autoCommands.addAll(Arrays.asList(
-					//new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-					new Pair<String, Command>("BranchGrabbingGamePiece",
-							new BranchAuto("Shoot",
-									new Pose2d(7.4, 5.8, new Rotation2d()), 4))
-			//new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
-			//new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
-			//new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-			));
-			autoCommands.addAll(createBranches());
+			default:
+				switch (DriveConstants.driveType) {
+					case SWERVE:
+						drivetrainS = new Swerve(new GyroIO() {
+						}, new ModuleIO() {
+						},
+								new ModuleIO() {
+								}, new ModuleIO() {
+								}, new ModuleIO() {
+								});
+						break;
+					case TANK:
+						drivetrainS = new Tank(new TankIO() {
+						});
+						break;
+					case MECANUM:
+						drivetrainS = new Mecanum(new MecanumIO() {
+						});
+				}
+				flywheelS = new FlywheelS(new FlywheelIO(){});
+							armS = new SingleJointedArmS(new SingleJointedArmIO(){});
+							elevatorS = new ElevatorS(new ElevatorIO(){});
+							doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){});
+				autoCommands.addAll(Arrays.asList(
+						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+						new Pair<String, Command>("BranchGrabbingGamePiece",
+								new BranchAuto("Shoot",
+										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
+				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
+				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
+				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
+				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
+				));
+				autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
@@ -511,15 +528,16 @@ public class RobotContainer {
 		autoChooser.onChange(auto -> {
 			try {
 				currentAuto = auto;
+				Logger.recordOutput("RobotState/autoPath",
+						PathFinder.parseAutoToPose2dList(auto.getName()).toArray(Pose2d[]::new));
 				field.getObject("path")
 						.setPoses(PathFinder.parseAutoToPose2dList(auto.getName()));
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
 				field.getObject("path").setPoses(
 						new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
 								new Pose2d(-50.2, -50, new Rotation2d())
-				});
+						});
 			}
 		});
 		// Configure the trigger bindings
@@ -545,7 +563,7 @@ public class RobotContainer {
 				new RunTest(SysIdRoutine.Direction.kForward, false));
 		xButtonTest.whileTrue(
 				new RunTest(SysIdRoutine.Direction.kReverse, false));
-		//Example Drive To 2024 Amp Pose, Bind to what you need.
+		// Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
@@ -553,8 +571,9 @@ public class RobotContainer {
 						new Pose2d(1.9, 7.7,
 								new Rotation2d(Units.degreesToRadians(90))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
-		//swerve DRIVE tests
-		//When user hits right bumper, go to next test, or wrap back to starting test for SysID.
+		// swerve DRIVE tests
+		// When user hits right bumper, go to next test, or wrap back to starting test
+		// for SysID.
 		rightBumperTest.onTrue(new InstantCommand(() -> {
 			if (currentTest == Constants.SysIdRoutines.values().length - 1) {
 				currentTest = 0;
@@ -563,7 +582,8 @@ public class RobotContainer {
 				currentTest++;
 			}
 		}));
-		//When user hits left bumper, go to next test, or wrap back to starting test for SysID.
+		// When user hits left bumper, go to next test, or wrap back to starting test
+		// for SysID.
 		leftBumperTest.onTrue(new InstantCommand(() -> {
 			if (currentTest == 0) {
 				currentTest = Constants.SysIdRoutines.values().length - 1;
@@ -572,11 +592,12 @@ public class RobotContainer {
 				currentTest--;
 			}
 		}));
-		//When using CTRE, be sure to hit Start so that the motors are logged via CTRE (For SysId)
+		// When using CTRE, be sure to hit Start so that the motors are logged via CTRE
+		// (For SysId)
 		selectButtonTest.onTrue(Commands.runOnce(SignalLogger::stop));
 		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
 		if (Constants.currentMode == Mode.SIM) {
-			//ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
+			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}
 	}
 

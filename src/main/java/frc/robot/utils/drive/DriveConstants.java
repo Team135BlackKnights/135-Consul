@@ -10,7 +10,6 @@ import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
@@ -22,8 +21,6 @@ import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation.DriveTrainSimulationProfile;
-
-import java.util.HashMap;
 
 public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
@@ -93,7 +90,7 @@ public class DriveConstants {
 	}
 
 	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
-			"Drive/MaxTranslationalAcceleration", 15);
+			"Drive/MaxTranslationalAcceleration", 22);
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50);
 	public static boolean fieldOriented = true;
@@ -155,38 +152,6 @@ public class DriveConstants {
 	public static ModuleLimits moduleLimitsFree = new ModuleLimits(
 			DriveConstants.kMaxSpeedMetersPerSecond,
 			maxTranslationalAcceleration.get(), maxRotationalAcceleration.get());
-	public static HashMap<String, Pose2d> kEndingPoses = new HashMap<>() {};
-	static {
-		kEndingPoses.put("New Path", new Pose2d(1.39, 5.53, new Rotation2d()));
-		/*kEndingPoses.put("Spike3To5", new Pose2d(7.097, .716, new Rotation2d()));
-		kEndingPoses.put("5To4", new Pose2d(7.3, 2.413, new Rotation2d()));
-		kEndingPoses.put("4To3", new Pose2d(6.959, 4.072, new Rotation2d()));
-		kEndingPoses.put("CenterTo3", new Pose2d(7.235, 4.097, new Rotation2d()));
-		kEndingPoses.put("3To4", new Pose2d(7.3, 2.413, new Rotation2d()));
-		kEndingPoses.put("4To5", new Pose2d(7.2, .741, new Rotation2d()));
-		kEndingPoses.put("Spike3ToSpike2",
-				new Pose2d(2.027, 5.557, new Rotation2d()));
-		kEndingPoses.put("Spike2ToSpike1",
-				new Pose2d(2.104, 7.024, new Rotation2d()));
-		kEndingPoses.put("Spike1ToSpike2",
-				new Pose2d(2.067, 5.604, new Rotation2d()));
-		kEndingPoses.put("Spike2ToSpike3",
-				new Pose2d(2.067, 4.113, new Rotation2d()));
-		kEndingPoses.put("Spike1ToSpike3",
-				new Pose2d(2.038, 4.106, new Rotation2d()));
-		kEndingPoses.put("Spike3ToSpike1",
-				new Pose2d(2.038, 7.024, new Rotation2d()));
-		kEndingPoses.put("3To2", new Pose2d(7.159, 5.794, new Rotation2d()));
-		kEndingPoses.put("2To1", new Pose2d(7.088, 7.477, new Rotation2d()));
-		kEndingPoses.put("1To2", new Pose2d(7.339, 5.823, new Rotation2d()));
-		kEndingPoses.put("2To3", new Pose2d(7.191, 4.121, new Rotation2d()));
-		kEndingPoses.put("BottomSpikeTo4",
-				new Pose2d(7.168, 2.377, new Rotation2d()));
-		kEndingPoses.put("CenterToSpike2",
-				new Pose2d(1.993, 5.56, new Rotation2d()));
-		kEndingPoses.put("TopToSpike1",
-				new Pose2d(2.021, 7.03, new Rotation2d()));*/
-	}
 	public static class TrainConstants {
 		
 		/**
