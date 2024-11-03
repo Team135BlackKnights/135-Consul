@@ -441,7 +441,7 @@ public class RobotContainer {
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				visionS = new Vision(new VisionIO{}); 
+				visionS = new Vision(new VisionIO(){}); 
 				autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
