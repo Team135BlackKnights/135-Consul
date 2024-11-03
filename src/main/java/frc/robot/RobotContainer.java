@@ -286,6 +286,7 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown implementation type, please check DriveConstants.java!");
 				}
+				visionS = new Vision(new VisionIOPhotonVision());
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
