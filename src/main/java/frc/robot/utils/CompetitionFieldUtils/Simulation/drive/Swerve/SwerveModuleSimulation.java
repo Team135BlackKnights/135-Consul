@@ -1,4 +1,4 @@
-package frc.robot.utils.CompetitionFieldUtils.Simulation.drive;
+package frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -7,6 +7,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.BrushlessMotorSim;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 
 import java.util.Queue;

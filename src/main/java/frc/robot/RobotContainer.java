@@ -27,9 +27,9 @@ import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
 import frc.robot.utils.drive.DriveConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;

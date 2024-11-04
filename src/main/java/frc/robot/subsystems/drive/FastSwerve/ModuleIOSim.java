@@ -17,10 +17,10 @@ package frc.robot.subsystems.drive.FastSwerve;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
 import frc.robot.utils.drive.DriveConstants;
 
 import java.util.Arrays;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SwerveModuleSimulation;
 
 /**
  * Wrapper class around {@link SwerveModuleSimulation} that implements ModuleIO
