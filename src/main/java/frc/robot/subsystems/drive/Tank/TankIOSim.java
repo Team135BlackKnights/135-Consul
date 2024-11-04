@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
@@ -24,18 +25,7 @@ public class TankIOSim implements TankIO {
 			.getD();
 	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
 			/ 2;
-	private DCMotorSim frontLeft = new DCMotorSim(
-			DriveConstants.getDriveTrainMotors(1),
-			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim frontRight = new DCMotorSim(
-			DriveConstants.getDriveTrainMotors(1),
-			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim backLeft = new DCMotorSim(
-			DriveConstants.getDriveTrainMotors(1),
-			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
-	private DCMotorSim backRight = new DCMotorSim(
-			DriveConstants.getDriveTrainMotors(1),
-			DriveConstants.TrainConstants.kDriveMotorGearRatio, .01);
+	private final DCMotorSim frontLeft, backLeft, frontRight, backRight;
 	private double leftAppliedVolts = 0.0;
 	private double rightAppliedVolts = 0.0;
 	private boolean closedLoop = false;
@@ -54,7 +44,14 @@ public class TankIOSim implements TankIO {
 		backRight.update(dtSeconds);
 	}
 
-	public TankIOSim(GyroIO gyroSim) { gyro = gyroSim; }
+	public TankIOSim(GyroIO gyroSim) {
+		gyro = gyroSim;
+		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
+		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
+		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
+		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
+		
+	}
 
 	public DifferentialDriveWheelSpeeds getWheelSpeeds() {
 		return new DifferentialDriveWheelSpeeds(
@@ -72,14 +69,12 @@ public class TankIOSim implements TankIO {
 		if (closedLoop) {
 			leftAppliedVolts = MathUtil
 					.clamp(leftPID.calculate((frontLeft.getAngularVelocityRadPerSec()
-							+ backLeft.getAngularVelocityRadPerSec()) / 2
-							) + leftFFVolts, -12.0, 12.0);
+							+ backLeft.getAngularVelocityRadPerSec()) / 2) + leftFFVolts, -12.0, 12.0);
 			rightAppliedVolts = MathUtil
 					.clamp(
 							rightPID
 									.calculate((frontRight.getAngularVelocityRadPerSec()
-											+ backRight.getAngularVelocityRadPerSec()) / 2
-											)
+											+ backRight.getAngularVelocityRadPerSec()) / 2)
 									+ rightFFVolts,
 							-12.0, 12.0);
 			// Set inputs to the motors
@@ -89,15 +84,17 @@ public class TankIOSim implements TankIO {
 			backRight.setInputVoltage(rightAppliedVolts);
 		}
 		// Populate inputs
-		inputs.leftPositionRad =tankDrivePhysicsSimResults.driveWheelFinalRevolutions[0]
-		* 2 * Math.PI * 4;
-		inputs.leftVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[0]* 2 * Math.PI * 4;
+		inputs.leftPositionRad = tankDrivePhysicsSimResults.driveWheelFinalRevolutions[0]
+				* 2 * Math.PI * 4;
+		inputs.leftVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[0] * 2
+				* Math.PI * 4;
 		inputs.leftAppliedVolts = leftAppliedVolts;
 		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDrawAmps(),
 				backLeft.getCurrentDrawAmps()
 		};
-		inputs.rightPositionRad = tankDrivePhysicsSimResults.driveWheelFinalRevolutions[1]* 2 * Math.PI * 4;
-		inputs.rightVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[1]* 2 * Math.PI * 4;
+		inputs.rightPositionRad = tankDrivePhysicsSimResults.driveWheelFinalRevolutions[1] * 2 * Math.PI * 4;
+		inputs.rightVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[1] * 2
+				* Math.PI * 4;
 		inputs.rightAppliedVolts = rightAppliedVolts;
 		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDrawAmps(),
 				backRight.getCurrentDrawAmps()

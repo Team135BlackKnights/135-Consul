@@ -17,10 +17,16 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Robot;
+import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.GeometryConvertor;
 
 import org.dyn4j.dynamics.Force;
 import org.dyn4j.geometry.Vector2;
+
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.DriveFeedforwards;
 
 /**
  *
@@ -54,7 +60,17 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
       DriveTrainSimulationProfile profile, Pose2d initialPoseOnField, Consumer<Pose2d> resetOdometryCallBack) {
     super(profile, initialPoseOnField, resetOdometryCallBack);
   }
-
+  public SimplifiedHolonomicDriveSimulation(
+      DriveTrainSimulationProfile profile, Pose2d initialPoseOnField, int id) {
+    super(profile, initialPoseOnField, new Consumer<Pose2d>() {
+      @Override
+      public void accept(Pose2d t) {
+      }
+    });
+    this.id = id;
+  }
+  @SuppressWarnings("unused")
+  private int id;
   private ChassisSpeeds desiredFieldRelativeSpeeds = new ChassisSpeeds();
 
   /**
@@ -195,7 +211,20 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
                     false)));
     return commandGroup;
   }
-
+  private void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+    runChassisSpeeds(speeds, true);}
+    @SuppressWarnings("unused")
+   private Command opponentRobotFollowPath(PathPlannerPath path) {
+        return new FollowPathCommand(
+                path,
+                this::getSimulatedDriveTrainPose,
+                this::getDriveTrainSimulatedChassisSpeedsRobotRelative,
+                this::setPathplannerChassisSpeeds,
+                DriveConstants.mainController,
+                DriveConstants.mainConfig,
+                () -> Robot.isRed,this
+        );
+    }
 @Override
 public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();

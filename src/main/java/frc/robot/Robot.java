@@ -6,24 +6,29 @@ package frc.robot;
 import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.SysIdRoutines;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -54,11 +59,12 @@ public class Robot extends LoggedRobot {
 	private RobotContainer m_robotContainer;
 	public static boolean isRed;
 	private boolean isPracticeDSMode = false, loggerStarted = false;
-	private double lastMatchTime = 0;
+	private double lastMatchTime = 0, previousTime = Logger.getRealTimestamp(), accumulatedCharge = 0;
+	private LoggedPowerDistribution pdh;
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-
+	public static final CANBus canBus = new CANBus("rio");
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
@@ -142,7 +148,7 @@ public class Robot extends LoggedRobot {
 					new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
 			break;
 		}
-		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
+		//Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
@@ -153,7 +159,10 @@ public class Robot extends LoggedRobot {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
+		pdh = LoggedPowerDistribution.getInstance();
 		SmartDashboard.putBoolean("ShouldEndLog", false);
+		//read the accumated charge from the last boot, so we can set it to that on boot.
+		accumulatedCharge = 0; //TODO: figure out how to read the accumulated charge from the last boot.
 	}
 
 	/**
@@ -166,12 +175,25 @@ public class Robot extends LoggedRobot {
 	 */
 	@Override
 	public void robotPeriodic() {
-		double startTime = Logger.getRealTimestamp();
+		//This is where we update the battery voltage and current draw. Converts current draw (Amps) to Coloumbs.
+		double currentTime = Logger.getRealTimestamp();
+		double deltaTime = currentTime - previousTime;
+		previousTime = currentTime;		
+		// Calculate the charge used since the last update
+		double chargeUsed = pdh.getInputs().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
+		accumulatedCharge += chargeUsed;
+  
+		// Calculate the remaining charge percentage
+		double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); //64800 is the total charge of the battery in Coloumbs (18 * 3600s/hr)
+		batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
+		Logger.recordOutput("BatteryPercentage", batteryPercentage);
+		//Record the current accumated charge, so we can set it to that on next boot.
+		Logger.recordOutput("AccumulatedCharge", accumulatedCharge);
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
-					DriveConstants.pathConstraints.getMaxVelocityMps(),
+					DriveConstants.pathConstraints.maxVelocityMPS(),
 					DriveConstants.maxTranslationalAcceleration.get(),
-					DriveConstants.pathConstraints.getMaxAngularVelocityRps(),
+					DriveConstants.pathConstraints.maxAngularVelocityRadPerSec(),
 					DriveConstants.maxRotationalAcceleration.get());
 			DriveConstants.moduleLimitsFree = new ModuleLimits(
 					DriveConstants.kMaxSpeedMetersPerSecond,
@@ -201,9 +223,9 @@ public class Robot extends LoggedRobot {
 		SmartDashboard.putNumber("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("BatteryVoltage",
 				RobotController.getBatteryVoltage());
-		CANBus.CANBusStatus canBusStatus = CANBus.getStatus("rio");
+		CANBusStatus canBusStatus = canBus.getStatus();
 		Logger.recordOutput("CANUtil", canBusStatus.BusUtilization * 100.0);
-		double runtimeMS = (Logger.getRealTimestamp() - startTime) / 1000.0;
+		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("RobotPeriodicMS", runtimeMS);
 	}
 
@@ -252,10 +274,22 @@ public class Robot extends LoggedRobot {
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				if (RobotContainer.currentAuto != null) {
 					RobotContainer.fieldSimulation.resetField(true);
-					RobotContainer.fieldSimulation.getMainDriveSimulation()
+					try {
+						PathPlannerPath path = PathPlannerAuto
+								.getPathGroupFromAutoFile(
+										RobotContainer.currentAuto.getName()).get(0);
+						if (DriveConstants.driveType == DriveTrainType.TANK){
+							RobotContainer.fieldSimulation.getMainDriveSimulation().setSimulationWorldPose(path.getStartingDifferentialPose());
+						}else{
+							RobotContainer.fieldSimulation.getMainDriveSimulation()
 							.setSimulationWorldPose(
-									PathPlannerAuto.getStaringPoseFromAutoFile(
-											RobotContainer.currentAuto.getName()));
+								new Pose2d(
+									path.getPoint(0).position,
+									path.getIdealStartingState().rotation()));
+						}		
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					RobotContainer.fieldSimulation.getMainDriveSimulation()
 							.resetOdometryToActualRobotPose();
 				}

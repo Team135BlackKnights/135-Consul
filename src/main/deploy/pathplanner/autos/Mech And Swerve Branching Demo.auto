@@ -1,12 +1,5 @@
 {
-  "version": 1.0,
-  "startingPose": {
-    "position": {
-      "x": 1.3906108140945437,
-      "y": 5.597242832183838
-    },
-    "rotation": -9.91502586797726e-27
-  },
+  "version": "2025.0",
   "command": {
     "type": "sequential",
     "data": {
@@ -55,7 +48,7 @@
                                 {
                                   "type": "path",
                                   "data": {
-                                    "pathName": "GoToTopNote"
+                                    "pathName": "MechSwerve Move"
                                   }
                                 },
                                 {
@@ -91,6 +84,7 @@
       ]
     }
   },
+  "resetOdom": true,
   "folder": null,
   "choreoAuto": true
 }
