@@ -266,20 +266,23 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	}
 
 	@Override
-	public void setDrivePID(double kP, double kI, double kD) {
+	public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
 		driveTalonConfig.Slot0.kP = kP;
 		driveTalonConfig.Slot0.kI = kI;
 		driveTalonConfig.Slot0.kD = kD;
+		driveTalonConfig.Slot0.kS = kS;
+		driveTalonConfig.Slot0.kV = kV;
 		driveTalon.getConfigurator().apply(driveTalonConfig, 0.01);
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
+		turnTalonConfig.Slot0.kV = kV;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 

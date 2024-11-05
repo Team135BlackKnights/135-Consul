@@ -97,12 +97,12 @@ public class ModuleIOSim implements ModuleIO {
 		runTurnVolts(turnFeedback.calculate(currentAngle, angleRads));
 	}
 	@Override
-	public void setDrivePID(double kP, double kI, double kD) {
+	public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
 		driveFeedback.setPID(kP, kI, kD);
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
 		turnFeedback.setPID(kP, kI, kD);
 	}
 
