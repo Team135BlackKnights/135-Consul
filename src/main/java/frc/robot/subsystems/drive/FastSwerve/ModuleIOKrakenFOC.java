@@ -64,7 +64,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
 	private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(
 			0);
-	private final MotionMagicExpoVoltage positionControl = new MotionMagicExpoVoltage(
+	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(
 			0);
 	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
@@ -260,7 +260,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		turnTalon.setControl(
-				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideBrakeDurNeutral(false));
+				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideCoastDurNeutral(false));
 	}
 
 	@Override
@@ -278,7 +278,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
-		//turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
+		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
 		turnTalonConfig.Slot0.kV = kV;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
