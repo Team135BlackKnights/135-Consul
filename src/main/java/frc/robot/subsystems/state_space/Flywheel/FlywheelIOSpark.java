@@ -5,12 +5,17 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -20,28 +25,27 @@ import frc.robot.utils.state_space.StateSpaceConstants;
 
 public class FlywheelIOSpark implements FlywheelIO {
 	private double appliedVolts = 0.0;
-	private CANSparkBase flywheel;
+	private SparkBase flywheel;
+	private SparkBaseConfig config;
 	private RelativeEncoder encoder;
 	private static final Executor CurrentExecutor = Executors
 			.newFixedThreadPool(1);
 
 	public FlywheelIOSpark() {
 		if (StateSpaceConstants.Flywheel.motorVendor == MotorVendor.NEO_SPARK_MAX) {
-			flywheel = new CANSparkMax(StateSpaceConstants.Flywheel.kMotorID,
-					MotorType.kBrushless);
+			flywheel = new SparkMax(StateSpaceConstants.Flywheel.kMotorID, MotorType.kBrushless);
+			config = new SparkMaxConfig();
 		} else {
-			flywheel = new CANSparkFlex(StateSpaceConstants.Flywheel.kMotorID,
-					MotorType.kBrushless);
+			flywheel = new SparkFlex(StateSpaceConstants.Flywheel.kMotorID, MotorType.kBrushless);
+			config = new SparkFlexConfig();
 		}
-		flywheel.enableVoltageCompensation(12);
-		flywheel
-				.setIdleMode(StateSpaceConstants.Flywheel.isBrake ? IdleMode.kBrake
-						: IdleMode.kCoast);
+		config.voltageCompensation(12);
+		config.idleMode(StateSpaceConstants.Flywheel.isBrake ? IdleMode.kBrake : IdleMode.kCoast);
 		flywheel.setCANTimeout(250);
 		flywheel.setInverted(StateSpaceConstants.Flywheel.inverted);
-		flywheel.setSmartCurrentLimit(StateSpaceConstants.Flywheel.currentLimit);
+		config.smartCurrentLimit(StateSpaceConstants.Flywheel.currentLimit);
 		encoder = flywheel.getEncoder();
-		flywheel.burnFlash();
+		flywheel.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 	}
 
 	@Override
@@ -59,12 +63,15 @@ public class FlywheelIOSpark implements FlywheelIO {
 	}
 
 	@Override
-	public void setVoltage(double volts) { appliedVolts = volts; }
+	public void setVoltage(double volts) {
+		appliedVolts = volts;
+	}
 
 	@Override
 	public void setCurrentLimit(int amps) {
 		CurrentExecutor.execute(() -> {
-			flywheel.setSmartCurrentLimit(amps);
+			config.smartCurrentLimit(amps);
+			flywheel.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		});
 	}
 

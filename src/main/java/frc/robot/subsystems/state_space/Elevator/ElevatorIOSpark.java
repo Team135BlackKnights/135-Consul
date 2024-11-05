@@ -5,12 +5,17 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -20,28 +25,27 @@ import frc.robot.utils.state_space.StateSpaceConstants;
 
 public class ElevatorIOSpark implements ElevatorIO {
 	private double appliedVolts = 0.0;
-	private CANSparkBase elevator;
+	private SparkBase elevator;
+	private SparkBaseConfig config;
 	private RelativeEncoder encoder;
 	private static final Executor CurrentExecutor = Executors
 			.newFixedThreadPool(1);
 
 	public ElevatorIOSpark() {
 		if (StateSpaceConstants.Elevator.motorVendor == MotorVendor.NEO_SPARK_MAX) {
-			elevator = new CANSparkMax(StateSpaceConstants.Elevator.kMotorID,
-					MotorType.kBrushless);
+			elevator = new SparkMax(StateSpaceConstants.Elevator.kMotorID, MotorType.kBrushless);
+			config = new SparkMaxConfig();
 		} else {
-			elevator = new CANSparkFlex(StateSpaceConstants.Elevator.kMotorID,
-					MotorType.kBrushless);
+			elevator = new SparkFlex(StateSpaceConstants.Elevator.kMotorID, MotorType.kBrushless);
+			config = new SparkFlexConfig();
 		}
-		elevator.enableVoltageCompensation(12);
-		elevator
-				.setIdleMode(StateSpaceConstants.Elevator.isBrake ? IdleMode.kBrake
-						: IdleMode.kCoast);
+		config.voltageCompensation(12);
+		config.idleMode(StateSpaceConstants.Elevator.isBrake ? IdleMode.kBrake : IdleMode.kCoast);
 		elevator.setCANTimeout(250);
 		elevator.setInverted(StateSpaceConstants.Elevator.inverted);
-		elevator.setSmartCurrentLimit(StateSpaceConstants.Elevator.currentLimit);
+		config.smartCurrentLimit(StateSpaceConstants.Elevator.currentLimit);
 		encoder = elevator.getEncoder();
-		elevator.burnFlash();
+		elevator.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 	}
 
 	@Override
@@ -53,18 +57,22 @@ public class ElevatorIOSpark implements ElevatorIO {
 		inputs.elevatorTemp = elevator.getMotorTemperature();
 		inputs.velocityMetersPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(encoder.getVelocity()
-						* StateSpaceConstants.Elevator.elevatorGearing);;
+						* StateSpaceConstants.Elevator.elevatorGearing);
+		;
 		inputs.currentAmps = new double[] { elevator.getOutputCurrent()
 		};
 	}
 
 	@Override
-	public void setVoltage(double volts) { appliedVolts = volts; }
+	public void setVoltage(double volts) {
+		appliedVolts = volts;
+	}
 
 	@Override
 	public void setCurrentLimit(int amps) {
 		CurrentExecutor.execute(() -> {
-			elevator.setSmartCurrentLimit(amps);
+			config.smartCurrentLimit(amps);
+			elevator.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		});
 	}
 
@@ -72,7 +80,9 @@ public class ElevatorIOSpark implements ElevatorIO {
 	/**
 	 * Stop the elevator by telling it to go to its same position with 0 speed.
 	 */
-	public void stop() { setVoltage(0); }
+	public void stop() {
+		setVoltage(0);
+	}
 
 	@Override
 	public List<SelfChecking> getSelfCheckingHardware() {

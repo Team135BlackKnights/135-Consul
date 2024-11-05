@@ -5,12 +5,17 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -20,29 +25,32 @@ import frc.robot.utils.state_space.StateSpaceConstants;
 
 public class SingleJointedArmIOSpark implements SingleJointedArmIO {
 	private double appliedVolts = 0.0;
-	private CANSparkBase arm;
+	private SparkBase arm;
+	private SparkBaseConfig config;
 	private RelativeEncoder encoder;
 	private static final Executor CurrentExecutor = Executors
 			.newFixedThreadPool(1);
 
 	public SingleJointedArmIOSpark() {
 		if (StateSpaceConstants.SingleJointedArm.motorVendor == MotorVendor.NEO_SPARK_MAX) {
-			arm = new CANSparkMax(StateSpaceConstants.SingleJointedArm.kMotorID,
+			arm = new SparkMax(StateSpaceConstants.SingleJointedArm.kMotorID,
 					MotorType.kBrushless);
+			config = new SparkMaxConfig();
 		} else {
-			arm = new CANSparkFlex(StateSpaceConstants.SingleJointedArm.kMotorID,
+			arm = new SparkFlex(StateSpaceConstants.SingleJointedArm.kMotorID,
 					MotorType.kBrushless);
+			config = new SparkFlexConfig();
 		}
-		arm.enableVoltageCompensation(12);
-		arm.setIdleMode(
+		config.voltageCompensation(12);
+		config.idleMode(
 				StateSpaceConstants.SingleJointedArm.isBrake ? IdleMode.kBrake
 						: IdleMode.kCoast);
 		arm.setCANTimeout(250);
 		arm.setInverted(StateSpaceConstants.SingleJointedArm.inverted);
-		arm.setSmartCurrentLimit(
+		config.smartCurrentLimit(
 				StateSpaceConstants.SingleJointedArm.currentLimit);
 		encoder = arm.getEncoder();
-		arm.burnFlash();
+		arm.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 	}
 
 	@Override
@@ -50,7 +58,8 @@ public class SingleJointedArmIOSpark implements SingleJointedArmIO {
 		arm.setVoltage(appliedVolts);
 		inputs.appliedVolts = appliedVolts;
 		inputs.positionRad = Units.rotationsToRadians(encoder.getPosition()
-				* StateSpaceConstants.SingleJointedArm.armGearing);;
+				* StateSpaceConstants.SingleJointedArm.armGearing);
+		;
 		inputs.armTemp = arm.getMotorTemperature();
 		inputs.velocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(encoder.getVelocity()
@@ -60,12 +69,15 @@ public class SingleJointedArmIOSpark implements SingleJointedArmIO {
 	}
 
 	@Override
-	public void setVoltage(double volts) { arm.setVoltage(volts); }
+	public void setVoltage(double volts) {
+		arm.setVoltage(volts);
+	}
 
 	@Override
 	public void setCurrentLimit(int amps) {
 		CurrentExecutor.execute(() -> {
-			arm.setSmartCurrentLimit(amps);
+			config.smartCurrentLimit(amps);
+			arm.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		});
 	}
 
