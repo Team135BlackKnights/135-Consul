@@ -167,6 +167,7 @@ public class DriveConstants {
 				VecBuilder.fill(0.003, 0.003, 0.0002));
 		public static double kDeadband = 0.05;
 		public static final double kWheelDiameter = Units.inchesToMeters(4),
+		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(40); //test chassis
@@ -205,7 +206,7 @@ public class DriveConstants {
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get(),TrainConstants.weight, kBumperToBumperWidth,
 			kBumperToBumperLength);
-
+	
 		public static final class RobotPhysicsSimulationConfigs {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
 		public static final double SIMULATION_DT = Robot.defaultPeriodSecs / SIM_ITERATIONS_PER_ROBOT_PERIOD;
