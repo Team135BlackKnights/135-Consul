@@ -132,7 +132,6 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
-		driveTalonConfig.TorqueCurrent.TorqueNeutralDeadband = .3;
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
@@ -143,7 +142,6 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
 		turnTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = .1;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
 		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
@@ -256,13 +254,13 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			double feedForward) {
 		driveTalon.setControl(velocityTorqueCurrentFOC
 				.withVelocity(Units.radiansToRotations(velocityRadsPerSec))
-				.withFeedForward(feedForward));
+				.withFeedForward(feedForward).withOverrideCoastDurNeutral(false));
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		turnTalon.setControl(
-				positionControl.withPosition(Units.radiansToRotations(angleRads)));
+				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideCoastDurNeutral(false));
 	}
 
 	@Override

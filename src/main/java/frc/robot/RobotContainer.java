@@ -4,6 +4,7 @@
 package frc.robot;
 
 import frc.robot.Constants.Mode;
+import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
@@ -136,6 +137,7 @@ public class RobotContainer {
 	 * Reads every Choreo file in the deploy folder and creates a command for
 	 * each Checks within Filesystem.getDeployDirectory(), "choreo/" for all
 	 * files NOT having two . in the name (including the one . in .traj)
+	 * 
 	 * @return
 	 */
 	private Collection<Pair<String, Command>> createBranches() {
@@ -153,9 +155,9 @@ public class RobotContainer {
 					for (PathPlannerPath path : auto) {
 						commands.add(new Pair<String, Command>("Branch" + path.name,
 								new BranchAuto(path.name,
-								new Pose2d(
-									path.getPoint(path.getAllPathPoints().size()-1).position,
-									path.getGoalEndState().rotation()),
+										new Pose2d(
+												path.getPoint(path.getAllPathPoints().size() - 1).position,
+												path.getGoalEndState().rotation()),
 										path.getGoalEndState().velocity().magnitude())));
 						System.out.println("Added Branch" + path.name);
 					}
@@ -302,19 +304,18 @@ public class RobotContainer {
 				autoCommands.addAll(createBranches());
 				break;
 			case SIM:
-			GyroSimulation gyroSimulation = null;
-			switch (DriveConstants.gyroType) {
-				case PIGEON:
-					gyroSimulation = GyroSimulation.createPigeon2();
-					break;
-				case NAVX:
-					gyroSimulation = GyroSimulation.createNav2X();
-					break;
-			}
+				GyroSimulation gyroSimulation = null;
+				switch (DriveConstants.gyroType) {
+					case PIGEON:
+						gyroSimulation = GyroSimulation.createPigeon2();
+						break;
+					case NAVX:
+						gyroSimulation = GyroSimulation.createNav2X();
+						break;
+				}
 				switch (DriveConstants.driveType) {
 					case SWERVE:
-						
-						
+
 						SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
 								.getMark4i(DriveConstants.getDriveTrainMotors(1),
 										DriveConstants.getDriveTrainMotors(1),
@@ -357,42 +358,42 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 					case TANK:
-					final DifferentialDriveKinematics diffKinematics = new DifferentialDriveKinematics(DriveConstants.kChassisWidth);
-					final GyroIOSim tankGyroIOSim = new GyroIOSim(gyroSimulation);
-					TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
-					drivetrainS = new Tank(tankIOSim);
-					TankDriveSimulation tankSim = new TankDriveSimulation(DriveConstants.mainRobotProfile,
-						gyroSimulation,
-						diffKinematics,
-						FieldConstants.START_POSE,
-						(Tank) drivetrainS,
-						tankIOSim,
-						drivetrainS::resetPose);
-					fieldSimulation = new Crescendo2024FieldSimulation(tankSim);
-					fieldSimulation.placeGamePiecesOnField(true);
-						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines... 
-						
+						final DifferentialDriveKinematics diffKinematics = new DifferentialDriveKinematics(
+								DriveConstants.kChassisWidth);
+						final GyroIOSim tankGyroIOSim = new GyroIOSim(gyroSimulation);
+						TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
+						drivetrainS = new Tank(tankIOSim);
+						TankDriveSimulation tankSim = new TankDriveSimulation(DriveConstants.mainRobotProfile,
+								gyroSimulation,
+								diffKinematics,
+								FieldConstants.START_POSE,
+								(Tank) drivetrainS,
+								tankIOSim,
+								drivetrainS::resetPose);
+						fieldSimulation = new Crescendo2024FieldSimulation(tankSim);
+						fieldSimulation.placeGamePiecesOnField(true);
+						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
+
 						break;
 					default:
-					final MecanumDriveKinematics mechKinematics = new MecanumDriveKinematics(
-						DriveConstants.kModuleTranslations[0],
-						DriveConstants.kModuleTranslations[1],
-						DriveConstants.kModuleTranslations[2],
-						DriveConstants.kModuleTranslations[3]);
-					final GyroIOSim mecanumGyroIOSim = new GyroIOSim(gyroSimulation);
-					MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
-					drivetrainS = new Mecanum(mecanumIOSim);
-					MecanumDriveSimulation mecanumSim = 
-					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
-					gyroSimulation, 
-					mechKinematics, 
-					FieldConstants.START_POSE, 
-					(Mecanum)drivetrainS,
-					 mecanumIOSim,
-					  drivetrainS::resetPose);
-					fieldSimulation = new Crescendo2024FieldSimulation(mecanumSim);
-                        fieldSimulation.placeGamePiecesOnField(true);
-                        AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
+						final MecanumDriveKinematics mechKinematics = new MecanumDriveKinematics(
+								DriveConstants.kModuleTranslations[0],
+								DriveConstants.kModuleTranslations[1],
+								DriveConstants.kModuleTranslations[2],
+								DriveConstants.kModuleTranslations[3]);
+						final GyroIOSim mecanumGyroIOSim = new GyroIOSim(gyroSimulation);
+						MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
+						drivetrainS = new Mecanum(mecanumIOSim);
+						MecanumDriveSimulation mecanumSim = new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
+								gyroSimulation,
+								mechKinematics,
+								FieldConstants.START_POSE,
+								(Mecanum) drivetrainS,
+								mecanumIOSim,
+								drivetrainS::resetPose);
+						fieldSimulation = new Crescendo2024FieldSimulation(mecanumSim);
+						fieldSimulation.placeGamePiecesOnField(true);
+						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
 				autoCommands.addAll(Arrays.asList(
@@ -461,9 +462,18 @@ public class RobotContainer {
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
 		autoChooser = AutoBuilder.buildAutoChooser();
-		if (drivetrainS instanceof Swerve){
+		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
-			autoChooser.addOption("Wheel Radius Characterization", orientBeforeData.andThen(new WheelRadiusCharacterization((Swerve) drivetrainS, WheelRadiusCharacterization.Direction.CLOCKWISE)).withName("DRIVE wheel radius characterization"));
+			autoChooser.addOption("Wheel Radius Characterization",
+					orientBeforeData
+							.andThen(new WheelRadiusCharacterization((Swerve) drivetrainS,
+									WheelRadiusCharacterization.Direction.CLOCKWISE))
+							.withName("DRIVE wheel radius characterization"));
+			autoChooser.addOption("Swerve Module Static Characterization",
+					new StaticCharacterization(drivetrainS, ((Swerve) drivetrainS)::runCharacterization,
+							((Swerve) drivetrainS)::getCharacterizationVelocity)
+							.finallyDo(((Swerve) drivetrainS)::endCharacterization)
+							.withName("Swerve Module Static Characterization"));
 		}
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);

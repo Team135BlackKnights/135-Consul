@@ -110,11 +110,14 @@ public class Module {
 		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) && Constants.currentMode != Mode.SIM) {
 			double wheelTorqueAmps = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
+
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
 					(inputs.negateFF ? 0 : 1) * 
-							(wheelTorqueAmps));
+							(wheelTorqueAmps)
+							+ff.calculate(currentVelocity, setpointVelocity).magnitude() //might be wrong
+							);
 		} else {
 			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2))
         / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;

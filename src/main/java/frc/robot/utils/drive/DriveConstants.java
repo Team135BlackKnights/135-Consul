@@ -184,7 +184,7 @@ public class DriveConstants {
 				//ctre
 				//overallTurningMotorConstantContainer = new MotorConstantContainer(
 				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
-				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
+				overallDriveMotorConstantContainer = new MotorConstantContainer(.1, //5 for CTRE
 						.13, 0.001, 0.05, 0, 0.000);
 	}
 	public static ModuleConfig mainModuleConfig;
