@@ -119,7 +119,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * @param desiredChassisSpeedsFieldRelative the desired chassis speeds relative to the field,
    *     represented as {@link ChassisSpeeds}
    */
-  private void simulateChassisBehaviorWithFieldRelativeSpeeds(
+  public void simulateChassisBehaviorWithFieldRelativeSpeeds(
       ChassisSpeeds desiredChassisSpeedsFieldRelative) {
     super.setAtRest(false);
 
@@ -229,5 +229,15 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
 @Override
 public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();
+}
+public ChassisSpeeds getMeasuredChassisSpeedsRobotRelative() {
+  return ChassisSpeeds.fromFieldRelativeSpeeds(
+          getMeasuredChassisSpeedsFieldRelative(),
+          getObjectOnFieldPose2d().getRotation());
+}
+
+public ChassisSpeeds getMeasuredChassisSpeedsFieldRelative() {
+  return GeometryConvertor.toWpilibChassisSpeeds(getLinearVelocity(),
+          getAngularVelocity());
 }
 }

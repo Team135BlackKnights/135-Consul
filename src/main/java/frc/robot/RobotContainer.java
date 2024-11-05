@@ -12,6 +12,7 @@ import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
 import frc.robot.subsystems.drive.Mecanum.MecanumIO;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
@@ -26,6 +27,7 @@ import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
@@ -59,6 +61,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
 import java.util.HashMap;
@@ -296,17 +299,19 @@ public class RobotContainer {
 				autoCommands.addAll(createBranches());
 				break;
 			case SIM:
+			GyroSimulation gyroSimulation = null;
+			switch (DriveConstants.gyroType) {
+				case PIGEON:
+					gyroSimulation = GyroSimulation.createPigeon2();
+					break;
+				case NAVX:
+					gyroSimulation = GyroSimulation.createNav2X();
+					break;
+			}
 				switch (DriveConstants.driveType) {
 					case SWERVE:
-						GyroSimulation gyroSimulation = null;
-						switch (DriveConstants.gyroType) {
-							case PIGEON:
-								gyroSimulation = GyroSimulation.createPigeon2();
-								break;
-							case NAVX:
-								gyroSimulation = GyroSimulation.createNav2X();
-								break;
-						}
+						
+						
 						SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
 								.getMark4i(DriveConstants.getDriveTrainMotors(1),
 										DriveConstants.getDriveTrainMotors(1),
@@ -366,26 +371,35 @@ public class RobotContainer {
 						 */
 						break;
 					default:
-						/*
-						 * final GyroIOSim mecanumGyroIOSim = new GyroIOSim();
-						 * MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
-						 * drivetrainS = new Mecanum(mecanumIOSim);
-						 * fieldSimulation = new Crescendo2024FieldSimulation(
-						 * new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
-						 * mecanumGyroIOSim,
-						 * new MecanumDriveKinematics(
-						 * DriveConstants.kModuleTranslations[0],
-						 * DriveConstants.kModuleTranslations[1],
-						 * DriveConstants.kModuleTranslations[2],
-						 * DriveConstants.kModuleTranslations[3]),
-						 * FieldConstants.START_POSE, (Mecanum) drivetrainS,
-						 * mecanumIOSim, drivetrainS::resetPose));
-						 * fieldSimulation.placeGamePiecesOnField(true);
-						 * testOpponentRobot = new OpponentRobotSimulation(0);
-						 * fieldSimulation.addRobot(testOpponentRobot);
-						 * PPHolonomicDriveController
-						 * .setRotationTargetOverride(this::getRotationTargetOverride);
-						 */
+					final MecanumDriveKinematics kinematics = new MecanumDriveKinematics(
+						DriveConstants.kModuleTranslations[0],
+						DriveConstants.kModuleTranslations[1],
+						DriveConstants.kModuleTranslations[2],
+						DriveConstants.kModuleTranslations[3]);
+					final GyroIOSim mecanumGyroIOSim = new GyroIOSim(gyroSimulation);
+					MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
+					drivetrainS = new Mecanum(mecanumIOSim);
+					fieldSimulation = new Crescendo2024FieldSimulation(
+					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
+					mecanumGyroIOSim,
+					kinematics,
+					FieldConstants.START_POSE, (Mecanum) drivetrainS,
+					mecanumIOSim, drivetrainS::resetPose));
+					MecanumDriveSimulation mecanumSim = 
+					
+					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
+					mecanumGyroIOSim, 
+					kinematics, 
+					FieldConstants.START_POSE, 
+					(Mecanum)drivetrainS,
+					 mecanumIOSim,
+					  drivetrainS::resetPose);
+					fieldSimulation = new Crescendo2024FieldSimulation(mecanumSim);
+                        fieldSimulation.placeGamePiecesOnField(true);
+                        AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
+					
+					
+		
 						break;
 				}
 				autoCommands.addAll(Arrays.asList(
