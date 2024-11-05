@@ -77,7 +77,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
 				instantVelocityRobotRelative);
 		iterationNum++;
-		iterationNum %= 5;
+		iterationNum %= DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
 
 	}
 

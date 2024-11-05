@@ -20,6 +20,7 @@ import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIO;
+import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
@@ -28,6 +29,7 @@ import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
@@ -61,6 +63,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
@@ -354,24 +357,24 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 					case TANK:
-						/*
-						 * final GyroIOSim tankGyroIOSim = new GyroIOSim();
-						 * TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
-						 * drivetrainS = new Tank(tankIOSim);
-						 * fieldSimulation = new Crescendo2024FieldSimulation(
-						 * new TankDriveSimulation(DriveConstants.mainRobotProfile,
-						 * tankGyroIOSim,
-						 * new DifferentialDriveKinematics(
-						 * DriveConstants.kChassisWidth),
-						 * FieldConstants.START_POSE, (Tank) drivetrainS,
-						 * tankIOSim, drivetrainS::resetPose));
-						 * fieldSimulation.placeGamePiecesOnField(true);
-						 * testOpponentRobot = new OpponentRobotSimulation(0);
-						 * fieldSimulation.addRobot(testOpponentRobot);
-						 */
+					final DifferentialDriveKinematics diffKinematics = new DifferentialDriveKinematics(DriveConstants.kChassisWidth);
+					final GyroIOSim tankGyroIOSim = new GyroIOSim(gyroSimulation);
+					TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
+					drivetrainS = new Tank(tankIOSim);
+					TankDriveSimulation tankSim = new TankDriveSimulation(DriveConstants.mainRobotProfile,
+						tankGyroIOSim,
+						diffKinematics,
+						FieldConstants.START_POSE,
+						(Tank) drivetrainS,
+						tankIOSim,
+						drivetrainS::resetPose);
+					fieldSimulation = new Crescendo2024FieldSimulation(tankSim);
+					fieldSimulation.placeGamePiecesOnField(true);
+						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines... 
+						
 						break;
 					default:
-					final MecanumDriveKinematics kinematics = new MecanumDriveKinematics(
+					final MecanumDriveKinematics mechKinematics = new MecanumDriveKinematics(
 						DriveConstants.kModuleTranslations[0],
 						DriveConstants.kModuleTranslations[1],
 						DriveConstants.kModuleTranslations[2],
@@ -379,17 +382,10 @@ public class RobotContainer {
 					final GyroIOSim mecanumGyroIOSim = new GyroIOSim(gyroSimulation);
 					MecanumIOSim mecanumIOSim = new MecanumIOSim(mecanumGyroIOSim);
 					drivetrainS = new Mecanum(mecanumIOSim);
-					fieldSimulation = new Crescendo2024FieldSimulation(
-					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
-					mecanumGyroIOSim,
-					kinematics,
-					FieldConstants.START_POSE, (Mecanum) drivetrainS,
-					mecanumIOSim, drivetrainS::resetPose));
 					MecanumDriveSimulation mecanumSim = 
-					
 					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
 					mecanumGyroIOSim, 
-					kinematics, 
+					mechKinematics, 
 					FieldConstants.START_POSE, 
 					(Mecanum)drivetrainS,
 					 mecanumIOSim,
@@ -397,9 +393,6 @@ public class RobotContainer {
 					fieldSimulation = new Crescendo2024FieldSimulation(mecanumSim);
                         fieldSimulation.placeGamePiecesOnField(true);
                         AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
-					
-					
-		
 						break;
 				}
 				autoCommands.addAll(Arrays.asList(
