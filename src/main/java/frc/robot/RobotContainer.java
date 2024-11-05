@@ -362,7 +362,7 @@ public class RobotContainer {
 					TankIOSim tankIOSim = new TankIOSim(tankGyroIOSim);
 					drivetrainS = new Tank(tankIOSim);
 					TankDriveSimulation tankSim = new TankDriveSimulation(DriveConstants.mainRobotProfile,
-						tankGyroIOSim,
+						gyroSimulation,
 						diffKinematics,
 						FieldConstants.START_POSE,
 						(Tank) drivetrainS,
@@ -384,7 +384,7 @@ public class RobotContainer {
 					drivetrainS = new Mecanum(mecanumIOSim);
 					MecanumDriveSimulation mecanumSim = 
 					new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
-					mecanumGyroIOSim, 
+					gyroSimulation, 
 					mechKinematics, 
 					FieldConstants.START_POSE, 
 					(Mecanum)drivetrainS,

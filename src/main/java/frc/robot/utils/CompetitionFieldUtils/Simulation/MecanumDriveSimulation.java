@@ -1,7 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
@@ -11,10 +10,10 @@ import frc.robot.Robot;
 import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim.MecanumDrivePhysicsSimResults;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SimplifiedHolonomicDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
-import frc.robot.utils.drive.Sensors.GyroIOSim;
 import org.littletonrobotics.junction.Logger;
 import java.util.function.Consumer;
 
@@ -28,23 +27,22 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private int iterationNum = 0;
 	private final Mecanum mecanum;
 	private final MecanumIOSim mecanumIOSim;
-	private final GyroIOSim gyroIOSim;
+	private final GyroSimulation gyroSim;
 	private final double subPeriodSeconds = Robot.defaultPeriodSecs
 			/ DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
 	private final MecanumDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
-	private double gForce = 0.0;
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
 		return radPerSecond * TrainConstants.kDriveMotorGearRatio
 				* TrainConstants.kWheelDiameter / 2;
 	}
 
-	public MecanumDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroIOSim gyroIOSim,
+	public MecanumDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroSimulation gyroSim,
 			MecanumDriveKinematics kinematics, Pose2d startingPose,
 			Mecanum mecanum, MecanumIOSim ioSim, Consumer<Pose2d> resetOdometryCallBack) {
 		super(robotProfile, startingPose, resetOdometryCallBack);
-		this.gyroIOSim = gyroIOSim;
+		this.gyroSim = gyroSim;
 		this.mecanum = mecanum;
 		this.mecanumIOSim = ioSim;
 		this.kinematics = kinematics;
@@ -63,32 +61,20 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 		mecanum.updateSim(subPeriodSeconds);
 		// should do the actual motion calculations
-		final ChassisSpeeds mecanumTheoreticalSpeeds = kinematics
-				.toChassisSpeeds(mecanumIOSim.getWheelSpeeds());
+		final ChassisSpeeds mecanumTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
+				.toChassisSpeeds(mecanumIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				mecanumTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
 		final MecanumDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
 				.toWheelSpeeds(instantVelocityRobotRelative);
-		updateGyroSimulationResults(gyroIOSim,
-				super.getObjectOnFieldPose2d().getRotation(),
-				super.getAngularVelocity(), gForce, iterationNum);
+		gyroSim.updateSimulationSubTick(angularVelocity);
 		updateMecanumSimulationResults(mecanum, mecanumIOSim, actualModuleFloorSpeeds,
 				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
 				instantVelocityRobotRelative);
 		iterationNum++;
 		iterationNum %= DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
 
-	}
-
-	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
-			Rotation2d currentFacing, double angularVelocityRadPerSec,
-			double gForce, int iterationNum) {
-		final GyroIOSim.GyroPhysicsSimulationResults results = gyroIOSim.gyroPhysicsSimulationResults;
-		results.robotAngularVelocityRadPerSec = angularVelocityRadPerSec;
-		results.gForce = gForce;
-		results.odometryYawPositions[iterationNum] = currentFacing;
-		results.hasReading = true;
 	}
 
 	private static void updateMecanumSimulationResults(Mecanum mecanum, MecanumIOSim mecanumIOSim,
