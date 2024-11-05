@@ -9,13 +9,19 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkBase.ControlType;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
+import com.revrobotics.spark.SparkClosedLoopController;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -31,15 +37,16 @@ public class TankIOSparkBase implements TankIO {
 			.getP();
 	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getD();
-	private final CANSparkBase leftLeader;
-	private final CANSparkBase rightLeader;
-	private final CANSparkBase leftFollower;
-	private final CANSparkBase rightFollower;
+	private final SparkBase leftLeader;
+	private final SparkBase rightLeader;
+	private final SparkBase leftFollower;
+	private final SparkBase rightFollower;
 	private final RelativeEncoder leftEncoder;
 	private final RelativeEncoder rightEncoder;
-	private final SparkPIDController leftPID;
-	private final SparkPIDController rightPID;
+	private final SparkClosedLoopController leftPID;
+	private final SparkClosedLoopController rightPID;
 	private final GyroIO gyro;
+	private final SparkBaseConfig sparkConfig;
 	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final Executor currentExecutor = Executors
 			.newFixedThreadPool(8);
@@ -47,52 +54,48 @@ public class TankIOSparkBase implements TankIO {
 	public TankIOSparkBase(GyroIO gyro) {
 		this.gyro = gyro;
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
-			leftLeader = new CANSparkMax(DriveConstants.kFrontLeftDrivePort,
+			leftLeader = new SparkMax(DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			rightLeader = new CANSparkMax(DriveConstants.kFrontRightDrivePort,
+			rightLeader = new SparkMax(DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			leftFollower = new CANSparkMax(DriveConstants.kBackLeftDrivePort,
+			leftFollower = new SparkMax(DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			rightFollower = new CANSparkMax(DriveConstants.kBackRightDrivePort,
+			rightFollower = new SparkMax(DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
+			sparkConfig = new SparkMaxConfig();
 		} else {
-			leftLeader = new CANSparkFlex(DriveConstants.kFrontLeftDrivePort,
+			leftLeader = new SparkFlex(DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			rightLeader = new CANSparkFlex(DriveConstants.kFrontRightDrivePort,
+			rightLeader = new SparkFlex(DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			leftFollower = new CANSparkFlex(DriveConstants.kBackLeftDrivePort,
+			leftFollower = new SparkFlex(DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			rightFollower = new CANSparkFlex(DriveConstants.kBackRightDrivePort,
+			rightFollower = new SparkFlex(DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
+			sparkConfig = new SparkFlexConfig();
 		}
 		leftEncoder = leftLeader.getEncoder();
 		rightEncoder = rightLeader.getEncoder();
-		leftPID = leftLeader.getPIDController();
-		rightPID = rightLeader.getPIDController();
-		leftLeader.restoreFactoryDefaults();
-		rightLeader.restoreFactoryDefaults();
-		leftFollower.restoreFactoryDefaults();
-		rightFollower.restoreFactoryDefaults();
+		leftPID = leftLeader.getClosedLoopController();
+		rightPID = rightLeader.getClosedLoopController();
 		leftLeader.setCANTimeout(250);
 		rightLeader.setCANTimeout(250);
 		leftFollower.setCANTimeout(250);
 		rightFollower.setCANTimeout(250);
 		leftLeader.setInverted(DriveConstants.kFrontLeftDriveReversed);
 		rightLeader.setInverted(DriveConstants.kFrontRightDriveReversed);
-		leftFollower.follow(leftLeader, DriveConstants.kBackLeftDriveReversed);
-		rightFollower.follow(rightLeader, DriveConstants.kBackRightDriveReversed);
-		leftLeader.enableVoltageCompensation(12.0);
-		rightLeader.enableVoltageCompensation(12.0);
-		leftLeader.setSmartCurrentLimit(DriveConstants.kMaxDriveCurrent);
-		rightLeader.setSmartCurrentLimit(DriveConstants.kMaxDriveCurrent);
-		leftPID.setP(KP);
-		leftPID.setD(KD);
-		rightPID.setP(KP);
-		rightPID.setD(KD);
-		leftLeader.burnFlash();
-		rightLeader.burnFlash();
-		leftFollower.burnFlash();
-		rightFollower.burnFlash();
+		sparkConfig.voltageCompensation(12);
+		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
+		ClosedLoopConfig loopConfig = new ClosedLoopConfig();
+		loopConfig.p(KP);
+		loopConfig.d(KD);
+		sparkConfig.apply(loopConfig);
+		leftLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		rightLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.follow(leftLeader);
+		leftFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.follow(rightLeader);
+		rightFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 	}
 
 	@Override
@@ -139,10 +142,13 @@ public class TankIOSparkBase implements TankIO {
 	@Override
 	public void setCurrentLimit(int amps) {
 		currentExecutor.execute(() -> {
-			leftLeader.setSmartCurrentLimit(amps);
-			leftFollower.setSmartCurrentLimit(amps);
-			rightLeader.setSmartCurrentLimit(amps);
-			rightFollower.setSmartCurrentLimit(amps);
+			sparkConfig.smartCurrentLimit(amps);
+			leftLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			rightLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			sparkConfig.follow(leftLeader);
+			leftFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			sparkConfig.follow(rightLeader);
+			rightFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		});
 		Logger.recordOutput("Drive/CurrentLimit", amps);
 	}

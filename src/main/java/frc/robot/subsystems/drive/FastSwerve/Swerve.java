@@ -28,6 +28,7 @@ import frc.robot.subsystems.drive.FastSwerve.Trajectory.PathFollowingWithChoreo;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.EqualsUtil;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
@@ -58,8 +59,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		TELEOP,
 		/** Driving based on a trajectory. */
 		TRAJECTORY,
-		/** Driving to a location on the field automatically. */
-		AUTO_ALIGN,
+		/** Mathematical derivation of wheel radius, to account for ALL error */
+		WHEEL_RADIUS_CHARACTERIZATION,
+		/** Characterization of the drive motors kS/kV. */
+		MODULE_CHARACTERIZATION
 	}
 
 	public enum CoastRequest {
@@ -124,6 +127,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	};
 	private final OdometryThread odometryThread;
 	private double[] pathPlannerNM = new double[4];
+	private double characterizationVelocity = 0.0;
+
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
 		this.gyroIO = gyroIO;
@@ -140,13 +145,12 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configureCustom( (path) ->
-		new PathFollowingWithChoreo(
-			path,
-			this::getPose,
-			this::getChassisSpeeds,
-			this::setPathplannerChassisSpeeds,
-			DriveConstants.mainController,
+		AutoBuilder.configureCustom((path) -> new PathFollowingWithChoreo(
+				path,
+				this::getPose,
+				this::getChassisSpeeds,
+				this::setPathplannerChassisSpeeds,
+				DriveConstants.mainController,
 				DriveConstants.mainConfig,
 				() -> Robot.isRed, this), this::getPose, this::resetPose, () -> Robot.isRed, true);
 		Pathfinding.setPathfinder(new LocalADStarAK());
@@ -445,8 +449,23 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				setBrakeMode(false);
 			}
 		}
+		switch (currentDriveMode) {
+			case MODULE_CHARACTERIZATION -> {
+				for (int i = 0; i < 4; i++) {
+					modules[i].runCharacterization(0, characterizationVelocity);
+				}
+				break;
+			}
+			case WHEEL_RADIUS_CHARACTERIZATION -> {
+				desiredSpeeds = new ChassisSpeeds(0, 0, characterizationVelocity);
+				break;
+			}
+			default -> {
+				break;
+			}
+		}
 		// Run modules
-		if (!modulesOrienting) {
+		if (!modulesOrienting && currentDriveMode != DriveMode.MODULE_CHARACTERIZATION) {
 			// Run robot at desiredSpeeds
 			// Generate feasible next setpoint
 			SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
@@ -456,14 +475,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			for (int i = 0; i < modules.length; i++) {
 				// Optimize setpoints
 				optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
-				if (currentDriveMode == DriveMode.TRAJECTORY){
+				if (currentDriveMode == DriveMode.TRAJECTORY) {
 					optimizedSetpointTorques[i] = new SwerveModuleState(pathPlannerNM[i],
-						optimizedSetpointStates[i].angle);
-				}else{
+							optimizedSetpointStates[i].angle);
+				} else {
 					optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
-						optimizedSetpointStates[i].angle);
+							optimizedSetpointStates[i].angle);
 				}
-				
+
 				modules[i].runSetpoint(optimizedSetpointStates[i],
 						optimizedSetpointTorques[i]);
 			}
@@ -497,8 +516,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
 		for (int i = 0; i < 4; i++) {
-			
-			pathPlannerNM[i] = feedforwards.linearForcesNewtons()[i] * DriveConstants.TrainConstants.kWheelDiameter/2;
+
+			pathPlannerNM[i] = feedforwards.linearForcesNewtons()[i] * DriveConstants.TrainConstants.kWheelDiameter / 2;
 		}
 	}
 
@@ -571,6 +590,35 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	public boolean[] isSkidding() {
 		return isSkidding;
+	}
+
+	@Override
+	public double[] getWheelRadiusCharacterizationPosition() {
+		return Arrays.stream(modules).mapToDouble(Module::getPositionRads)
+				.toArray();
+	}
+
+	public double getCharacterizationVelocity() {
+		double driveVelocityAverage = 0.0;
+		for (var module : modules) {
+			driveVelocityAverage += module.getCharacterizationVelocity();
+		}
+		return driveVelocityAverage / 4.0;
+	}
+
+	@Override
+	public void runWheelRadiusCharacterization(double velocity) {
+		currentDriveMode = DriveMode.WHEEL_RADIUS_CHARACTERIZATION;
+		characterizationVelocity = velocity;
+	}
+
+	public void runCharacterization(double input) {
+		currentDriveMode = DriveMode.MODULE_CHARACTERIZATION;
+		characterizationVelocity = input;
+	}
+
+	public void endCharacterization() {
+		currentDriveMode = DriveMode.TELEOP;
 	}
 
 	@Override
@@ -782,6 +830,55 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	public boolean isCollisionDetected() {
 		return collisionDetected;
+	}
+
+	/**
+	 * Returns command that orients all modules to {@code orientation}, ending when
+	 * the modules have
+	 * rotated.
+	 */
+	public Command orientModules(Rotation2d orientation) {
+		return orientModules(new Rotation2d[] { orientation, orientation, orientation, orientation });
+	}
+
+	/**
+	 * Returns command that orients all modules to {@code orientations[]}, ending
+	 * when the modules
+	 * have rotated.
+	 */
+	public Command orientModules(Rotation2d[] orientations) {
+		return run(() -> {
+			SwerveModuleState[] states = new SwerveModuleState[4];
+			for (int i = 0; i < orientations.length; i++) {
+				modules[i].runSetpoint(
+						new SwerveModuleState(0.0, orientations[i]),
+						new SwerveModuleState(0.0, new Rotation2d()));
+				states[i] = new SwerveModuleState(0.0, modules[i].getAngle());
+			}
+			currentSetpoint = new SwerveSetpoint(new ChassisSpeeds(), states);
+		})
+				.until(
+						() -> Arrays.stream(modules)
+								.allMatch(
+										module -> EqualsUtil.epsilonEquals(
+												module.getAngle().getDegrees(),
+												module.getSetpointState().angle.getDegrees(),
+												2.0)))
+				.beforeStarting(() -> modulesOrienting = true)
+				.finallyDo(() -> modulesOrienting = false)
+				.withName("Orient Modules");
+	}
+
+	public static Rotation2d[] getXOrientations() {
+		return Arrays.stream(DriveConstants.kModuleTranslations)
+				.map(Translation2d::getAngle)
+				.toArray(Rotation2d[]::new);
+	}
+
+	public static Rotation2d[] getCircleOrientations() {
+		return Arrays.stream(DriveConstants.kModuleTranslations)
+				.map(translation -> translation.getAngle().plus(new Rotation2d(Math.PI / 2.0)))
+				.toArray(Rotation2d[]::new);
 	}
 
 	@Override

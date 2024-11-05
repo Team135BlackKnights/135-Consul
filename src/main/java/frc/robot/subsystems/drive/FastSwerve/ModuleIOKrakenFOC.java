@@ -132,7 +132,6 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
-		driveTalonConfig.TorqueCurrent.TorqueNeutralDeadband = .3;
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
@@ -143,7 +142,6 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
 		turnTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = .1;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
 		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
@@ -256,30 +254,33 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			double feedForward) {
 		driveTalon.setControl(velocityTorqueCurrentFOC
 				.withVelocity(Units.radiansToRotations(velocityRadsPerSec))
-				.withFeedForward(feedForward));
+				.withFeedForward(feedForward).withOverrideCoastDurNeutral(false));
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		turnTalon.setControl(
-				positionControl.withPosition(Units.radiansToRotations(angleRads)));
+				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideCoastDurNeutral(false));
 	}
 
 	@Override
-	public void setDrivePID(double kP, double kI, double kD) {
+	public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
 		driveTalonConfig.Slot0.kP = kP;
 		driveTalonConfig.Slot0.kI = kI;
 		driveTalonConfig.Slot0.kD = kD;
+		driveTalonConfig.Slot0.kS = kS;
+		driveTalonConfig.Slot0.kV = kV;
 		driveTalon.getConfigurator().apply(driveTalonConfig, 0.01);
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
+		turnTalonConfig.Slot0.kV = kV;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 

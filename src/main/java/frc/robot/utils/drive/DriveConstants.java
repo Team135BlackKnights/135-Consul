@@ -167,6 +167,7 @@ public class DriveConstants {
 				VecBuilder.fill(0.003, 0.003, 0.0002));
 		public static double kDeadband = 0.05;
 		public static final double kWheelDiameter = Units.inchesToMeters(4),
+		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(40); //test chassis
@@ -183,7 +184,7 @@ public class DriveConstants {
 				//ctre
 				//overallTurningMotorConstantContainer = new MotorConstantContainer(
 				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
-				overallDriveMotorConstantContainer = new MotorConstantContainer(.1,
+				overallDriveMotorConstantContainer = new MotorConstantContainer(.1, //5 for CTRE
 						.13, 0.001, 0.05, 0, 0.000);
 	}
 	public static ModuleConfig mainModuleConfig;
@@ -194,7 +195,7 @@ public class DriveConstants {
 
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
-			mainController = new PPLTVController(null, null, kBumperToBumperWidth, MAX_G);
+			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), kBumperToBumperWidth, MAX_G);
 		}else{
 		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
@@ -205,7 +206,7 @@ public class DriveConstants {
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get(),TrainConstants.weight, kBumperToBumperWidth,
 			kBumperToBumperLength);
-
+	
 		public static final class RobotPhysicsSimulationConfigs {
 		public static final int SIM_ITERATIONS_PER_ROBOT_PERIOD = 5;
 		public static final double SIMULATION_DT = Robot.defaultPeriodSecs / SIM_ITERATIONS_PER_ROBOT_PERIOD;
