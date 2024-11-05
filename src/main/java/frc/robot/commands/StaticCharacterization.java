@@ -40,6 +40,7 @@ public class StaticCharacterization extends Command {
   public void execute() {
     currentInput = timer.get() * currentRampFactor.get();
     inputConsumer.accept(currentInput);
+    Logger.recordOutput("StaticChar/CurrentAmps", currentInput);
   }
 
   @Override

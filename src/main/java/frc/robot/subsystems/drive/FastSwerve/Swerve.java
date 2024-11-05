@@ -452,7 +452,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		switch (currentDriveMode) {
 			case MODULE_CHARACTERIZATION -> {
 				for (int i = 0; i < 4; i++) {
-					modules[i].runCharacterization(characterizationVelocity, 0);
+					modules[i].runCharacterization(0, characterizationVelocity);
 				}
 				break;
 			}
