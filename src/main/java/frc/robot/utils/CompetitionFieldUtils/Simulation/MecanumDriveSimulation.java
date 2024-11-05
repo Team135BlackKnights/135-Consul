@@ -1,6 +1,5 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -30,7 +29,8 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Mecanum mecanum;
 	private final MecanumIOSim mecanumIOSim;
 	private final GyroIOSim gyroIOSim;
-	private final double subPeriodSeconds = Robot.defaultPeriodSecs/DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
+	private final double subPeriodSeconds = Robot.defaultPeriodSecs
+			/ DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
 	private final MecanumDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
 	private double gForce = 0.0;
@@ -41,9 +41,9 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	}
 
 	public MecanumDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroIOSim gyroIOSim,
-			MecanumDriveKinematics kinematics, Pose2d startingPose, 
-			Mecanum mecanum, MecanumIOSim ioSim,Consumer<Pose2d> resetOdometryCallBack) {
-    	super(robotProfile, startingPose, resetOdometryCallBack);
+			MecanumDriveKinematics kinematics, Pose2d startingPose,
+			Mecanum mecanum, MecanumIOSim ioSim, Consumer<Pose2d> resetOdometryCallBack) {
+		super(robotProfile, startingPose, resetOdometryCallBack);
 		this.gyroIOSim = gyroIOSim;
 		this.mecanum = mecanum;
 		this.mecanumIOSim = ioSim;
@@ -52,6 +52,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 		resetOdometryToActualRobotPose();
 	}
+
 	@Override
 	public void resetOdometryToActualRobotPose() {
 		resetOdometryCallBack.accept(getObjectOnFieldPose2d());
@@ -61,26 +62,24 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	public void simulationSubTick() {
 
 		mecanum.updateSim(subPeriodSeconds);
-        //should do the actual motion calculations
-        final ChassisSpeeds mecanumTheoreticalSpeeds = kinematics
-                .toChassisSpeeds(mecanumIOSim.getWheelSpeeds());
-        super.simulateChassisBehaviorWithFieldRelativeSpeeds(
-                mecanumTheoreticalSpeeds);
-        final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
-        final MecanumDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
-                .toWheelSpeeds(instantVelocityRobotRelative);
-        updateGyroSimulationResults(gyroIOSim,
-                super.getObjectOnFieldPose2d().getRotation(),
-                super.getAngularVelocity(), gForce, iterationNum);
-        updateMecanumSimulationResults(mecanum, mecanumIOSim, actualModuleFloorSpeeds,
-                profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
-                instantVelocityRobotRelative);
-				iterationNum ++;
-				iterationNum %= 5;
+		// should do the actual motion calculations
+		final ChassisSpeeds mecanumTheoreticalSpeeds = kinematics
+				.toChassisSpeeds(mecanumIOSim.getWheelSpeeds());
+		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
+				mecanumTheoreticalSpeeds);
+		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
+		final MecanumDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
+				.toWheelSpeeds(instantVelocityRobotRelative);
+		updateGyroSimulationResults(gyroIOSim,
+				super.getObjectOnFieldPose2d().getRotation(),
+				super.getAngularVelocity(), gForce, iterationNum);
+		updateMecanumSimulationResults(mecanum, mecanumIOSim, actualModuleFloorSpeeds,
+				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
+				instantVelocityRobotRelative);
+		iterationNum++;
+		iterationNum %= 5;
 
-			}
-	
-
+	}
 
 	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
 			Rotation2d currentFacing, double angularVelocityRadPerSec,
@@ -107,7 +106,8 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 				speeds.rearRightMetersPerSecond
 		};
 		final MecanumDrivePhysicsSimResults results = mecanumIOSim.mecanumDrivePhysicsSimResults;
-		//Convert mecanum array into wheel speeds (the loop should always iterate 4 times)
+		// Convert mecanum array into wheel speeds (the loop should always iterate 4
+		// times)
 		for (int i = 0; i < freeWheelSpeeds.length; i++) {
 			degreeAngles[i] = (TrainConstants.mecanumInitialAngleOffsetDegrees
 					+ i * 90) % 360;
@@ -130,7 +130,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private static double getActualDriveMotorRotterSpeedRevPerSec(
 			double moduleSpeedProjectedOnSwerveHeadingMPS,
 			double moduleFreeSpeedMPS) {
-		//Motor efficiency? I.E. how much of the free speed does it get at max speed? 
+		// Motor efficiency? I.E. how much of the free speed does it get at max speed?
 		final double FLOOR_SPEED_WEIGHT_IN_ACTUAL_MOTOR_SPEED = 0.8,
 				rotorSpeedMetersPerSecond;
 		if (Math.abs(
