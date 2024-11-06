@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.DataHandler;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
 
@@ -30,7 +31,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	private double armSetRad;
 	private double elbowSetRad;
 	public double latency;
-	private Notifier m_updatePositionsNotifier = null; //Checks for updates
+	private Notifier m_updatePositionsNotifier = null; // Checks for updates
 	private final Mechanism2d m_mech2d = new Mechanism2d(
 			StateSpaceConstants.DoubleJointedArm.simSizeWidth,
 			StateSpaceConstants.DoubleJointedArm.simSizeLength);
@@ -63,7 +64,9 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		super.registerAllHardware(io.getSelfCheckingHardware());
 	}
 
-	public void setVoltages(List<Double> voltages) { this.voltages = voltages; }
+	public void setVoltages(List<Double> voltages) {
+		this.voltages = voltages;
+	}
 
 	@Override
 	public void periodic() {
@@ -72,9 +75,19 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		io.updateInputs(inputs);
 		Logger.processInputs("DoubleJointedArmS", inputs);
+		LoggableTunedNumber.ifChanged(hashCode(), ()->{
+			//send the new qelms/relms to the Pi
+			double[] currentConstants = new double[] {StateSpaceConstants.DoubleJointedArm.qPos.get(),
+					StateSpaceConstants.DoubleJointedArm.qVel.get(), StateSpaceConstants.DoubleJointedArm.qError.get(),
+					StateSpaceConstants.DoubleJointedArm.rPos.get()};
+			DataHandler.logData(currentConstants,"DoubleJointedArmConstants");
+			Logger.recordOutput("DoubleJointedArmS/currentConstants", currentConstants);
+		}, StateSpaceConstants.DoubleJointedArm.qPos,
+				StateSpaceConstants.DoubleJointedArm.qVel, StateSpaceConstants.DoubleJointedArm.qError,
+				StateSpaceConstants.DoubleJointedArm.rPos);
 		m_DoubleJointedArm.setAngle(Units.radiansToDegrees(getArmRads()));
 		m_DoubleJointedElbow.setAngle(Units.radiansToDegrees(getElbowRads()));
-		Logger.recordOutput("DoubleJointedArmMechanism", m_mech2d);
+		Logger.recordOutput("DoubleJointedArmS/DoubleJointedArmMechanism", m_mech2d);
 	}
 
 	@Override
@@ -89,7 +102,9 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		return orchestra;
 	}
 
-	public double getArmError() { return inputs.positionArmRads - armSetRad; }
+	public double getArmError() {
+		return inputs.positionArmRads - armSetRad;
+	}
 
 	public void setExpectedPositions(List<Double> rads) {
 		io.setExpectedPositions(rads.get(0), rads.get(1));
@@ -105,12 +120,15 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		this.elbowSetRad = limitElbowRad(elbowRad);
 		DataHandler.logData(new double[] { armRad, elbowRad, elbowInversed
 		}, "DoubleJointSetpoint");
+		Logger.recordOutput("DoubleJointedArmS/setpoint", new double[] { armRad, elbowRad, elbowInversed
+		});
 	}
 
 	public void setDoubleJointedArm(double[] macro) {
 		this.armSetRad = limitArmRad(macro[0]);
 		this.elbowSetRad = limitElbowRad(macro[1]);
 		DataHandler.logData(macro, "DoubleJointSetpoint");
+		Logger.recordOutput("DoubleJointedArmS/setpoint", macro);
 	}
 
 	public double limitArmRad(double armRad) {
@@ -140,11 +158,17 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	}
 
 	@Override
-	public void setCurrentLimit(int amps) { io.setCurrentLimit(amps); }
+	public void setCurrentLimit(int amps) {
+		io.setCurrentLimit(amps);
+	}
 
-	public double getArmRads() { return inputs.positionArmRads; }
+	public double getArmRads() {
+		return inputs.positionArmRads;
+	}
 
-	public double getElbowRads() { return inputs.positionElbowRads; }
+	public double getElbowRads() {
+		return inputs.positionElbowRads;
+	}
 
 	/**
 	 * @return a double list which contains an x coordinate in meters for the

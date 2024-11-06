@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.button.POVButton;
 import frc.robot.RobotContainer;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
+import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
 
 public class StateSpaceConstants {
@@ -61,6 +62,11 @@ public class StateSpaceConstants {
 				simSizeWidth = (armLength + elbowLength) * 2,
 				simSizeLength = (armLength + elbowLength) * 2,
 				physicalX = simSizeWidth / 2, physicalY = simSizeLength / 2;
+		//qelms and relms
+		public static LoggableTunedNumber qPos = new LoggableTunedNumber("DoubleJointedArmS/qPos",0.01745),
+		qVel = new LoggableTunedNumber("DoubleJointedArmS/qVel",0.1745329),
+		qError = new LoggableTunedNumber("DoubleJointedArmS/qError",10),
+		rPos = new LoggableTunedNumber("DoubleJointedArmS/rPos",.01745/4);
 	}
 
 	public class SingleJointedArm {
