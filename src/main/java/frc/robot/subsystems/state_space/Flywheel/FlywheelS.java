@@ -24,6 +24,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.utils.drive.Sensors.EncoderIO;
+import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
 
@@ -34,8 +36,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class FlywheelS extends SubsystemChecker {
-	private final FlywheelIO io;
-	private final FlywheelIOInputsAutoLogged inputs = new FlywheelIOInputsAutoLogged();
+	private final FlywheelIO flywheelIO;
+	private final EncoderIO encoderIO;
+	private final FlywheelIOInputsAutoLogged flywheelIOInputs = new FlywheelIOInputsAutoLogged();
+	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
 	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
 	Voltage holdVoltage = Volts.of(4);
@@ -83,9 +87,17 @@ public class FlywheelS extends SubsystemChecker {
 	 */
 	private final static LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
 			flywheelPlant, m_controller, m_observer, 12, .02);
-
-	public FlywheelS(FlywheelIO io) {
-		this.io = io;
+	/**
+	 * Creates a new flywheelS
+	 * @param flywheelIO the flywheel IO
+	 * @param encoderIO the encoder IO (can leave this one null if no independent encoder attached, flywheel will just use its built in one)
+	 */
+	public FlywheelS(FlywheelIO flywheelIO, EncoderIO encoderIO) {
+		this.flywheelIO = flywheelIO;
+		this.encoderIO = encoderIO;
+		if (encoderIO != null){
+			encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
+		}
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
 						(state) -> Logger.recordOutput("FlywheelS/SysIdState",
@@ -99,20 +111,30 @@ public class FlywheelS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
-		m_loop.correct(VecBuilder.fill(inputs.velocityRadPerSec));
+		m_loop.correct(VecBuilder.fill(flywheelIOInputs.velocityRadPerSec));
 		m_loop.predict(.02);
 		double volts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		io.setVoltage(volts);
+		flywheelIO.setVoltage(volts);
 		Logger.recordOutput("FlywheelS/Volts", volts);
 		Logger.recordOutput("FlywheelS/AdjustedRPM",
 				Units.radiansPerSecondToRotationsPerMinute(m_loop.getXHat(0)));
-		io.updateInputs(inputs);
-		Logger.processInputs("FlywheelS", inputs);
+		flywheelIO.updateInputs(flywheelIOInputs);
+		Logger.processInputs("FlywheelS", flywheelIOInputs);
+		if (encoderIO != null){
+		encoderIO.updateInputs(encoderIOInputsAutoLogged);
+		flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.relativePositionRadians;
+		flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+		Logger.processInputs("FlywheelS", flywheelIOInputs);
+		Logger.processInputs("FlyWheelS/EncoderIO", encoderIOInputsAutoLogged);
+		}
+		//get encoder
+		//override vals for inputs.velocity
+		//log flywheels/encoder
 	}
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
-		io.setVoltage(volts);
+		flywheelIO.setVoltage(volts);
 	}
 
 	/** Run closed loop at the specified velocity. */
@@ -127,7 +149,7 @@ public class FlywheelS extends SubsystemChecker {
 	/** Stops the flywheel. */
 	public void stop() {
 		m_loop.setNextR(VecBuilder.fill(0));
-		io.stop();
+		flywheelIO.stop();
 	}
 
 	/**
@@ -149,27 +171,27 @@ public class FlywheelS extends SubsystemChecker {
 	}
 
 	public double getError() {
-		return Math.abs(inputs.velocityRadPerSec - m_loop.getNextR().get(0, 0));
+		return Math.abs(flywheelIOInputs.velocityRadPerSec - m_loop.getNextR().get(0, 0));
 	}
 
 	@Override
 	public double getCurrent() {
-		return Math.abs(inputs.currentAmps[0]);
+		return Math.abs(flywheelIOInputs.currentAmps[0]);
 	}
 
 	/** Returns the current velocity in radians per second. */
 	public double getCharacterizationVelocity() {
-		return inputs.velocityRadPerSec;
+		return flywheelIOInputs.velocityRadPerSec;
 	}
 
 	private void registerSelfCheckHardware() {
-		super.registerAllHardware(io.getSelfCheckingHardware());
+		super.registerAllHardware(flywheelIO.getSelfCheckingHardware());
 	}
 
 	@Override
 	public List<ParentDevice> getOrchestraDevices() {
 		List<ParentDevice> orchestra = new ArrayList<>();
-		List<SelfChecking> driveHardware = io.getSelfCheckingHardware();
+		List<SelfChecking> driveHardware = flywheelIO.getSelfCheckingHardware();
 		for (SelfChecking motor : driveHardware) {
 			if (motor.getHardware() instanceof TalonFX) {
 				orchestra.add((TalonFX) motor.getHardware());
@@ -181,13 +203,13 @@ public class FlywheelS extends SubsystemChecker {
 	@Override
 	public HashMap<String, Double> getTemps() {
 		HashMap<String, Double> tempMap = new HashMap<>();
-		tempMap.put("FlywheelTemp", inputs.flywheelTemp);
+		tempMap.put("FlywheelTemp", flywheelIOInputs.flywheelTemp);
 		return tempMap;
 	}
 
 	@Override
 	public void setCurrentLimit(int amps) {
-		io.setCurrentLimit(amps);
+		flywheelIO.setCurrentLimit(amps);
 	}
 
 	@Override
