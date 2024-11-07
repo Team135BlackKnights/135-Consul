@@ -26,7 +26,7 @@ public interface EncoderIO {
     /*
      * Higher gear ratio (>1) means a reduction
      */
-    public default void setConversionFactor(double factor) {
+    public default void setGearRatio(double factor) {
 
     }
 
