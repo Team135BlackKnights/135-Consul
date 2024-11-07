@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.utils.drive.Sensors.EncoderIO;
+import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
 import edu.wpi.first.math.MathUtil;
@@ -41,8 +43,10 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public class ElevatorS extends SubsystemChecker {
-	private final ElevatorIO io;
-	private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
+	private final ElevatorIO elevatorIO;
+	private final EncoderIO encoderIO;
+	private final ElevatorIOInputsAutoLogged elevatorIOInputs = new ElevatorIOInputsAutoLogged();
+	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
 	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
 	Voltage holdVoltage = Volts.of(4);
@@ -118,10 +122,14 @@ public class ElevatorS extends SubsystemChecker {
 			"Elevator Root", StateSpaceConstants.Elevator.physicalX,
 			StateSpaceConstants.Elevator.physicalY);
 	private final MechanismLigament2d m_elevatorMech2d = m_mech2dRoot.append(
-			new MechanismLigament2d("Elevator", inputs.positionMeters, 90));
+			new MechanismLigament2d("Elevator", elevatorIOInputs.positionMeters, 90));
 
-	public ElevatorS(ElevatorIO io) {
-		this.io = io;
+	public ElevatorS(ElevatorIO elevatorIO, EncoderIO encoderIO) {
+		this.elevatorIO = elevatorIO;
+		this.encoderIO = encoderIO;
+		if (encoderIO != null){
+			encoderIO.setGearRatio(StateSpaceConstants.Elevator.elevatorGearing);
+		}
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
 						(state) -> Logger.recordOutput("ElevatorS/SysIdState",
@@ -136,8 +144,9 @@ public class ElevatorS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
-		m_position = inputs.positionMeters;
-		m_velocity = inputs.velocityMetersPerSec;
+		
+		m_position = elevatorIOInputs.positionMeters;
+		m_velocity = elevatorIOInputs.velocityMetersPerSec;
 		m_lastProfiledReference = m_profile.calculate(.02,
 				m_lastProfiledReference, goal); // calculate where it SHOULD be.
 		m_loop.setNextR(m_lastProfiledReference.position,
@@ -150,9 +159,9 @@ public class ElevatorS extends SubsystemChecker {
 		m_loop.predict(.02);
 		// Send the new calculated voltage to the motors.
 		double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		io.setVoltage(appliedVolts);
-		io.updateInputs(inputs);
-		Logger.processInputs("ElevatorS", inputs);
+		elevatorIO.setVoltage(appliedVolts);
+		elevatorIO.updateInputs(elevatorIOInputs);
+		Logger.processInputs("ElevatorS", elevatorIOInputs);
 		m_elevatorMech2d.setLength(m_loop.getXHat(0));
 		// Push the mechanism to AdvantageScope
 		Logger.recordOutput("ElevatorMechanism", m_mech2d);
@@ -161,11 +170,18 @@ public class ElevatorS extends SubsystemChecker {
 				StateSpaceConstants.Elevator.simY,
 				StateSpaceConstants.Elevator.simZ, new Rotation3d(0, 0, 0.0));
 		Logger.recordOutput("Mechanism3d/Elevator/", elevatorPose);
+		if (encoderIO != null){
+			encoderIO.updateInputs(encoderIOInputsAutoLogged);
+			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
+			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("ElevatorS", elevatorIOInputs);
+			+
+		}
 	}
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
-		io.setVoltage(volts);
+		elevatorIO.setVoltage(volts);
 	}
 
 	/*
@@ -235,7 +251,7 @@ public class ElevatorS extends SubsystemChecker {
 
 	/** Stops the arm. */
 	public void stop() {
-		io.stop();
+		elevatorIO.stop();
 	}
 
 	public double getDistance() {
@@ -299,13 +315,13 @@ public class ElevatorS extends SubsystemChecker {
 	}
 
 	private void registerSelfCheckHardware() {
-		super.registerAllHardware(io.getSelfCheckingHardware());
+		super.registerAllHardware(elevatorIO.getSelfCheckingHardware());
 	}
 
 	@Override
 	public List<ParentDevice> getOrchestraDevices() {
 		List<ParentDevice> orchestra = new ArrayList<>();
-		List<SelfChecking> driveHardware = io.getSelfCheckingHardware();
+		List<SelfChecking> driveHardware = elevatorIO.getSelfCheckingHardware();
 		for (SelfChecking motor : driveHardware) {
 			if (motor.getHardware() instanceof TalonFX) {
 				orchestra.add((TalonFX) motor.getHardware());
@@ -317,18 +333,18 @@ public class ElevatorS extends SubsystemChecker {
 	@Override
 	public HashMap<String, Double> getTemps() {
 		HashMap<String, Double> tempMap = new HashMap<>();
-		tempMap.put("ElevatorTemp", inputs.elevatorTemp);
+		tempMap.put("ElevatorTemp", elevatorIOInputs.elevatorTemp);
 		return tempMap;
 	}
 
 	@Override
 	public void setCurrentLimit(int amps) {
-		io.setCurrentLimit(amps);
+		elevatorIO.setCurrentLimit(amps);
 	}
 
 	@Override
 	public double getCurrent() {
-		return inputs.currentAmps[0];
+		return elevatorIOInputs.currentAmps[0];
 	}
 
 	@Override
