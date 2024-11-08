@@ -122,10 +122,10 @@ public class FlywheelS extends SubsystemChecker {
 		Logger.processInputs("FlywheelS", flywheelIOInputs);
 		if (encoderIO != null){
 		encoderIO.updateInputs(encoderIOInputsAutoLogged);
-		flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.relativePositionRadians;
+		flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
 		flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 		Logger.processInputs("FlywheelS", flywheelIOInputs);
-		Logger.processInputs("FlyWheelS/EncoderIO", encoderIOInputsAutoLogged);
+		Logger.processInputs("FlywheelS/EncoderIO", encoderIOInputsAutoLogged);
 		}
 		//get encoder
 		//override vals for inputs.velocity

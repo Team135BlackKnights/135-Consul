@@ -175,7 +175,6 @@ public class ElevatorS extends SubsystemChecker {
 			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
 			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			Logger.processInputs("ElevatorS", elevatorIOInputs);
-			+
 		}
 	}
 

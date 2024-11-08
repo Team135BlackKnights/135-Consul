@@ -1,6 +1,5 @@
 package frc.robot.subsystems.state_space.DoubleJointedArm;
 
-import java.beans.Encoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +107,16 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		m_DoubleJointedElbow.setAngle(Units.radiansToDegrees(getElbowRads()));
 		Logger.recordOutput("DoubleJointedArmS/DoubleJointedArmMechanism", m_mech2d);
 		if (armEncoderIO != null){
-			doubleJointedArmInputs.arm
+			doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
+			doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
+			Logger.processInputs("DoubleJointedArmS/ArmEncoderIO", armEncoderIOInputsAutoLogged);
+		}
+		if ( elbowEncoderIO != null){
+			doubleJointedArmInputs.positionArmRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
+			doubleJointedArmInputs.velocityArmRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
+			Logger.processInputs("DoubleJointedArmS/ArmEncoderIO", elbowEncoderIOInputsAutoLogged);
 		}
 	}
 

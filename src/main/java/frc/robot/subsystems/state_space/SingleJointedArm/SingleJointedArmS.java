@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.Sensors.EncoderIO;
+import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
 import edu.wpi.first.math.MathUtil;
@@ -45,7 +47,9 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public class SingleJointedArmS extends SubsystemChecker {
-	private final SingleJointedArmIO io;
+	private final SingleJointedArmIO singleJointedArmIO;
+	private final EncoderIO singleJointedArmEncoderIO;
+	private final EncoderIOInputsAutoLogged singleJointedArmEncoderIOInputs = new EncoderIOInputsAutoLogged();
 	private final SingleJointedArmIOInputsAutoLogged inputs = new SingleJointedArmIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
 	// using sysId
@@ -135,8 +139,9 @@ public class SingleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(inputs.positionRad), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public SingleJointedArmS(SingleJointedArmIO io) {
-		this.io = io;
+	public SingleJointedArmS(SingleJointedArmIO io, EncoderIO encoderIO) {
+		this.singleJointedArmIO = io;
+		this.singleJointedArmEncoderIO = encoderIO;
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
 						(state) -> Logger.recordOutput("SingleJointedArmS/SysIdState",
@@ -165,8 +170,8 @@ public class SingleJointedArmS extends SubsystemChecker {
 		m_loop.predict(.02);
 		// Send the new calculated voltage to the motors.
 		double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		io.setVoltage(appliedVolts);
-		io.updateInputs(inputs);
+		singleJointedArmIO.setVoltage(appliedVolts);
+		singleJointedArmIO.updateInputs(inputs);
 		Logger.processInputs("SingleJointedArmS", inputs);
 		m_SingleJointedarm.setAngle(Units.radiansToDegrees(m_loop.getXHat(0)));
 		Logger.recordOutput("SingleJointedArmMechanism", m_mech2d);
@@ -178,11 +183,17 @@ public class SingleJointedArmS extends SubsystemChecker {
 				new Rotation3d(0, -m_loop.getXHat(0), 0.0));
 		Logger.recordOutput("Mechanism3d/SingleJointedArm/",
 				SingleJointedarmPose);
+		if (singleJointedArmEncoderIO != null){
+			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
+			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
+			Logger.processInputs("SingleJointedArmS", inputs);
+			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
+		}
 	}
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
-		io.setVoltage(volts);
+		singleJointedArmIO.setVoltage(volts);
 	}
 
 	/*
@@ -261,7 +272,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	/** Stops the arm. */
 	public void stop() {
-		io.stop();
+		singleJointedArmIO.stop();
 	}
 
 	public double getDistance() {
@@ -316,13 +327,13 @@ public class SingleJointedArmS extends SubsystemChecker {
 	}
 
 	private void registerSelfCheckHardware() {
-		super.registerAllHardware(io.getSelfCheckingHardware());
+		super.registerAllHardware(singleJointedArmIO.getSelfCheckingHardware());
 	}
 
 	@Override
 	public List<ParentDevice> getOrchestraDevices() {
 		List<ParentDevice> orchestra = new ArrayList<>();
-		List<SelfChecking> driveHardware = io.getSelfCheckingHardware();
+		List<SelfChecking> driveHardware = singleJointedArmIO.getSelfCheckingHardware();
 		for (SelfChecking motor : driveHardware) {
 			if (motor.getHardware() instanceof TalonFX) {
 				orchestra.add((TalonFX) motor.getHardware());
@@ -369,6 +380,6 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	@Override
 	public void setCurrentLimit(int amps) {
-		io.setCurrentLimit(amps);
+		singleJointedArmIO.setCurrentLimit(amps);
 	}
 }
