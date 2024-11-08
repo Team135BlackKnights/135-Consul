@@ -27,6 +27,8 @@ public class DriveConstants {
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
+	//This one is swerve-exclusive
+	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
 	public static final GyroType gyroType = GyroType.PIGEON;
 	public static DCMotor getDriveTrainMotors(int number){
 		switch (robotMotorController) {
@@ -78,6 +80,10 @@ public class DriveConstants {
 	 */
 	public enum DriveTrainType {
 		SWERVE, TANK, MECANUM
+	}
+	public enum SwerveModuleType {
+		SDSMK4I,
+		THRIFTYSWERVE
 	}
 
 	/**
