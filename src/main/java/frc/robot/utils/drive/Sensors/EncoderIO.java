@@ -22,6 +22,9 @@ public interface EncoderIO {
 
 	public default void updateInputs(EncoderIOInputs inputs) {}
 
+	/**
+     * This function only resets relative, absolute stays the same.
+     */
 	public default void reset() {}
     /*
      * Higher gear ratio (>1) means a reduction

@@ -217,6 +217,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.velocityConversionFactor(turnVelocityConversionFactor)
 				.positionConversionFactor(turnPositionConversionFactor);
 		turnConfig = turnConfig.apply(turnEncoderConfig);
+		//3.3 is the voltage here
 		turnAbsoluteEncoderConfig = new AnalogSensorConfig().inverted(isTurnAbsInverted)
 				.positionConversionFactor(1 / 3.3 * 2 * Math.PI)
 				.velocityConversionFactor(1 / 3.3 * 2 * Math.PI);

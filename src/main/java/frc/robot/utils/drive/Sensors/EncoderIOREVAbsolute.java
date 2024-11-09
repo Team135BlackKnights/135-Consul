@@ -32,7 +32,7 @@ public class EncoderIOREVAbsolute implements EncoderIO {
                 / conversionFactor;
         inputs.relativePositionRadians = (Units.rotationsToRadians(encoder.getPosition())
                 / conversionFactor) - encoderOffsetRadians;
-        inputs.timestampSeconds = Logger.getRealTimestamp() * 1e-6;
+        inputs.timestampSeconds = Logger.getTimestamp() * 1e6;
     }
 
     /**
