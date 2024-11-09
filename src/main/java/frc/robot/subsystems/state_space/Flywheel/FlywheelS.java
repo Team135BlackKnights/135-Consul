@@ -34,6 +34,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class FlywheelS extends SubsystemChecker {
 	private final FlywheelIO flywheelIO;
@@ -92,11 +93,17 @@ public class FlywheelS extends SubsystemChecker {
 	 * @param flywheelIO the flywheel IO
 	 * @param encoderIO the encoder IO (can leave this one null if no independent encoder attached, flywheel will just use its built in one)
 	 */
-	public FlywheelS(FlywheelIO flywheelIO, EncoderIO encoderIO) {
+	public FlywheelS(FlywheelIO flywheelIO, Optional<EncoderIO> encoderIO) {
 		this.flywheelIO = flywheelIO;
-		this.encoderIO = encoderIO;
-		if (encoderIO != null){
-			encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
+		EncoderIO encoderOptional = null;
+		try {
+			encoderOptional = encoderIO.get();
+		}
+		finally {
+			this.encoderIO = encoderOptional;
+		}
+		if (this.encoderIO != null){
+			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,

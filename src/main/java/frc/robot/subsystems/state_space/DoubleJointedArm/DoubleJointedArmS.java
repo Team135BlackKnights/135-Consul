@@ -3,6 +3,7 @@ package frc.robot.subsystems.state_space.DoubleJointedArm;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -54,15 +55,33 @@ public class DoubleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(getElbowRads()), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public DoubleJointedArmS(DoubleJointedArmIO io, EncoderIO armEncoderIO, EncoderIO elbowEncoderIO) {
-		this.armEncoderIO = armEncoderIO;
-		this.elbowEncoderIO = elbowEncoderIO;
-		this.doubleJointedArmIO = io;
-		if (armEncoderIO != null){
-			armEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.armGearing);
+	public DoubleJointedArmS(DoubleJointedArmIO io, Optional<EncoderIO> armEncoderIO, Optional<EncoderIO> elbowEncoderIO) {
+		EncoderIO armEncoderIOOptional = null;
+		EncoderIO elbowEncoderIOOptional = null;
+		try {
+			armEncoderIOOptional = armEncoderIO.get();
 		}
-		if (elbowEncoderIO != null){
-			elbowEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.elbowCurrentLimit);
+		finally {
+			this.armEncoderIO= armEncoderIOOptional;
+		}
+		if (this.armEncoderIO != null){
+			this.armEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
+		}
+		try {
+			elbowEncoderIOOptional = elbowEncoderIO.get();
+		}
+		finally {
+			this.elbowEncoderIO = elbowEncoderIOOptional;
+		}
+		if (this.elbowEncoderIO != null){
+			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
+		}
+		this.doubleJointedArmIO = io;
+		if (this.armEncoderIO != null){
+			this.armEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.armGearing);
+		}
+		if (this.elbowEncoderIO != null){
+			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.elbowCurrentLimit);
 		}
 		m_updatePositionsNotifier = new Notifier(() -> {
 			DataHandler.logData(new double[] { getArmRads(), getElbowRads()

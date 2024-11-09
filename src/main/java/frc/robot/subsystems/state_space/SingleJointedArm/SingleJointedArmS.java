@@ -44,6 +44,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 public class SingleJointedArmS extends SubsystemChecker {
@@ -139,9 +140,18 @@ public class SingleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(inputs.positionRad), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public SingleJointedArmS(SingleJointedArmIO io, EncoderIO encoderIO) {
+	public SingleJointedArmS(SingleJointedArmIO io, Optional<EncoderIO> encoderIO) {
 		this.singleJointedArmIO = io;
-		this.singleJointedArmEncoderIO = encoderIO;
+		EncoderIO encoderCheck = null;
+		try {
+			encoderCheck = encoderIO.get();
+		}
+		finally {
+			this.singleJointedArmEncoderIO = encoderCheck;
+		}
+		if (this.singleJointedArmEncoderIO != null){
+			this.singleJointedArmEncoderIO.setGearRatio(StateSpaceConstants.SingleJointedArm.armGearing);
+		}
 		sysId = new SysIdRoutine(
 				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
 						(state) -> Logger.recordOutput("SingleJointedArmS/SysIdState",
