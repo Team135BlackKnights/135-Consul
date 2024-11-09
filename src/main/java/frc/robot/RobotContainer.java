@@ -11,6 +11,7 @@ import frc.robot.commands.state_space.DoubleJointedArmC;
 import frc.robot.commands.state_space.ElevatorC;
 import frc.robot.commands.state_space.SingleJointedArmC;
 import frc.robot.commands.state_space.FlywheelC;
+import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -110,6 +111,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.utils.state_space.StateSpaceConstants;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
  * Phoenix-6 2025 (non-replay), REVLib 2025, URCL, GrappleLib 2025, AKit 2025,
@@ -329,38 +331,41 @@ public class RobotContainer {
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
 				autoCommands.addAll(createBranches());
+
 				switch (StateSpaceConstants.Flywheel.motorVendor){
+
 					case CTRE_ON_RIO:
 					case CTRE_ON_CANIVORE:
-					flywheelS = new FlywheelS(new FlywheelIOTalon());
+					flywheelS = new FlywheelS(new FlywheelIOTalon(), null);
 	
 					break;
 					default:
-					flywheelS = new FlywheelS(new FlywheelIOSpark());
+					flywheelS = new FlywheelS(new FlywheelIOSpark(),null);
 					break;
 				}
 				switch (StateSpaceConstants.SingleJointedArm.motorVendor){
 					case CTRE_ON_RIO:
 					case CTRE_ON_CANIVORE:
-					armS = new SingleJointedArmS(new SingleJointedArmIOTalon());
+					armS = new SingleJointedArmS(new SingleJointedArmIOTalon(),null);
 	
 					break;
 					default:
-					armS = new SingleJointedArmS(new SingleJointedArmIOSpark());
+					armS = new SingleJointedArmS(new SingleJointedArmIOSpark(),null);
 					break;
 				}
 				switch (StateSpaceConstants.Elevator.motorVendor){
 					case CTRE_ON_RIO:
 					case CTRE_ON_CANIVORE:
-					elevatorS = new ElevatorS(new ElevatorIOTalon());
+					elevatorS = new ElevatorS(new ElevatorIOTalon(),null);
 	
 					break;
 					default:
-					elevatorS = new ElevatorS(new ElevatorIOSpark());
+					elevatorS = new ElevatorS(new ElevatorIOSpark(),null);
 					break;
 				}
-				doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon());
+				doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),null,null);
 				break;
+
 			case SIM:
 				GyroSimulation gyroSimulation = null;
 				switch (DriveConstants.gyroType) {
@@ -454,10 +459,10 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-				flywheelS = new FlywheelS(new FlywheelIOSim());
+			/* 	flywheelS = new FlywheelS(new FlywheelIOSim());
 			armS = new SingleJointedArmS(new SingleJointedArmIOSim());
 			elevatorS = new ElevatorS(new ElevatorIOSim());
-			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim());
+			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim());*/
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -494,10 +499,10 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
-				flywheelS = new FlywheelS(new FlywheelIO(){});
+				/*flywheelS = new FlywheelS(new FlywheelIO(){});
 							armS = new SingleJointedArmS(new SingleJointedArmIO(){});
 							elevatorS = new ElevatorS(new ElevatorIO(){});
-							doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){});
+							doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){});*/
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),

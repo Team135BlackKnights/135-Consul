@@ -35,8 +35,8 @@ public class EncoderIOREVAbsolute implements EncoderIO {
         inputs.timestampSeconds = Logger.getTimestamp() * 1e6;
     }
 
-    /**
-     * This function only resets relative, absolute offset stays the same.
+	/**
+     * This function only resets relative, absolute stays the same.
      */
     @Override
     public void reset() {

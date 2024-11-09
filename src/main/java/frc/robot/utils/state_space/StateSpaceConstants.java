@@ -13,6 +13,12 @@ import frc.robot.utils.MotorConstantContainer;
 public class StateSpaceConstants {
 	public static boolean debug = true;
 
+	public enum EncoderType{
+		CTRE,
+		REVABSOLUTE,
+		REVANALOG,
+		NOATTACHEDENCODER
+	}
 	public class Controls {
 		/* Enter any non-button controls here.
 		 * Left trigger is used for RPM speed. 0-0 1-7100.
@@ -34,6 +40,7 @@ public class StateSpaceConstants {
 
 	public class Flywheel {
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
+		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
 		public static boolean isBrake = false;
 		public static int kMotorID = 20, maxRPM = 8700, currentLimit = 20;
@@ -47,6 +54,8 @@ public class StateSpaceConstants {
 	public class DoubleJointedArm {
 		public static boolean armInverted = false;
 		public static boolean elbowInverted = false;
+		public static EncoderType wristEncoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType armEncoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean isBrake = false;
 		public static int kArmMotorID = 30, kElbowMotorID = 31;
 		public static double[] macroTopLeft = { -1.5, 1, 0
@@ -71,6 +80,7 @@ public class StateSpaceConstants {
 
 	public class SingleJointedArm {
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
+		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
 		public static boolean isBrake = false;
 		public static int kMotorID = 30;
@@ -98,6 +108,7 @@ public class StateSpaceConstants {
 
 	public class Elevator {
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
+		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
 		public static boolean isBrake = false;
 		public static int kMotorID = 40, currentLimit = 60;
