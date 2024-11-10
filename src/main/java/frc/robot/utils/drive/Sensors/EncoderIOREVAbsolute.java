@@ -3,6 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
+import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class EncoderIOREVAbsolute implements EncoderIO {
                 / conversionFactor;
         inputs.relativePositionRadians = (Units.rotationsToRadians(encoder.getPosition())
                 / conversionFactor) - encoderOffsetRadians;
-        inputs.timestampSeconds = Logger.getRealTimestamp() * 1e-6;
+        inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
     }
 
     /**

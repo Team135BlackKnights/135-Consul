@@ -3,6 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
+import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 
@@ -40,7 +41,7 @@ public class EncoderIOCANCoder implements EncoderIO {
                 / conversionFactor;
         inputs.relativePositionRadians = (Units.rotationsToRadians(encoder.getAbsolutePosition().getValueAsDouble())
                 / conversionFactor) - encoderOffsetRadians;
-        inputs.timestampSeconds = Logger.getRealTimestamp() * 1e-6;
+        inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
     }
 
     /**
