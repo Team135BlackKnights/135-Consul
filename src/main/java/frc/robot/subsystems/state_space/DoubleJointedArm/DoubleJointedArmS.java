@@ -30,7 +30,8 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	private final DoubleJointedArmIO doubleJointedArmIO;
 	private final EncoderIO elbowEncoderIO, armEncoderIO;
 	private final DoubleJointedArmIOInputsAutoLogged doubleJointedArmInputs = new DoubleJointedArmIOInputsAutoLogged();
-	private final EncoderIOInputsAutoLogged armEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged(), elbowEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
+	private final EncoderIOInputsAutoLogged armEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged(),
+			elbowEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private List<Double> voltages;
 	private double armSetRad;
 	private double elbowSetRad;
@@ -55,24 +56,15 @@ public class DoubleJointedArmS extends SubsystemChecker {
 					new Color8Bit(Color.kYellow)));
 
 	public DoubleJointedArmS(DoubleJointedArmIO io, EncoderIO armEncoderIO, EncoderIO elbowEncoderIO) {
-		EncoderIO armEncoderIOOptional = null;
-		EncoderIO elbowEncoderIOOptional = null;
-		
-			this.armEncoderIO= armEncoderIOOptional;
-		if (this.armEncoderIO != null){
-			this.armEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
-		}
-			this.elbowEncoderIO = elbowEncoderIOOptional;
-		if (this.elbowEncoderIO != null){
-			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
-		}
-		this.doubleJointedArmIO = io;
-		if (this.armEncoderIO != null){
+		this.armEncoderIO = armEncoderIO;
+		this.elbowEncoderIO = elbowEncoderIO;
+		if (this.armEncoderIO != null) {
 			this.armEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.armGearing);
 		}
-		if (this.elbowEncoderIO != null){
-			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.elbowCurrentLimit);
+		if (this.elbowEncoderIO != null) {
+			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.DoubleJointedArm.elbowGearing);
 		}
+		this.doubleJointedArmIO = io;
 		m_updatePositionsNotifier = new Notifier(() -> {
 			DataHandler.logData(new double[] { getArmRads(), getElbowRads()
 			}, "DoubleJointedEncoders");
@@ -94,20 +86,20 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		if (voltages != null) {
 			doubleJointedArmIO.setVoltage(voltages);
 		}
-		if (elbowEncoderIO != null){
+		if (elbowEncoderIO != null) {
 			elbowEncoderIO.updateInputs(elbowEncoderIOInputsAutoLogged);
 		}
-		if (armEncoderIO != null){
+		if (armEncoderIO != null) {
 			armEncoderIO.updateInputs(armEncoderIOInputsAutoLogged);
 		}
 		doubleJointedArmIO.updateInputs(doubleJointedArmInputs);
 		Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
-		LoggableTunedNumber.ifChanged(hashCode(), ()->{
-			//send the new qelms/relms to the Pi
-			double[] currentConstants = new double[] {StateSpaceConstants.DoubleJointedArm.qPos.get(),
+		LoggableTunedNumber.ifChanged(hashCode(), () -> {
+			// send the new qelms/relms to the Pi
+			double[] currentConstants = new double[] { StateSpaceConstants.DoubleJointedArm.qPos.get(),
 					StateSpaceConstants.DoubleJointedArm.qVel.get(), StateSpaceConstants.DoubleJointedArm.qError.get(),
-					StateSpaceConstants.DoubleJointedArm.rPos.get()};
-			DataHandler.logData(currentConstants,"DoubleJointedArmConstants");
+					StateSpaceConstants.DoubleJointedArm.rPos.get() };
+			DataHandler.logData(currentConstants, "DoubleJointedArmConstants");
 			Logger.recordOutput("DoubleJointedArmS/currentConstants", currentConstants);
 		}, StateSpaceConstants.DoubleJointedArm.qPos,
 				StateSpaceConstants.DoubleJointedArm.qVel, StateSpaceConstants.DoubleJointedArm.qError,
@@ -115,13 +107,13 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		m_DoubleJointedArm.setAngle(Units.radiansToDegrees(getArmRads()));
 		m_DoubleJointedElbow.setAngle(Units.radiansToDegrees(getElbowRads()));
 		Logger.recordOutput("DoubleJointedArmS/DoubleJointedArmMechanism", m_mech2d);
-		if (armEncoderIO != null){
+		if (armEncoderIO != null) {
 			doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
 			doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
 			Logger.processInputs("DoubleJointedArmS/ArmEncoderIO", armEncoderIOInputsAutoLogged);
 		}
-		if ( elbowEncoderIO != null){
+		if (elbowEncoderIO != null) {
 			doubleJointedArmInputs.positionArmRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
 			doubleJointedArmInputs.velocityArmRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);

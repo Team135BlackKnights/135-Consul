@@ -141,10 +141,8 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	public SingleJointedArmS(SingleJointedArmIO io, EncoderIO encoderIO) {
 		this.singleJointedArmIO = io;
-		EncoderIO encoderCheck = null;
-		
-			this.singleJointedArmEncoderIO = encoderCheck;
-		if (this.singleJointedArmEncoderIO != null){
+		this.singleJointedArmEncoderIO = encoderIO;
+		if (encoderIO != null){
 			this.singleJointedArmEncoderIO.setGearRatio(StateSpaceConstants.SingleJointedArm.armGearing);
 		}
 		sysId = new SysIdRoutine(

@@ -127,7 +127,7 @@ public class ElevatorS extends SubsystemChecker {
 	public ElevatorS(ElevatorIO elevatorIO, EncoderIO encoderIO) {
 		this.elevatorIO = elevatorIO;
 		this.encoderIO = encoderIO;
-		if (this.encoderIO != null){
+		if (encoderIO != null){
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
 		sysId = new SysIdRoutine(

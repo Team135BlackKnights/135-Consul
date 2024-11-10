@@ -94,8 +94,8 @@ public class FlywheelS extends SubsystemChecker {
 	 */
 	public FlywheelS(FlywheelIO flywheelIO, EncoderIO encoderIO) {
 		this.flywheelIO = flywheelIO;
-		this.encoderIO = null;
-		if (this.encoderIO != null){
+		this.encoderIO = encoderIO;
+		if(encoderIO != null){
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
 		sysId = new SysIdRoutine(
