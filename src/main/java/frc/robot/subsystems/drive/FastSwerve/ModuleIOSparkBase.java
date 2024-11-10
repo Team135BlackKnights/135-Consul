@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -219,8 +220,8 @@ public class ModuleIOSparkBase implements ModuleIO {
 		turnConfig = turnConfig.apply(turnEncoderConfig);
 		//3.3 is the voltage here
 		turnAbsoluteEncoderConfig = new AnalogSensorConfig().inverted(isTurnAbsInverted)
-				.positionConversionFactor(1 / 3.3 * 2 * Math.PI)
-				.velocityConversionFactor(1 / 3.3 * 2 * Math.PI);
+				.positionConversionFactor(1 / RobotController.getVoltage3V3() * 2 * Math.PI)
+				.velocityConversionFactor(1 / RobotController.getVoltage3V3() * 2 * Math.PI);
 		turnConfig = turnConfig.apply(turnAbsoluteEncoderConfig);
 		turnSignalsConfig = new SignalsConfig().analogPositionAlwaysOn(true).analogVelocityAlwaysOn(true)
 				.analogPositionPeriodMs((int) (1000 / DriveConstants.TrainConstants.odomHz))

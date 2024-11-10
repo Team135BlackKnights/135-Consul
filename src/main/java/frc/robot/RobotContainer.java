@@ -320,7 +320,7 @@ public class RobotContainer {
 					// Placeholder values
 					default:
 						throw new IllegalArgumentException(
-								"Unknown implementation type, please check DriveConstants.java!");
+								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
@@ -440,42 +440,39 @@ public class RobotContainer {
 				}
 				switch (DriveConstants.driveType) {
 					case SWERVE:
+						SwerveModuleSimulation[] moduleSimulations = new SwerveModuleSimulation[4];
+						ModuleIO[] moduleIOSims = new ModuleIO[4];
+						for (int i = 0; i < 4; i++){
+							switch (DriveConstants.swerveModuleType){
+								case SDSMK4I:
+								moduleSimulations[i] = SwerveModuleSimulation
+								.getMark4i(DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.getDriveTrainMotors(1),
+										DriveConstants.kMaxDriveCurrent,
+										DRIVE_WHEEL_TYPE.RUBBER, 2)
+								.get();
+								break;
+								case THRIFTYSWERVE:
+								moduleSimulations[i] = SwerveModuleSimulation.getThrifty(DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.getDriveTrainMotors(1),
+								DriveConstants.kMaxDriveCurrent,
+								DRIVE_WHEEL_TYPE.RUBBER, 2).get();
+								break;
+								default:
+								throw new IllegalArgumentException(
+									"Unknown implementation type for module, please check DriveConstants.java!");
+								}
+							moduleIOSims[i] = new ModuleIOSim(moduleSimulations[i]);
+						}
 
-						SwerveModuleSimulation frontLeftSim = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
-								.get();
-						SwerveModuleSimulation frontRightSim = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
-								.get();
-						SwerveModuleSimulation backLeftSim = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
-								.get();
-						SwerveModuleSimulation backRightSim = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
-								.get();
-						ModuleIOSim frontLeft = new ModuleIOSim(frontLeftSim);
-						ModuleIOSim frontRight = new ModuleIOSim(frontRightSim);
-						ModuleIOSim backLeft = new ModuleIOSim(backLeftSim);
-						ModuleIOSim backRight = new ModuleIOSim(backRightSim);
-						drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), frontLeft,
-								frontRight, backLeft, backRight);
+		
+						drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), moduleIOSims[0],
+								moduleIOSims[1], moduleIOSims[2], moduleIOSims[3]);
 						SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
 								DriveConstants.mainRobotProfile.robotMass,
 								DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
-								new SwerveModuleSimulation[] { frontLeftSim, frontRightSim,
-										backLeftSim, backRightSim
+								new SwerveModuleSimulation[] { moduleSimulations[0], moduleSimulations[1],
+									moduleSimulations[2], moduleSimulations[3]
 								}, DriveConstants.kModuleTranslations, gyroSimulation,
 								FieldConstants.START_POSE, drivetrainS::resetPose);
 						fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
