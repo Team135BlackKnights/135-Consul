@@ -4,8 +4,8 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.revrobotics.spark.SparkBase;
 import com.studica.frc.AHRS;
-import com.revrobotics.CANSparkBase;
 
 import au.grapplerobotics.LaserCan;
 import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
@@ -194,7 +194,7 @@ public abstract class SubsystemChecker extends SubsystemBase
 		hardware.add(new SelfCheckingPWMMotor(label, pwmMotor));
 	}
 
-	public void registerHardware(String label, CANSparkBase sparkBase) {
+	public void registerHardware(String label, SparkBase sparkBase) {
 		hardware.add(new SelfCheckingSparkBase(label, sparkBase));
 	}
 

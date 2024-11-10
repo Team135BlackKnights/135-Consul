@@ -10,13 +10,21 @@ import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.revrobotics.CANSparkBase;
-import com.revrobotics.CANSparkFlex;
-import com.revrobotics.CANSparkBase.ControlType;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.MAXMotionConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
+import com.revrobotics.spark.SparkClosedLoopController;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -27,23 +35,25 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 
 public class MecanumIOSparkBase implements MecanumIO {
+
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getD();
-	private final CANSparkBase frontLeft;
-	private final CANSparkBase frontRight;
-	private final CANSparkBase backLeft;
-	private final CANSparkBase backRight;
+	private final SparkBaseConfig sparkConfig;
+	private final SparkBase frontLeft;
+	private final SparkBase frontRight;
+	private final SparkBase backLeft;
+	private final SparkBase backRight;
 	private final RelativeEncoder frontLeftEncoder;
 	private final RelativeEncoder frontRightEncoder;
 	private final RelativeEncoder backLeftEncoder;
 	private final RelativeEncoder backRightEncoder;
-	private final SparkPIDController frontLeftPID;
-	private final SparkPIDController frontRightPID;
-	private final SparkPIDController backLeftPID;
-	private final SparkPIDController backRightPID;
+	private final SparkClosedLoopController frontLeftPID;
+	private final SparkClosedLoopController frontRightPID;
+	private final SparkClosedLoopController backLeftPID;
+	private final SparkClosedLoopController backRightPID;
 	private final GyroIO gyroIO;
 	private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final Executor currentExecutor = Executors
@@ -52,58 +62,58 @@ public class MecanumIOSparkBase implements MecanumIO {
 	public MecanumIOSparkBase(GyroIO gyroIO) {
 		this.gyroIO = gyroIO;
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
-			frontLeft = new CANSparkMax(DriveConstants.kFrontLeftDrivePort,
+			frontLeft = new SparkMax(DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			frontRight = new CANSparkMax(DriveConstants.kFrontRightDrivePort,
+			frontRight = new SparkMax(DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			backLeft = new CANSparkMax(DriveConstants.kBackLeftDrivePort,
+			backLeft = new SparkMax(DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			backRight = new CANSparkMax(DriveConstants.kBackRightDrivePort,
+			backRight = new SparkMax(DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
+			sparkConfig = new SparkMaxConfig();
 		} else {
-			frontLeft = new CANSparkFlex(DriveConstants.kFrontLeftDrivePort,
+			frontLeft = new SparkFlex(DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			frontRight = new CANSparkFlex(DriveConstants.kFrontRightDrivePort,
+			frontRight = new SparkFlex(DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			backLeft = new CANSparkFlex(DriveConstants.kBackLeftDrivePort,
+			backLeft = new SparkFlex(DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			backRight = new CANSparkFlex(DriveConstants.kBackRightDrivePort,
+			backRight = new SparkFlex(DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
+			sparkConfig = new SparkFlexConfig();
 		}
-		frontLeftEncoder = frontLeft.getEncoder();
-		frontRightEncoder = frontRight.getEncoder();
-		backLeftEncoder = backLeft.getEncoder();
-		backRightEncoder = backRight.getEncoder();
-		frontLeftPID = frontLeft.getPIDController();
-		frontRightPID = frontRight.getPIDController();
-		backLeftPID = backLeft.getPIDController();
-		backRightPID = backRight.getPIDController();
-		frontLeft.restoreFactoryDefaults();
-		frontRight.restoreFactoryDefaults();
-		backLeft.restoreFactoryDefaults();
-		backRight.restoreFactoryDefaults();
+
 		frontLeft.setCANTimeout(250);
 		frontRight.setCANTimeout(250);
 		backLeft.setCANTimeout(250);
 		backRight.setCANTimeout(250);
 		frontLeft.setInverted(DriveConstants.kFrontLeftDriveReversed);
 		frontRight.setInverted(DriveConstants.kFrontRightDriveReversed);
-		frontLeft.enableVoltageCompensation(12.0);
-		frontRight.enableVoltageCompensation(12.0);
-		frontLeft.setSmartCurrentLimit(DriveConstants.kMaxDriveCurrent);
-		frontRight.setSmartCurrentLimit(DriveConstants.kMaxDriveCurrent);
-		frontLeftPID.setP(KP);
-		frontLeftPID.setD(KD);
-		frontRightPID.setP(KP);
-		frontRightPID.setD(KD);
-		backLeftPID.setP(KP);
-		backLeftPID.setD(KD);
-		backRightPID.setP(KP);
-		backRightPID.setD(KD);
-		frontLeft.burnFlash();
-		frontRight.burnFlash();
-		backLeft.burnFlash();
-		backRight.burnFlash();
+		backLeft.setInverted(DriveConstants.kBackLeftDriveReversed);
+		backRight.setInverted(DriveConstants.kBackRightDriveReversed);
+		sparkConfig.voltageCompensation(12);
+		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
+		sparkConfig.idleMode(IdleMode.kBrake);
+		frontLeftEncoder = frontLeft.getEncoder();
+		frontRightEncoder = frontRight.getEncoder();
+		backLeftEncoder = backLeft.getEncoder();
+		backRightEncoder = backRight.getEncoder();
+		frontLeftPID = frontLeft.getClosedLoopController();
+		frontRightPID = frontRight.getClosedLoopController();
+		backLeftPID = backLeft.getClosedLoopController();
+		backRightPID = backRight.getClosedLoopController();
+		ClosedLoopConfig loopConfig = new ClosedLoopConfig();
+		loopConfig.d(KD);
+		loopConfig.p(KP);
+		MAXMotionConfig MaxMotionConfig = new MAXMotionConfig();
+		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
+		sparkConfig.apply(loopConfig);
+		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		
+
 	}
 
 	@Override
@@ -175,19 +185,19 @@ public class MecanumIOSparkBase implements MecanumIO {
 			frontLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontLeftRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, frontLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, frontLeftFFVolts);
 			frontRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontRightRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, frontRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, frontRightFFVolts);
 			backLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backLeftRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, backLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, backLeftFFVolts);
 			backRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backRightRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, backRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, backRightFFVolts);
 		}else{
 			setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec), convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec), convertRadPerSecondToVoltage(backRightRadPerSec));
 		}
@@ -208,10 +218,11 @@ public class MecanumIOSparkBase implements MecanumIO {
 	@Override
 	public void setCurrentLimit(int amps) {
 		currentExecutor.execute(() -> {
-			frontLeft.setSmartCurrentLimit(amps);
-			frontRight.setSmartCurrentLimit(amps);
-			backLeft.setSmartCurrentLimit(amps);
-			backRight.setSmartCurrentLimit(amps);
+			sparkConfig.smartCurrentLimit(amps);
+			frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+			backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		});
 		Logger.recordOutput("Mecanum/CurrentLimit", amps);
 	}

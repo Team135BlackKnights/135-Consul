@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
-import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.CANBus.CANBusStatus;
@@ -66,6 +65,7 @@ public class Robot extends LoggedRobot {
 			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus canBus = new CANBus("rio");
+	//public static final CANBus canivoreCanBus = new CANBus("canivore-drive");
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
@@ -225,7 +225,9 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("BatteryVoltage",
 				RobotController.getBatteryVoltage());
 		CANBusStatus canBusStatus = canBus.getStatus();
+		//CANBusStatus canivoreCanBusStatus = canivoreCanBus.getStatus();
 		Logger.recordOutput("CANUtil", canBusStatus.BusUtilization * 100.0);
+		//Logger.recordOutput("CanivoreUtil", canivoreCanBusStatus.BusUtilization * 100.0);
 		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("RobotPeriodicMS", runtimeMS);
 	}

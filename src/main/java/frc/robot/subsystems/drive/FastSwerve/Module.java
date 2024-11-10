@@ -54,6 +54,10 @@ public class Module {
 			"Drive/Module/TurnkS",
 			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
 					.getKs());
+	private static final LoggableTunedNumber turnkV = new LoggableTunedNumber(
+			"Drive/Module/TurnkV",
+			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+					.getKv());
 	private SwerveModuleState setpointState = new SwerveModuleState();
 	private final int index;
 	private final ModuleIO io;
@@ -86,11 +90,11 @@ public class Module {
 						0),
 				drivekS, drivekV);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
-				drivekP, drivekI, drivekD);
+				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get(), drivekS.get(), drivekV.get()),
+				drivekP, drivekI, drivekD, drivekS, drivekV);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get()),
-				turnkP, turnkI, turnkD, turnkS);
+				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get(), turnkV.get()),
+				turnkP, turnkI, turnkD, turnkS, turnkV);
 	}
 
 	/** Runs to {@link SwerveModuleState} */
@@ -106,11 +110,14 @@ public class Module {
 		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) && Constants.currentMode != Mode.SIM) {
 			double wheelTorqueAmps = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
+
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
 					(inputs.negateFF ? 0 : 1) * 
-							(wheelTorqueAmps));
+							(wheelTorqueAmps)
+							+ff.calculate(currentVelocity, setpointVelocity).magnitude() //might be wrong
+							);
 		} else {
 			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2))
         / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;

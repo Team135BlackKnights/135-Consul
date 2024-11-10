@@ -160,9 +160,12 @@ public interface DrivetrainS extends Subsystem {
 	}
 
 	default double getCurrent() { return 0; }
-
+	default void runWheelRadiusCharacterization(double velocity) {
+		throw new UnsupportedOperationException(
+				"Unimplemented method 'runWheelRadiusCharacterization'");
+	}
 	void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards);
-
+	default double[] getWheelRadiusCharacterizationPosition() { return new double[] {0.0, 0.0, 0.0, 0.0}; }
 	default boolean[] isSkidding() {
 		return new boolean[] { false, false, false, false
 		};

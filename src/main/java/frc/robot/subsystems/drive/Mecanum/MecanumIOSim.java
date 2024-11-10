@@ -43,12 +43,17 @@ public class MecanumIOSim implements MecanumIO {
 	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
 			/ 2;
 
-	public MecanumIOSim(GyroIO gyroSim) { gyro = gyroSim; 
-	frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
-		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
-		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
-		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1);
-		}
+	public MecanumIOSim(GyroIO gyroSim) {
+		gyro = gyroSim;
+		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+	}
 
 	@Override
 	public void updateSim(double dtSeconds) {
@@ -85,10 +90,12 @@ public class MecanumIOSim implements MecanumIO {
 			backRight.setInputVoltage(backRightAppliedVolts);
 		}
 		// Update gyro simulation (you might want to base this on your robot's movement)
-		//Pigeon2SimState simState = pigeon.getSimState();
-		//double angularVelocity = (frontLeft.getAngularVelocityRadPerSec() - frontRight.getAngularVelocityRadPerSec()
-		//	 + backLeft.getAngularVelocityRadPerSec() - backRight.getAngularVelocityRadPerSec()) / 4.0;
-		//simState.addYaw(Units.radiansToDegrees(angularVelocity));
+		// Pigeon2SimState simState = pigeon.getSimState();
+		// double angularVelocity = (frontLeft.getAngularVelocityRadPerSec() -
+		// frontRight.getAngularVelocityRadPerSec()
+		// + backLeft.getAngularVelocityRadPerSec() -
+		// backRight.getAngularVelocityRadPerSec()) / 4.0;
+		// simState.addYaw(Units.radiansToDegrees(angularVelocity));
 		inputs.leftFrontPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[0]
 				* 2 * Math.PI * 4;
 		inputs.leftFrontVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[0]
