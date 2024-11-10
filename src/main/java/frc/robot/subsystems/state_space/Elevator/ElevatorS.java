@@ -40,7 +40,6 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 public class ElevatorS extends SubsystemChecker {
@@ -125,15 +124,9 @@ public class ElevatorS extends SubsystemChecker {
 	private final MechanismLigament2d m_elevatorMech2d = m_mech2dRoot.append(
 			new MechanismLigament2d("Elevator", elevatorIOInputs.positionMeters, 90));
 
-	public ElevatorS(ElevatorIO elevatorIO, Optional<EncoderIO> encoderIO) {
+	public ElevatorS(ElevatorIO elevatorIO, EncoderIO encoderIO) {
 		this.elevatorIO = elevatorIO;
-		EncoderIO encoderOptional = null;
-		try {
-			encoderOptional = encoderIO.get();
-		}
-		finally {
-			this.encoderIO = encoderOptional;
-		}
+		this.encoderIO = encoderIO;
 		if (this.encoderIO != null){
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}

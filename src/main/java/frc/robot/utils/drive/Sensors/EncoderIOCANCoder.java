@@ -21,14 +21,15 @@ public class EncoderIOCANCoder implements EncoderIO {
     private double conversionFactor = 1.0;
     private double encoderOffsetRadians = 0.0;
     private String name = "";
+    /**
+     * Constructs a new EncoderIO for reading CANCoders.
+     * @param canID the device ID
+     * @param canBus the canBus the CANCoder is on (if no CANIVORE, this should be "rio")
+     * @param name the device name.
+     */
     public EncoderIOCANCoder(int canID, CANBus canBus, String name) {
         this.encoder = new CANcoder(canID, canBus);
         this.encoderOffsetRadians = Units.rotationsToRadians(encoder.getAbsolutePosition().getValueAsDouble()) / conversionFactor;
-        this.name = name;
-    }
-
-    public EncoderIOCANCoder(int canID, String name) {
-        this.encoder = new CANcoder(canID);
         this.name = name;
     }
 

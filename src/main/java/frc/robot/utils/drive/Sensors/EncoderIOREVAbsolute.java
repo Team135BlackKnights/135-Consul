@@ -9,18 +9,43 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
-import com.revrobotics.spark.SparkAbsoluteEncoder;
+
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.util.Units;
 
 public class EncoderIOREVAbsolute implements EncoderIO {
-    private final SparkAbsoluteEncoder encoder;
-    private double conversionFactor = 1.0;
-    private double encoderOffsetRadians = 0.0;
-    public EncoderIOREVAbsolute(SparkBase spark) {
-        this.encoder = spark.getAbsoluteEncoder();
-        this.encoderOffsetRadians = Units.rotationsToRadians(encoder.getPosition()) / conversionFactor;
+ private double conversionFactor = 1.0;
+  private double encoderOffsetRadians = 0.0;
+  private final SparkBase spark;
+  private final boolean isInverted;
+  private final AbsoluteEncoder encoder;
+
+    public EncoderIOREVAbsolute(SparkBase spark, boolean isInverted) {
+      this.isInverted = isInverted;
+    this.spark = spark;
+    AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig().inverted(isInverted)
+        .positionConversionFactor(1 / conversionFactor)
+        .velocityConversionFactor(1 /conversionFactor);
+    this.encoder = spark.getAbsoluteEncoder();
+    if (spark.getClass().getName() == "com.revrobotics.spark.SparkMax") {
+      SparkMaxConfig config = new SparkMaxConfig();
+      config.apply(absoluteEncoderConfig);
+      spark.configure(config, ResetMode.kResetSafeParameters,
+          PersistMode.kNoPersistParameters);
+    } else {
+      SparkFlexConfig config = new SparkFlexConfig();
+      config.apply(absoluteEncoderConfig);
+      spark.configure(config, ResetMode.kResetSafeParameters,
+          PersistMode.kNoPersistParameters);
+    }
+    encoderOffsetRadians = encoder.getPosition();
     }
 
 
@@ -49,7 +74,22 @@ public class EncoderIOREVAbsolute implements EncoderIO {
      */
     @Override
     public void setGearRatio(double factor) {
-        conversionFactor = factor;
+        AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig().inverted(isInverted)
+        .positionConversionFactor(1 / factor)
+        .velocityConversionFactor(1 /factor);
+    if (spark.getClass().getName() == "com.revrobotics.spark.SparkMax") {
+      SparkMaxConfig config = new SparkMaxConfig();
+      config.apply(absoluteEncoderConfig);
+      spark.configure(config, ResetMode.kResetSafeParameters,
+          PersistMode.kNoPersistParameters);
+    } else {
+      SparkFlexConfig config = new SparkFlexConfig();
+      config.apply(absoluteEncoderConfig);
+      spark.configure(config, ResetMode.kResetSafeParameters,
+          PersistMode.kNoPersistParameters);
+    }
+    encoderOffsetRadians = encoder.getPosition();
+    
     }
 
     public List<SelfChecking> getSelfCheckingHardware() {

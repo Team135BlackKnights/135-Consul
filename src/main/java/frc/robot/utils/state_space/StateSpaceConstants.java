@@ -9,6 +9,7 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
+import com.ctre.phoenix6.CANBus;
 
 public class StateSpaceConstants {
 	public static boolean debug = true;
@@ -39,11 +40,14 @@ public class StateSpaceConstants {
 	}
 
 	public class Flywheel {
+		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
+		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
-		public static int kMotorID = 20, maxRPM = 8700, currentLimit = 20;
+		//Encoder ID and CANBus only matter for CTRE
+		public static int kMotorID = 20, kEncoderID = 25, maxRPM = 8700, currentLimit = 20;
 		public static MotorConstantContainer flywheelValueHolder = new MotorConstantContainer(
 				-0.089838, 0.0015425 * .88, 0.0039717 * 1, 0,0, 0);
 		public static double m_KalmanModel = 3, m_KalmanEncoder = 0.01,
@@ -52,12 +56,14 @@ public class StateSpaceConstants {
 	}
 
 	public class DoubleJointedArm {
+		public static CANBus CANBus = new CANBus("rio");
 		public static boolean armInverted = false;
+		public static boolean isArmEncoderInverted = false;
+		public static boolean isElbowEncoderInverted = false;
 		public static boolean elbowInverted = false;
-		public static EncoderType wristEncoderType = EncoderType.NOATTACHEDENCODER;
-		public static EncoderType armEncoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType doubleJointedEncoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean isBrake = false;
-		public static int kArmMotorID = 30, kElbowMotorID = 31;
+		public static int kArmMotorID = 30, kElbowMotorID = 31, kArmEncoderID = 28,  kElbowEncoderID = 29;
 		public static double[] macroTopLeft = { -1.5, 1, 0
 		}, macroTopRight = { 1.5, 1, 1
 		}; //0 = false, 1 = true for the last value 
@@ -79,11 +85,13 @@ public class StateSpaceConstants {
 	}
 
 	public class SingleJointedArm {
+		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
+		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
-		public static int kMotorID = 30;
+		public static int kMotorID = 30, kEncoderID = 26;
 		public static MotorConstantContainer armValueHolder = new MotorConstantContainer(
 				.001, .001, .001, 0,0, 0); //must have position set in SysId
 		public static double m_KalmanModelPosition = .015,
@@ -107,11 +115,13 @@ public class StateSpaceConstants {
 	}
 
 	public class Elevator {
+		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
 		public static boolean inverted = false;
+		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
-		public static int kMotorID = 40, currentLimit = 60;
+		public static int kMotorID = 40,  kEncoderID = 27, currentLimit = 60;
 		public static MotorConstantContainer elevatorValueHolder = new MotorConstantContainer(
 				.001, .001, .001, 0,0, 0); //must have position set in SysId
 		public static double m_KalmanModelPosition = Units.inchesToMeters(1),

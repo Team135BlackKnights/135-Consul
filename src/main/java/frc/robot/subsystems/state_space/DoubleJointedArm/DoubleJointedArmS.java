@@ -3,7 +3,6 @@ package frc.robot.subsystems.state_space.DoubleJointedArm;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -55,24 +54,15 @@ public class DoubleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(getElbowRads()), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public DoubleJointedArmS(DoubleJointedArmIO io, Optional<EncoderIO> armEncoderIO, Optional<EncoderIO> elbowEncoderIO) {
+	public DoubleJointedArmS(DoubleJointedArmIO io, EncoderIO armEncoderIO, EncoderIO elbowEncoderIO) {
 		EncoderIO armEncoderIOOptional = null;
 		EncoderIO elbowEncoderIOOptional = null;
-		try {
-			armEncoderIOOptional = armEncoderIO.get();
-		}
-		finally {
+		
 			this.armEncoderIO= armEncoderIOOptional;
-		}
 		if (this.armEncoderIO != null){
 			this.armEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
-		try {
-			elbowEncoderIOOptional = elbowEncoderIO.get();
-		}
-		finally {
 			this.elbowEncoderIO = elbowEncoderIOOptional;
-		}
 		if (this.elbowEncoderIO != null){
 			this.elbowEncoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}

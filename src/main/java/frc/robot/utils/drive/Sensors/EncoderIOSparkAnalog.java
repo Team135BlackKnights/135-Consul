@@ -27,10 +27,10 @@ public class EncoderIOSparkAnalog implements EncoderIO {
   public EncoderIOSparkAnalog(SparkBase spark, boolean isInverted) {
     this.isInverted = isInverted;
     this.spark = spark;
-    AnalogSensorConfig absoluteEncoderConfig = new AnalogSensorConfig().inverted(isInverted)
-        .positionConversionFactor(1 / voltageIn * 2 * Math.PI / conversionFactor)
-        .velocityConversionFactor(1 / voltageIn * 2 * Math.PI / conversionFactor);
     sparkAnalogSensor = spark.getAnalog();
+    AnalogSensorConfig absoluteEncoderConfig = new AnalogSensorConfig().inverted(isInverted)
+    .positionConversionFactor(1 / voltageIn * 2 * Math.PI / conversionFactor)
+    .velocityConversionFactor(1 / voltageIn * 2 * Math.PI / conversionFactor);
     if (spark.getClass().getName() == "com.revrobotics.spark.SparkMax") {
       SparkMaxConfig config = new SparkMaxConfig();
       config.apply(absoluteEncoderConfig);
