@@ -11,11 +11,6 @@ import java.util.List;
 
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.config.AbsoluteEncoderConfig;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.util.Units;
 
@@ -68,22 +63,7 @@ public class EncoderIOREVAbsolute implements EncoderIO {
      */
     @Override
     public void setGearRatio(double factor) {
-        AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig().inverted(isInverted)
-        .positionConversionFactor(1 / factor)
-        .velocityConversionFactor(1 /factor);
-    if (spark.getClass().getName() == "com.revrobotics.spark.SparkMax") {
-      SparkMaxConfig config = new SparkMaxConfig();
-      config.apply(absoluteEncoderConfig);
-      spark.configure(config, ResetMode.kResetSafeParameters,
-          PersistMode.kNoPersistParameters);
-    } else {
-      SparkFlexConfig config = new SparkFlexConfig();
-      config.apply(absoluteEncoderConfig);
-      spark.configure(config, ResetMode.kResetSafeParameters,
-          PersistMode.kNoPersistParameters);
-    }
-    encoderOffsetRadians = encoder.getPosition();
-    
+        conversionFactor = factor;
     }
 
     public List<SelfChecking> getSelfCheckingHardware() {
