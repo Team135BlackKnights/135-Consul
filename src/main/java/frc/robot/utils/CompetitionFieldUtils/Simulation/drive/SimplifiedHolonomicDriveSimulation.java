@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.Robot;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.GeometryConvertor;
 
@@ -118,7 +119,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * @param desiredChassisSpeedsFieldRelative the desired chassis speeds relative to the field,
    *     represented as {@link ChassisSpeeds}
    */
-  private void simulateChassisBehaviorWithFieldRelativeSpeeds(
+  public void simulateChassisBehaviorWithFieldRelativeSpeeds(
       ChassisSpeeds desiredChassisSpeedsFieldRelative) {
     super.setAtRest(false);
 
@@ -228,5 +229,15 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
 @Override
 public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();
+}
+public ChassisSpeeds getMeasuredChassisSpeedsRobotRelative() {
+  return ChassisSpeeds.fromFieldRelativeSpeeds(
+          getMeasuredChassisSpeedsFieldRelative(),
+          getObjectOnFieldPose2d().getRotation());
+}
+
+public ChassisSpeeds getMeasuredChassisSpeedsFieldRelative() {
+  return GeometryConvertor.toWpilibChassisSpeeds(getLinearVelocity(),
+          getAngularVelocity());
 }
 }

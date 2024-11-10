@@ -287,9 +287,12 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		double[] feedForwardVolts = new double[4];
 		for (int i = 0; i < 4; i++) {
 			double current = feedforwards.torqueCurrentsAmps()[i]; // Current needed for torque
-			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage from speed
-			double resistanceVoltage = current * DriveConstants.getDriveTrainMotors(1).rOhms; // Voltage due to resistance
-		
+			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage
+																														// from
+																														// speed
+			double resistanceVoltage = current * DriveConstants.getDriveTrainMotors(1).rOhms; // Voltage due to
+																								// resistance
+
 			// Total voltage required considering both speed and resistance
 			feedForwardVolts[i] = resistanceVoltage + speedVoltage;
 		}

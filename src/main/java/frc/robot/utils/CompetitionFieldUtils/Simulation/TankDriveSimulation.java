@@ -1,8 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-/*import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
@@ -12,38 +10,39 @@ import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSim.TankDrivePhysicsSimResults;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.SimplifiedHolonomicDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
-import frc.robot.utils.drive.Sensors.GyroIOSim;
 import frc.robot.utils.maths.GeometryConvertor;
 
-import org.dyn4j.geometry.Vector2;
 import org.littletonrobotics.junction.Logger;
-
-import java.util.function.Consumer;*/
+import java.util.function.Consumer;
 
 /**
  * Simulates the dynamics of a tank robot. This class is meant to be used in
  * simulation only.
  */
-/*public class TankDriveSimulation extends HolonomicChassisSimulation {
+public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Tank tank;
 	private final TankIOSim tankIOSim;
-	private final GyroIOSim gyroIOSim;
+	private final GyroSimulation gyroSim;
+	private final int iterationNum = 0;
+	private final double subPeriodSeconds = Robot.defaultPeriodSecs
+	/ DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD;
 	private final DifferentialDriveKinematics kinematics;
 	private final Consumer<Pose2d> resetOdometryCallBack;
-	private double gForce = 0.0; //G
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
 		return radPerSecond * TrainConstants.kDriveMotorGearRatio
 				* TrainConstants.kWheelDiameter / 2;
 	}
 
-	public TankDriveSimulation(RobotProfile robotProfile, GyroIOSim gyroIOSim,
+	public TankDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroSimulation gyroSim,
 			DifferentialDriveKinematics kinematics, Pose2d startingPose, Tank tank,
 			TankIOSim ioSim, Consumer<Pose2d> resetOdometryCallBack) {
-		super(robotProfile, startingPose);
-		this.gyroIOSim = gyroIOSim;
+		super(robotProfile, startingPose, resetOdometryCallBack);
+		this.gyroSim = gyroSim;
 		this.tank = tank;
 		this.tankIOSim = ioSim;
 		this.kinematics = kinematics;
@@ -65,73 +64,24 @@ import java.util.function.Consumer;*/
 				GeometryConvertor.toDyn4jLinearVelocity(adjustedSpeeds));
 		super.setAngularVelocity(adjustedSpeeds.omegaRadiansPerSecond);
 	}
-
 	@Override
-	public void simulateChassisBehaviorWithRobotRelativeSpeeds(
-			ChassisSpeeds desiredChassisSpeedsRobotRelative) {
-		ChassisSpeeds adjustedSpeeds = new ChassisSpeeds(
-				desiredChassisSpeedsRobotRelative.vxMetersPerSecond, 0,
-				desiredChassisSpeedsRobotRelative.omegaRadiansPerSecond);
-		simulateChassisBehaviorWithFieldRelativeSpeeds(
-				ChassisSpeeds.fromRobotRelativeSpeeds(adjustedSpeeds,
-						getObjectOnFieldPose2d().getRotation()));
-	}
-
-	@Override
-	public void updateSimulationSubPeriod(int iterationNum,
-			double subPeriodSeconds) {
+	public void simulationSubTick(){
 		tank.updateSim(subPeriodSeconds);
 		//should do the actual motion calculations
-		final ChassisSpeeds tankTheoreticalSpeeds = kinematics
-				.toChassisSpeeds(tankIOSim.getWheelSpeeds());
-		super.simulateChassisBehaviorWithRobotRelativeSpeeds(
+		final ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
+		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),
+		getObjectOnFieldPose2d().getRotation().unaryMinus());
+		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				tankTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
 		final DifferentialDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
 				.toWheelSpeeds(instantVelocityRobotRelative);
-		updateGyroSimulationResults(gyroIOSim,
-				super.getObjectOnFieldPose2d().getRotation(),
-				super.getAngularVelocity(), gForce, iterationNum);
+		gyroSim.updateSimulationSubTick(super.getAngularVelocity());
 		updateTankSimulationResults(tank, tankIOSim, actualModuleFloorSpeeds,
-				profile.robotMaxVelocity, iterationNum, subPeriodSeconds,
+				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
 				instantVelocityRobotRelative);
+				
 	}
-
-	private final Vector2 previousDesiredLinearMotionPercent = new Vector2();
-
-	@Override
-	protected void simulateChassisTranslationalBehavior(
-			Vector2 desiredLinearMotionPercent) {
-		super.simulateChassisTranslationalBehavior(desiredLinearMotionPercent);
-		final double dTheta = previousDesiredLinearMotionPercent
-				.getAngleBetween(desiredLinearMotionPercent),
-				desiredMotionDirectionChangingRateOmega = dTheta
-						/ (Robot.defaultPeriodSecs
-								/ DriveConstants.RobotPhysicsSimulationConfigs.SIM_ITERATIONS_PER_ROBOT_PERIOD),
-				centripetalForce = desiredMotionDirectionChangingRateOmega
-						* getLinearVelocity().getMagnitude() * profile.robotMass;
-		super.applyForce(Vector2.create(
-				MathUtil.clamp(centripetalForce, -profile.frictionForce,
-						profile.frictionForce),
-				getLinearVelocity().getDirection() + Math.toRadians(90)));
-		//calculate gForce
-		gForce = Math
-				.sqrt(Math.pow(getLinearVelocity().x, 2)
-						+ Math.pow(getLinearVelocity().y, 2))
-				/ DriveConstants.RobotPhysicsSimulationConfigs.FLOOR_FRICTION_ACCELERATION_METERS_PER_SEC_SQ;
-		previousDesiredLinearMotionPercent.set(desiredLinearMotionPercent);
-	}
-
-	private static void updateGyroSimulationResults(GyroIOSim gyroIOSim,
-			Rotation2d currentFacing, double angularVelocityRadPerSec,
-			double gForce, int iterationNum) {
-		final GyroIOSim.GyroPhysicsSimulationResults results = gyroIOSim.gyroPhysicsSimulationResults;
-		results.robotAngularVelocityRadPerSec = angularVelocityRadPerSec;
-		results.gForce = gForce;
-		results.odometryYawPositions[iterationNum] = currentFacing;
-		results.hasReading = true;
-	}
-
 	private static void updateTankSimulationResults(Tank tank,
 			TankIOSim tankIOSim, DifferentialDriveWheelSpeeds speeds,
 			double robotMaxVelocity, int simulationIteration, double periodSeconds,
@@ -195,4 +145,3 @@ import java.util.function.Consumer;*/
 		}
 	}
 }
-*/
