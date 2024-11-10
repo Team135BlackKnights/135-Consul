@@ -5,9 +5,7 @@ import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
@@ -19,6 +17,8 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -29,11 +29,11 @@ import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class ModuleIOKrakenFOC implements ModuleIO {
+public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	// Hardware
 	private final TalonFX driveTalon;
 	private final TalonFX turnTalon;
-	private final CANcoder turnAbsoluteEncoder;
+	private final AnalogInput turnAbsoluteEncoder;
 	private final Rotation2d absoluteEncoderOffset;
 	private final String driveName;
 	private final String turnName;
@@ -45,7 +45,6 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	private final StatusSignal<Current> driveTorqueCurrent;
 	private final StatusSignal<Temperature> driveTemp;
 	private final StatusSignal<Angle> turnPosition;
-	private final StatusSignal<Angle> turnAbsolutePosition;
 	private final StatusSignal<AngularVelocity> turnVelocity;
 	private final StatusSignal<Voltage> turnAppliedVolts;
 	private final StatusSignal<Current> turnSupplyCurrent;
@@ -69,64 +68,68 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
 	private final boolean isDriveMotorInverted;
+	private final boolean isTurnSensorInverted;
 
 	/**
 	 * @apiNote CANCoder offsets SHOULD be set to zero in code due to how the
 	 *          user manual works
 	 */
-	public ModuleIOKrakenFOC(int index) {
+	public ModuleIOKrakenFOCWithThrifty(int index) {
 		// Init controllers and encoders from config constants
 		switch (index) {
-		case 0:
-			driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, "rio");
-			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kFrontLeftAbsEncoderPort, "rio");
-			driveName = "FrontLeftDrive";
-			turnName = "FrontLeftTurn";
-			absoluteEncoderOffset = new Rotation2d(
-					DriveConstants.kFrontLeftAbsEncoderOffsetRad);
-			isDriveMotorInverted = DriveConstants.kFrontLeftDriveReversed;
-			isTurnMotorInverted = DriveConstants.kFrontLeftTurningReversed;
-			break;
-		case 1:
-			driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, "rio");
-			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kFrontRightAbsEncoderPort);
-			driveName = "FrontRightDrive";
-			turnName = "FrontRightTurn";
-			absoluteEncoderOffset = new Rotation2d(
-					DriveConstants.kFrontRightAbsEncoderOffsetRad);
-			isDriveMotorInverted = DriveConstants.kFrontRightDriveReversed;
-			isTurnMotorInverted = DriveConstants.kFrontRightTurningReversed;
-			break;
-		case 2:
-			driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, "rio");
-			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kBackLeftAbsEncoderPort, "rio");
-			driveName = "BackLeftDrive";
-			turnName = "BackLeftTurn";
-			absoluteEncoderOffset = new Rotation2d(
-					DriveConstants.kBackLeftAbsEncoderOffsetRad);
-			isDriveMotorInverted = DriveConstants.kBackLeftDriveReversed;
-			isTurnMotorInverted = DriveConstants.kBackLeftTurningReversed;
-			break;
-		case 3:
-			driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, "rio");
-			driveName = "BackRightDrive";
-			turnName = "BackRightTurn";
-			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kBackRightAbsEncoderPort, "rio");
-			absoluteEncoderOffset = new Rotation2d(
-					DriveConstants.kBackRightAbsEncoderOffsetRad);
-			isDriveMotorInverted = DriveConstants.kBackRightDriveReversed;
-			isTurnMotorInverted = DriveConstants.kBackRightTurningReversed;
-			break;
-		default:
-			throw new RuntimeException("Invalid module index");
+			case 0:
+				driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, "rio");
+				turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, "rio");
+				turnAbsoluteEncoder = new AnalogInput(DriveConstants.kFrontLeftAbsEncoderPort);
+				driveName = "FrontLeftDrive";
+				turnName = "FrontLeftTurn";
+				absoluteEncoderOffset = new Rotation2d(
+						DriveConstants.kFrontLeftAbsEncoderOffsetRad);
+				isDriveMotorInverted = DriveConstants.kFrontLeftDriveReversed;
+				isTurnMotorInverted = DriveConstants.kFrontLeftTurningReversed;
+				isTurnSensorInverted = DriveConstants.kFrontLeftAbsEncoderReversed;
+				break;
+			case 1:
+				driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, "rio");
+				turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, "rio");
+				turnAbsoluteEncoder = new AnalogInput(
+						DriveConstants.kFrontRightAbsEncoderPort);
+				driveName = "FrontRightDrive";
+				turnName = "FrontRightTurn";
+				absoluteEncoderOffset = new Rotation2d(
+						DriveConstants.kFrontRightAbsEncoderOffsetRad);
+				isDriveMotorInverted = DriveConstants.kFrontRightDriveReversed;
+				isTurnMotorInverted = DriveConstants.kFrontRightTurningReversed;
+				isTurnSensorInverted = DriveConstants.kFrontRightAbsEncoderReversed;
+				break;
+			case 2:
+				driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, "rio");
+				turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, "rio");
+				turnAbsoluteEncoder = new AnalogInput(
+						DriveConstants.kBackLeftAbsEncoderPort);
+				driveName = "BackLeftDrive";
+				turnName = "BackLeftTurn";
+				absoluteEncoderOffset = new Rotation2d(
+						DriveConstants.kBackLeftAbsEncoderOffsetRad);
+				isDriveMotorInverted = DriveConstants.kBackLeftDriveReversed;
+				isTurnMotorInverted = DriveConstants.kBackLeftTurningReversed;
+				isTurnSensorInverted = DriveConstants.kBackLeftAbsEncoderReversed;
+				break;
+			case 3:
+				driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, "rio");
+				turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, "rio");
+				driveName = "BackRightDrive";
+				turnName = "BackRightTurn";
+				turnAbsoluteEncoder = new AnalogInput(
+						DriveConstants.kBackRightAbsEncoderPort);
+				absoluteEncoderOffset = new Rotation2d(
+						DriveConstants.kBackRightAbsEncoderOffsetRad);
+				isDriveMotorInverted = DriveConstants.kBackRightDriveReversed;
+				isTurnMotorInverted = DriveConstants.kBackRightTurningReversed;
+				isTurnSensorInverted = DriveConstants.kBackRightAbsEncoderReversed;
+				break;
+			default:
+				throw new RuntimeException("Invalid module index");
 		}
 		// Config Motors
 		driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxDriveCurrent;
@@ -143,12 +146,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				: InvertedValue.CounterClockwise_Positive;
 		turnTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
-		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatio;
-		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
-				.getDeviceID();
-		turnTalonConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-		turnTalonConfig.Feedback.SensorToMechanismRatio = 1;
-		turnTalonConfig.Feedback.RotorToSensorRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.ClosedLoopGeneral.ContinuousWrap = true;
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
@@ -167,7 +165,14 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		drivePositionQueue = OdometryThread
 				.registerSignalInput(driveTalon.getPosition());
 		turnPositionQueue = OdometryThread
-				.registerSignalInput(turnTalon.getPosition());
+				.registerInput(() -> {
+					double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+					if (isTurnSensorInverted) {
+						absolutePositionPercent = 1 - absolutePositionPercent;
+					}
+					return new Rotation2d(absolutePositionPercent * 2.0 * Math.PI)
+							.minus(absoluteEncoderOffset).getRadians();
+				});
 		// Get signals and set update rate
 		// 100hz signals
 		driveVelocity = driveTalon.getVelocity();
@@ -175,7 +180,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveSupplyCurrent = driveTalon.getSupplyCurrent();
 		driveTorqueCurrent = driveTalon.getTorqueCurrent();
 		driveTemp = driveTalon.getDeviceTemp();
-		turnAbsolutePosition = turnAbsoluteEncoder.getPosition();
+
 		turnVelocity = turnTalon.getVelocity();
 		turnAppliedVolts = turnTalon.getMotorVoltage();
 		turnSupplyCurrent = turnTalon.getSupplyCurrent();
@@ -186,8 +191,13 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				turnVelocity, turnAppliedVolts, turnSupplyCurrent,
 				turnTorqueCurrent);
 		// Reset turn position to absolute encoder position
+		//get absolute position from analog encoder
+		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+		if (isTurnSensorInverted) {
+			absolutePositionPercent = 1 - absolutePositionPercent;
+		}
 		turnTalon.setPosition(
-				Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble())
+				Rotation2d.fromRotations(absolutePositionPercent * 2.0 * Math.PI)
 						.minus(absoluteEncoderOffset).getRotations(),
 				1.0);
 		// Optimize bus utilization
@@ -204,7 +214,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				.isOK();
 		inputs.turnMotorConnected = BaseStatusSignal.refreshAll(turnPosition,
 				turnVelocity, turnAppliedVolts, turnSupplyCurrent,
-				turnTorqueCurrent, turnTemp, turnAbsolutePosition).isOK();
+				turnTorqueCurrent, turnTemp).isOK();
 		inputs.drivePositionRads = Units
 				.rotationsToRadians(drivePosition.getValueAsDouble());
 		inputs.driveVelocityRadsPerSec = Units
@@ -213,8 +223,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		inputs.driveSupplyCurrentAmps = driveSupplyCurrent.getValueAsDouble();
 		inputs.driveTorqueCurrentAmps = driveTorqueCurrent.getValueAsDouble();
 		inputs.driveMotorTemp = driveTemp.getValueAsDouble();
-		inputs.turnAbsolutePosition = Rotation2d
-				.fromRotations(turnAbsolutePosition.getValueAsDouble())
+		// get absolute position from analog encoder
+		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+		if (isTurnSensorInverted) {
+			absolutePositionPercent = 1 - absolutePositionPercent;
+		}
+		inputs.turnAbsolutePosition = new Rotation2d(absolutePositionPercent * 2.0 * Math.PI)
 				.minus(absoluteEncoderOffset);
 		inputs.turnPosition = Rotation2d
 				.fromRotations(turnPosition.getValueAsDouble());

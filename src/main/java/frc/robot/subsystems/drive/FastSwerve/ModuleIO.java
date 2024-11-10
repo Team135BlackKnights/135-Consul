@@ -52,10 +52,10 @@ public interface ModuleIO {
 	default void runTurnPositionSetpoint(double angleRads) {}
 
 	/** Configure drive PID */
-	default void setDrivePID(double kP, double kI, double kD) {}
+	default void setDrivePID(double kP, double kI, double kD, double kS, double kV) {}
 
 	/** Configure turn PID */
-	default void setTurnPID(double kP, double kI, double kD, double kS) {}
+	default void setTurnPID(double kP, double kI, double kD, double kS, double kV) {}
 
 	/** Enable or disable brake mode on the drive motor. */
 	default void setDriveBrakeMode(boolean enable) {}
