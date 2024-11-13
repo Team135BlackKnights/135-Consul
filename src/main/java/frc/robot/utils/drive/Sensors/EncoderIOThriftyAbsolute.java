@@ -33,7 +33,9 @@ public class EncoderIOThriftyAbsolute implements EncoderIO {
         this.encoderOffsetRadians = encoderOffsetRadians;
         this.isAbsoluteEncoderInverted = isInverted;
     }
-
+    public EncoderIOThriftyAbsolute(int rioPort, double conversionFactor, double encoderOffsetRadians) {
+        this(rioPort, conversionFactor, encoderOffsetRadians, false);
+    }
     public EncoderIOThriftyAbsolute(int rioPort, double conversionFactor) {
         this(rioPort, conversionFactor, 0, false);
     }

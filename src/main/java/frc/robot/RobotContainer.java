@@ -13,8 +13,9 @@ import frc.robot.commands.state_space.SingleJointedArmC;
 import frc.robot.commands.state_space.FlywheelC;
 import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOCANCoder;
+import frc.robot.utils.drive.Sensors.EncoderIODutyCycle;
 import frc.robot.utils.drive.Sensors.EncoderIOREVAbsolute;
-import frc.robot.utils.drive.Sensors.EncoderIOSparkAnalog;
+import frc.robot.utils.drive.Sensors.EncoderIOThriftyAbsolute;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -336,96 +337,183 @@ public class RobotContainer {
 				));
 				autoCommands.addAll(createBranches());
 				//Control logic assumes CTRE for CTRE, REV or CTRE for REV. This is due to REVLib's 2025 changes to AbsoluteEncoders requiring a SPARK to run them.
-				switch (StateSpaceConstants.Flywheel.motorVendor){
+				FlywheelIO flywheelIO = null;
+				switch (StateSpaceConstants.Flywheel.motorVendor) {
 					case CTRE_ON_RIO:
 					case CTRE_ON_CANIVORE:
-					flywheelS = new FlywheelS(new FlywheelIOTalon(), new EncoderIOCANCoder(StateSpaceConstants.Flywheel.kEncoderID, StateSpaceConstants.Flywheel.CANBus, "FlywheelEncoder"));
-					break;
-					//We're on REV
-					default:
-					FlywheelIOSpark flywheelIO = new FlywheelIOSpark();
-					switch (StateSpaceConstants.Flywheel.encoderType){
-						case CTRE: 
-						flywheelS = new FlywheelS(flywheelIO, new EncoderIOCANCoder(StateSpaceConstants.Flywheel.kEncoderID, StateSpaceConstants.Flywheel.CANBus, "FlywheelEncoder"));
-						case NOATTACHEDENCODER:
-						flywheelS = new FlywheelS(flywheelIO, null);
-						//No absolute Encoder
-						case REVABSOLUTE:
-						flywheelS = new FlywheelS(flywheelIO,new EncoderIOSparkAnalog((SparkBase) flywheelIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.Flywheel.isEncoderInverted));
+						flywheelIO = new FlywheelIOTalon();
+						flywheelS = new FlywheelS(new FlywheelIOTalon(),
+								new EncoderIOCANCoder(StateSpaceConstants.Flywheel.kEncoderID,
+										StateSpaceConstants.Flywheel.CANBus, "FlywheelEncoder"));
 						break;
-						case REVANALOG:
-						flywheelS = new FlywheelS(flywheelIO,new EncoderIOREVAbsolute((SparkBase) flywheelIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.Flywheel.isEncoderInverted));
-						default:
-						throw new IllegalArgumentException(
-							"Unknown implementation type, please check StateSpaceConstants.java!");
-					}
-
-					break;
+					// We're on REV
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						flywheelIO = new FlywheelIOSpark();
+						break;
+					default:	
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
 				}
-				switch (StateSpaceConstants.SingleJointedArm.motorVendor){
-					case CTRE_ON_RIO:
-					case CTRE_ON_CANIVORE:
-					armS = new SingleJointedArmS(new SingleJointedArmIOTalon(), new EncoderIOCANCoder(StateSpaceConstants.SingleJointedArm.kEncoderID, StateSpaceConstants.SingleJointedArm.CANBus, "SingleJointedArmEncoder"));
-					break;
-					default:
-					SingleJointedArmIOSpark armIO = new SingleJointedArmIOSpark();
-					switch (StateSpaceConstants.SingleJointedArm.encoderType){
-						case CTRE:
-						armS = new SingleJointedArmS(armIO, new EncoderIOCANCoder(StateSpaceConstants.SingleJointedArm.kEncoderID, StateSpaceConstants.SingleJointedArm.CANBus, "SingleJointedArmEncoder"));
-						break;
-						case NOATTACHEDENCODER:
-						armS = new SingleJointedArmS(armIO, null);
-						break;
-						case REVABSOLUTE:
-						armS = new SingleJointedArmS(armIO, new EncoderIOREVAbsolute((SparkBase) armIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.SingleJointedArm.isEncoderInverted));
-						case REVANALOG:
-						armS = new SingleJointedArmS(armIO, new EncoderIOSparkAnalog((SparkBase) armIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.SingleJointedArm.isEncoderInverted));
-						break;
-						default:
-						throw new IllegalArgumentException(
-							"Unknown implementation type, please check StateSpaceConstants.java!");	
-					}
-					break;
-				}
-				switch (StateSpaceConstants.Elevator.motorVendor){
-					case CTRE_ON_RIO:
-					case CTRE_ON_CANIVORE:
-					elevatorS = new ElevatorS(new ElevatorIOTalon(),new EncoderIOCANCoder(StateSpaceConstants.Elevator.kEncoderID, StateSpaceConstants.SingleJointedArm.CANBus, "elevatorEncoder"));
-					break;
-					default:
-					ElevatorIOSpark elevatorIO = new ElevatorIOSpark();
-					switch (StateSpaceConstants.Elevator.encoderType){
-						case CTRE:
-						elevatorS = new ElevatorS(elevatorIO, new EncoderIOCANCoder(StateSpaceConstants.Elevator.kEncoderID, StateSpaceConstants.SingleJointedArm.CANBus, "elevatorEncoder"));
-						break;
-						case NOATTACHEDENCODER:
-						elevatorS = new ElevatorS(elevatorIO, null);
-						break;
-						case REVABSOLUTE: 
-						elevatorS = new ElevatorS(elevatorIO, new EncoderIOREVAbsolute((SparkBase) elevatorIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.SingleJointedArm.isEncoderInverted));
-						break;
-						case REVANALOG: 
-						elevatorS = new ElevatorS(elevatorIO, new EncoderIOSparkAnalog((SparkBase) elevatorIO.getSelfCheckingHardware().get(0).getHardware(), StateSpaceConstants.SingleJointedArm.isEncoderInverted));
-						break;
-						default: 
-						throw new IllegalArgumentException(
-							"Unknown implementation type, please check StateSpaceConstants.java!");	
-					}
-					elevatorS = new ElevatorS(new ElevatorIOSpark(),null);
-					break;
-				}
-				switch (StateSpaceConstants.DoubleJointedArm.doubleJointedEncoderType){
+				EncoderIO flywheelEncoder = null;
+				switch (StateSpaceConstants.Flywheel.encoderType) {
 					case CTRE:
-					doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(), new EncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kArmEncoderID, StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmArmEncoder"),new EncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID, StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmElbowEncoder"));
-					break;
-					case NOATTACHEDENCODER:
-					doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),null,null);
-					break;
+						flywheelEncoder = new EncoderIOCANCoder(StateSpaceConstants.Flywheel.kEncoderID,
+								StateSpaceConstants.Flywheel.CANBus, "FlywheelEncoder",
+								StateSpaceConstants.Flywheel.encoderGearing,
+								StateSpaceConstants.Flywheel.encoderOffsetRotations,
+								StateSpaceConstants.Flywheel.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						flywheelEncoder = null;
+						// No absolute Encoder
+						break;
+					case REV_ABSOLUTE:
+						flywheelEncoder = new EncoderIOREVAbsolute(
+								(SparkBase) flywheelIO.getSelfCheckingHardware().get(0).getHardware(),
+								StateSpaceConstants.Flywheel.encoderGearing,
+								StateSpaceConstants.Flywheel.encoderOffsetRotations,
+								StateSpaceConstants.Flywheel.isEncoderInverted);
+						break;
 					default:
-					throw new IllegalArgumentException("Due to REVLib 2025's changes to absolute encoders, sparkAnalog and REVAbsoluteEncoder are not supported for double jointed arms");	
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				//create flywheelS
+				flywheelS = new FlywheelS(flywheelIO, flywheelEncoder);
+				//throw away old copy of flywheelIO and encoder
+				flywheelIO = null;
+				flywheelEncoder = null;
+
+				SingleJointedArmIO armIO = null;
+				switch (StateSpaceConstants.SingleJointedArm.motorVendor) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+						armIO = new SingleJointedArmIOTalon();
+						break;
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						armIO = new SingleJointedArmIOSpark();
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
+						
+				}
+				EncoderIO singleJointedArmEncoder = null;
+				switch (StateSpaceConstants.SingleJointedArm.encoderType) {
+					case CTRE:
+						singleJointedArmEncoder = new EncoderIOCANCoder(StateSpaceConstants.SingleJointedArm.kEncoderID,
+								StateSpaceConstants.SingleJointedArm.CANBus,
+								"SingleJointedArmEncoder", StateSpaceConstants.SingleJointedArm.encoderGearing,
+								StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+								StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						singleJointedArmEncoder = null;
+						break;
+					case REV_ABSOLUTE:
+						singleJointedArmEncoder = new EncoderIOREVAbsolute(
+								(SparkBase) armIO.getSelfCheckingHardware().get(0).getHardware(),
+								StateSpaceConstants.SingleJointedArm.encoderGearing,
+								StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+								StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				armS = new SingleJointedArmS(armIO, singleJointedArmEncoder);
+				//throw away old copy of armIO and encoder
+				armIO = null;
+				singleJointedArmEncoder = null;
+
+				ElevatorIO elevatorIO = null;
+				switch (StateSpaceConstants.Elevator.motorVendor) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+					
+						elevatorIO = new ElevatorIOTalon();
+						break;
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						elevatorIO = new ElevatorIOSpark();
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				EncoderIO elevatorEncoder = null;
+				switch (StateSpaceConstants.Elevator.encoderType) {
+					case CTRE:
+						elevatorEncoder = 
+								new EncoderIOCANCoder(StateSpaceConstants.Elevator.kEncoderID,
+										StateSpaceConstants.SingleJointedArm.CANBus, "elevatorEncoder",StateSpaceConstants.Elevator.encoderGearing,
+										StateSpaceConstants.Elevator.encoderOffsetRotations,
+										StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						elevatorEncoder = null;
+						break;
+					case REV_ABSOLUTE:
+						elevatorEncoder =
+								new EncoderIOREVAbsolute(
+										(SparkBase) elevatorIO.getSelfCheckingHardware().get(0).getHardware(),
+										StateSpaceConstants.Elevator.encoderGearing,
+										StateSpaceConstants.Elevator.encoderOffsetRotations,
+										StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				elevatorS = new ElevatorS(elevatorIO, elevatorEncoder);
+				//throw away old copy of elevatorIO and encoder
+				elevatorIO = null;
+				elevatorEncoder = null;
+				
+				// Double Jointed Arm will always be CTRE for latency reasons
+				switch (StateSpaceConstants.DoubleJointedArm.doubleJointedEncoderType) {
+					case CTRE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new EncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmArmEncoder",
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new EncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmElbowEncoder",
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					case NO_ATTACHED_ENCODER:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(), null, null);
+						break;
+					case DUTY_CYCLE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new EncoderIODutyCycle(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new EncoderIODutyCycle(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					case THRIFTY_ABSOLUTE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new EncoderIOThriftyAbsolute(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new EncoderIOThriftyAbsolute(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Due to REVLib 2025's changes to absolute encoders, sparkAnalog and REVAbsoluteEncoder are not supported for double jointed arms");
 
 				}
-
 				break;
 
 			case SIM:

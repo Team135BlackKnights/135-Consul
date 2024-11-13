@@ -16,9 +16,10 @@ public class StateSpaceConstants {
 
 	public enum EncoderType{
 		CTRE,
-		REVABSOLUTE,
-		REVANALOG,
-		NOATTACHEDENCODER
+		REV_ABSOLUTE,
+		DUTY_CYCLE,
+		THRIFTY_ABSOLUTE,
+		NO_ATTACHED_ENCODER
 	}
 	public class Controls {
 		/* Enter any non-button controls here.
@@ -42,7 +43,7 @@ public class StateSpaceConstants {
 	public class Flywheel {
 		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
-		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;
 		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
@@ -52,6 +53,8 @@ public class StateSpaceConstants {
 				-0.089838, 0.0015425 * .88, 0.0039717 * 1, 0,0, 0);
 		public static double m_KalmanModel = 3, m_KalmanEncoder = 0.01,
 				m_LQRQelms = 1, m_LQRRVolts = 12, flywheelGearing = 1.5,
+				encoderGearing = 1,
+				encoderOffsetRotations = 0,
 				MOI = 0.001;
 	}
 
@@ -61,7 +64,7 @@ public class StateSpaceConstants {
 		public static boolean isArmEncoderInverted = false;
 		public static boolean isElbowEncoderInverted = false;
 		public static boolean elbowInverted = false;
-		public static EncoderType doubleJointedEncoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType doubleJointedEncoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean isBrake = false;
 		public static int kArmMotorID = 30, kElbowMotorID = 31, kArmEncoderID = 28,  kElbowEncoderID = 29;
 		public static double[] macroTopLeft = { -1.5, 1, 0
@@ -73,6 +76,10 @@ public class StateSpaceConstants {
 				elbowMinRad = Double.NEGATIVE_INFINITY,
 				elbowMaxRad = Double.POSITIVE_INFINITY, elbowCurrentLimit = 60,
 				elbowGearing = 45, armLength = Units.inchesToMeters(46.25),
+				armEncoderGearing = 1,
+				armEncoderOffsetRotations = 0,
+				elbowEncoderGearing = 1,
+				elbowEncoderOffsetRotations = 0,
 				elbowLength = Units.inchesToMeters(41.8),
 				simSizeWidth = (armLength + elbowLength) * 2,
 				simSizeLength = (armLength + elbowLength) * 2,
@@ -87,7 +94,7 @@ public class StateSpaceConstants {
 	public class SingleJointedArm {
 		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
-		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;
 		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
@@ -101,6 +108,8 @@ public class StateSpaceConstants {
 				m_LQRQelmsPosition = Units.degreesToRadians(1),
 				m_LQRQelmsVelocity = Units.degreesToRadians(45.0), m_LQRRVolts = 12,
 				armGearing = 200,
+				encoderGearing = 1,
+				encoderOffsetRotations = 0,
 				maxSpeed = DCMotor.getKrakenX60Foc(1).freeSpeedRadPerSec,
 				maxAcceleration = DCMotor.getKrakenX60Foc(1).freeSpeedRadPerSec / 2,
 				startingPosition = Units.degreesToRadians(-36),
@@ -117,7 +126,7 @@ public class StateSpaceConstants {
 	public class Elevator {
 		public static CANBus CANBus = new CANBus("rio");
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
-		public static EncoderType encoderType = EncoderType.NOATTACHEDENCODER;
+		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;
 		public static boolean isEncoderInverted = false;
 		public static boolean isBrake = false;
@@ -128,6 +137,8 @@ public class StateSpaceConstants {
 				m_KalmanModelVelocity = Units.inchesToMeters(40),
 				m_KalmanEncoderPosition = 0.001, m_KalmanEncoderVelocity = 0.001, m_LQRQelmsPosition = 1,
 				m_LQRQelmsVelocity = 10, m_LQRRVolts = 12, elevatorGearing = 1.5,
+				encoderGearing = 1,
+				encoderOffsetRotations = 0,
 				carriageMass = Units.lbsToKilograms(10),
 				drumRadius = Units.inchesToMeters(.75),
 				maxSpeed = Units.feetToMeters(6),

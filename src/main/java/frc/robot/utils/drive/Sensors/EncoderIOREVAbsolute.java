@@ -24,32 +24,39 @@ public class EncoderIOREVAbsolute implements EncoderIO {
     private final SparkAbsoluteEncoder encoder;
     private double conversionFactor = 1.0;
     private double encoderOffsetRotations = 0.0;
+    private boolean isInverted = false;
 
-    public EncoderIOREVAbsolute(SparkBase spark, double conversionFactor, double encoderOffsetRotations) {
+    public EncoderIOREVAbsolute(SparkBase spark, double conversionFactor, double encoderOffsetRotations,
+            boolean isInverted) {
         this.encoder = spark.getAbsoluteEncoder();
         this.conversionFactor = conversionFactor;
         this.encoderOffsetRotations = encoderOffsetRotations;
+        this.isInverted = isInverted;
+    }
+
+    public EncoderIOREVAbsolute(SparkBase spark, double conversionFactor, double encoderOffsetRotations) {
+        this(spark, conversionFactor, encoderOffsetRotations, false);
     }
 
     public EncoderIOREVAbsolute(SparkBase spark, double conversionFactor) {
-        this(spark, conversionFactor, 0);
+        this(spark, conversionFactor, 0, false);
     }
 
     public EncoderIOREVAbsolute(SparkBase spark) {
-        this(spark, 1.0, 0);
+        this(spark, 1.0, 0, false);
     }
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        inputs.absolutePositionRadians = Units.rotationsToRadians(encoder.getPosition() - encoderOffsetRotations)
-                / conversionFactor;
-        inputs.angularVelocityRadPerSec = Units.rotationsToRadians(encoder.getVelocity())
-                / conversionFactor;
+        inputs.absolutePositionRadians = (Units.rotationsToRadians(encoder.getPosition() - encoderOffsetRotations)
+                / conversionFactor) * (isInverted ? -1 : 1);
+        inputs.angularVelocityRadPerSec = (Units.rotationsToRadians(encoder.getVelocity())
+                / conversionFactor) * (isInverted ? -1 : 1);
         inputs.relativePositionRadians = 0; // Not supported by REV SparkMax on breakout.
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
     }
 
-	/**
+    /**
      * This function only resets relative, absolute stays the same.
      */
     @Override
