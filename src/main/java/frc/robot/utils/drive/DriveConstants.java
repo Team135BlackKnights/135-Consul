@@ -147,6 +147,7 @@ public class DriveConstants {
 			kBackRightDrivePort = 12, // REV 12 CTRE 12
 			kBackRightTurningPort = 13, // REV 13 CTRE 13
 			kBackRightAbsEncoderPort = 24, // REV 1 CTRE 24
+			kGyroPort = 18, // REV DOESN'T MATTER, USE kUSB1    CTRE 18
 			kMaxDriveCurrent = 180, kMaxTurnCurrent = 80;
 	public static final boolean kFrontLeftDriveReversed = true,
 			kFrontLeftTurningReversed = true, kFrontLeftAbsEncoderReversed = false,

@@ -20,6 +20,7 @@ import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import org.littletonrobotics.urcl.URCL;
 
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.SysIdRoutines;
@@ -148,7 +149,7 @@ public class Robot extends LoggedRobot {
 					new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
 			break;
 		}
-		//Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
+		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
