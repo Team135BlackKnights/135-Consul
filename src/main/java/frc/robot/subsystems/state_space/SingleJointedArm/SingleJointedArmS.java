@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIO;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
@@ -139,7 +140,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(inputs.positionRad), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public SingleJointedArmS(SingleJointedArmIO io, EncoderIO encoderIO) {
+	public SingleJointedArmS(SingleJointedArmIO io, SingleJointedArmEncoderIO encoderIO) {
 		this.singleJointedArmIO = io;
 		this.singleJointedArmEncoderIO = encoderIO;
 		if (encoderIO != null){

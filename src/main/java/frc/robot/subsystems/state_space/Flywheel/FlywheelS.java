@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -92,7 +93,7 @@ public class FlywheelS extends SubsystemChecker {
 	 * @param flywheelIO the flywheel IO
 	 * @param encoderIO the encoder IO (can leave this one null if no independent encoder attached, flywheel will just use its built in one)
 	 */
-	public FlywheelS(FlywheelIO flywheelIO, EncoderIO encoderIO) {
+	public FlywheelS(FlywheelIO flywheelIO, FlywheelEncoderIO encoderIO) {
 		this.flywheelIO = flywheelIO;
 		this.encoderIO = encoderIO;
 		if(encoderIO != null){

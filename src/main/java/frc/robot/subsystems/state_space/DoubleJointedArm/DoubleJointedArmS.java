@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.DataHandler;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIO;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIO;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
@@ -55,7 +57,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(getElbowRads()), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public DoubleJointedArmS(DoubleJointedArmIO io, EncoderIO armEncoderIO, EncoderIO elbowEncoderIO) {
+	public DoubleJointedArmS(DoubleJointedArmIO io, DoubleJointedArmArmEncoderIO armEncoderIO, DoubleJointedArmElbowEncoderIO elbowEncoderIO) {
 		this.armEncoderIO = armEncoderIO;
 		this.elbowEncoderIO = elbowEncoderIO;
 		if (this.armEncoderIO != null) {

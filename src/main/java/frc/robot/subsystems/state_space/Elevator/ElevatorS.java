@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -124,7 +125,7 @@ public class ElevatorS extends SubsystemChecker {
 	private final MechanismLigament2d m_elevatorMech2d = m_mech2dRoot.append(
 			new MechanismLigament2d("Elevator", elevatorIOInputs.positionMeters, 90));
 
-	public ElevatorS(ElevatorIO elevatorIO, EncoderIO encoderIO) {
+	public ElevatorS(ElevatorIO elevatorIO, ElevatorEncoderIO encoderIO) {
 		this.elevatorIO = elevatorIO;
 		this.encoderIO = encoderIO;
 		if (encoderIO != null){
