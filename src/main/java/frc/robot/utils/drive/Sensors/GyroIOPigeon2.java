@@ -26,7 +26,6 @@ import java.util.Queue;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
-	private static final int id = 0;
 	private final Pigeon2 pigeon;
 	private final StatusSignal<Angle> yaw;
 	private final StatusSignal<LinearAcceleration> accelX;
@@ -36,7 +35,7 @@ public class GyroIOPigeon2 implements GyroIO {
 	private double last_world_linear_accel_x, last_world_linear_accel_y;
 
 	public GyroIOPigeon2() {
-		pigeon = new Pigeon2(id, "rio");
+		pigeon = new Pigeon2(DriveConstants.kGyroPort, "rio");
 		yaw = pigeon.getYaw();
 		yawVelocity = pigeon.getAngularVelocityZWorld();
 		accelX = pigeon.getAccelerationX();
