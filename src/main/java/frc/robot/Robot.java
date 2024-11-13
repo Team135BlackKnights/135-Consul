@@ -64,7 +64,7 @@ public class Robot extends LoggedRobot {
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-	public static final CANBus canBus = new CANBus("rio");
+	public static final CANBus canBus = new CANBus();
 	//public static final CANBus canivoreCanBus = new CANBus("canivore-drive");
 	/**
 	 * This function is run when the robot is first started up and should be used
