@@ -4,24 +4,24 @@
 package frc.robot.utils;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.utils.selfCheck.SelfChecking;
-
+import edu.wpi.first.networktables.NetworkTableEntry;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public interface GyroIO {
+public interface DriverStationIO {
+	public static enum DSLEDMode{
+		
+	}
 	@AutoLog
-	public static class GyroIOInputs {
-        public boolean connected = false;
-		public Rotation2d yawPosition = new Rotation2d();
-		public double[] odometryYawTimestamps = new double[] {};
-		public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
-		public double yawVelocityRadPerSec = 0.0;
-		public boolean collisionDetected;
+	public static class DriverStationIOInputs {
+
 	}
 
-	public default void updateInputs(GyroIOInputs inputs) {}
+	//public default void updateInputs(GyroIOInputs inputs) {
+//
+//	}
 
 	public default void reset() {}
 
