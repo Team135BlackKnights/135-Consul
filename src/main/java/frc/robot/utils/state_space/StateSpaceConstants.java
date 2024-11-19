@@ -41,7 +41,7 @@ public class StateSpaceConstants {
 	}
 
 	public class Flywheel {
-		public static CANBus CANBus = new CANBus("rio");
+		public static CANBus CANBus = new CANBus();
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;
@@ -59,7 +59,7 @@ public class StateSpaceConstants {
 	}
 
 	public class DoubleJointedArm {
-		public static CANBus CANBus = new CANBus("rio");
+		public static CANBus CANBus = new CANBus();
 		public static boolean armInverted = false;
 		public static boolean isArmEncoderInverted = false;
 		public static boolean isElbowEncoderInverted = false;
@@ -92,7 +92,7 @@ public class StateSpaceConstants {
 	}
 
 	public class SingleJointedArm {
-		public static CANBus CANBus = new CANBus("rio");
+		public static CANBus CANBus = new CANBus();
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;
@@ -124,7 +124,7 @@ public class StateSpaceConstants {
 	}
 
 	public class Elevator {
-		public static CANBus CANBus = new CANBus("rio");
+		public static CANBus CANBus = new CANBus();
 		public static MotorVendor motorVendor = MotorVendor.CTRE_ON_RIO;
 		public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 		public static boolean inverted = false;

@@ -25,7 +25,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIO;
-import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -38,7 +37,7 @@ import java.util.List;
 
 public class FlywheelS extends SubsystemChecker {
 	private final FlywheelIO flywheelIO;
-	private final EncoderIO encoderIO;
+	private final FlywheelEncoderIO encoderIO;
 	private final FlywheelIOInputsAutoLogged flywheelIOInputs = new FlywheelIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
@@ -88,15 +87,18 @@ public class FlywheelS extends SubsystemChecker {
 	 */
 	private final static LinearSystemLoop<N1, N1, N1> m_loop = new LinearSystemLoop<>(
 			flywheelPlant, m_controller, m_observer, 12, .02);
+
 	/**
 	 * Creates a new flywheelS
+	 * 
 	 * @param flywheelIO the flywheel IO
-	 * @param encoderIO the encoder IO (can leave this one null if no independent encoder attached, flywheel will just use its built in one)
+	 * @param encoderIO  the encoder IO (can leave this one null if no independent
+	 *                   encoder attached, flywheel will just use its built in one)
 	 */
 	public FlywheelS(FlywheelIO flywheelIO, FlywheelEncoderIO encoderIO) {
 		this.flywheelIO = flywheelIO;
 		this.encoderIO = encoderIO;
-		if(encoderIO != null){
+		if (encoderIO != null) {
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
 		sysId = new SysIdRoutine(
@@ -112,6 +114,13 @@ public class FlywheelS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		if (encoderIO != null) {
+			encoderIO.updateInputs(encoderIOInputsAutoLogged);
+			flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
+			flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("FlywheelS", flywheelIOInputs);
+			Logger.processInputs("FlywheelS/FlywheelEncoder", encoderIOInputsAutoLogged);
+		}
 		m_loop.correct(VecBuilder.fill(flywheelIOInputs.velocityRadPerSec));
 		m_loop.predict(.02);
 		double volts = MathUtil.clamp(m_loop.getU(0), -12, 12);
@@ -121,16 +130,10 @@ public class FlywheelS extends SubsystemChecker {
 				Units.radiansPerSecondToRotationsPerMinute(m_loop.getXHat(0)));
 		flywheelIO.updateInputs(flywheelIOInputs);
 		Logger.processInputs("FlywheelS", flywheelIOInputs);
-		if (encoderIO != null){
-		encoderIO.updateInputs(encoderIOInputsAutoLogged);
-		flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
-		flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
-		Logger.processInputs("FlywheelS", flywheelIOInputs);
-		Logger.processInputs("FlywheelS/EncoderIO", encoderIOInputsAutoLogged);
-		}
-		//get encoder
-		//override vals for inputs.velocity
-		//log flywheels/encoder
+
+		// get encoder
+		// override vals for inputs.velocity
+		// log flywheels/encoder
 	}
 
 	/** Run open loop at the specified voltage. */

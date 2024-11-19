@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIO;
-import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -45,7 +44,7 @@ import java.util.function.BooleanSupplier;
 
 public class ElevatorS extends SubsystemChecker {
 	private final ElevatorIO elevatorIO;
-	private final EncoderIO encoderIO;
+	private final ElevatorEncoderIO encoderIO;
 	private final ElevatorIOInputsAutoLogged elevatorIOInputs = new ElevatorIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
@@ -69,7 +68,8 @@ public class ElevatorS extends SubsystemChecker {
 			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanModelPosition,
 					StateSpaceConstants.Elevator.m_KalmanModelVelocity), // How accurate we
 			// think our model is, in meters and meters/second.
-			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanEncoderPosition, StateSpaceConstants.Elevator.m_KalmanEncoderVelocity), // How accurate we think our encoder position
+			VecBuilder.fill(StateSpaceConstants.Elevator.m_KalmanEncoderPosition,
+					StateSpaceConstants.Elevator.m_KalmanEncoderVelocity), // How accurate we think our encoder position
 			// data is. In this case we very highly trust our encoder position reading.
 			.02);
 	private final LinearQuadraticRegulator<N2, N1, N2> m_controller = new LinearQuadraticRegulator<>(
@@ -128,7 +128,7 @@ public class ElevatorS extends SubsystemChecker {
 	public ElevatorS(ElevatorIO elevatorIO, ElevatorEncoderIO encoderIO) {
 		this.elevatorIO = elevatorIO;
 		this.encoderIO = encoderIO;
-		if (encoderIO != null){
+		if (encoderIO != null) {
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
 		sysId = new SysIdRoutine(
@@ -145,7 +145,12 @@ public class ElevatorS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
-		
+		if (encoderIO != null) {
+			encoderIO.updateInputs(encoderIOInputsAutoLogged);
+			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
+			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("ElevatorS/Encoder", encoderIOInputsAutoLogged);
+		}
 		m_position = elevatorIOInputs.positionMeters;
 		m_velocity = elevatorIOInputs.velocityMetersPerSec;
 		m_lastProfiledReference = m_profile.calculate(.02,
@@ -153,7 +158,7 @@ public class ElevatorS extends SubsystemChecker {
 		m_loop.setNextR(m_lastProfiledReference.position,
 				m_lastProfiledReference.velocity); // Tell our motors to get there
 		// Correct our Kalman filter's state vector estimate with encoder data
-		m_loop.correct(VecBuilder.fill(m_position,m_velocity));
+		m_loop.correct(VecBuilder.fill(m_position, m_velocity));
 		// Update our LQR to generate new voltage commands and use the voltages to
 		// predict the next
 		// state with out Kalman filter.
@@ -163,6 +168,7 @@ public class ElevatorS extends SubsystemChecker {
 		elevatorIO.setVoltage(appliedVolts);
 		elevatorIO.updateInputs(elevatorIOInputs);
 		Logger.processInputs("ElevatorS", elevatorIOInputs);
+
 		m_elevatorMech2d.setLength(m_loop.getXHat(0));
 		// Push the mechanism to AdvantageScope
 		Logger.recordOutput("ElevatorMechanism", m_mech2d);
@@ -171,12 +177,6 @@ public class ElevatorS extends SubsystemChecker {
 				StateSpaceConstants.Elevator.simY,
 				StateSpaceConstants.Elevator.simZ, new Rotation3d(0, 0, 0.0));
 		Logger.recordOutput("Mechanism3d/Elevator/", elevatorPose);
-		if (encoderIO != null){
-			encoderIO.updateInputs(encoderIOInputsAutoLogged);
-			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
-			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
-			Logger.processInputs("ElevatorS", elevatorIOInputs);
-		}
 	}
 
 	/** Run open loop at the specified voltage. */

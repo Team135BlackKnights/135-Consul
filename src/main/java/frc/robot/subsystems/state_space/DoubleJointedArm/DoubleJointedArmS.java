@@ -23,17 +23,17 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIO;
 import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIO;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
 
 public class DoubleJointedArmS extends SubsystemChecker {
 	private final DoubleJointedArmIO doubleJointedArmIO;
-	private final EncoderIO elbowEncoderIO, armEncoderIO;
+	private final DoubleJointedArmArmEncoderIO armEncoderIO;
+	private final DoubleJointedArmElbowEncoderIO elbowEncoderIO;
 	private final DoubleJointedArmIOInputsAutoLogged doubleJointedArmInputs = new DoubleJointedArmIOInputsAutoLogged();
-	private final EncoderIOInputsAutoLogged armEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged(),
-			elbowEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
+	private final EncoderIOInputsAutoLogged armEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
+	private final EncoderIOInputsAutoLogged elbowEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private List<Double> voltages;
 	private double armSetRad;
 	private double elbowSetRad;
@@ -57,7 +57,8 @@ public class DoubleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(getElbowRads()), 1,
 					new Color8Bit(Color.kYellow)));
 
-	public DoubleJointedArmS(DoubleJointedArmIO io, DoubleJointedArmArmEncoderIO armEncoderIO, DoubleJointedArmElbowEncoderIO elbowEncoderIO) {
+	public DoubleJointedArmS(DoubleJointedArmIO io, DoubleJointedArmArmEncoderIO armEncoderIO,
+			DoubleJointedArmElbowEncoderIO elbowEncoderIO) {
 		this.armEncoderIO = armEncoderIO;
 		this.elbowEncoderIO = elbowEncoderIO;
 		if (this.armEncoderIO != null) {
@@ -90,9 +91,15 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		if (elbowEncoderIO != null) {
 			elbowEncoderIO.updateInputs(elbowEncoderIOInputsAutoLogged);
+			doubleJointedArmInputs.positionElbowRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
+			doubleJointedArmInputs.velocityElbowRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("DoubleJointedArmS/ElbowEncoder", elbowEncoderIOInputsAutoLogged);
 		}
 		if (armEncoderIO != null) {
 			armEncoderIO.updateInputs(armEncoderIOInputsAutoLogged);
+			doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
+			doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			Logger.processInputs("DoubleJointedArmS/ArmEncoder", armEncoderIOInputsAutoLogged);
 		}
 		doubleJointedArmIO.updateInputs(doubleJointedArmInputs);
 		Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
@@ -109,18 +116,6 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		m_DoubleJointedArm.setAngle(Units.radiansToDegrees(getArmRads()));
 		m_DoubleJointedElbow.setAngle(Units.radiansToDegrees(getElbowRads()));
 		Logger.recordOutput("DoubleJointedArmS/DoubleJointedArmMechanism", m_mech2d);
-		if (armEncoderIO != null) {
-			doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
-			doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
-			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
-			Logger.processInputs("DoubleJointedArmS/ArmEncoderIO", armEncoderIOInputsAutoLogged);
-		}
-		if (elbowEncoderIO != null) {
-			doubleJointedArmInputs.positionArmRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
-			doubleJointedArmInputs.velocityArmRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
-			Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
-			Logger.processInputs("DoubleJointedArmS/ArmEncoderIO", elbowEncoderIOInputsAutoLogged);
-		}
 	}
 
 	@Override

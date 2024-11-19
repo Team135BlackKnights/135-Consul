@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIO;
 import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.Sensors.EncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
@@ -49,7 +48,7 @@ import java.util.function.BooleanSupplier;
 
 public class SingleJointedArmS extends SubsystemChecker {
 	private final SingleJointedArmIO singleJointedArmIO;
-	private final EncoderIO singleJointedArmEncoderIO;
+	private final SingleJointedArmEncoderIO singleJointedArmEncoderIO;
 	private final EncoderIOInputsAutoLogged singleJointedArmEncoderIOInputs = new EncoderIOInputsAutoLogged();
 	private final SingleJointedArmIOInputsAutoLogged inputs = new SingleJointedArmIOInputsAutoLogged();
 	private final SysIdRoutine sysId;
@@ -143,7 +142,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 	public SingleJointedArmS(SingleJointedArmIO io, SingleJointedArmEncoderIO encoderIO) {
 		this.singleJointedArmIO = io;
 		this.singleJointedArmEncoderIO = encoderIO;
-		if (encoderIO != null){
+		if (encoderIO != null) {
 			this.singleJointedArmEncoderIO.setGearRatio(StateSpaceConstants.SingleJointedArm.armGearing);
 		}
 		sysId = new SysIdRoutine(
@@ -160,6 +159,12 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		if (singleJointedArmEncoderIO != null) {
+			singleJointedArmEncoderIO.updateInputs(singleJointedArmEncoderIOInputs);
+			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
+			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
+			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
+		}
 		m_position = inputs.positionRad;
 		m_velocity = inputs.velocityRadPerSec;
 		m_lastProfiledReference = m_profile.calculate(.02,
@@ -167,7 +172,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 		m_loop.setNextR(m_lastProfiledReference.position,
 				m_lastProfiledReference.velocity); // Tell our motors to get there
 		// Correct our Kalman filter's state vector estimate with encoder data
-		m_loop.correct(VecBuilder.fill(m_position,m_velocity));
+		m_loop.correct(VecBuilder.fill(m_position, m_velocity));
 		// Update our LQR to generate new voltage commands and use the voltages to
 		// predict the next
 		// state with out Kalman filter.
@@ -187,12 +192,6 @@ public class SingleJointedArmS extends SubsystemChecker {
 				new Rotation3d(0, -m_loop.getXHat(0), 0.0));
 		Logger.recordOutput("Mechanism3d/SingleJointedArm/",
 				SingleJointedarmPose);
-		if (singleJointedArmEncoderIO != null){
-			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
-			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
-			Logger.processInputs("SingleJointedArmS", inputs);
-			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
-		}
 	}
 
 	/** Run open loop at the specified voltage. */

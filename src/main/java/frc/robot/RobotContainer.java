@@ -864,7 +864,8 @@ public class RobotContainer {
 		return new double[] { Math.min(drivetrainS.getCurrent(), 200),
       flywheelS.getCurrent(),
 			armS.getCurrent(),
-			elevatorS.getCurrent()
+			elevatorS.getCurrent(),
+			doubleJointedArmS.getCurrent()
 		};
 	}
 
