@@ -3,6 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
+import frc.robot.Constants.EncoderType;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public interface EncoderIO {
 		public double relativePositionRadians = 0.0;
 		public double absolutePositionRadians = 0.0;
 		public double angularVelocityRadPerSec = 0.0;
+		public EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 	}
 
 	public default void updateInputs(EncoderIOInputs inputs) {}
