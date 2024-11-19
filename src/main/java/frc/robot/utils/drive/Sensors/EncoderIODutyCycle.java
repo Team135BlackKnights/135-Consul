@@ -5,6 +5,7 @@ package frc.robot.utils.drive.Sensors;
 
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,7 @@ public class EncoderIODutyCycle implements EncoderIO {
         inputs.absolutePositionRadians = currentPosition;
         inputs.relativePositionRadians = 0; //Not supported by DutyCycleEncoder.
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
+        inputs.encoderType = EncoderType.DUTY_CYCLE;
     }
 
     /**

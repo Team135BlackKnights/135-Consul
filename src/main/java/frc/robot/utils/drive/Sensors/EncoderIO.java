@@ -4,6 +4,7 @@
 package frc.robot.utils.drive.Sensors;
 
 import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public interface EncoderIO {
 		public double relativePositionRadians = 0.0;
 		public double absolutePositionRadians = 0.0;
 		public double angularVelocityRadPerSec = 0.0;
+		public EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER;
 	}
 
 	public default void updateInputs(EncoderIOInputs inputs) {}

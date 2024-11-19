@@ -6,6 +6,7 @@ package frc.robot.utils.drive.Sensors;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,7 @@ public class EncoderIOCANCoder implements EncoderIO {
                 .rotationsToRadians(encoder.getPosition().getValueAsDouble())
                 / conversionFactor);
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
+        inputs.encoderType = EncoderType.CTRE;
     }
 
     /**

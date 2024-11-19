@@ -5,6 +5,7 @@ package frc.robot.utils.drive.Sensors;
 
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ public class EncoderIOREVAbsolute implements EncoderIO {
                 / conversionFactor;
         inputs.relativePositionRadians = 0; // Not supported by REV SparkMax on breakout.
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
+        inputs.encoderType = EncoderType.REV_ABSOLUTE;
     }
 
     /**
