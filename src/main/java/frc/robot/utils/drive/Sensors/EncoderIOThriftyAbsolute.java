@@ -3,6 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
+import frc.robot.Constants.EncoderType;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 
@@ -58,6 +59,7 @@ public class EncoderIOThriftyAbsolute implements EncoderIO {
 
         inputs.relativePositionRadians = 0;
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
+        inputs.encoderType = EncoderType.THRIFTY_ABSOLUTE;
     }
 
     /**
