@@ -74,7 +74,13 @@ public final class Constants {
 		//Runs when the match is over (after endgame)
 		MATCHOVER
 	}
-
+	public static enum EncoderType{
+		NO_ATTACHED_ENCODER,
+		DUTY_CYCLE,
+		CTRE,
+		THRIFTY_ABSOLUTE,
+		REV_ABSOLUTE
+	}
 	public static enum SysIdRoutines { swerveDrive }
 
 	public static int PowerDistributionID = 1;
