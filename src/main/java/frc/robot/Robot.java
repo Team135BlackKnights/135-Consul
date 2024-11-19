@@ -20,6 +20,7 @@ import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import org.littletonrobotics.urcl.URCL;
 
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.SysIdRoutines;
@@ -64,8 +65,8 @@ public class Robot extends LoggedRobot {
 	public static SysIdRoutines runningTest = Constants.SysIdRoutines
 			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-	public static final CANBus canBus = new CANBus("rio");
-	//public static final CANBus canivoreCanBus = new CANBus("canivore-drive");
+	public static final CANBus rioCanBus = new CANBus();
+	public static final CANBus driveCanBus = new CANBus(DriveConstants.canBusName);
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
@@ -149,7 +150,7 @@ public class Robot extends LoggedRobot {
 					new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
 			break;
 		}
-		//Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
+		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
@@ -164,6 +165,8 @@ public class Robot extends LoggedRobot {
 		SmartDashboard.putBoolean("ShouldEndLog", false);
 		//read the accumated charge from the last boot, so we can set it to that on boot.
 		accumulatedCharge = 0; //TODO: figure out how to read the accumulated charge from the last boot.
+		// Publish the current mode of the robot (to check in pit display)
+		Logger.recordOutput("SystemStatus/robotMode", Constants.currentMode);
 	}
 
 	/**
@@ -187,9 +190,9 @@ public class Robot extends LoggedRobot {
 		// Calculate the remaining charge percentage
 		double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); //64800 is the total charge of the battery in Coloumbs (18 * 3600s/hr)
 		batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
-		Logger.recordOutput("BatteryPercentage", batteryPercentage);
+		Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
 		//Record the current accumated charge, so we can set it to that on next boot.
-		Logger.recordOutput("AccumulatedCharge", accumulatedCharge);
+		Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
 					DriveConstants.pathConstraints.maxVelocityMPS(),
@@ -203,8 +206,7 @@ public class Robot extends LoggedRobot {
 		}, DriveConstants.maxTranslationalAcceleration,
 				DriveConstants.maxRotationalAcceleration);
 		DataHandler.updateHandlerState();
-		SmartDashboard.putString("Match State",
-				Constants.currentMatchState.name());
+		Logger.recordOutput("MatchState", Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
@@ -219,17 +221,17 @@ public class Robot extends LoggedRobot {
 		for (PeriodicFunction f : periodicFunctions) {
 			f.runIfReady();
 		}
-		Logger.recordOutput("MemoryTotal", Runtime.getRuntime().totalMemory());
-		Logger.recordOutput("MemoryFree", Runtime.getRuntime().freeMemory());
-		SmartDashboard.putNumber("MatchTime", DriverStation.getMatchTime());
-		Logger.recordOutput("BatteryVoltage",
+		Logger.recordOutput("SystemStatus/MemoryTotal", Runtime.getRuntime().totalMemory());
+		Logger.recordOutput("SystemStatus/MemoryFree", Runtime.getRuntime().freeMemory());
+		Logger.recordOutput("MatchTime", DriverStation.getMatchTime());
+		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
-		CANBusStatus canBusStatus = canBus.getStatus();
-		//CANBusStatus canivoreCanBusStatus = canivoreCanBus.getStatus();
-		Logger.recordOutput("CANUtil", canBusStatus.BusUtilization * 100.0);
-		//Logger.recordOutput("CanivoreUtil", canivoreCanBusStatus.BusUtilization * 100.0);
+		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
+		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization * 100.0);
+		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);
 		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
-		Logger.recordOutput("RobotPeriodicMS", runtimeMS);
+		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 	}
 
 	/** This function is called once each time the robot enters Disabled mode. */
@@ -407,7 +409,7 @@ public class Robot extends LoggedRobot {
 		RobotContainer.updateSimulationWorld();
 		RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(
 				RobotContainer.getCurrentDraw()));
-		SmartDashboard.putNumber("Robot Voltage",
+		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
 	}
 
