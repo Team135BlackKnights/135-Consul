@@ -3,6 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
+import frc.robot.Constants.EncoderType;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 

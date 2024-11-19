@@ -78,6 +78,13 @@ public final class Constants {
 	public static enum SysIdRoutines {
 		swerveDrive, flywheel, singleJointedArm, elevator
 	}
+	public static enum EncoderType{
+		NO_ATTACHED_ENCODER,
+		DUTY_CYCLE,
+		CTRE,
+		THRIFTY_ABSOLUTE,
+		REV_ABSOLUTE
+	}
 
 	public static int PowerDistributionID = 1;
 
