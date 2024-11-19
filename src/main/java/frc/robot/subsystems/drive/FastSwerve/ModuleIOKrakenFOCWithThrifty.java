@@ -74,12 +74,19 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	 * @apiNote CANCoder offsets SHOULD be set to zero in code due to how the
 	 *          user manual works
 	 */
+	@SuppressWarnings("unused")
 	public ModuleIOKrakenFOCWithThrifty(int index) {
 		// Init controllers and encoders from config constants
 		switch (index) {
 			case 0:
-				driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, "rio");
-				turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, "rio");
+				if (DriveConstants.canBusName == "") {
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
+
+				} else {
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.canBusName);
+				}
 				turnAbsoluteEncoder = new AnalogInput(DriveConstants.kFrontLeftAbsEncoderPort);
 				driveName = "FrontLeftDrive";
 				turnName = "FrontLeftTurn";
@@ -90,8 +97,13 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kFrontLeftAbsEncoderReversed;
 				break;
 			case 1:
-				driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, "rio");
-				turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, "rio");
+				if (DriveConstants.canBusName == "") {
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
+				} else {
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.canBusName);
+				}
 				turnAbsoluteEncoder = new AnalogInput(
 						DriveConstants.kFrontRightAbsEncoderPort);
 				driveName = "FrontRightDrive";
@@ -103,8 +115,13 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kFrontRightAbsEncoderReversed;
 				break;
 			case 2:
-				driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, "rio");
-				turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, "rio");
+				if (DriveConstants.canBusName == "") {
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
+				} else {
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.canBusName);
+				}
 				turnAbsoluteEncoder = new AnalogInput(
 						DriveConstants.kBackLeftAbsEncoderPort);
 				driveName = "BackLeftDrive";
@@ -116,8 +133,13 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kBackLeftAbsEncoderReversed;
 				break;
 			case 3:
-				driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, "rio");
-				turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, "rio");
+				if (DriveConstants.canBusName == "") {
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
+				} else {
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.canBusName);
+				}
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";
 				turnAbsoluteEncoder = new AnalogInput(
@@ -191,7 +213,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				turnVelocity, turnAppliedVolts, turnSupplyCurrent,
 				turnTorqueCurrent);
 		// Reset turn position to absolute encoder position
-		//get absolute position from analog encoder
+		// get absolute position from analog encoder
 		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
 		if (isTurnSensorInverted) {
 			absolutePositionPercent = 1 - absolutePositionPercent;

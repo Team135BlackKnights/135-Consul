@@ -181,8 +181,6 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
-		// Publish the current mode of the robot (to check in pit display)
-		Logger.recordOutput("robotMode", Constants.currentMode);
 
 		// We check to see what drivetrain type we have here, and create the correct
 		// drivetrain system based on that.
