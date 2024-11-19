@@ -24,7 +24,6 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator.SwerveSetpoint;
-import frc.robot.subsystems.drive.FastSwerve.Trajectory.PathFollowingWithChoreo;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
@@ -145,14 +144,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configureCustom((path) -> new PathFollowingWithChoreo(
-				path,
-				this::getPose,
-				this::getChassisSpeeds,
-				this::setPathplannerChassisSpeeds,
+				AutoBuilder.configure(this::getPose, this::resetPose,
+				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
-				() -> Robot.isRed, this), this::getPose, this::resetPose, () -> Robot.isRed, true);
+				() -> Robot.isRed, this);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
 			Logger.recordOutput("Odometry/Trajectory",
@@ -501,6 +497,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
+		pathplannerIndex = 0;
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
@@ -510,15 +507,43 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 	}
 
+	int pathplannerIndex = 0;
+	boolean movingRight = false;
 	@Override
 	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+				pathplannerIndex++;
 		for (int i = 0; i < 4; i++) {
-
-			pathPlannerNM[i] = feedforwards.linearForcesNewtons()[i] * DriveConstants.TrainConstants.kWheelDiameter / 2;
-		}
+			
+			//only the robot relative x and y forces are provided for Choreo.
+			double xForce = feedforwards.robotRelativeForcesXNewtons()[i];
+			double yForce = feedforwards.robotRelativeForcesYNewtons()[i];
+			if (pathplannerIndex ==1){
+				double angle = Math.atan2(yForce, xForce);
+				if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
+					movingRight = true;
+				  } else {
+					movingRight = false;
+				  }
+			}
+			double linearForce = Math.sqrt(xForce * xForce + yForce * yForce);
+			double velocityMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+	  
+			// Calculate the dot product to determine if force aligns with velocity
+			double dotProduct = (xForce * speeds.vxMetersPerSecond + yForce * speeds.vyMetersPerSecond);
+	  
+			// Sign adjustment based on alignment with velocity direction
+			double signAdjustment = Math.signum(dotProduct / (linearForce * velocityMagnitude));
+			if (Double.isNaN(signAdjustment)) {
+			  signAdjustment = 1;
+			}
+			// Assign the adjusted force magnitude
+			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					}
+					Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
+					Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
 	}
 
 	/**
