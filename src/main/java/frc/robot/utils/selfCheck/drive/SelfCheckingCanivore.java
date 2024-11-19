@@ -12,6 +12,7 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 /**
  * @apiNote Untested, needs to be checked with hardware
+ * @deprecated as of right now, there's no "subsystem" this falls under. Therefore, a selfChecker is not needed. -G
  * Code for a self checking CANivore through the Phoenix 6 API.
  * Does not technically ping the CANivore, instead looks at the CAN bus.
  */
@@ -28,8 +29,8 @@ public class SelfCheckingCanivore implements SelfChecking {
 	public SelfCheckingCanivore(String label) {
 		this.label = label;
 		
-		this.busStatus = Robot.canBus.getStatus();
-		this.isNetworkCANFD = Robot.canBus.isNetworkFD(); 
+		this.busStatus = Robot.rioCanBus.getStatus();
+		this.isNetworkCANFD = Robot.rioCanBus.isNetworkFD(); 
 	}
 	@Override
 	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {

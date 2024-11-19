@@ -26,6 +26,7 @@ public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_RIO;
+	public static final String canBusName = ""; //Leave "" if CTRE_ON_RIO
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
 	//This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
