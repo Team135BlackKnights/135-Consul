@@ -77,10 +77,10 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		// Init controllers and encoders from config constants
 		switch (index) {
 		case 0:
-			driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, "rio");
+			driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort );
+			turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
 			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kFrontLeftAbsEncoderPort, "rio");
+					DriveConstants.kFrontLeftAbsEncoderPort );
 			driveName = "FrontLeftDrive";
 			turnName = "FrontLeftTurn";
 			absoluteEncoderOffset = new Rotation2d(
@@ -89,8 +89,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			isTurnMotorInverted = DriveConstants.kFrontLeftTurningReversed;
 			break;
 		case 1:
-			driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, "rio");
+			driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort );
+			turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
 			turnAbsoluteEncoder = new CANcoder(
 					DriveConstants.kFrontRightAbsEncoderPort);
 			driveName = "FrontRightDrive";
@@ -101,10 +101,10 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			isTurnMotorInverted = DriveConstants.kFrontRightTurningReversed;
 			break;
 		case 2:
-			driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, "rio");
+			driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
+			turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
 			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kBackLeftAbsEncoderPort, "rio");
+					DriveConstants.kBackLeftAbsEncoderPort);
 			driveName = "BackLeftDrive";
 			turnName = "BackLeftTurn";
 			absoluteEncoderOffset = new Rotation2d(
@@ -113,12 +113,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			isTurnMotorInverted = DriveConstants.kBackLeftTurningReversed;
 			break;
 		case 3:
-			driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, "rio");
-			turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, "rio");
+			driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
+			turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
 			driveName = "BackRightDrive";
 			turnName = "BackRightTurn";
 			turnAbsoluteEncoder = new CANcoder(
-					DriveConstants.kBackRightAbsEncoderPort, "rio");
+					DriveConstants.kBackRightAbsEncoderPort);
 			absoluteEncoderOffset = new Rotation2d(
 					DriveConstants.kBackRightAbsEncoderOffsetRad);
 			isDriveMotorInverted = DriveConstants.kBackRightDriveReversed;

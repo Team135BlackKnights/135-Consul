@@ -106,7 +106,7 @@ Refer to the [135_Pit_Display](https://github.com/Team135BlackKnights/135_Pit_Di
 
 We'd like to extend our deepest gratitude to FRC teams 254, 418, 449, 1678, 1690, 3015, 5516, 6328 and so many others for their code and ideas. Links to their codebases are here:  
 [254  (The Cheesy Poofs)](https://github.com/Team254): Setpoint Generator (accel limiting)  
-[418  (Purple Haze)](https://github.com/lasarobotics): 2nd Order Kinematics
+[418  (Purple Haze)](https://github.com/lasarobotics): 2nd Order Kinematics  
 [1678 (Citrus Circuits)](https://github.com/frc1678): Idea for vision filtering  
 [1690 (Orbit)](https://github.com/team1690): Skid Detection Algorithm  
 [3015 (Ranger Robotics)](https://github.com/3015rangerrobotics): Pathplanner, Pit Display (event panel)  

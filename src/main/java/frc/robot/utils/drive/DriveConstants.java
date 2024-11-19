@@ -25,7 +25,7 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrain
 public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
 	public static final boolean enablePID = true;
-	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
+	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_RIO;
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
 	//This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
@@ -120,8 +120,8 @@ public class DriveConstants {
 			kBackLeftAbsEncoderOffsetRad = 2 * Math.PI - 2.891372,
 			kBackRightAbsEncoderOffsetRad = 2 * Math.PI - 0.116861,*/
 			//Ctre Offsets
-			kFrontLeftAbsEncoderOffsetRad = 0, kFrontRightAbsEncoderOffsetRad = 0,
-			kBackLeftAbsEncoderOffsetRad = 0, kBackRightAbsEncoderOffsetRad = 0,
+			kFrontLeftAbsEncoderOffsetRad = 0, kFrontRightAbsEncoderOffsetRad = 0, //-.935 , BR -.7792
+			kBackLeftAbsEncoderOffsetRad = 0, kBackRightAbsEncoderOffsetRad = 0, //-.2392 FL -.5813
 			SKID_THRESHOLD = .5, //Meters per second
 			MAX_G = 0.5;
 	public static PathConstraints pathConstraints = new PathConstraints(
@@ -183,16 +183,16 @@ public class DriveConstants {
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0),
 				//sim
-				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.02, 0.001, 0.001, 12, 0.01, 0.001),
+				//overallTurningMotorConstantContainer = new MotorConstantContainer(
+				//		0.02, 0.001, 0.001, 12, 0.01, 0.001),
 				/*//rev 
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
-				//ctre
-				//overallTurningMotorConstantContainer = new MotorConstantContainer(
-				//		0.001, 0.001, 0.001, 50, 0, .1), //Average the turning motors for these vals.	*/
-				overallDriveMotorConstantContainer = new MotorConstantContainer(.1, //5 for CTRE
-						.13, 0.001, 0.05, 0, 0.000);
+				//ctre*/
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						2.5, 4, 0.001, 40, 10, 5), //Average the turning motors for these vals.	
+				overallDriveMotorConstantContainer = new MotorConstantContainer(2, //5 for CTRE
+						.1, 0.001, 5, 0.25, 0.05);
 	}
 	public static ModuleConfig mainModuleConfig;
 	public static RobotConfig mainConfig;

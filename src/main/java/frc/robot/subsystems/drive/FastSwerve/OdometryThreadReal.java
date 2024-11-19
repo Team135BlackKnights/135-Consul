@@ -53,7 +53,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
                     TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
             case CTRE_ON_RIO -> {
                 TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
-                BaseStatusSignal.refreshAll();
+                //BaseStatusSignal.refreshAll();
             }
             case CTRE_ON_CANIVORE ->
                     BaseStatusSignal.waitForAll(.02, statusSignals);
