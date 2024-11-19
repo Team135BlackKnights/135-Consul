@@ -16,6 +16,7 @@ public class DoubleJointedArmIOSim implements DoubleJointedArmIO {
 		inputs.positionArmRads = expectedArmRads;
 		inputs.appliedElbowVolts = elbowVolts;
 		inputs.positionElbowRads = expectedElbowRads;
+		inputs.currentAmps = new double[] { 0, 0 };
 	}
 
 	@Override
