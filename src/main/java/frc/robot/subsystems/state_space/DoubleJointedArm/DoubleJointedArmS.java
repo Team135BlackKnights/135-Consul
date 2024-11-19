@@ -91,14 +91,18 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		if (elbowEncoderIO != null) {
 			elbowEncoderIO.updateInputs(elbowEncoderIOInputsAutoLogged);
-			doubleJointedArmInputs.positionElbowRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
-			doubleJointedArmInputs.velocityElbowRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			if (elbowEncoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+				doubleJointedArmInputs.positionElbowRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
+				doubleJointedArmInputs.velocityElbowRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			}
 			Logger.processInputs("DoubleJointedArmS/ElbowEncoder", elbowEncoderIOInputsAutoLogged);
 		}
 		if (armEncoderIO != null) {
 			armEncoderIO.updateInputs(armEncoderIOInputsAutoLogged);
-			doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
-			doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			if (armEncoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+				doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
+				doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			}
 			Logger.processInputs("DoubleJointedArmS/ArmEncoder", armEncoderIOInputsAutoLogged);
 		}
 		doubleJointedArmIO.updateInputs(doubleJointedArmInputs);

@@ -116,9 +116,12 @@ public class FlywheelS extends SubsystemChecker {
 	public void periodic() {
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
+			if (encoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+				flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
+				flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+			}
 			flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
 			flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
-			Logger.processInputs("FlywheelS", flywheelIOInputs);
 			Logger.processInputs("FlywheelS/FlywheelEncoder", encoderIOInputsAutoLogged);
 		}
 		m_loop.correct(VecBuilder.fill(flywheelIOInputs.velocityRadPerSec));

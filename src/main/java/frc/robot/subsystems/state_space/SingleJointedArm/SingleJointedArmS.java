@@ -161,8 +161,11 @@ public class SingleJointedArmS extends SubsystemChecker {
 	public void periodic() {
 		if (singleJointedArmEncoderIO != null) {
 			singleJointedArmEncoderIO.updateInputs(singleJointedArmEncoderIOInputs);
+			if (singleJointedArmEncoderIOInputs.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+
 			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
 			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
+			}
 			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
 		}
 		m_position = inputs.positionRad;

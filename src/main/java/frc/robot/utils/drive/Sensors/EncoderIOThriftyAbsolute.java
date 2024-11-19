@@ -5,6 +5,7 @@ package frc.robot.utils.drive.Sensors;
 
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,7 @@ public class EncoderIOThriftyAbsolute implements EncoderIO {
 
         inputs.relativePositionRadians = 0;
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
+        inputs.encoderType = EncoderType.THRIFTY_ABSOLUTE;
     }
 
     /**

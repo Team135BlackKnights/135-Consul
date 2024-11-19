@@ -674,10 +674,10 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-			flywheelS = new FlywheelS(new FlywheelIOSim(),null);
-			armS = new SingleJointedArmS(new SingleJointedArmIOSim(), null);
-			elevatorS = new ElevatorS(new ElevatorIOSim(),null);
-			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim(),null,null);
+			flywheelS = new FlywheelS(new FlywheelIOSim(), new FlywheelEncoderIO(){});
+			armS = new SingleJointedArmS(new SingleJointedArmIOSim(), new SingleJointedArmEncoderIO(){});
+			elevatorS = new ElevatorS(new ElevatorIOSim(), new ElevatorEncoderIO(){});
+			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim(),new DoubleJointedArmArmEncoderIO(){}, new DoubleJointedArmElbowEncoderIO(){});
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),

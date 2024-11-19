@@ -147,9 +147,11 @@ public class ElevatorS extends SubsystemChecker {
 	public void periodic() {
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
+			if (encoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
 			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
 			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
-			Logger.processInputs("ElevatorS/Encoder", encoderIOInputsAutoLogged);
+			}
+			Logger.processInputs("ElevatorS/ElevatorEncoder", encoderIOInputsAutoLogged);
 		}
 		m_position = elevatorIOInputs.positionMeters;
 		m_velocity = elevatorIOInputs.velocityMetersPerSec;
