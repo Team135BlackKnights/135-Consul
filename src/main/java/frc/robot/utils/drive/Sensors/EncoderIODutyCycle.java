@@ -6,7 +6,6 @@ package frc.robot.utils.drive.Sensors;
 import frc.robot.Constants.EncoderType;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
-import frc.robot.utils.state_space.StateSpaceConstants.EncoderType;
 
 import java.util.ArrayList;
 import java.util.List;

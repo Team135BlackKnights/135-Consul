@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.EncoderType;
 import frc.robot.DataHandler;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIO;
@@ -91,7 +92,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		if (elbowEncoderIO != null) {
 			elbowEncoderIO.updateInputs(elbowEncoderIOInputsAutoLogged);
-			if (elbowEncoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+			if (elbowEncoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 				doubleJointedArmInputs.positionElbowRads = elbowEncoderIOInputsAutoLogged.absolutePositionRadians;
 				doubleJointedArmInputs.velocityElbowRadsPerSec = elbowEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}
@@ -99,7 +100,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		if (armEncoderIO != null) {
 			armEncoderIO.updateInputs(armEncoderIOInputsAutoLogged);
-			if (armEncoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+			if (armEncoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 				doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
 				doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}

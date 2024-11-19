@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.EncoderType;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
@@ -116,7 +117,7 @@ public class FlywheelS extends SubsystemChecker {
 	public void periodic() {
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
-			if (encoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+			if (encoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 				flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
 				flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}

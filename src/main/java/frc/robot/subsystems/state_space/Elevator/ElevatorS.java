@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.EncoderType;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
@@ -147,7 +148,7 @@ public class ElevatorS extends SubsystemChecker {
 	public void periodic() {
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
-			if (encoderIOInputsAutoLogged.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+			if (encoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
 			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}

@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.EncoderType;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIO;
 import frc.robot.utils.drive.DriveConstants;
@@ -161,7 +162,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 	public void periodic() {
 		if (singleJointedArmEncoderIO != null) {
 			singleJointedArmEncoderIO.updateInputs(singleJointedArmEncoderIOInputs);
-			if (singleJointedArmEncoderIOInputs.encoderType != StateSpaceConstants.EncoderType.NO_ATTACHED_ENCODER) {
+			if (singleJointedArmEncoderIOInputs.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 
 			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
 			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;

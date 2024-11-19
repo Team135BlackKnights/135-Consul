@@ -4,6 +4,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
+import frc.robot.Constants.EncoderType;
 import frc.robot.RobotContainer;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -13,14 +14,6 @@ import com.ctre.phoenix6.CANBus;
 
 public class StateSpaceConstants {
 	public static boolean debug = true;
-
-	public enum EncoderType{
-		CTRE,
-		REV_ABSOLUTE,
-		DUTY_CYCLE,
-		THRIFTY_ABSOLUTE,
-		NO_ATTACHED_ENCODER
-	}
 	public class Controls {
 		/* Enter any non-button controls here.
 		 * Left trigger is used for RPM speed. 0-0 1-7100.
