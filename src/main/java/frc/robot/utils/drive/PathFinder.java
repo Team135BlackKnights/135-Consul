@@ -3,7 +3,6 @@ package frc.robot.utils.drive;
 import org.json.simple.JSONObject;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
@@ -14,7 +13,6 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.drive.DriveToPose;
 import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import frc.robot.RobotContainer;
 import java.util.List;
 import java.util.function.Supplier;
@@ -40,37 +38,17 @@ public class PathFinder {
 	public static Command goToPose(Pose2d pose,
 			Supplier<PathConstraints> constraints, DrivetrainS drive,
 			boolean isAuto, double endVelocity) {
-		if (DriveConstants.driveType == DriveTrainType.SWERVE) {
-			Command pathFindToPose = new PathfindingCommand(
-				pose,
-				constraints.get(),
-				endVelocity,
-				drive::getPose,
-				drive::getChassisSpeeds,
-				drive::setPathplannerChassisSpeeds,
-				DriveConstants.mainController,
-				DriveConstants.mainConfig,
-				drive);
-			if (isAuto) {
-				return pathFindToPose.finallyDo(() -> RobotContainer.field.getObject("target pose")
-				.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));;
-			}else{
-				return pathFindToPose.andThen(new DriveToPose(drive, pose, constraints.get()))
-				.finallyDo(() -> RobotContainer.field.getObject("target pose")
-						.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));;
-			}
-		}else{
-			if (isAuto) { // skip accuracy for speed
-				return AutoBuilder
-						.pathfindToPose((pose), constraints.get(), endVelocity)
-						.finallyDo(() -> RobotContainer.field.getObject("target pose")
-								.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
-			}
-			return AutoBuilder.pathfindToPose((pose), constraints.get(), endVelocity)
-					.andThen(new DriveToPose(drive, pose, constraints.get()))
+		if (isAuto) { // skip accuracy for speed
+			return AutoBuilder
+					.pathfindToPose((pose), constraints.get(), endVelocity)
 					.finallyDo(() -> RobotContainer.field.getObject("target pose")
 							.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
 		}
+		return AutoBuilder.pathfindToPose((pose), constraints.get(), endVelocity)
+				.andThen(new DriveToPose(drive, pose, constraints.get()))
+				.finallyDo(() -> RobotContainer.field.getObject("target pose")
+						.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
+
 	}
 
 	public static List<Pose2d> parseAutoToPose2dList(String autoFileName) {

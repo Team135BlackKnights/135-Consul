@@ -42,54 +42,67 @@ public class MecanumIOTalonFX implements MecanumIO {
 			.getP();
 	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getD();
-	private final TalonFX frontLeft = new TalonFX(
-			DriveConstants.kFrontLeftDrivePort);
-	private final TalonFX backLeft = new TalonFX(
-			DriveConstants.kBackLeftDrivePort);
-	private final TalonFX frontRight = new TalonFX(
-			DriveConstants.kFrontRightDrivePort);
-	private final TalonFX backRight = new TalonFX(
-			DriveConstants.kBackRightDrivePort);
-	private final StatusSignal<Angle> frontLeftPosition = frontLeft
-			.getPosition();
-	private final StatusSignal<AngularVelocity> frontLeftVelocity = frontLeft
-			.getVelocity();
-	private final StatusSignal<Voltage> frontLeftAppliedVolts = frontLeft
-			.getMotorVoltage();
-	private final StatusSignal<Current> frontLeftCurrent = frontLeft
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> frontLeftTemp = frontLeft.getDeviceTemp();
-	private final StatusSignal<Angle> frontRightPosition = frontRight
-			.getPosition();
-	private final StatusSignal<AngularVelocity> frontRightVelocity = frontRight
-			.getVelocity();
-	private final StatusSignal<Voltage> frontRightAppliedVolts = frontRight
-			.getMotorVoltage();
-	private final StatusSignal<Current> frontRightCurrent = frontRight
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> frontRightTemp = frontRight
-			.getDeviceTemp();
-	private final StatusSignal<Angle> backLeftPosition = backLeft.getPosition();
-	private final StatusSignal<AngularVelocity> backLeftVelocity = backLeft.getVelocity();
-	private final StatusSignal<Voltage> backLeftAppliedVolts = backLeft
-			.getMotorVoltage();
-	private final StatusSignal<Current> backLeftCurrent = backLeft
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> backLeftTemp = backLeft.getDeviceTemp();
-	private final StatusSignal<Angle> backRightPosition = backRight
-			.getPosition();
-	private final StatusSignal<AngularVelocity> backRightVelocity = backRight
-			.getVelocity();
-	private final StatusSignal<Voltage> backRightAppliedVolts = backRight
-			.getMotorVoltage();
-	private final StatusSignal<Current> backRightCurrent = backRight
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> backRightTemp = backRight.getDeviceTemp();
+	private final TalonFX frontLeft;
+	private final TalonFX backLeft;
+	private final TalonFX frontRight;
+	private final TalonFX backRight;
+	private final StatusSignal<Angle> frontLeftPosition;
+	private final StatusSignal<AngularVelocity> frontLeftVelocity;
+	private final StatusSignal<Voltage> frontLeftAppliedVolts;
+	private final StatusSignal<Current> frontLeftCurrent;
+	private final StatusSignal<Temperature> frontLeftTemp;
+	private final StatusSignal<Angle> frontRightPosition;
+	private final StatusSignal<AngularVelocity> frontRightVelocity;
+	private final StatusSignal<Voltage> frontRightAppliedVolts;
+	private final StatusSignal<Current> frontRightCurrent;
+	private final StatusSignal<Temperature> frontRightTemp;
+	private final StatusSignal<Angle> backLeftPosition;
+	private final StatusSignal<AngularVelocity> backLeftVelocity;
+	private final StatusSignal<Voltage> backLeftAppliedVolts;
+	private final StatusSignal<Current> backLeftCurrent;
+	private final StatusSignal<Temperature> backLeftTemp;
+	private final StatusSignal<Angle> backRightPosition;
+	private final StatusSignal<AngularVelocity> backRightVelocity;
+	private final StatusSignal<Voltage> backRightAppliedVolts;
+	private final StatusSignal<Current> backRightCurrent;
+	private final StatusSignal<Temperature> backRightTemp;
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
-	private static final Executor currentExecutor = Executors
-			.newFixedThreadPool(8);
+	private static final Executor currentExecutor = Executors.newFixedThreadPool(8);
 
+	@SuppressWarnings("unused")
 	public MecanumIOTalonFX(GyroIO gyro) {
+		if (DriveConstants.canBusName == "") {
+			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort);
+			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort);
+			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort);
+			backRight = new TalonFX(DriveConstants.kBackRightDrivePort);
+		} else {
+			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
+			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
+			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
+			backRight = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
+		}
+
+		frontLeftPosition = frontLeft.getPosition();
+		frontLeftVelocity = frontLeft.getVelocity();
+		frontLeftAppliedVolts = frontLeft.getMotorVoltage();
+		frontLeftCurrent = frontLeft.getSupplyCurrent();
+		frontLeftTemp = frontLeft.getDeviceTemp();
+		frontRightPosition = frontRight.getPosition();
+		frontRightVelocity = frontRight.getVelocity();
+		frontRightAppliedVolts = frontRight.getMotorVoltage();
+		frontRightCurrent = frontRight.getSupplyCurrent();
+		frontRightTemp = frontRight.getDeviceTemp();
+		backLeftPosition = backLeft.getPosition();
+		backLeftVelocity = backLeft.getVelocity();
+		backLeftAppliedVolts = backLeft.getMotorVoltage();
+		backLeftCurrent = backLeft.getSupplyCurrent();
+		backLeftTemp = backLeft.getDeviceTemp();
+		backRightPosition = backRight.getPosition();
+		backRightVelocity = backRight.getVelocity();
+		backRightAppliedVolts = backRight.getMotorVoltage();
+		backRightCurrent = backRight.getSupplyCurrent();
+		backRightTemp = backRight.getDeviceTemp();
 		this.gyroIO = gyro;
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -175,7 +188,9 @@ public class MecanumIOTalonFX implements MecanumIO {
 	}
 
 	@Override
-	public void reset() { gyroIO.reset(); }
+	public void reset() {
+		gyroIO.reset();
+	}
 
 	@Override
 	public void setVoltage(double frontLeftVolts, double frontRightVolts,
@@ -185,16 +200,20 @@ public class MecanumIOTalonFX implements MecanumIO {
 		backLeft.setControl(new VoltageOut(backLeftVolts));
 		backRight.setControl(new VoltageOut(backRightVolts));
 	}
-	
-	/** Converts radians per second into voltage that will achieve that value in a motor.
+
+	/**
+	 * Converts radians per second into voltage that will achieve that value in a
+	 * motor.
 	 * Takes the angular velocity of the motor (radPerSec),
-	 * divides by the theoretical max angular speed (max linear speed / wheel radius)
-	 * and multiplies by 12 (the theoretical standard voltage)  
+	 * divides by the theoretical max angular speed (max linear speed / wheel
+	 * radius)
+	 * and multiplies by 12 (the theoretical standard voltage)
+	 * 
 	 * @param radPerSec radians per second of the motor
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+		return 12 * radPerSec * (TrainConstants.kWheelDiameter / 2) / DriveConstants.kMaxSpeedMetersPerSecond;
 
 	}
 
@@ -211,22 +230,32 @@ public class MecanumIOTalonFX implements MecanumIO {
 		});
 		Logger.recordOutput("Mecanum/CurrentLimit", amps);
 	}
-	
+
 	@Override
 	public void setVelocity(double frontLeftRadPerSec,
 			double frontRightRadPerSec, double backLeftRadPerSec,
 			double backRightRadPerSec, double frontLeftFFVolts,
 			double frontRightFFVolts, double backLeftFFVolts,
 			double backRightFFVolts) {
-			if (DriveConstants.enablePID){
-				frontLeft.setControl(new VelocityVoltage(Units.radiansToRotations(frontLeftRadPerSec* GEAR_RATIO)).withEnableFOC(true).withFeedForward(frontLeftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
-				frontRight.setControl(new VelocityVoltage(Units.radiansToRotations(frontRightRadPerSec* GEAR_RATIO)).withEnableFOC(true).withFeedForward(frontRightFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
-				backLeft.setControl(new VelocityVoltage(Units.radiansToRotations(backLeftRadPerSec* GEAR_RATIO)).withEnableFOC(true).withFeedForward(backLeftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
-				backRight.setControl(new VelocityVoltage(Units.radiansToRotations(backRightRadPerSec* GEAR_RATIO)).withEnableFOC(true).withFeedForward(backRightFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
-			}else{
-				setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec), convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec), convertRadPerSecondToVoltage(backRightRadPerSec));
-			}
-		
+		if (DriveConstants.enablePID) {
+			frontLeft.setControl(new VelocityVoltage(Units.radiansToRotations(frontLeftRadPerSec * GEAR_RATIO))
+					.withEnableFOC(true).withFeedForward(frontLeftFFVolts).withSlot(0)
+					.withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
+			frontRight.setControl(new VelocityVoltage(Units.radiansToRotations(frontRightRadPerSec * GEAR_RATIO))
+					.withEnableFOC(true).withFeedForward(frontRightFFVolts).withSlot(0)
+					.withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
+			backLeft.setControl(new VelocityVoltage(Units.radiansToRotations(backLeftRadPerSec * GEAR_RATIO))
+					.withEnableFOC(true).withFeedForward(backLeftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
+					.withLimitForwardMotion(false).withLimitReverseMotion(false));
+			backRight.setControl(new VelocityVoltage(Units.radiansToRotations(backRightRadPerSec * GEAR_RATIO))
+					.withEnableFOC(true).withFeedForward(backRightFFVolts).withSlot(0)
+					.withOverrideBrakeDurNeutral(false).withLimitForwardMotion(false).withLimitReverseMotion(false));
+		} else {
+			setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec),
+					convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec),
+					convertRadPerSecondToVoltage(backRightRadPerSec));
+		}
+
 	}
 
 	@Override

@@ -40,44 +40,57 @@ public class TankIOTalonFX implements TankIO {
 			.getP();
 	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
 			.getD();
-	private final TalonFX leftLeader = new TalonFX(
-			DriveConstants.kFrontLeftDrivePort);
-	private final TalonFX leftFollower = new TalonFX(
-			DriveConstants.kBackLeftDrivePort);
-	private final TalonFX rightLeader = new TalonFX(
-			DriveConstants.kFrontRightDrivePort);
-	private final TalonFX rightFollower = new TalonFX(
-			DriveConstants.kBackRightDrivePort);
-	private final StatusSignal<Angle> leftPosition = leftLeader.getPosition();
-	private final StatusSignal<AngularVelocity> leftVelocity = leftLeader.getVelocity();
-	private final StatusSignal<Voltage> leftAppliedVolts = leftLeader
-			.getMotorVoltage();
-	private final StatusSignal<Current> leftLeaderCurrent = leftLeader
-			.getSupplyCurrent();
-	private final StatusSignal<Current> leftFollowerCurrent = leftFollower
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> leftLeaderTemp = leftLeader
-			.getDeviceTemp();
-	private final StatusSignal<Temperature> leftFollowerTemp = leftFollower
-			.getDeviceTemp();
-	private final StatusSignal<Angle> rightPosition = rightLeader.getPosition();
-	private final StatusSignal<AngularVelocity> rightVelocity = rightLeader.getVelocity();
-	private final StatusSignal<Voltage> rightAppliedVolts = rightLeader
-			.getMotorVoltage();
-	private final StatusSignal<Current> rightLeaderCurrent = rightLeader
-			.getSupplyCurrent();
-	private final StatusSignal<Current> rightFollowerCurrent = rightFollower
-			.getSupplyCurrent();
-	private final StatusSignal<Temperature> rightLeaderTemp = rightLeader
-			.getDeviceTemp();
-	private final StatusSignal<Temperature> rightFollowerTemp = rightFollower
-			.getDeviceTemp();
-	private final TalonFXConfiguration config = new TalonFXConfiguration();
-	private static final Executor currentExecutor = Executors
-			.newFixedThreadPool(8);
+	private final TalonFX leftLeader;
+	private final TalonFX leftFollower;
+	private final TalonFX rightLeader;
+	private final TalonFX rightFollower;
+	private final StatusSignal<Angle> leftPosition;
+	private final StatusSignal<AngularVelocity> leftVelocity;
+	private final StatusSignal<Voltage> leftAppliedVolts;
+	private final StatusSignal<Current> leftLeaderCurrent;
+	private final StatusSignal<Current> leftFollowerCurrent;
+	private final StatusSignal<Temperature> leftLeaderTemp;
+	private final StatusSignal<Temperature> leftFollowerTemp;
+	private final StatusSignal<Angle> rightPosition;
+	private final StatusSignal<AngularVelocity> rightVelocity;
+	private final StatusSignal<Voltage> rightAppliedVolts;
+	private final StatusSignal<Current> rightLeaderCurrent;
+	private final StatusSignal<Current> rightFollowerCurrent;
+	private final StatusSignal<Temperature> rightLeaderTemp;
+	private final StatusSignal<Temperature> rightFollowerTemp;
+	private final TalonFXConfiguration config;
+	private static final Executor currentExecutor = Executors.newFixedThreadPool(8);
 
+	@SuppressWarnings("unused")
 	public TankIOTalonFX(GyroIO gyro) {
 		this.gyro = gyro;
+		if (DriveConstants.canBusName == "") {
+			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort);
+			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort);
+			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort);
+			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort);
+		} else {
+			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
+			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
+			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
+			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
+		}
+
+		this.leftPosition = leftLeader.getPosition();
+		this.leftVelocity = leftLeader.getVelocity();
+		this.leftAppliedVolts = leftLeader.getMotorVoltage();
+		this.leftLeaderCurrent = leftLeader.getSupplyCurrent();
+		this.leftFollowerCurrent = leftFollower.getSupplyCurrent();
+		this.leftLeaderTemp = leftLeader.getDeviceTemp();
+		this.leftFollowerTemp = leftFollower.getDeviceTemp();
+		this.rightPosition = rightLeader.getPosition();
+		this.rightVelocity = rightLeader.getVelocity();
+		this.rightAppliedVolts = rightLeader.getMotorVoltage();
+		this.rightLeaderCurrent = rightLeader.getSupplyCurrent();
+		this.rightFollowerCurrent = rightFollower.getSupplyCurrent();
+		this.rightLeaderTemp = rightLeader.getDeviceTemp();
+		this.rightFollowerTemp = rightFollower.getDeviceTemp();
+		this.config = new TalonFXConfiguration();
 		config.CurrentLimits.SupplyCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		config.CurrentLimits.SupplyCurrentLimitEnable = true;
 		config.MotorOutput.Inverted = DriveConstants.kFrontLeftDriveReversed
@@ -181,12 +194,14 @@ public class TankIOTalonFX implements TankIO {
 	public void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {
 		if (DriveConstants.enablePID) {
-			leftLeader.setControl(new VelocityVoltage(Units.radiansToRotations(leftRadPerSec * GEAR_RATIO)).withEnableFOC(true)
-					.withFeedForward(leftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
-					.withLimitForwardMotion(false).withLimitReverseMotion(false));
-			rightLeader.setControl(new VelocityVoltage(Units.radiansToRotations(rightRadPerSec * GEAR_RATIO)).withEnableFOC(true)
-					.withFeedForward(rightFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
-					.withLimitForwardMotion(false).withLimitReverseMotion(false));
+			leftLeader.setControl(
+					new VelocityVoltage(Units.radiansToRotations(leftRadPerSec * GEAR_RATIO)).withEnableFOC(true)
+							.withFeedForward(leftFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
+							.withLimitForwardMotion(false).withLimitReverseMotion(false));
+			rightLeader.setControl(
+					new VelocityVoltage(Units.radiansToRotations(rightRadPerSec * GEAR_RATIO)).withEnableFOC(true)
+							.withFeedForward(rightFFVolts).withSlot(0).withOverrideBrakeDurNeutral(false)
+							.withLimitForwardMotion(false).withLimitReverseMotion(false));
 		} else {
 			setVoltage(convertRadPerSecondToVoltage(leftRadPerSec),
 					convertRadPerSecondToVoltage(rightRadPerSec));
