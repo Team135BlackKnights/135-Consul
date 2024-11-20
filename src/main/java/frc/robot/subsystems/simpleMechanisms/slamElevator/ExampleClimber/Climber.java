@@ -56,7 +56,29 @@ public class Climber extends GenericSlamElevator<Climber.Goal> {
     }
 
     @Override
-    public Command systemCheckCommand() {
-        return Commands.none();
+    /**
+     * A command which sets to idle, ejects, and then sets to idle again.
+     */
+    protected Command systemCheckCommand() {
+        return Commands.sequence(
+                Commands.runOnce(() -> goal = Goal.STOP),
+                Commands.run(() -> goal = Goal.EXTEND).withTimeout(5),
+                Commands.runOnce(() -> {
+                    if (!extended()) {
+                        addFault(
+                                "[System Check] " + getName() + " failed to extend fully",
+                                false, true);
+                    }
+                }),
+                //go back down
+                Commands.run(() -> goal = Goal.RETRACT).withTimeout(5),
+                Commands.runOnce(() -> {
+                    if (!retracted()) {
+                        addFault(
+                                "[System Check] " + getName() + " failed to retract fully",
+                                false, true);
+                    }
+                }),
+                Commands.runOnce(() -> goal = Goal.RETRACT));
     }
 }

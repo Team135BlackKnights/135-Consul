@@ -121,7 +121,7 @@ public abstract class GenericSlamElevator<G extends GenericSlamElevator.SlamElev
             }
             // If we are finished with timer, finish goal.
             // Also assume we are at the goal if auto was started
-            atGoal = staticTimer.hasElapsed(staticTimeSecs) || DriverStation.isAutonomousEnabled();
+            atGoal = staticTimer.hasElapsed(staticTimeSecs)/* || Constants.currentMatchState == FRCMatchState.AUTO*/;
         } else {
             staticTimer.stop();
             staticTimer.reset();
@@ -202,5 +202,4 @@ public abstract class GenericSlamElevator<G extends GenericSlamElevator.SlamElev
     public void setCurrentLimit(int amps) {
         io.setCurrentLimit(amps);
     }
-    // TODO: Add system checks and tests
 }

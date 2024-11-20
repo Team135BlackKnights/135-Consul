@@ -1,4 +1,4 @@
-package frc.robot.subsystems.simpleMechanisms.slamElevator;
+package frc.robot.subsystems.simpleMechanisms.roller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,10 +7,10 @@ import org.littletonrobotics.junction.AutoLog;
 
 import frc.robot.utils.selfCheck.SelfChecking;
 
-public interface GenericSlamElevatorIO {
+public interface GenericRollerSystemIO {
   @AutoLog
-  class GenericSlamElevatorIOInputs {
-    public boolean motorConnected = true;
+  abstract class GenericRollerSystemIOInputs {
+    public boolean connected = true;
     public double positionRads = 0.0;
     public double velocityRadsPerSec = 0.0;
     public double appliedVoltage = 0.0;
@@ -20,17 +20,18 @@ public interface GenericSlamElevatorIO {
     public String name = "";
   }
 
-  /** Update the inputs. */
-  default void updateInputs(GenericSlamElevatorIOInputs inputs) {}
+  default void updateInputs(GenericRollerSystemIOInputs inputs) {
+  }
 
-  /** Run slam elevator at amps */
-  default void runCurrent(double amps) {}
-  default void setCurrentLimit(double amps) {}
-  /** Stop slam elevator */
-  default void stop() {}
+  /** Run feeder at volts */
+  default void runVolts(double volts) {
+  }
 
-  /** Enable or disable brake mode on the elevator motor. */
-  default void setBrakeMode(boolean enable) {
+  default void setCurrentLimit(double amps) {
+  }
+
+  /** Stop feeder */
+  default void stop() {
   }
 
   /**
@@ -38,6 +39,6 @@ public interface GenericSlamElevatorIO {
    * implementation
    */
   public default List<SelfChecking> getSelfCheckingHardware() {
-      return new ArrayList<SelfChecking>();
+    return new ArrayList<SelfChecking>();
   }
 }

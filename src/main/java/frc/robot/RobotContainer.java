@@ -24,6 +24,15 @@ import frc.robot.subsystems.drive.Tank.TankIO;
 import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
+import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.Intake;
+import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIO;
+import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIOKrakenFOC;
+import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIOSim;
+import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIOSparkBase;
+import frc.robot.subsystems.simpleMechanisms.slamElevator.ExampleClimber.Climber;
+import frc.robot.subsystems.simpleMechanisms.slamElevator.ExampleClimber.ClimberIO;
+import frc.robot.subsystems.simpleMechanisms.slamElevator.ExampleClimber.ClimberIOKrakenFOC;
+import frc.robot.subsystems.simpleMechanisms.slamElevator.ExampleClimber.ClimberIOSim;
 import frc.robot.subsystems.drive.Tank.Tank;
 import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
@@ -43,6 +52,7 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
+import frc.robot.utils.simpleMechanisms.SimpleMechanismConstants;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -96,6 +106,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static Climber climber;
+	public static Intake intake;
 	private final SendableChooser<Command> autoChooser;
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
@@ -287,6 +299,28 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
+				switch (SimpleMechanismConstants.Climber.motorType) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+						climber = new Climber(new ClimberIOKrakenFOC());
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type for climber (REV NOT SUPPORTED!), please check SimpleMechanismConstants.java!");
+				}
+				switch (SimpleMechanismConstants.Roller.motorType) {
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						intake = new Intake(new IntakeIOSparkBase());
+						break;
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+						intake = new Intake(new IntakeIOKrakenFOC());
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type for intake, please check SimpleMechanismConstants.java!");
+				}
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -391,6 +425,8 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
+				climber = new Climber(new ClimberIOSim());
+				intake = new Intake(new IntakeIOSim());
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -426,6 +462,8 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
+				climber = new Climber(new ClimberIO(){});
+				intake = new Intake(new IntakeIO(){});
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -564,7 +602,7 @@ public class RobotContainer {
 	 * @return Current in amps.
 	 */
 	public static double[] getCurrentDraw() {
-		return new double[] { Math.min(drivetrainS.getCurrent(), 200)
+		return new double[] { Math.min(drivetrainS.getCurrent(), 200), climber.getCurrent(),intake.getCurrent()
 		};
 	}
 
@@ -578,7 +616,8 @@ public class RobotContainer {
 	 * @return a command with all of them in a sequence.
 	 */
 	public static Command allSystemsCheck() {
-		return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand());
+		return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand(), climber.getSystemCheckCommand(),
+				intake.getSystemCheckCommand());
 	}
 
 	public static HashMap<String, Double> combineMaps(
@@ -593,7 +632,7 @@ public class RobotContainer {
 
 	public static HashMap<String, Double> getAllTemps() {
 		// List of HashMaps
-		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps());
+		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps(), climber.getTemps(), intake.getTemps());
 		// Combine all maps
 		HashMap<String, Double> combinedMap = combineMaps(maps);
 		return combinedMap;
@@ -606,18 +645,24 @@ public class RobotContainer {
 	 */
 	public static boolean allSystemsOK() {
 		return drivetrainS
-				.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK;
+				.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK
+				&& climber.getSystemStatus() == SubsystemChecker.SystemStatus.OK
+				&& intake.getSystemStatus() == SubsystemChecker.SystemStatus.OK;
 	}
 
 	public static Collection<ParentDevice> getOrchestraDevices() {
 		Collection<ParentDevice> devices = new ArrayList<>();
 		devices.addAll(drivetrainS.getDriveOrchestraDevices());
+		devices.addAll(climber.getOrchestraDevices());
+		devices.addAll(intake.getOrchestraDevices());
 		return devices;
 	}
 
 	public static Subsystem[] getAllSubsystems() {
-		Subsystem[] subsystems = new Subsystem[1];
+		Subsystem[] subsystems = new Subsystem[3];
 		subsystems[0] = drivetrainS;
+		subsystems[1] = climber;
+		subsystems[2] = intake;
 		return subsystems;
 	}
 
