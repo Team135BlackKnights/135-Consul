@@ -64,7 +64,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 			DriveConstants.kModuleTranslations[1],
 			DriveConstants.kModuleTranslations[2],
 			DriveConstants.kModuleTranslations[3]);
-	private final SimpleMotorFeedforward feedforward = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private final SimpleMotorFeedforward feedforward = DriveConstants.overallDriveMotorConstantContainer
 			.getFeedforward();
 	private final SysIdRoutine sysId;
 	private final double poseBufferSizeSeconds = 2;

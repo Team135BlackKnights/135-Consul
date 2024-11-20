@@ -206,10 +206,10 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.maxAcceleration(DriveConstants.maxTranslationalAcceleration.get()
 						/ DriveConstants.TrainConstants.kWheelDiameter / 2);
 		driveClosedLoopConfig = new ClosedLoopConfig().pidf(
-				DriveConstants.TrainConstants.overallDriveMotorConstantContainer.getP(),
-				DriveConstants.TrainConstants.overallDriveMotorConstantContainer.getI(),
-				DriveConstants.TrainConstants.overallDriveMotorConstantContainer.getD(),
-				DriveConstants.TrainConstants.overallDriveMotorConstantContainer.getKv())
+				DriveConstants.overallDriveMotorConstantContainer.getP(),
+				DriveConstants.overallDriveMotorConstantContainer.getI(),
+				DriveConstants.overallDriveMotorConstantContainer.getD(),
+				DriveConstants.overallDriveMotorConstantContainer.getKv())
 				.feedbackSensor(FeedbackSensor.kPrimaryEncoder).apply(driveMaxMotionConfig);
 		driveConfig = driveConfig.apply(driveClosedLoopConfig);
 		// Drive Config Done!
@@ -231,10 +231,10 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.busVoltagePeriodMs((int) (1000 / DriveConstants.TrainConstants.odomHz));
 		turnConfig = turnConfig.apply(turnSignalsConfig);
 		turnClosedLoopConfig = new ClosedLoopConfig().pidf(
-				DriveConstants.TrainConstants.overallTurningMotorConstantContainer.getP(),
-				DriveConstants.TrainConstants.overallTurningMotorConstantContainer.getI(),
-				DriveConstants.TrainConstants.overallTurningMotorConstantContainer.getD(),
-				DriveConstants.TrainConstants.overallTurningMotorConstantContainer.getKv())
+				DriveConstants.overallTurningMotorConstantContainer.getP(),
+				DriveConstants.overallTurningMotorConstantContainer.getI(),
+				DriveConstants.overallTurningMotorConstantContainer.getD(),
+				DriveConstants.overallTurningMotorConstantContainer.getKv())
 				.feedbackSensor(FeedbackSensor.kAnalogSensor).positionWrappingEnabled(true)
 				.positionWrappingInputRange(-Math.PI, Math.PI);
 		turnConfig = turnConfig.apply(turnClosedLoopConfig);

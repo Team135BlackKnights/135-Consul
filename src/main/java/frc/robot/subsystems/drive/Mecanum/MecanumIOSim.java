@@ -20,9 +20,9 @@ import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class MecanumIOSim implements MecanumIO {
 	public final MecanumDrivePhysicsSimResults mecanumDrivePhysicsSimResults = new MecanumDrivePhysicsSimResults();
-	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
-	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
 	private final DCMotorSim frontLeft, backLeft, frontRight, backRight;
 	private double frontLeftAppliedVolts = 0.0;
