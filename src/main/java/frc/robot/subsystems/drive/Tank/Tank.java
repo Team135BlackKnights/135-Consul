@@ -59,7 +59,7 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	private final TankIOInputsAutoLogged inputs = new TankIOInputsAutoLogged();
 	private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(
 			TRACK_WIDTH);
-	private final SimpleMotorFeedforward feedforward = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private final SimpleMotorFeedforward feedforward = DriveConstants.overallDriveMotorConstantContainer
 			.getFeedforward();
 	private final SysIdRoutine sysId;
 	private final double poseBufferSizeSeconds = 2;

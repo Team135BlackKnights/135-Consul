@@ -20,52 +20,52 @@ import org.littletonrobotics.junction.Logger;
 public class Module {
 	private static final LoggableTunedNumber drivekP = new LoggableTunedNumber(
 			"Drive/Module/DrivekP",
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getP());
 	private static final LoggableTunedNumber drivekI = new LoggableTunedNumber(
 			"Drive/Module/DrivekI",
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getI());
 	private static final LoggableTunedNumber drivekD = new LoggableTunedNumber(
 			"Drive/Module/DrivekD",
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getD());
 	private static final LoggableTunedNumber drivekS = new LoggableTunedNumber(
 			"Drive/Module/DrivekS",
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getKs());
 	private static final LoggableTunedNumber drivekV = new LoggableTunedNumber(
 			"Drive/Module/DrivekV",
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getKv());
 	private static final LoggableTunedNumber turnkP = new LoggableTunedNumber(
 			"Drive/Module/TurnkP",
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+			DriveConstants.overallTurningMotorConstantContainer
 					.getP());
 	private static final LoggableTunedNumber turnkI = new LoggableTunedNumber(
 			"Drive/Module/TurnkI",
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+			DriveConstants.overallTurningMotorConstantContainer
 					.getI());
 	private static final LoggableTunedNumber turnkD = new LoggableTunedNumber(
 			"Drive/Module/TurnkD",
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+			DriveConstants.overallTurningMotorConstantContainer
 					.getD());
 	private static final LoggableTunedNumber turnkS = new LoggableTunedNumber(
 			"Drive/Module/TurnkS",
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+			DriveConstants.overallTurningMotorConstantContainer
 					.getKs());
 	private static final LoggableTunedNumber turnkV = new LoggableTunedNumber(
 			"Drive/Module/TurnkV",
-			DriveConstants.TrainConstants.overallTurningMotorConstantContainer
+			DriveConstants.overallTurningMotorConstantContainer
 					.getKv());
 	private SwerveModuleState setpointState = new SwerveModuleState();
 	private final int index;
 	private final ModuleIO io;
 	private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
 	private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getKs(),
-			DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+			DriveConstants.overallDriveMotorConstantContainer
 					.getKv(),
 			0.0);
 
