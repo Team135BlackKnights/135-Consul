@@ -295,21 +295,23 @@ public class ElevatorS extends SubsystemChecker {
 	public BooleanSupplier withinLimits(SysIdRoutine.Direction direction) {
 		BooleanSupplier returnVal;
 		if (direction.toString() == "kReverse") {
-			if (elevatorIOInputs.positionMeters < StateSpaceConstants.Elevator.startingPosition) {
-				returnVal = () -> false;
+			if (elevatorIOInputs.positionMeters <= StateSpaceConstants.Elevator.startingPosition) {
+				returnVal = () -> true;
 				return returnVal;
 			}
 		}
 		// second set of conditionals (below) checks to see if the Elevator is within
 		// the hard limits, and stops it if it is
 		if (direction.toString() == "kForward") {
-			if (elevatorIOInputs.positionMeters > StateSpaceConstants.Elevator.maxPosition) {
-				returnVal = () -> false;
+			System.out.println("Elevator Position: " + elevatorIOInputs.positionMeters);
+			if (elevatorIOInputs.positionMeters >= StateSpaceConstants.Elevator.maxPosition) {
+				returnVal = () -> true;
+				System.out.println("Elevator Position: " + elevatorIOInputs.positionMeters);
 				return returnVal;
 			}
 		}
 		// otherwise, we're in bounds!
-		returnVal = () -> true;
+		returnVal = () -> false;
 		return returnVal;
 	}
 

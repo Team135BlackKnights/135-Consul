@@ -311,21 +311,21 @@ public class SingleJointedArmS extends SubsystemChecker {
 	public BooleanSupplier withinLimits(SysIdRoutine.Direction direction) {
 		BooleanSupplier returnVal;
 		if (direction.toString() == "kReverse") {
-			if (getDistance() < StateSpaceConstants.SingleJointedArm.startingPosition) {
-				returnVal = () -> false;
+			if (getDistance() <= StateSpaceConstants.SingleJointedArm.startingPosition) {
+				returnVal = () -> true;
 				return returnVal;
 			}
 		}
 		// second set of conditionals (below) checks to see if the SingleJointedarm is
 		// within the hard limits, and stops it if it is
 		if (direction.toString() == "kForward") {
-			if (getDistance() > StateSpaceConstants.SingleJointedArm.maxPosition) {
-				returnVal = () -> false;
+			if (getDistance() >= StateSpaceConstants.SingleJointedArm.maxPosition) {
+				returnVal = () -> true;
 				return returnVal;
 			}
 		}
 		// otherwise, we're in bounds!
-		returnVal = () -> true;
+		returnVal = () -> false;
 		return returnVal;
 	}
 
