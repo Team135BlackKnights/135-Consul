@@ -23,7 +23,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
 
 import frc.robot.Constants.FRCMatchState;
-import frc.robot.Constants.SysIdRoutines;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.vision.VisionConstants;
@@ -62,8 +61,6 @@ public class Robot extends LoggedRobot {
 	private boolean isPracticeDSMode = false, loggerStarted = false;
 	private double lastMatchTime = 0, previousTime = Logger.getRealTimestamp(), accumulatedCharge = 0;
 	private LoggedPowerDistribution pdh;
-	public static SysIdRoutines runningTest = Constants.SysIdRoutines
-			.values()[0];
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus rioCanBus = new CANBus();
 	public static final CANBus driveCanBus = new CANBus(DriveConstants.canBusName);
@@ -155,7 +152,6 @@ public class Robot extends LoggedRobot {
 		loggerStarted = true;
 		m_robotContainer = new RobotContainer();
 		DataHandler.startHandler();
-		SmartDashboard.putString("QUEUED TEST", runningTest.toString()); //Put what Test we're going to run on the test controller.
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
@@ -214,9 +210,6 @@ public class Robot extends LoggedRobot {
 		// commands, running already-scheduled commands, removing finished or interrupted commands,
 		// and running subsystem periodic() methods.  This must be called from the robot's periodic
 		// block in order for anything in the Command-based framework to work.
-		runningTest = Constants.SysIdRoutines
-				.values()[RobotContainer.currentTest];
-		SmartDashboard.putString("QUEUED TEST", runningTest.toString());
 		CommandScheduler.getInstance().run();
 		for (PeriodicFunction f : periodicFunctions) {
 			f.runIfReady();

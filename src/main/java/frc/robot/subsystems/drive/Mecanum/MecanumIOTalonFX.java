@@ -38,9 +38,9 @@ public class MecanumIOTalonFX implements MecanumIO {
 	private final GyroIO gyroIO;
 	private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
-	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
-	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
 	private final TalonFX frontLeft;
 	private final TalonFX backLeft;
