@@ -44,7 +44,6 @@ public class FeedForwardCharacterization extends Command {
       voltageConsumer.accept(0.0);
     } else if (atLimit.get()){
       //end the commmand early
-      end(true);
       isFinished = true;
     } else {
       double voltage = (timer.get() - START_DELAY_SECS) * RAMP_VOLTS_PER_SEC;
