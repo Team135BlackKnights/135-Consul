@@ -16,7 +16,9 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
@@ -182,22 +184,12 @@ public class DriveConstants {
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
 				0.001, 0.001, 0.001, 5, 0, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0),
-				//sim
-				//overallTurningMotorConstantContainer = new MotorConstantContainer(
-				//		0.02, 0.001, 0.001, 12, 0.01, 0.001),
-				/*//rev 
-				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0.001), //Average the turning motors for these vals.
-				//ctre*/
-				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						2.5, 4, 0.001, 40, 10, 5), //Average the turning motors for these vals.	
-				overallDriveMotorConstantContainer = new MotorConstantContainer(2, //5 for CTRE
-						.1, 0.001, 5, 0.25, 0.05);
+						0.001, 0.001, 0.001, 5, 0, 0);
 	}
 	public static ModuleConfig mainModuleConfig;
 	public static RobotConfig mainConfig;
 	public static PathFollowingController mainController;
+	public static MotorConstantContainer overallTurningMotorConstantContainer, overallDriveMotorConstantContainer;
 	static{
 		if (driveType == DriveTrainType.TANK){
 
@@ -208,6 +200,25 @@ public class DriveConstants {
 		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
 			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
+		}
+		if (Constants.currentMode == Mode.SIM) {
+			overallTurningMotorConstantContainer = new MotorConstantContainer(
+					0.02, 0.001, 0.001, 12, 0.01, 0.001);
+			overallDriveMotorConstantContainer = new MotorConstantContainer(.1, // 5 for CTRE
+					.13, 0.001, .05, 0, 0);
+		} else {
+			if (robotMotorController == MotorVendor.CTRE_ON_CANIVORE
+					|| robotMotorController == MotorVendor.CTRE_ON_RIO) {
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						2.5, 4, 0.001, 40, 10, 5); // Average the turning motors for these vals.
+				overallDriveMotorConstantContainer = new MotorConstantContainer(2, // 5 for CTRE
+						.1, 0.001, 5, 0.25, 0.05);
+			} else {
+				overallTurningMotorConstantContainer = new MotorConstantContainer(
+						0.001, 0.001, 0.001, 5, 0, 0.001); // Average the turning motors for these vals.
+				overallDriveMotorConstantContainer = new MotorConstantContainer(2, // 5 for CTRE
+						.1, 0.001, 5, 0.25, 0.05);
+			}
 		}
 	}
 	public static DriveTrainSimulationProfile mainRobotProfile = new DriveTrainSimulationProfile(
