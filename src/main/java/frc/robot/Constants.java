@@ -74,10 +74,6 @@ public final class Constants {
 		//Runs when the match is over (after endgame)
 		MATCHOVER
 	}
-
-	public static enum SysIdRoutines {
-		swerveDrive, flywheel, singleJointedArm, elevator
-	}
 	public static enum EncoderType{
 		NO_ATTACHED_ENCODER,
 		DUTY_CYCLE,

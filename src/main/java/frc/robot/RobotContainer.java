@@ -72,7 +72,6 @@ import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedAr
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIODutyCycle;
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOREVAbsolute;
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOThriftyAbsolute;
-import frc.robot.utils.RunTest;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;

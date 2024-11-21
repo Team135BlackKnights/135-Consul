@@ -5,10 +5,6 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -36,7 +32,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import static edu.wpi.first.units.Units.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,12 +43,7 @@ public class ElevatorS extends SubsystemChecker {
 	private final ElevatorEncoderIO encoderIO;
 	private final ElevatorIOInputsAutoLogged elevatorIOInputs = new ElevatorIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
-	private final SysIdRoutine sysId;
-	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
-	Voltage holdVoltage = Volts.of(4);
-	Time timeout = Seconds.of(10);
 	private static double m_velocity, m_position;
-	// using sysId
 	/*
 	 * All Elevator Statespace uses an N2 at the first position, because we care
 	 * about velocity AND position of the Elevator.
@@ -132,12 +122,6 @@ public class ElevatorS extends SubsystemChecker {
 		if (encoderIO != null) {
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
-		sysId = new SysIdRoutine(
-				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
-						(state) -> Logger.recordOutput("ElevatorS/SysIdState",
-								state.toString())),
-				new SysIdRoutine.Mechanism((voltage) -> runVolts(voltage.in(Volts)),
-						null, this));
 		registerSelfCheckHardware();
 		m_loop.reset(VecBuilder.fill(m_position, m_velocity));
 		m_lastProfiledReference = new TrapezoidProfile.State(m_position,
@@ -268,19 +252,6 @@ public class ElevatorS extends SubsystemChecker {
 	public double getVelocity() {
 		return m_loop.getXHat(1);
 	}
-
-	/**
-	 * @param direction forward/reverse ("kForward" or "kReverse")
-	 * @return command which runs wanted test
-	 */
-	public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-		return sysId.quasistatic(direction).onlyWhile(withinLimits(direction));
-	}
-
-	public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-		return sysId.dynamic(direction).onlyWhile(withinLimits(direction));
-	}
-
 	public TrapezoidProfile.State limitState(TrapezoidProfile.State state) {
 		if (state.position < startingState().position) {
 			return startingState();
