@@ -8,12 +8,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
  * and D for PID loops. Remember to check whether your loop should be position
  * or velocity
  * 
- * @param Kp The Kp value from SysID, used in state-space
- * @param Ks The Ks value from SysID, used in state-space
- * @param Kv The Kv value from SysID, used in state-space
- * @param P  The P value from SysID, used in PID loops
- * @param I  The I value from a given constant, used in PID loops
- * @param D  the D Value from SysId, used in PID loops
+ * 
  */
 public class MotorConstantContainer {
 	private double[] valueHolderArray = new double[6];
@@ -22,12 +17,13 @@ public class MotorConstantContainer {
 	 * Create our SysID constant holder, and alert to any possible SysID
 	 * mistakes.
 	 * 
-	 * @param Ks
-	 * @param Kv
-	 * @param Ka
-	 * @param P
-	 * @param I
-	 * @param D
+	 * @param Ks The Ks value from @see StaticCharacterization, used in state-space
+	 * @param Kv The Kv value from @see FeedForwardCharacterization, used in state-space.
+	 * @param Ka The Ka value from SysID, used in state-space. ALMOST ALWAYS
+	 *           UNUSED (0.001)
+	 * @param P  The P value, used in PID loops
+	 * @param I  The I value from a given constant, used in PID loops
+	 * @param D  the D Value, used in PID loops
 	 */
 	public MotorConstantContainer(double Ks, double Kv, double Ka, double P,
 			double I, double D) {
@@ -67,30 +63,42 @@ public class MotorConstantContainer {
 	/**
 	 * @return Ks SysID constant
 	 */
-	public double getKs() { return valueHolderArray[0]; }
+	public double getKs() {
+		return valueHolderArray[0];
+	}
 
 	/**
 	 * @return Kv SysID constant
 	 */
-	public double getKv() { return valueHolderArray[1]; }
+	public double getKv() {
+		return valueHolderArray[1];
+	}
 
 	/**
 	 * @return Ka SysID constant
 	 */
-	public double getKa() { return valueHolderArray[2]; }
+	public double getKa() {
+		return valueHolderArray[2];
+	}
 
 	/**
-	 * @return PID P SysID constant
+	 * @return PID P constant
 	 */
-	public double getP() { return valueHolderArray[3]; }
+	public double getP() {
+		return valueHolderArray[3];
+	}
 
 	/**
-	 * @return PID I SysID constant IF using a position controller
+	 * @return PID I constant IF using a position controller
 	 */
-	public double getI() { return valueHolderArray[4]; }
+	public double getI() {
+		return valueHolderArray[4];
+	}
 
 	/**
-	 * @return PID D SysID constant IF using a position controller
+	 * @return PID D constant IF using a position controller
 	 */
-	public double getD() { return valueHolderArray[5]; }
+	public double getD() {
+		return valueHolderArray[5];
+	}
 }

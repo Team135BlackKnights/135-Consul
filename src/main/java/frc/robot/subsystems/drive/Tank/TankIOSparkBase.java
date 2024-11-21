@@ -33,9 +33,9 @@ import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class TankIOSparkBase implements TankIO {
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
-	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
-	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
 	private final SparkBase leftLeader;
 	private final SparkBase rightLeader;

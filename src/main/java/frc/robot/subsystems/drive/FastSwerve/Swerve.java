@@ -1,7 +1,5 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
-import static edu.wpi.first.units.Units.*;
-
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -18,7 +16,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -113,7 +110,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			Matrix<N3, N1> stdDevs) {
 	}
 
-	private final SysIdRoutine sysId;
 	private SwerveModulePosition[] lastWheelPositions = new SwerveModulePosition[] { new SwerveModulePosition(),
 			new SwerveModulePosition(), new SwerveModulePosition(),
 			new SwerveModulePosition() };
@@ -144,7 +140,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-				AutoBuilder.configure(this::getPose, this::resetPose,
+		AutoBuilder.configure(this::getPose, this::resetPose,
 				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
@@ -157,15 +153,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
 			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
 		});
-		sysId = new SysIdRoutine(
-				new SysIdRoutine.Config(null, null, null,
-						(state) -> Logger.recordOutput("Drive/SysIdState",
-								state.toString())),
-				new SysIdRoutine.Mechanism((voltage) -> {
-					for (int i = 0; i < 4; i++) {
-						modules[i].runCharacterization(0, voltage.in(Volts));
-					}
-				}, null, this));
 		setBrakeMode(true);
 		registerSelfCheckHardware();
 		this.odometryThread = OdometryThread.createInstance();
@@ -509,41 +496,43 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	int pathplannerIndex = 0;
 	boolean movingRight = false;
+
 	@Override
 	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-				pathplannerIndex++;
+		pathplannerIndex++;
 		for (int i = 0; i < 4; i++) {
-			
-			//only the robot relative x and y forces are provided for Choreo.
+
+			// only the robot relative x and y forces are provided for Choreo.
 			double xForce = feedforwards.robotRelativeForcesXNewtons()[i];
 			double yForce = feedforwards.robotRelativeForcesYNewtons()[i];
-			if (pathplannerIndex ==1){
+			if (pathplannerIndex == 1) {
 				double angle = Math.atan2(yForce, xForce);
 				if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
 					movingRight = true;
-				  } else {
+				} else {
 					movingRight = false;
-				  }
+				}
 			}
 			double linearForce = Math.sqrt(xForce * xForce + yForce * yForce);
 			double velocityMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-	  
+
 			// Calculate the dot product to determine if force aligns with velocity
 			double dotProduct = (xForce * speeds.vxMetersPerSecond + yForce * speeds.vyMetersPerSecond);
-	  
+
 			// Sign adjustment based on alignment with velocity direction
 			double signAdjustment = Math.signum(dotProduct / (linearForce * velocityMagnitude));
 			if (Double.isNaN(signAdjustment)) {
-			  signAdjustment = 1;
+				signAdjustment = 1;
 			}
 			// Assign the adjusted force magnitude
-			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)* DriveConstants.TrainConstants.kWheelDiameter / 2;
-					}
-					Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
-					Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
+			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)
+					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+		}
+		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
+		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
 	}
 
 	/**
@@ -623,6 +612,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				.toArray();
 	}
 
+	@Override
+	@AutoLogOutput(key = "RobotState/Velocity")
 	public double getCharacterizationVelocity() {
 		double driveVelocityAverage = 0.0;
 		for (var module : modules) {
@@ -637,11 +628,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		characterizationVelocity = velocity;
 	}
 
+	@Override
 	public void runCharacterization(double input) {
 		currentDriveMode = DriveMode.MODULE_CHARACTERIZATION;
 		characterizationVelocity = input;
 	}
 
+	@Override
 	public void endCharacterization() {
 		currentDriveMode = DriveMode.TELEOP;
 	}
@@ -933,20 +926,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	public Rotation2d getRotation2d() {
 		return getPose().getRotation();
-	}
-
-	/**
-	 * Returns a command to run a quasistatic test in the specified direction.
-	 */
-	@Override
-	public Command sysIdQuasistaticDrive(SysIdRoutine.Direction direction) {
-		return sysId.quasistatic(direction);
-	}
-
-	/** Returns a command to run a dynamic test in the specified direction. */
-	@Override
-	public Command sysIdDynamicDrive(SysIdRoutine.Direction direction) {
-		return sysId.dynamic(direction);
 	}
 
 	@Override

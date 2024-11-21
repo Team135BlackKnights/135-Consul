@@ -4,6 +4,7 @@
 package frc.robot;
 
 import frc.robot.Constants.Mode;
+import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
@@ -90,7 +91,6 @@ import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
 
-import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -133,7 +133,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.utils.state_space.StateSpaceConstants;
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -756,15 +755,24 @@ public class RobotContainer {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
 					orientBeforeData
-							.andThen(new WheelRadiusCharacterization((Swerve) drivetrainS,
+							.andThen(new WheelRadiusCharacterization(drivetrainS,
 									WheelRadiusCharacterization.Direction.CLOCKWISE))
 							.withName("DRIVE wheel radius characterization"));
-			autoChooser.addOption("Swerve Module Static Characterization",
-					new StaticCharacterization(drivetrainS, ((Swerve) drivetrainS)::runCharacterization,
-							((Swerve) drivetrainS)::getCharacterizationVelocity)
-							.finallyDo(((Swerve) drivetrainS)::endCharacterization)
-							.withName("Swerve Module Static Characterization"));
+		} else {
+			autoChooser.addOption("Wheel Radius Characterization",
+					new WheelRadiusCharacterization(drivetrainS,
+							WheelRadiusCharacterization.Direction.CLOCKWISE)
+							.withName("DRIVE wheel radius characterization"));
 		}
+		autoChooser.addOption("Drive Static Characterization",
+				new StaticCharacterization(drivetrainS, drivetrainS::runCharacterization,
+						drivetrainS::getCharacterizationVelocity)
+						.finallyDo(drivetrainS::endCharacterization)
+						.withName("Drive Static Characterization"));
+		autoChooser.addOption("Drive FeedForward Characterization",
+				new FeedForwardCharacterization(drivetrainS, drivetrainS::runCharacterization,
+						drivetrainS::getCharacterizationVelocity).finallyDo(drivetrainS::endCharacterization)
+						.withName("Drive FeedForward Characterization"));
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 		autoChooser.onChange(auto -> {
@@ -797,14 +805,6 @@ public class RobotContainer {
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
 				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
-		yButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, true));
-		bButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, true));
-		aButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kForward, false));
-		xButtonTest.whileTrue(
-				new RunTest(SysIdRoutine.Direction.kReverse, false));
 		// Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
@@ -813,31 +813,6 @@ public class RobotContainer {
 						new Pose2d(1.9, 7.7,
 								new Rotation2d(Units.degreesToRadians(90))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
-		// swerve DRIVE tests
-		// When user hits right bumper, go to next test, or wrap back to starting test
-		// for SysID.
-		rightBumperTest.onTrue(new InstantCommand(() -> {
-			if (currentTest == Constants.SysIdRoutines.values().length - 1) {
-				currentTest = 0;
-				System.out.println("looping");
-			} else {
-				currentTest++;
-			}
-		}));
-		// When user hits left bumper, go to next test, or wrap back to starting test
-		// for SysID.
-		leftBumperTest.onTrue(new InstantCommand(() -> {
-			if (currentTest == 0) {
-				currentTest = Constants.SysIdRoutines.values().length - 1;
-				System.out.println("looping");
-			} else {
-				currentTest--;
-			}
-		}));
-		// When using CTRE, be sure to hit Start so that the motors are logged via CTRE
-		// (For SysId)
-		selectButtonTest.onTrue(Commands.runOnce(SignalLogger::stop));
-		startButtonTest.onTrue(Commands.runOnce(SignalLogger::start));
 		if (Constants.currentMode == Mode.SIM) {
 			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}

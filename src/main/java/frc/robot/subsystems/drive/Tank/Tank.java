@@ -32,14 +32,9 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -59,9 +54,17 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	private final TankIOInputsAutoLogged inputs = new TankIOInputsAutoLogged();
 	private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(
 			TRACK_WIDTH);
-	private final SimpleMotorFeedforward feedforward = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private final SimpleMotorFeedforward feedforward = DriveConstants.overallDriveMotorConstantContainer
 			.getFeedforward();
-	private final SysIdRoutine sysId;
+	private record NextMotorOutput(DifferentialDriveWheelSpeeds wheelSpeeds, double[] voltages) {
+			}
+			public enum DriveMode {
+				NORMAL, WHEEL_RADIUS_CHARACTERIZATION, SPEED_CHARACTERIZATION
+			}
+	private NextMotorOutput nextMotorOutput = new NextMotorOutput(new DifferentialDriveWheelSpeeds(), new double[2]);
+	private double characterizationVelocity = 0.0;
+	private DriveMode currentDriveMode = DriveMode.NORMAL;
+
 	private final double poseBufferSizeSeconds = 2;
 	private Twist2d fieldVelocity;
 	private Rotation2d rawGyroRotation = new Rotation2d();
@@ -106,17 +109,6 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 					DriveConstants.TrainConstants.odometryStateStdDevs.get(i, 0),
 					2));
 		}
-		// Configure SysId
-		Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
-		Voltage holdVoltage = Volts.of(4);
-		Time timeout = Seconds.of(10);
-		sysId = new SysIdRoutine(
-				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
-						(state) -> Logger.recordOutput("Drive/SysIdState",
-								state.toString())),
-				new SysIdRoutine.Mechanism(
-						(voltage) -> driveVolts(voltage.in(Volts), voltage.in(Volts)),
-						null, this));
 		registerSelfCheckHardware();
 	}
 
@@ -213,13 +205,15 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
+		currentDriveMode = DriveMode.NORMAL;
 		DifferentialDriveWheelSpeeds wheelSpeeds = kinematics
 				.toWheelSpeeds(speeds);
-		driveVelocity(wheelSpeeds);
+		driveVelocity(wheelSpeeds,false);
 	}
 
 	@Override
 	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+		currentDriveMode = DriveMode.NORMAL;
 		DifferentialDriveWheelSpeeds wheelSpeeds = kinematics
 				.toWheelSpeeds(speeds);
 		double leftFeedForwardVolts = ((wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS)
@@ -231,9 +225,7 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				* DriveConstants.getDriveTrainMotors(1).rOhms;
 		double rightResistanceVoltage = feedforwards.torqueCurrentsAmps()[2]
 				* DriveConstants.getDriveTrainMotors(1).rOhms;
-		io.setVelocity(wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS,
-				wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS,
-				leftFeedForwardVolts + leftResistanceVoltage, rightFeedForwardVolts + rightResistanceVoltage);
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{leftFeedForwardVolts + leftResistanceVoltage, rightFeedForwardVolts + rightResistanceVoltage});
 	}
 
 	private DifferentialDriveWheelPositions getWheelPositions() {
@@ -268,6 +260,20 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				new OdometryObservation(wheelPositions.getPositions(),
 						rawGyroRotation, wheelPositions.getTimestamp()));
 		collisionDetected = collisionDetected();
+		switch (currentDriveMode) {
+			case WHEEL_RADIUS_CHARACTERIZATION:
+				ChassisSpeeds speeds = new ChassisSpeeds(0, 0, characterizationVelocity);
+				driveVelocity(kinematics.toWheelSpeeds(speeds), true);
+				break;
+			case SPEED_CHARACTERIZATION:
+				driveVolts(characterizationVelocity, characterizationVelocity);
+				break;
+			case NORMAL:
+				io.setVelocity(nextMotorOutput.wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS,
+						nextMotorOutput.wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS,
+						nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
+				break;
+		}
 		DrivetrainS.super.periodic();
 	}
 
@@ -277,34 +283,22 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 
 	/** Run closed loop at the specified voltage. */
-	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds) {
+	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds, boolean setSpeeds) {
 		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
 		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
 		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
 		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
-		io.setVelocity(leftRadPerSec, rightRadPerSec,
-				feedforward.calculate(leftVelocity, MetersPerSecond.of(leftRadPerSec)).magnitude(),
-				feedforward.calculate(rightVelocity, MetersPerSecond.of(rightRadPerSec)).magnitude());
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity, MetersPerSecond.of(leftRadPerSec)).magnitude(),
+			feedforward.calculate(rightVelocity, MetersPerSecond.of(rightRadPerSec)).magnitude()});
+		if (setSpeeds)
+			io.setVelocity(leftRadPerSec, rightRadPerSec,
+					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
 	}
 
 	/** Stops the drive. */
 	@Override
 	public void stopModules() {
-		driveVelocity(new DifferentialDriveWheelSpeeds());
-	}
-
-	/**
-	 * Returns a command to run a quasistatic test in the specified direction.
-	 */
-	@Override
-	public Command sysIdQuasistaticDrive(SysIdRoutine.Direction direction) {
-		return sysId.quasistatic(direction);
-	}
-
-	/** Returns a command to run a dynamic test in the specified direction. */
-	@Override
-	public Command sysIdDynamicDrive(SysIdRoutine.Direction direction) {
-		return sysId.dynamic(direction);
+		driveVelocity(new DifferentialDriveWheelSpeeds(),true);
 	}
 
 	/** Returns the current odometry pose in meters. */
@@ -347,11 +341,16 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 
 	/** Returns the average velocity in radians/second. */
+	@Override
+	@AutoLogOutput(key = "RobotState/Velocity")
 	public double getCharacterizationVelocity() {
-		return (inputs.leftVelocityRadPerSec + inputs.rightVelocityRadPerSec)
-				/ 2.0;
+		ChassisSpeeds chassisSpeeds = getChassisSpeeds();
+		return Math.sqrt(Math.pow(chassisSpeeds.vxMetersPerSecond, 2) + Math.pow(chassisSpeeds.vyMetersPerSecond, 2) + Math.pow(getChassisSpeeds().omegaRadiansPerSecond * WHEEL_RADIUS, 2));
 	}
-
+	@Override 
+	public double[] getWheelRadiusCharacterizationPosition(){
+		return new double[] { inputs.leftPositionRad, inputs.rightPositionRad };
+	}
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(io.getSelfCheckingHardware());
 	}
@@ -367,7 +366,21 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 		}
 		return orchestra;
 	}
+	@Override
+	public void runWheelRadiusCharacterization(double velocity) {
+		currentDriveMode = DriveMode.WHEEL_RADIUS_CHARACTERIZATION;
+		characterizationVelocity = velocity;
+	}
 
+	@Override
+	public void runCharacterization(double input) {
+		currentDriveMode = DriveMode.SPEED_CHARACTERIZATION;
+		characterizationVelocity = input;
+	}
+	@Override
+	public void endCharacterization() {
+		currentDriveMode = DriveMode.NORMAL;
+	}
 	@Override
 	public double getCurrent() {
 		if (inputs.leftCurrentAmps.length == 1) {
