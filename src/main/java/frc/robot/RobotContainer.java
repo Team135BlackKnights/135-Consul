@@ -770,7 +770,8 @@ public class RobotContainer {
 						.withName("Drive Static Characterization"));
 		autoChooser.addOption("Drive FeedForward Characterization",
 				new FeedForwardCharacterization(drivetrainS, drivetrainS::runCharacterization,
-						drivetrainS::getCharacterizationVelocity).finallyDo(drivetrainS::endCharacterization)
+						drivetrainS::getCharacterizationVelocity, () -> false) //NEVER automatically end. MUST disable to end.
+						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);

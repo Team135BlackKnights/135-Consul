@@ -16,20 +16,22 @@ public class FeedForwardCharacterization extends Command {
   private FeedForwardCharacterizationData data;
   private final Consumer<Double> voltageConsumer;
   private final Supplier<Double> velocitySupplier;
-
+  private final Supplier<Boolean> atLimit;
   private final Timer timer = new Timer();
-
+  private boolean isFinished = false;
   /** Creates a new FeedForwardCharacterization command. */
   public FeedForwardCharacterization(
-      Subsystem subsystem, Consumer<Double> voltageConsumer, Supplier<Double> velocitySupplier) {
+      Subsystem subsystem, Consumer<Double> voltageConsumer, Supplier<Double> velocitySupplier, Supplier<Boolean> atLimit) {
     addRequirements(subsystem);
     this.voltageConsumer = voltageConsumer;
     this.velocitySupplier = velocitySupplier;
+    this.atLimit = atLimit;
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+    isFinished = false;
     data = new FeedForwardCharacterizationData();
     timer.reset();
     timer.start();
@@ -40,7 +42,11 @@ public class FeedForwardCharacterization extends Command {
   public void execute() {
     if (timer.get() < START_DELAY_SECS) {
       voltageConsumer.accept(0.0);
-    } else {
+    } else if (atLimit.get()){
+      //end the commmand early
+      end(true);
+      isFinished = true;
+    } {
       double voltage = (timer.get() - START_DELAY_SECS) * RAMP_VOLTS_PER_SEC;
       voltageConsumer.accept(voltage);
       data.add(velocitySupplier.get(), voltage);
@@ -58,7 +64,7 @@ public class FeedForwardCharacterization extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return isFinished;
   }
 
   public static class FeedForwardCharacterizationData {
