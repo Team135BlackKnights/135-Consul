@@ -527,8 +527,8 @@ public class RobotContainer {
 								new Rotation2d(Units.degreesToRadians(90))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
 		VisionConstants.Controls.autoIntake
-				.whileTrue(new DriveToAITarget(drivetrainS));		
-if (Constants.currentMode == Mode.SIM) {
+				.whileTrue(new DriveToAITarget(drivetrainS));
+		if (Constants.currentMode == Mode.SIM) {
 			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}
 	}
