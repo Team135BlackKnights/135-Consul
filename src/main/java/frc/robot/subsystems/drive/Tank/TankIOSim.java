@@ -19,9 +19,9 @@ import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class TankIOSim implements TankIO {
 	public final TankDrivePhysicsSimResults tankDrivePhysicsSimResults = new TankDrivePhysicsSimResults();
-	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
-	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
 	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
 			/ 2;

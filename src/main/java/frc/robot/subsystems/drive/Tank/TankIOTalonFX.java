@@ -36,9 +36,9 @@ public class TankIOTalonFX implements TankIO {
 	private final GyroIO gyro;
 	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
-	private static final double KP = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
-	private static final double KD = DriveConstants.TrainConstants.overallDriveMotorConstantContainer
+	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
 	private final TalonFX leftLeader;
 	private final TalonFX leftFollower;
