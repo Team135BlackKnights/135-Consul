@@ -70,6 +70,8 @@ public class AIRobotInSimulation {
                         new PIDConstants(7.0, 0.05));
 
         private static boolean getIsAlliancePartner(Pose2d startingPose) {
+                if (Robot.isRed)
+                        return startingPose.getX() < FieldConstants.FIELD_WIDTH / 2;
                 return startingPose.getX() > FieldConstants.FIELD_WIDTH / 2;
         }
 
@@ -79,35 +81,35 @@ public class AIRobotInSimulation {
                         instances[0] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 0"),
                                         Commands.none(),
-                                        PathPlannerPath.fromPathFile("opponent cycle path 0").flipPath(),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 0 reversed"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[0],
                                         1, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[0]));
                         instances[1] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 1"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent cycle path 1 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 1 reversed"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[1],
                                         2, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[1]));
                         instances[2] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 2"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent cycle path 2 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 2 reversed"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[2],
                                         3, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[2]));
                         instances[3] = new AIRobotInSimulation(
                                                 PathPlannerPath.fromPathFile("opponent cycle path 3"),
                                                 doNothing(),
-                                                PathPlannerPath.fromPathFile("opponent cycle path 3 backwards"),
+                                                PathPlannerPath.fromPathFile("opponent cycle path 3 reversed"),
                                                 Commands.none(),
                                                 ROBOT_QUEENING_POSITIONS[3],
                                                 4, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[3]));
                         instances[4] = new AIRobotInSimulation(
                                         PathPlannerPath.fromPathFile("opponent cycle path 4"),
                                         doNothing(),
-                                        PathPlannerPath.fromPathFile("opponent cycle path 4 backwards"),
+                                        PathPlannerPath.fromPathFile("opponent cycle path 4 reversed"),
                                         Commands.none(),
                                         ROBOT_QUEENING_POSITIONS[4],
                                         5, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[4]));
