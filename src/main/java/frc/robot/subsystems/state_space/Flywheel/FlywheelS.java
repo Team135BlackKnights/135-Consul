@@ -16,21 +16,14 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.EncoderType;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIO;
 import frc.robot.utils.drive.Sensors.EncoderIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.state_space.StateSpaceConstants;
-
-import static edu.wpi.first.units.Units.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,10 +34,10 @@ public class FlywheelS extends SubsystemChecker {
 	private final FlywheelEncoderIO encoderIO;
 	private final FlywheelIOInputsAutoLogged flywheelIOInputs = new FlywheelIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
-	private final SysIdRoutine sysId;
-	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
-	Voltage holdVoltage = Volts.of(4);
-	Time timeout = Seconds.of(10);
+	private enum State {
+		PERIODIC, CHARACTERIZATION
+	}
+	private State currentState = State.PERIODIC;
 	/**
 	 * This Plant holds a state-space model of our flywheel. It has the following
 	 * properties: States: Velocity, in Rad/s. (will match Output) Inputs: Volts.
@@ -102,12 +95,6 @@ public class FlywheelS extends SubsystemChecker {
 		if (encoderIO != null) {
 			this.encoderIO.setGearRatio(StateSpaceConstants.Flywheel.flywheelGearing);
 		}
-		sysId = new SysIdRoutine(
-				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
-						(state) -> Logger.recordOutput("FlywheelS/SysIdState",
-								state.toString())),
-				new SysIdRoutine.Mechanism((voltage) -> runVolts(voltage.in(Volts)),
-						null, this));
 		m_loop.setNextR(0); // go to zero
 		m_loop.reset(VecBuilder.fill(0));
 		registerSelfCheckHardware();
@@ -127,9 +114,11 @@ public class FlywheelS extends SubsystemChecker {
 		}
 		m_loop.correct(VecBuilder.fill(flywheelIOInputs.velocityRadPerSec));
 		m_loop.predict(.02);
-		double volts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		flywheelIO.setVoltage(volts);
-		Logger.recordOutput("FlywheelS/Volts", volts);
+		if (currentState != State.CHARACTERIZATION) {
+			double volts = MathUtil.clamp(m_loop.getU(0), -12, 12);
+			flywheelIO.setVoltage(volts);	
+			Logger.recordOutput("FlywheelS/Volts", volts);	
+		}
 		Logger.recordOutput("FlywheelS/AdjustedRPM",
 				Units.radiansPerSecondToRotationsPerMinute(m_loop.getXHat(0)));
 		flywheelIO.updateInputs(flywheelIOInputs);
@@ -142,11 +131,13 @@ public class FlywheelS extends SubsystemChecker {
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
+		currentState = State.CHARACTERIZATION;
 		flywheelIO.setVoltage(volts);
 	}
 
 	/** Run closed loop at the specified velocity. */
 	public void setRPM(double velocityRPM) {
+		currentState = State.PERIODIC;
 		var velocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(velocityRPM);
 		m_loop.setNextR(VecBuilder.fill(velocityRadPerSec));
@@ -159,19 +150,10 @@ public class FlywheelS extends SubsystemChecker {
 		m_loop.setNextR(VecBuilder.fill(0));
 		flywheelIO.stop();
 	}
-
-	/**
-	 * Returns a command to run a quasistatic test in the specified direction.
-	 */
-	public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-		return sysId.quasistatic(direction);
+	public void endCharacterization() {
+		flywheelIO.stop();
+		currentState = State.PERIODIC;
 	}
-
-	/** Returns a command to run a dynamic test in the specified direction. */
-	public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-		return sysId.dynamic(direction);
-	}
-
 	/** Returns the current velocity in RPM. */
 	@AutoLogOutput
 	public double getRPM() {

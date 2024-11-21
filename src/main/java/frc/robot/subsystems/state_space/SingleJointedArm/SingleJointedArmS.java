@@ -5,10 +5,6 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -40,8 +36,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import static edu.wpi.first.units.Units.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +46,6 @@ public class SingleJointedArmS extends SubsystemChecker {
 	private final SingleJointedArmEncoderIO singleJointedArmEncoderIO;
 	private final EncoderIOInputsAutoLogged singleJointedArmEncoderIOInputs = new EncoderIOInputsAutoLogged();
 	private final SingleJointedArmIOInputsAutoLogged inputs = new SingleJointedArmIOInputsAutoLogged();
-	private final SysIdRoutine sysId;
-	// using sysId
 	/*
 	 * All SingleJointedArm Statespace uses an N2 at the first position, because we
 	 * care about velocity AND position of the SingleJointedarm.
@@ -109,9 +101,6 @@ public class SingleJointedArmS extends SubsystemChecker {
 	 */
 	private static TrapezoidProfile.State goal = new TrapezoidProfile.State(
 			StateSpaceConstants.SingleJointedArm.startingPosition, 0);
-	Velocity<VoltageUnit> rampRate = Volts.of(1).per(Seconds); // for going FROM ZERO PER SECOND
-	Voltage holdVoltage = Volts.of(4);
-	Time timeout = Seconds.of(10);
 	// Create a Mechanism2d display of an SingleJointedArm with a fixed
 	// SingleJointedArmTower and moving SingleJointedArm.
 	/*
@@ -140,18 +129,19 @@ public class SingleJointedArmS extends SubsystemChecker {
 					Units.radiansToDegrees(inputs.positionRad), 1,
 					new Color8Bit(Color.kYellow)));
 
+	private enum State {
+		PERIODIC,
+		CHARACTERIZATION
+	}
+
+	private State currentState = State.PERIODIC;
+
 	public SingleJointedArmS(SingleJointedArmIO io, SingleJointedArmEncoderIO encoderIO) {
 		this.singleJointedArmIO = io;
 		this.singleJointedArmEncoderIO = encoderIO;
 		if (encoderIO != null) {
 			this.singleJointedArmEncoderIO.setGearRatio(StateSpaceConstants.SingleJointedArm.armGearing);
 		}
-		sysId = new SysIdRoutine(
-				new SysIdRoutine.Config(rampRate, holdVoltage, timeout,
-						(state) -> Logger.recordOutput("SingleJointedArmS/SysIdState",
-								state.toString())),
-				new SysIdRoutine.Mechanism((voltage) -> runVolts(voltage.in(Volts)),
-						null, this));
 		registerSelfCheckHardware();
 		m_loop.reset(VecBuilder.fill(m_position, m_velocity));
 		m_lastProfiledReference = new TrapezoidProfile.State(m_position,
@@ -164,13 +154,14 @@ public class SingleJointedArmS extends SubsystemChecker {
 			singleJointedArmEncoderIO.updateInputs(singleJointedArmEncoderIOInputs);
 			if (singleJointedArmEncoderIOInputs.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 
-			inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
-			inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
+				inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
+				inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
 			}
 			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
 		}
 		m_position = inputs.positionRad;
 		m_velocity = inputs.velocityRadPerSec;
+
 		m_lastProfiledReference = m_profile.calculate(.02,
 				m_lastProfiledReference, goal); // calculate where it SHOULD be.
 		m_loop.setNextR(m_lastProfiledReference.position,
@@ -181,9 +172,11 @@ public class SingleJointedArmS extends SubsystemChecker {
 		// predict the next
 		// state with out Kalman filter.
 		m_loop.predict(.02);
-		// Send the new calculated voltage to the motors.
-		double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		singleJointedArmIO.setVoltage(appliedVolts);
+		if (currentState != State.CHARACTERIZATION) {
+			// Send the new calculated voltage to the motors.
+			double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
+			singleJointedArmIO.setVoltage(appliedVolts);
+		}
 		singleJointedArmIO.updateInputs(inputs);
 		Logger.processInputs("SingleJointedArmS", inputs);
 		m_SingleJointedarm.setAngle(Units.radiansToDegrees(m_loop.getXHat(0)));
@@ -200,6 +193,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
+		currentState = State.CHARACTERIZATION;
 		singleJointedArmIO.setVoltage(volts);
 	}
 
@@ -255,6 +249,7 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	/** Run closed loop to the specified state. */
 	public void setState(TrapezoidProfile.State state) {
+		currentState = State.PERIODIC;
 		goal = limitState(state);
 		// Log arm setpoint
 		Logger.recordOutput("SingleJointedArmS/SetStatePosition", state.position);
@@ -294,16 +289,17 @@ public class SingleJointedArmS extends SubsystemChecker {
 		return m_loop.getXHat(1);
 	}
 
-	/**
-	 * @param direction forward/reverse ("kForward" or "kReverse")
-	 * @return command which runs wanted test
-	 */
-	public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-		return sysId.quasistatic(direction).onlyWhile(withinLimits(direction));
+	public double getCharacterizationVelocity() {
+		return inputs.velocityRadPerSec;
 	}
 
-	public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-		return sysId.dynamic(direction).onlyWhile(withinLimits(direction));
+	public boolean isCharacterizationInLimit() {
+		return withinLimits(SysIdRoutine.Direction.kForward).getAsBoolean();
+	}
+
+	public void endCharacterization() {
+		singleJointedArmIO.stop();
+		currentState = State.PERIODIC;
 	}
 
 	/**

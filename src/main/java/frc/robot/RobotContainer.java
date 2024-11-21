@@ -773,6 +773,53 @@ public class RobotContainer {
 						drivetrainS::getCharacterizationVelocity, () -> false) //NEVER automatically end. MUST disable to end.
 						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
+		autoChooser.addOption("Flywheel Static Characterization",
+				new StaticCharacterization(flywheelS, flywheelS::runVolts, flywheelS::getCharacterizationVelocity)
+						.finallyDo(flywheelS::endCharacterization)
+						.withName("Flywheel Static Characterization"));
+		autoChooser.addOption("Flywheel Characterization",
+				new FeedForwardCharacterization(flywheelS, flywheelS::runVolts,
+						flywheelS::getCharacterizationVelocity, () -> false)
+						.finallyDo(flywheelS::endCharacterization)
+						.withName("Flywheel Characterization"));
+		autoChooser.addOption("Single Jointed Arm Static Characterization",
+				new StaticCharacterization(armS, armS::runVolts, armS::getCharacterizationVelocity)
+						.finallyDo(armS::endCharacterization)
+						.withName("Single Jointed Arm Static Characterization"));
+		autoChooser.addOption("Single Jointed Arm Characterization",
+				new FeedForwardCharacterization(armS, armS::runVolts,
+						armS::getCharacterizationVelocity, armS::isCharacterizationInLimit)
+						.finallyDo(armS::endCharacterization)
+						.withName("Single Jointed Arm Characterization"));
+		autoChooser.addOption("Elevator Static Characterization",
+				new StaticCharacterization(elevatorS, elevatorS::runVolts, elevatorS::getCharacterizationVelocity)
+						.finallyDo(elevatorS::endCharacterization)
+						.withName("Elevator Static Characterization"));
+		autoChooser.addOption("Elevator Characterization",
+				new FeedForwardCharacterization(elevatorS, elevatorS::runVolts,
+						elevatorS::getCharacterizationVelocity, elevatorS::isCharacterizationInLimit)
+						.finallyDo(elevatorS::endCharacterization)
+						.withName("Elevator Characterization"));
+		autoChooser.addOption("Double Jointed Arm ARM Static Characterization",
+				new StaticCharacterization(doubleJointedArmS, doubleJointedArmS::runArmVolts,
+						doubleJointedArmS::getArmRadsPerSec)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ARM Static Characterization"));
+		autoChooser.addOption("Double Jointed Arm ARM Characterization",
+				new FeedForwardCharacterization(doubleJointedArmS, doubleJointedArmS::runArmVolts,
+						doubleJointedArmS::getArmRadsPerSec, doubleJointedArmS::isArmCharacterizationAtLimit)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ARM Characterization"));
+		autoChooser.addOption("Double Jointed Arm ELBOW Static Characterization",
+				new StaticCharacterization(doubleJointedArmS, doubleJointedArmS::runElbowVolts,
+						doubleJointedArmS::getElbowRadsPerSec)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ELBOW Static Characterization"));
+		autoChooser.addOption("Double Jointed Arm ELBOW Characterization",
+				new FeedForwardCharacterization(doubleJointedArmS, doubleJointedArmS::runElbowVolts,
+						doubleJointedArmS::getElbowRadsPerSec, doubleJointedArmS::isElbowCharacterizationAtLimit)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ELBOW Characterization"));
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 		autoChooser.onChange(auto -> {

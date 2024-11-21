@@ -35,6 +35,10 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	private final DoubleJointedArmIOInputsAutoLogged doubleJointedArmInputs = new DoubleJointedArmIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged armEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged elbowEncoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
+	private enum State {
+		PERIODIC, CHARACTERIZATION
+	}
+	private State currentState = State.PERIODIC;
 	private List<Double> voltages;
 	private double armSetRad;
 	private double elbowSetRad;
@@ -87,7 +91,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
-		if (voltages != null) {
+		if (voltages != null && currentState != State.CHARACTERIZATION) {
 			doubleJointedArmIO.setVoltage(voltages);
 		}
 		if (elbowEncoderIO != null) {
@@ -181,7 +185,40 @@ public class DoubleJointedArmS extends SubsystemChecker {
 		}
 		return elbowRad;
 	}
-
+	public boolean isArmCharacterizationAtLimit(){
+		if (doubleJointedArmInputs.positionArmRads > StateSpaceConstants.DoubleJointedArm.armMaxRad) {
+			return true;
+		} else if (doubleJointedArmInputs.positionArmRads < StateSpaceConstants.DoubleJointedArm.armMinRad) {
+			return true;
+		}
+		return false;
+	}
+	public boolean isElbowCharacterizationAtLimit(){
+		if (doubleJointedArmInputs.positionElbowRads > StateSpaceConstants.DoubleJointedArm.elbowMaxRad) {
+			return true;
+		} else if (doubleJointedArmInputs.positionElbowRads < StateSpaceConstants.DoubleJointedArm.elbowMinRad) {
+			return true;
+		}
+		return false;
+	}
+	public void runArmVolts(double armVolts){
+		List<Double> volts = new ArrayList<>();
+		volts.add(armVolts);
+		volts.add(0.0); // elbow
+		currentState = State.CHARACTERIZATION;
+		doubleJointedArmIO.setVoltage(volts);
+	}
+	public void runElbowVolts(double elbowVolts){
+		List<Double> volts = new ArrayList<>();
+		volts.add(0.0); // arm
+		volts.add(elbowVolts);
+		currentState = State.CHARACTERIZATION;
+		doubleJointedArmIO.setVoltage(volts);
+	}
+	public void endCharacterization(){
+		doubleJointedArmIO.stop();
+		currentState = State.PERIODIC;
+	}
 	@Override
 	public HashMap<String, Double> getTemps() {
 		HashMap<String, Double> tempMap = new HashMap<>();
@@ -202,7 +239,12 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	public double getElbowRads() {
 		return doubleJointedArmInputs.positionElbowRads;
 	}
-
+	public double getArmRadsPerSec(){
+		return doubleJointedArmInputs.velocityArmRadsPerSec;
+	}
+	public double getElbowRadsPerSec(){
+		return doubleJointedArmInputs.velocityElbowRadsPerSec;
+	}
 	/**
 	 * @return a double list which contains an x coordinate in meters for the
 	 *         endpoint, and y.

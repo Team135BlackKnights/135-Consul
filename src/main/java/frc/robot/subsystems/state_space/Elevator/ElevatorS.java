@@ -41,6 +41,12 @@ import java.util.function.BooleanSupplier;
 public class ElevatorS extends SubsystemChecker {
 	private final ElevatorIO elevatorIO;
 	private final ElevatorEncoderIO encoderIO;
+
+	private enum State {
+		PERIODIC, CHARACTERIZATION
+	}
+
+	private State currentState = State.PERIODIC;
 	private final ElevatorIOInputsAutoLogged elevatorIOInputs = new ElevatorIOInputsAutoLogged();
 	private final EncoderIOInputsAutoLogged encoderIOInputsAutoLogged = new EncoderIOInputsAutoLogged();
 	private static double m_velocity, m_position;
@@ -133,13 +139,14 @@ public class ElevatorS extends SubsystemChecker {
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
 			if (encoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
-			elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
-			elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
+				elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
+				elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}
 			Logger.processInputs("ElevatorS/ElevatorEncoder", encoderIOInputsAutoLogged);
 		}
 		m_position = elevatorIOInputs.positionMeters;
 		m_velocity = elevatorIOInputs.velocityMetersPerSec;
+
 		m_lastProfiledReference = m_profile.calculate(.02,
 				m_lastProfiledReference, goal); // calculate where it SHOULD be.
 		m_loop.setNextR(m_lastProfiledReference.position,
@@ -150,9 +157,11 @@ public class ElevatorS extends SubsystemChecker {
 		// predict the next
 		// state with out Kalman filter.
 		m_loop.predict(.02);
-		// Send the new calculated voltage to the motors.
-		double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
-		elevatorIO.setVoltage(appliedVolts);
+		if (currentState != State.CHARACTERIZATION) {
+			// Send the new calculated voltage to the motors.
+			double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
+			elevatorIO.setVoltage(appliedVolts);
+		}
 		elevatorIO.updateInputs(elevatorIOInputs);
 		Logger.processInputs("ElevatorS", elevatorIOInputs);
 
@@ -168,6 +177,7 @@ public class ElevatorS extends SubsystemChecker {
 
 	/** Run open loop at the specified voltage. */
 	public void runVolts(double volts) {
+		currentState = State.CHARACTERIZATION;
 		elevatorIO.setVoltage(volts);
 	}
 
@@ -223,6 +233,7 @@ public class ElevatorS extends SubsystemChecker {
 
 	/** Run closed loop to the specified state. */
 	public void setState(TrapezoidProfile.State state) {
+		currentState = State.PERIODIC;
 		goal = limitState(state);
 		// Log arm setpoint
 		Logger.recordOutput("ElevatorS/SetStatePosition", state.position);
@@ -252,6 +263,7 @@ public class ElevatorS extends SubsystemChecker {
 	public double getVelocity() {
 		return m_loop.getXHat(1);
 	}
+
 	public TrapezoidProfile.State limitState(TrapezoidProfile.State state) {
 		if (state.position < startingState().position) {
 			return startingState();
@@ -259,6 +271,19 @@ public class ElevatorS extends SubsystemChecker {
 			return maxState();
 		}
 		return state;
+	}
+
+	public double getCharacterizationVelocity() {
+		return elevatorIOInputs.velocityMetersPerSec;
+	}
+
+	public boolean isCharacterizationInLimit() {
+		return withinLimits(SysIdRoutine.Direction.kForward).getAsBoolean();
+	}
+
+	public void endCharacterization() {
+		elevatorIO.stop();
+		currentState = State.PERIODIC;
 	}
 
 	/**
@@ -270,7 +295,7 @@ public class ElevatorS extends SubsystemChecker {
 	public BooleanSupplier withinLimits(SysIdRoutine.Direction direction) {
 		BooleanSupplier returnVal;
 		if (direction.toString() == "kReverse") {
-			if (getDistance() < StateSpaceConstants.Elevator.startingPosition) {
+			if (elevatorIOInputs.positionMeters < StateSpaceConstants.Elevator.startingPosition) {
 				returnVal = () -> false;
 				return returnVal;
 			}
@@ -278,7 +303,7 @@ public class ElevatorS extends SubsystemChecker {
 		// second set of conditionals (below) checks to see if the Elevator is within
 		// the hard limits, and stops it if it is
 		if (direction.toString() == "kForward") {
-			if (getDistance() > StateSpaceConstants.Elevator.maxPosition) {
+			if (elevatorIOInputs.positionMeters > StateSpaceConstants.Elevator.maxPosition) {
 				returnVal = () -> false;
 				return returnVal;
 			}
