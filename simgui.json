@@ -33,8 +33,11 @@
       "/SmartDashboard/Field": "Field2d",
       "/SmartDashboard/Mech2d": "Mechanism2d",
       "/SmartDashboard/SystemStatus/AllSystemsCheck": "Command",
+      "/SmartDashboard/SystemStatus/Climber/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Mecanum/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Swerve/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/Tank/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/null/SystemCheck": "Command",
       "/SmartDashboard/VisionSystemSim-Vision Sim/Sim Field": "Field2d"
     },
     "windows": {
