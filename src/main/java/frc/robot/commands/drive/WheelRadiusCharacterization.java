@@ -2,7 +2,6 @@ package frc.robot.commands.drive;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
@@ -15,7 +14,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class WheelRadiusCharacterization extends Command {
   private static final LoggableTunedNumber characterizationSpeed =
-      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.1);
+      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.5);
   private static final DoubleSupplier gyroYawRadsSupplier =
       () -> RobotContainer.drivetrainS.getPose().getRotation().getRadians();
 
@@ -71,11 +70,11 @@ public class WheelRadiusCharacterization extends Command {
     accumGyroYawRads += MathUtil.angleModulus(gyroYawRadsSupplier.getAsDouble() - lastGyroYawRads);
     lastGyroYawRads = gyroYawRadsSupplier.getAsDouble();
     double averageWheelPosition = 0.0;
-    double[] wheelPositiions = drive.getWheelRadiusCharacterizationPosition();
-    for (int i = 0; i < 4; i++) {
-      averageWheelPosition += Math.abs(wheelPositiions[i] - startWheelPositions[i]);
+    double[] wheelPositions = drive.getWheelRadiusCharacterizationPosition();
+    for (int i = 0; i < wheelPositions.length; i++) {
+      averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
     }
-    averageWheelPosition /= 4.0;
+    averageWheelPosition /= wheelPositions.length;
 
     currentEffectiveWheelRadius = (accumGyroYawRads * DriveConstants.kDriveBaseRadius) / averageWheelPosition;
     Logger.recordOutput("Drive/RadiusCharacterization/DrivePosition", averageWheelPosition);
@@ -87,7 +86,7 @@ public class WheelRadiusCharacterization extends Command {
 
   @Override
   public void end(boolean interrupted) {
-    drive.setChassisSpeeds(new ChassisSpeeds());
+    drive.stopModules();
     if (Math.abs(accumGyroYawRads) <= Math.PI * 2.0) {
       System.out.println("Not enough data for characterization");
     } else {
