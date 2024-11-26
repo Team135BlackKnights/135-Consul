@@ -200,7 +200,9 @@ public class Robot extends LoggedRobot {
 					DriveConstants.maxRotationalAcceleration.get());
 		}, DriveConstants.maxTranslationalAcceleration,
 				DriveConstants.maxRotationalAcceleration);
+		long dataStartTime = System.currentTimeMillis();
 		DataHandler.updateHandlerState();
+		Logger.recordOutput("SystemStatus/DataUpdateMS", Math.abs(dataStartTime-System.currentTimeMillis()));
 		Logger.recordOutput("MatchState", Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
@@ -218,10 +220,12 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
+		/*	long statusCalls = System.currentTimeMillis();
 		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
 		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls - System.currentTimeMillis()));
 		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization * 100.0);
-		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);
+		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);*/
 		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 	}
@@ -352,7 +356,7 @@ public class Robot extends LoggedRobot {
 			}
 			Constants.currentMatchState = FRCMatchState.TELEOP;
 		}
-		if (RobotContainer.driveController.getPOV() == 0) {
+		/*if (RobotContainer.driveController.getPOV() == 0) {
 			//System.err.println("UP");
 			DataHandler.logData(new double[] { 4.5, 25.4
 			}, "shouldUpdateModel");
@@ -361,7 +365,7 @@ public class Robot extends LoggedRobot {
 			System.out.println("A");
 			DataHandler.logData(new double[] { 4.5
 			}, "modelInputs");
-		}
+		}*/
 	}
 
 	@Override
