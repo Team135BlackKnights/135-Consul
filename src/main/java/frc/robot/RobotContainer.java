@@ -5,6 +5,7 @@ package frc.robot;
 
 import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
@@ -486,6 +487,7 @@ public class RobotContainer {
 						drivetrainS::getCharacterizationVelocity, () -> false) //NEVER automatically end. MUST disable to end.
 						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
+		autoChooser.addOption("FUNI SONG", new OrchestraC("mii"));
 		SmartDashboard.putData(field);
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 		autoChooser.onChange(auto -> {

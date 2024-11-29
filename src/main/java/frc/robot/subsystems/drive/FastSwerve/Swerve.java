@@ -331,6 +331,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public void periodic() {
+		long systemTime = System.nanoTime();
 		// Check if modules are skidding
 		isSkidding = calculateSkidding();
 		// Update & process inputs
@@ -480,6 +481,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
 		collisionDetected = collisionDetected();
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("Drive/CycleTime", (systemTime - System.nanoTime())/1e6);
 	}
 
 	@Override

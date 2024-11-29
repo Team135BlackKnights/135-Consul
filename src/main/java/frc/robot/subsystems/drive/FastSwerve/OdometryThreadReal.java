@@ -5,17 +5,18 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.TimeUtil;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OdometryThreadReal extends Thread implements OdometryThread {
-    private final OdometryThread.OdometryDoubleInput[] odometryDoubleInputs;
-    private final BaseStatusSignal[] statusSignals;
+    private final List<OdometryDoubleInput> odometryDoubleInputs;
+    private final List<BaseStatusSignal> statusSignals;
     private final Queue<Double> timeStampsQueue;
     private final Lock lock = new ReentrantLock();
-    public OdometryThreadReal(OdometryThread.OdometryDoubleInput[] odometryDoubleInputs, BaseStatusSignal[] statusSignals) {
+    public OdometryThreadReal(List<OdometryDoubleInput> odometryDoubleInputs, List<BaseStatusSignal> statusSignals) {
         this.timeStampsQueue = new ArrayBlockingQueue<>(20);
         this.odometryDoubleInputs = odometryDoubleInputs;
         this.statusSignals = statusSignals;
@@ -26,7 +27,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
 
     @Override
     public synchronized void start() {
-        if (odometryDoubleInputs.length > 0)
+        if (odometryDoubleInputs.size() > 0)
             super.start();
     }
 
@@ -56,7 +57,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
                 //BaseStatusSignal.refreshAll();
             }
             case CTRE_ON_CANIVORE ->
-                    BaseStatusSignal.waitForAll(.02, statusSignals);
+                    BaseStatusSignal.waitForAll(.02, statusSignals.toArray(new BaseStatusSignal[0]));
         }
     }
 
@@ -65,9 +66,9 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
         for (BaseStatusSignal signal:statusSignals)
             totalLatency += signal.getTimestamp().getLatency();
 
-        if (statusSignals.length == 0)
+        if (statusSignals.size() == 0)
             return currentTime;
-        return currentTime - totalLatency / statusSignals.length;
+        return currentTime - totalLatency / statusSignals.size();
     }
 
 

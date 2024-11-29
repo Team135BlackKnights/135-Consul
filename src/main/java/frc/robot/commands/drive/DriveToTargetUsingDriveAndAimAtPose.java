@@ -146,7 +146,11 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 		if (goalSupplier.get() != null) {
 			return goalSupplier.get();
 		} else {
-			return new Translation2d(); //dont crash!
+			//get closeest gamepiece to robot
+			Translation2d robotPosition = swerveS.getPose().getTranslation();
+			return FieldConstants.getClosestGamePieceFromListOfNotes(robotPosition,
+					FieldConstants.NOTE_INITIAL_POSITIONS);
+			//return new Translation2d(); //dont crash!
 		}
 	}
 
