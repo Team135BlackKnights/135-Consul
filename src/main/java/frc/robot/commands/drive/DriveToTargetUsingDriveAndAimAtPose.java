@@ -22,6 +22,7 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.vision.VisionConstants;
 
 public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 	private final DrivetrainS swerveS;
@@ -43,28 +44,36 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 			"DriveToTargetUsingDriveAndAimAtPose/maxAutoLookTime", 2);
 	private boolean commandStarted = false;
 	private double gamePieceDistance = 99; //in m
+	private Rotation2d gamePieceAngleError = new Rotation2d(99); //in rad
+	private Timer lastRemovedNoteTimer = new Timer();
 	private Supplier<Translation2d> goalSupplier;
 	private Supplier<Boolean> gamePieceCollectedSupplier;
-
+	private Supplier<Boolean> visionOkaySupplier;
+	private Translation2d[] gamePieceLocations = FieldConstants.NOTE_INITIAL_POSITIONS;
 	public DriveToTargetUsingDriveAndAimAtPose(DrivetrainS swerveS,
 			Supplier<Translation2d> goalSupplier,
+			Supplier<Boolean> visionOkaySupplier,
 			Supplier<Boolean> noteDetectedSupplier) {
 		this.swerveS = swerveS;
 		addRequirements(swerveS);
 		this.goalSupplier = goalSupplier;
+		this.visionOkaySupplier = visionOkaySupplier;
 		this.gamePieceCollectedSupplier = noteDetectedSupplier;
 	}
 
+
+	//Example supplier for goalSupplier, make a seperate command to use this specific supplier if wanted.
+	/*
 	int counter = 0;
 	double lastTx = 0, lastTy = 0;
-	//Example supplier for goalSupplier
-	/* 
-	private void updateNotePose() {
+
+	private Translation2d updateNotePose() {
 		double gamePieceTx = 0, gamePieceTy = 0;
 		Pose2d currentPose = swerveS.getPose();
+		boolean noteDetected = false;
 		if (Constants.currentMode == Mode.SIM) {
-			//In simulation, get the current pose, and set the degree value to 
-			this.targetPieceLocation = RobotContainer.fieldSimulation
+			// In simulation, get the current pose, and set the degree value to
+			Translation2d targetPieceLocation = RobotContainer.fieldSimulation
 					.getClosestGamePieceOnGround().getPose3d().toPose2d()
 					.getTranslation();
 			double deltaX = targetPieceLocation.getX() - currentPose.getX();
@@ -76,13 +85,13 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 					.getDistance(targetPieceLocation);
 			double tyRad = Math.PI
 					- Units.degreesToRadians(
-							VisionConstants.limelightAngleOffsetDegrees.get())
+							VisionConstants.limeLightAngleOffsetDegrees)
 					- (Math.PI * 0.5D - Math.atan(d / Units.inchesToMeters(
 							VisionConstants.limelightLensHeightoffFloorInches)));
 			gamePieceTy = Units.radiansToDegrees(tyRad);
 			noteDetected = true;
 		} else {
-			//THESE ARE IN D E G R E E S 
+			// THESE ARE IN D E G R E E S
 			LimelightHelpers.LimelightTarget_Detector[] results = LimelightHelpers
 					.getLatestResults(
 							VisionConstants.limelightName).targetingResults.targets_Detector;
@@ -95,31 +104,37 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 					gamePieceTx = -object.tx;
 					gamePieceTy = object.ty;
 					noteDetected = true;
-					System.err.println("DETECTED");
+					Logger.recordOutput("Vision/NoteDetected", true);
 				} else {
 					noteDetected = false;
+					Logger.recordOutput("Vision/NoteDetected", false);
 				}
 			}
 		}
 		if (gamePieceTx == lastTx && gamePieceTy == lastTy) {
 			counter++;
-		}else{
+		} else {
 			counter = 0;
 		}
-		if (counter > 10) {
+		if (counter > 10) { //prevent flickering of note detection
 			noteDetected = false;
 		}
-		targetPieceLocation = GeomUtil
-				.calculateFieldRelativePose3d(currentPose, gamePieceTx, gamePieceTy,
-						Units.inchesToMeters(
-								VisionConstants.limelightLensHeightoffFloorInches),
-						Units.inchesToMeters(2),
-						VisionConstants.limelightAngleOffsetDegrees.get())
-				.getTranslation().toTranslation2d();
-	}*/
+		if (noteDetected)
+			return GeomUtil
+					.calculateFieldRelativePose3d(currentPose, gamePieceTx, gamePieceTy,
+							Units.inchesToMeters(
+									VisionConstants.limelightLensHeightoffFloorInches),
+							Units.inchesToMeters(2),
+							VisionConstants.limeLightAngleOffsetDegrees)
+					.getTranslation().toTranslation2d();
+		return null;
+	}
+	 */
+	
 
 	@Override
 	public void initialize() {
+		isFinished = false;
 		commandStarted = false;
 		/*if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
@@ -127,30 +142,48 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 					.getClosestGamePieceOnGround().getPose3d().toPose2d()
 					.getTranslation();
 		}*/
-		isFinished = false;
-		//LimelightHelpers.setPipelineIndex(VisionConstants.limelightName, 0);
-		timer.reset();
-		timer.start();
+		gamePieceLocations = FieldConstants.NOTE_INITIAL_POSITIONS;
+		timer.restart();
+		lastRemovedNoteTimer.restart();
 		RobotContainer.currentPath = "INTAKINGSTART_DRIVEPOSE";
 		RobotContainer.userDrive = false; //stop user control
 		drivingCommand = new DriveAndAimAtPose(swerveS, this::getGamePiecePose,
 				maxNoteSpeed.get(), false);
-		if (goalSupplier.get() != null) {
+		if (getGamePiecePose() != null) {
 			drivingCommand.initialize();
 			commandStarted = true;
 		}
 	}
-
 	private Translation2d getGamePiecePose() {
 		//if no note detected, pause drive command
 		if (goalSupplier.get() != null) {
 			return goalSupplier.get();
 		} else {
-			//get closeest gamepiece to robot
-			Translation2d robotPosition = swerveS.getPose().getTranslation();
-			return FieldConstants.getClosestGamePieceFromListOfNotes(robotPosition,
-					FieldConstants.NOTE_INITIAL_POSITIONS);
-			//return new Translation2d(); //dont crash!
+			//if vision is down, failover to closest gamepiece
+			if (Constants.currentMatchState == FRCMatchState.AUTO){
+				if (!visionOkaySupplier.get()) {
+					return FieldConstants.getClosestGamePieceFromListOfNotes(
+							swerveS.getPose().getTranslation(),
+							gamePieceLocations);
+				}
+				//vision is okay, but no gamepiece detected, check if we're within x degrees of the target note
+				//if we are, then we're close enough to say the note doesn't exist, re-search for a new one WITHOUT that note in the list
+				if (Math.abs(gamePieceDistance) <= VisionConstants.limelightCloseEnoughToConsiderMissingDistance.get() && Math.abs(gamePieceAngleError.getDegrees()) <= VisionConstants.limelightCloseEnoughToConsiderMissingAngle.get() && lastRemovedNoteTimer.hasElapsed(VisionConstants.limelightCloseEnoughToConsiderMissingTimeout.get())) {
+					//remove the closest note from the list
+					Translation2d closestNote = FieldConstants.getClosestGamePieceFromListOfNotes(
+							swerveS.getPose().getTranslation(),
+							gamePieceLocations);
+					//find that note in the list, and remove it
+					gamePieceLocations = java.util.Arrays.stream(gamePieceLocations)
+							.filter(note -> !note.equals(closestNote)) //where NOT the closest note
+							.toArray(Translation2d[]::new);
+					lastRemovedNoteTimer.restart();
+				}
+				return FieldConstants.getClosestGamePieceFromListOfNotes(
+					swerveS.getPose().getTranslation(),
+					gamePieceLocations);
+			}
+			return null; //no clue where the note is. This will cause the robot to spin in place at 10% speed
 		}
 	}
 
@@ -162,14 +195,19 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 			isFinished = true;
 		}
 		Pose2d currentPose = swerveS.getPose();
+		Translation2d target = getGamePiecePose();
 		Logger.recordOutput("RotateAndDriveToPose/Target",
-				new Pose2d(goalSupplier.get(), new Rotation2d()));
+				new Pose2d(target, new Rotation2d()));
 		gamePieceDistance = GeomUtil.calculateDistanceFromTranslation2d(
-				currentPose.getTranslation(), goalSupplier.get())
+				currentPose.getTranslation(), target)
 				- intakeOffsetPoseDistance.get() - FieldConstants.NOTE_DIAMETER / 2;
+		Rotation2d desiredAngle = GeomUtil.rotationFromCurrentToTarget(
+				currentPose.getTranslation(), target, VisionConstants.driveToAITargetApproachDirection);
+
+		gamePieceAngleError = desiredAngle.minus(currentPose.getRotation());
 		Logger.recordOutput("RotateAndDriveToPose/gamePieceDistance",
 				gamePieceDistance);
-		boolean gamePieceDetected = goalSupplier.get() != null;
+		boolean gamePieceDetected = target != null;
 		Logger.recordOutput("RotateAndDriveToPose/NoteDetected",
 				gamePieceDetected);
 		if (gamePieceDistance <= GeometryConstants.ObjectDistanceZeroSpeed
@@ -205,6 +243,8 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 	public void end(boolean interrupted) {
 		timer.stop();
 		timer.reset();
+		lastRemovedNoteTimer.stop();
+		lastRemovedNoteTimer.reset();
 		swerveS.stopModules();
 		if (gamePieceCollectedSupplier.get()
 				|| Constants.currentMode == Mode.SIM) {

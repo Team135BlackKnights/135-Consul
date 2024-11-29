@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.RobotContainer;
 import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.GeomUtil.ApproachDirection;
 
 public class VisionConstants {
 	// Field layout, fed to the PV cameras in order to work properly
@@ -31,7 +32,19 @@ public class VisionConstants {
 			return value;
 		}
 	}
-
+	//Command specific constants
+	//Aim To Pose
+	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.BACK;
+	//Drive And Aim At Pose
+	public static final ApproachDirection driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT;
+	//Drive To AI Target
+	public static final ApproachDirection driveToAITargetApproachDirection = ApproachDirection.FRONT;
+	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingDistance = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingDistance", Units.feetToMeters(4));
+	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingAngle = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingAngle", Units.degreesToRadians(3));
+	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingTimeout = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingTimeout", 1);
 	// If the change in odometry is below this distance, do not adjust april tag
 	// trusts.
 	public final static double maxStaleReadingXMeters = Units.inchesToMeters(4),
@@ -68,7 +81,7 @@ public class VisionConstants {
 	// Translations should be in inches, Rotations should be in degrees
 	public static LoggableTunedNumber
 
-			frontCamTranslationX = new LoggableTunedNumber("Vision/FrontCamX", 12.75),
+	frontCamTranslationX = new LoggableTunedNumber("Vision/FrontCamX", 12.75),
 			frontCamTranslationY = new LoggableTunedNumber("Vision/FrontCamY", 12.75),
 			frontCamTranslationZ = new LoggableTunedNumber("Vision/FrontCamZ", 19.75),
 			frontCamRoll = new LoggableTunedNumber("Vision/FrontCamRoll", 180),
@@ -98,21 +111,21 @@ public class VisionConstants {
 
 	// To figure out what these should be, look at the WPILIB Coordinate System
 	public static Translation3d frontCamTranslation3d = new Translation3d(
-				Units.inchesToMeters(frontCamTranslationX.get()), 
-				Units.inchesToMeters(frontCamTranslationY.get()), 
-				Units.inchesToMeters(frontCamTranslationZ.get())),
-			rightCamTranslation3d = new Translation3d(			
-				Units.inchesToMeters(rightCamTranslationX.get()), 
-				Units.inchesToMeters(rightCamTranslationY.get()), 
-				Units.inchesToMeters(rightCamTranslationZ.get())),
-			leftCamTranslation3d = new Translation3d(			
-				Units.inchesToMeters(leftCamTranslationX.get()), 
-				Units.inchesToMeters(leftCamTranslationY.get()), 
-				Units.inchesToMeters(leftCamTranslationZ.get())),
-			backCamTranslation3d = new Translation3d(			
-				Units.inchesToMeters(backCamTranslationX.get()), 
-				Units.inchesToMeters(backCamTranslationY.get()), 
-				Units.inchesToMeters(backCamTranslationZ.get()));
+			Units.inchesToMeters(frontCamTranslationX.get()),
+			Units.inchesToMeters(frontCamTranslationY.get()),
+			Units.inchesToMeters(frontCamTranslationZ.get())),
+			rightCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(rightCamTranslationX.get()),
+					Units.inchesToMeters(rightCamTranslationY.get()),
+					Units.inchesToMeters(rightCamTranslationZ.get())),
+			leftCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(leftCamTranslationX.get()),
+					Units.inchesToMeters(leftCamTranslationY.get()),
+					Units.inchesToMeters(leftCamTranslationZ.get())),
+			backCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(backCamTranslationX.get()),
+					Units.inchesToMeters(backCamTranslationY.get()),
+					Units.inchesToMeters(backCamTranslationZ.get()));
 	// Pitches of camera, in DEGREES, positive means UPWARD angle
 	public static int
 	// Camera resolution, and FPS
@@ -124,21 +137,21 @@ public class VisionConstants {
 			backPos = backCamTranslation3d;
 	public static Rotation3d frontRot = new Rotation3d(
 			Math.toDegrees(frontCamRoll.get()),
-			Math.toRadians(frontCamPitch.get()), 
+			Math.toRadians(frontCamPitch.get()),
 			Math.toRadians(frontCamYaw.get())),
-		rightRot = new Rotation3d(
-			Math.toDegrees(rightCamRoll.get()),
-			Math.toRadians(rightCamPitch.get()), 
-			Math.toRadians(rightCamYaw.get())),
-		leftRot = new Rotation3d(			
-			Math.toDegrees(leftCamRoll.get()),
-			Math.toRadians(leftCamPitch.get()), 
-			Math.toRadians(leftCamYaw.get())),
-		backRot = new Rotation3d(
-			Math.toDegrees(backCamRoll.get()),
-			Math.toRadians(backCamPitch.get()), 
-			Math.toRadians(backCamYaw.get()));
-	//Transforms, used in the camera declarations
+			rightRot = new Rotation3d(
+					Math.toDegrees(rightCamRoll.get()),
+					Math.toRadians(rightCamPitch.get()),
+					Math.toRadians(rightCamYaw.get())),
+			leftRot = new Rotation3d(
+					Math.toDegrees(leftCamRoll.get()),
+					Math.toRadians(leftCamPitch.get()),
+					Math.toRadians(leftCamYaw.get())),
+			backRot = new Rotation3d(
+					Math.toDegrees(backCamRoll.get()),
+					Math.toRadians(backCamPitch.get()),
+					Math.toRadians(backCamYaw.get()));
+	// Transforms, used in the camera declarations
 	public static Transform3d robotToFront = new Transform3d(frontPos, frontRot),
 			robotToRight = new Transform3d(rightPos, rightRot),
 			robotToLeft = new Transform3d(leftPos, leftRot),

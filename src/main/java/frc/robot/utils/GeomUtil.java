@@ -1,5 +1,6 @@
 package frc.robot.utils;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -9,7 +10,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
 
 public class GeomUtil {
 	/**
@@ -33,17 +33,9 @@ public class GeomUtil {
 	 * @param angle the angle to check
 	 * @return the optimized distance to rotate to reach an ideal angle
 	 */
-	public static double closerAngleToZero(double angle) {
+	public static double closerAngleToZero(Rotation2d angle) {
 		// Normalize the angle to be within the range of -180 to 180 degrees
-		double normalizedAngle = angle % 360;
-		if (normalizedAngle > 180) {
-			normalizedAngle -= 360;
-		} else if (normalizedAngle < -180) {
-			normalizedAngle += 360;
-		}
-		// Return the closer angle to zero
-		return (Math.abs(normalizedAngle) <= 180) ? normalizedAngle
-				: -normalizedAngle;
+		return Math.atan2(angle.getSin(), angle.getCos());
 	}
 
 	/**
@@ -92,10 +84,8 @@ public class GeomUtil {
 			// No adjustment needed for FRONT
 			break;
 		}
-		double angleDegrees = Math.toDegrees(angle);
-		// Create a Rotation2d object from the angle
-		Rotation2d rotationFromCurrentToTarget = new Rotation2d(
-				Units.degreesToRadians(angleDegrees));
+		//wrap the angle to be within -pi to pi
+		Rotation2d rotationFromCurrentToTarget = new Rotation2d(MathUtil.inputModulus(angle,-Math.PI, Math.PI));
 		return rotationFromCurrentToTarget;
 	}
 

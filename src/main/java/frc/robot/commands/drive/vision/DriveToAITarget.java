@@ -89,7 +89,7 @@ public class DriveToAITarget extends Command {
 			double deltaY = targetPieceLocation.getY() - currentPose.getY();
 			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
 			gamePieceTx -= currentPose.getRotation().getDegrees();
-			gamePieceTx = GeomUtil.closerAngleToZero(gamePieceTx);
+			gamePieceTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(gamePieceTx));
 			double d = currentPose.getTranslation()
 					.getDistance(targetPieceLocation);
 			double tyRad = Math.PI

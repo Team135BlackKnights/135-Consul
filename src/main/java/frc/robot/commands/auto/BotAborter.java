@@ -6,6 +6,7 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.util.Units;
@@ -59,7 +60,7 @@ public class BotAborter extends Command {
 			double deltaY = targetPieceLocation.getY() - currentPose.getY();
 			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
 			gamePieceTx -= currentPose.getRotation().getDegrees();
-			gamePieceTx = GeomUtil.closerAngleToZero(gamePieceTx);
+			gamePieceTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(gamePieceTx));
 			double d = currentPose.getTranslation()
 					.getDistance(targetPieceLocation);
 			double tyRad = Math.PI
@@ -78,7 +79,7 @@ public class BotAborter extends Command {
 				robotTx = Units
 						.radiansToDegrees(Math.atan2(robotDeltaY, robotDeltaX)); // Use atan2 instead of atan
 				robotTx -= currentPose.getRotation().getDegrees();
-				robotTx = GeomUtil.closerAngleToZero(robotTx);
+				robotTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(robotTx));
 				double robotD = opposingBotPose.getTranslation()
 						.getDistance(currentPose.getTranslation());
 				double robotTyRad = Math.PI

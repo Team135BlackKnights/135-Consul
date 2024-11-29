@@ -12,6 +12,7 @@ import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.vision.VisionConstants;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -53,7 +54,8 @@ public class AimToPose extends Command {
 		Pose2d currentPose = drive.getPose();
 		thetaController.reset(currentPose.getRotation().getRadians(),
 				drive.getRotation2d().getRadians());
-		drive.changeDeadband(.02); // Make sure the commands aren't trying to move tiny movements when the drivetrain won't allow it
+		drive.changeDeadband(.02); // Make sure the commands aren't trying to move tiny movements when the
+									// drivetrain won't allow it
 		RobotContainer.currentPath = "AIMTOPOSE";
 	}
 
@@ -68,12 +70,11 @@ public class AimToPose extends Command {
 			thetaController.setTolerance(thetaTolerance.get());
 		}, thetaKp, thetaKd, thetaMaxVelocitySlow, thetaTolerance);
 		RobotContainer.currentPath = "AIMTOPOSE";
-		//set Chassis to be aimed at it.
+		// set Chassis to be aimed at it.
 		double targetAngle = GeomUtil.closerAngleToZero(GeomUtil
 				.rotationFromCurrentToTarget(drive.getPose().getTranslation(),
 						poseSupplier.get().getTranslation(),
-						GeomUtil.ApproachDirection.BACK)
-				.getRadians());
+						VisionConstants.aimToPoseApproachDirection));
 		Logger.recordOutput("CurretP", thetaController.getP());
 		Rotation2d currentRotation = drive.getPose().getRotation();
 		Logger.recordOutput("TargetAngle", targetAngle);
@@ -81,7 +82,7 @@ public class AimToPose extends Command {
 		RobotContainer.angleOverrider = Optional.of(new Rotation2d(targetAngle));
 		double thetaVelocity = thetaController.getSetpoint().velocity
 				+ thetaController.calculate(currentRotation.getRadians(),
-						targetAngle); //Go to target rotation using FF.
+						targetAngle); // Go to target rotation using FF.
 		Logger.recordOutput("THETA", thetaVelocity);
 		PPHolonomicDriveController.overrideRotationFeedback(() -> thetaVelocity);
 		if (Constants.currentMatchState == Constants.FRCMatchState.TELEOP) {
@@ -96,9 +97,11 @@ public class AimToPose extends Command {
 		PPHolonomicDriveController.clearRotationFeedbackOverride();
 		RobotContainer.angularSpeed = 0;
 		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Go back to normal deadband
-		//drive.stopModules();
+		// drive.stopModules();
 	}
 
 	@Override
-	public boolean isFinished() { return false; }
+	public boolean isFinished() {
+		return false;
+	}
 }
