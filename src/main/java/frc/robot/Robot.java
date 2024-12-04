@@ -187,7 +187,8 @@ public class Robot extends LoggedRobot {
 		batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
 		Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
 		//Record the current accumated charge, so we can set it to that on next boot.
-		Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
+		Logger.recordOutput("FMS/isFMSAttached", DriverStation.isFMSAttached());
+  Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
 					DriveConstants.pathConstraints.maxVelocityMPS(),
