@@ -80,7 +80,10 @@ public class GyroIOPigeon2 implements GyroIO {
 			inputs.collisionDetected = false;
 		}
 	}
-
+	@Override
+	public void reset(){
+		pigeon.reset();
+	}
 	@Override
 	public List<SelfChecking> getSelfCheckingHardware() {
 		List<SelfChecking> hardware = new ArrayList<SelfChecking>();

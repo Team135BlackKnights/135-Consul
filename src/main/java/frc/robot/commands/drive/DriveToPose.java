@@ -61,18 +61,18 @@ public class DriveToPose extends Command {
 			"DriveToPose/FFMaxRadius");
 	//Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(2.0);
+		driveKp.initDefault(3.0);
 		driveKd.initDefault(0.0);
-		thetaKp.initDefault(12.16);
-		thetaKd.initDefault(0.0);
+		thetaKp.initDefault(6);
+		thetaKd.initDefault(0.1);
 		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0));
 		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(90.0));
-		driveTolerance.initDefault(0.06);
+		driveTolerance.initDefault(0.02);
 		driveToleranceSlow.initDefault(0.03);
 		thetaTolerance.initDefault(Units.degreesToRadians(3.0));
 		thetaToleranceSlow.initDefault(Units.degreesToRadians(1.0));
 		ffMinRadius.initDefault(0.2);
-		ffMaxRadius.initDefault(0.8);
+		ffMaxRadius.initDefault(1);
 	}
 
 	/** Drives to the specified pose under full software control. */
@@ -212,13 +212,13 @@ public class DriveToPose extends Command {
 								.transformBy(GeomUtil
 										.translationToTransform(driveVelocityScalar, 0.0))
 								.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
-		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-				driveVelocity.getX(), driveVelocity.getY(), thetaVelocity,
-				currentPose.getRotation())); //assert that we are relative to the current pose
+		drive.setChassisSpeeds(new ChassisSpeeds(
+				driveVelocity.getX(), driveVelocity.getY(), -thetaVelocity)); //assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",
 				driveController.getSetpoint().position);
+		Logger.recordOutput("DriveToPose/ThetaError", thetaErrorAbs);
 		Logger.recordOutput("DriveToPose/ThetaMeasured",
 				currentPose.getRotation().getDegrees());
 		Logger.recordOutput("DriveToPose/ThetaSetpoint",

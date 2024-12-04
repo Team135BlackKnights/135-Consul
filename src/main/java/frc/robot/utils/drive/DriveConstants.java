@@ -174,9 +174,9 @@ public class DriveConstants {
 		public static final double mecanumInitialAngleOffsetDegrees = 135, odomHz = 250;
 		public static final Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); //90 degrees makes robot front = facing left, 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
-				VecBuilder.fill(0.003, 0.003, 0.0002));
+				VecBuilder.fill(0.003, 0.003, 0.002));
 		public static double kDeadband = 0.05;
-		public static final double kWheelDiameter = Units.inchesToMeters(3.96),
+		public static final double kWheelDiameter = Units.inchesToMeters(3.995),
 		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
