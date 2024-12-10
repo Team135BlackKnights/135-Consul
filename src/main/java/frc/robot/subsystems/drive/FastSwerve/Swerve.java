@@ -531,7 +531,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 			// Assign the adjusted force magnitude
 			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());

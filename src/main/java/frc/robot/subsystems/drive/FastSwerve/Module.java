@@ -105,7 +105,7 @@ public class Module {
 				setpointState.speedMetersPerSecond);
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
 		// get current setpoint as Measure<? extends PerUnit<U, TimeUnit>>
-		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2));
+		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2));
 		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
 		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) && Constants.currentMode != Mode.SIM) {
@@ -113,19 +113,19 @@ public class Module {
 
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
-							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
+							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
 					(inputs.negateFF ? 0 : 1) * 
 							(wheelTorqueAmps)
 							+ff.calculate(currentVelocity, setpointVelocity).magnitude() //might be wrong
 							);
 		} else {
-			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter / 2))
+			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
         / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;
 			double torqueResistanceVoltage = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp * DriveConstants.getDriveTrainMotors(1).rOhms;
 			double wheelTorqueVolts = speedVoltage + torqueResistanceVoltage;
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
-							/ (DriveConstants.TrainConstants.kWheelDiameter / 2),
+							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
 					(inputs.negateFF ? 0 : 1) *
 							ff.calculate(currentVelocity, setpointVelocity).magnitude()
 							+ ((wheelTorqueVolts)));
@@ -173,7 +173,7 @@ public class Module {
 
 	/** Get turn angle of module as {@link Rotation2d}. */
 	public Rotation2d getAngle() {
-		return inputs.turnAbsolutePosition;
+		return inputs.turnPosition;
 	}
 
 	/** Get position of wheel rotations in radians */
@@ -184,13 +184,13 @@ public class Module {
 	/** Get position of wheel in meters. */
 	public double getPositionMeters() {
 		return inputs.drivePositionRads
-				* (DriveConstants.TrainConstants.kWheelDiameter / 2);
+				* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 	}
 
 	/** Get velocity of wheel in m/s. */
 	public double getVelocityMetersPerSec() {
 		return inputs.driveVelocityRadsPerSec
-				* (DriveConstants.TrainConstants.kWheelDiameter / 2);
+				* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 	}
 
 	/** Get current {@link SwerveModulePosition} of module. */

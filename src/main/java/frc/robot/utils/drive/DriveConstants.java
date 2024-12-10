@@ -176,8 +176,9 @@ public class DriveConstants {
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.002));
 		public static double kDeadband = 0.05;
-		public static final double kWheelDiameter = Units.inchesToMeters(3.995),
-		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter),
+		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter",.099);
+		public static final double 
+		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter.get()),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(40); //test chassis
@@ -193,11 +194,11 @@ public class DriveConstants {
 	static{
 		if (driveType == DriveTrainType.TANK){
 
-			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
+			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get()/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), kBumperToBumperWidth, MAX_G);
 		}else{
-		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
+		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get()/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
 			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
 		}

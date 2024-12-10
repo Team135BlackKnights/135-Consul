@@ -138,7 +138,7 @@ public class DriveToPose extends Command {
 												.getAngle().unaryMinus())
 										.getX()));
 		thetaController.reset(currentPose.getRotation().getRadians(),
-				drive.getRotation2d().getRadians());
+				0);
 		lastSetpointTranslation = drive.getPose().getTranslation();
 		drive.changeDeadband(.01); //Make sure the commands aren't trying to move tiny movements when the drivetrain wont allow it
 		RobotContainer.currentPath = "DRIVETOPOSE";
@@ -160,16 +160,16 @@ public class DriveToPose extends Command {
 			driveController.setD(driveKd.get());
 			driveController.setConstraints(new TrapezoidProfile.Constraints(
 					slowMode ? driveMaxVelocitySlow.get()
-							: pathConstraints.maxVelocityMPS(),
-					pathConstraints.maxAccelerationMPSSq()));
+							: DriveConstants.kMaxSpeedMetersPerSecond,
+					DriveConstants.maxTranslationalAcceleration.get()));
 			driveController.setTolerance(
 					slowMode ? driveToleranceSlow.get() : driveTolerance.get());
 			thetaController.setP(thetaKp.get());
 			thetaController.setD(thetaKd.get());
 			thetaController.setConstraints(new TrapezoidProfile.Constraints(
 					slowMode ? thetaMaxVelocitySlow.get()
-							: pathConstraints.maxAngularVelocityRadPerSec(),
-					pathConstraints.maxAngularAccelerationRadPerSecSq()));
+							: DriveConstants.kMaxTurningSpeedRadPerSec,
+					DriveConstants.maxRotationalAcceleration.get()));
 			thetaController.setTolerance(
 					slowMode ? thetaToleranceSlow.get() : thetaTolerance.get());
 		}
@@ -203,8 +203,11 @@ public class DriveToPose extends Command {
 						targetPose.getRotation().getRadians()); //Go to target rotation using FF.
 		thetaErrorAbs = Math.abs(currentPose.getRotation()
 				.minus(targetPose.getRotation()).getRadians());
-		if (thetaErrorAbs < thetaController.getPositionTolerance())
+		if (thetaErrorAbs < thetaController.getPositionTolerance()){
 			thetaVelocity = 0.0;
+			Logger.recordOutput("DriveToPose/NonMove", true);
+		}
+		Logger.recordOutput("DriveToPose/NonMove", false);
 		// Command speeds
 		var driveVelocity = new Pose2d(new Translation2d(),
 				currentPose.getTranslation().minus(targetPose.getTranslation())
@@ -213,12 +216,12 @@ public class DriveToPose extends Command {
 										.translationToTransform(driveVelocityScalar, 0.0))
 								.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
 		drive.setChassisSpeeds(new ChassisSpeeds(
-				driveVelocity.getX(), driveVelocity.getY(), -thetaVelocity)); //assert that we are relative to the current pose
+				driveVelocity.getX(), driveVelocity.getY(), thetaVelocity)); //assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",
 				driveController.getSetpoint().position);
-		Logger.recordOutput("DriveToPose/ThetaError", thetaErrorAbs);
+		Logger.recordOutput("DriveToPose/ThetaError", Units.radiansToDegrees(thetaErrorAbs));
 		Logger.recordOutput("DriveToPose/ThetaMeasured",
 				currentPose.getRotation().getDegrees());
 		Logger.recordOutput("DriveToPose/ThetaSetpoint",
