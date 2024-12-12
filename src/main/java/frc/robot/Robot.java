@@ -108,7 +108,7 @@ public class Robot extends LoggedRobot {
 		// autonomous chooser on the dashboard
 		Logger.recordMetadata("ProjectName", "The Chef"); // Set a metadata value
 		Logger.recordMetadata("TuningMode",
-				Boolean.toString(Constants.isTuningPID));
+		Boolean.toString(Constants.isTuningPID));
 		Logger.recordMetadata("RuntimeType", getRuntimeType().toString());
 		Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
 		Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);

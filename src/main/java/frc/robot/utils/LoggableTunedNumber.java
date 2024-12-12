@@ -4,20 +4,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
- 
+
 import frc.robot.Constants;
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber; 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns
  * default if not or value not in dashboard.
  */
 public class LoggableTunedNumber {
-	private static final String tableKey = "TunableNumbers";
 	private final String key;
 	private boolean hasDefault = false;
 	private double defaultValue;
-	private LoggedDashboardNumber dashboardNumber;
+	private LoggedNetworkNumber dashboardNumber;
 	private Map<Integer, Double> lastHasChangedValues = new HashMap<>();
 
 	/**
@@ -26,7 +25,8 @@ public class LoggableTunedNumber {
 	 * @param dashboardKey Key on dashboard
 	 */
 	public LoggableTunedNumber(String dashboardKey) {
-		this.key = tableKey + "/" + dashboardKey;
+		key = dashboardKey;
+		dashboardNumber = new LoggedNetworkNumber(dashboardKey);
 	}
 
 	/**
@@ -36,8 +36,9 @@ public class LoggableTunedNumber {
 	 * @param defaultValue Default value
 	 */
 	public LoggableTunedNumber(String dashboardKey, double defaultValue) {
-		this(dashboardKey);
-		initDefault(defaultValue);
+		key = dashboardKey;
+		hasDefault = true;
+		dashboardNumber = new LoggedNetworkNumber(dashboardKey, defaultValue);
 	}
 
 	/**
@@ -49,9 +50,9 @@ public class LoggableTunedNumber {
 	public void initDefault(double defaultValue) {
 		if (!hasDefault) {
 			hasDefault = true;
-			this.defaultValue = defaultValue;
+			dashboardNumber.setDefault(defaultValue);
 			if (Constants.isTuningPID) {
-				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
+				dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
 			}
 		}
 	}
@@ -62,34 +63,34 @@ public class LoggableTunedNumber {
 	 * @return The current value
 	 */
 	public double get() {
-		if (!hasDefault) {
-			return 0.0;
-		} else {
-			return Constants.isTuningPID ? dashboardNumber.get() : defaultValue;
-		}
+		return Constants.isTuningPID ? dashboardNumber.get() : defaultValue;
 	}
 
 	public static void ifChanged(int id, Consumer<double[]> action,
 			LoggableTunedNumber... tunableNumbers) {
-		if (Arrays.stream(tunableNumbers)
-				.anyMatch(tunableNumber -> tunableNumber.hasChanged(id))) {
-			action.accept(Arrays.stream(tunableNumbers)
-					.mapToDouble(LoggableTunedNumber::get).toArray());
+		if (Constants.isTuningPID) {
+			if (Arrays.stream(tunableNumbers)
+					.anyMatch(tunableNumber -> tunableNumber.hasChanged(id))) {
+				action.accept(Arrays.stream(tunableNumbers)
+						.mapToDouble(LoggableTunedNumber::get).toArray());
+			}
 		}
 	}
 
 	/** Runs action if any of the tunableNumbers have changed */
 	public static void ifChanged(int id, Runnable action,
 			LoggableTunedNumber... tunableNumbers) {
-		ifChanged(id, values -> action.run(), tunableNumbers);
+		if (Constants.isTuningPID) {
+			ifChanged(id, values -> action.run(), tunableNumbers);
+		}
 	}
 
 	/**
 	 * Checks whether the number has changed since our last check
 	 *
 	 * @param id Unique identifier for the caller to avoid conflicts when shared
-	 *              between multiple objects. Recommended approach is to pass the
-	 *              result of "hashCode()"
+	 *           between multiple objects. Recommended approach is to pass the
+	 *           result of "hashCode()"
 	 * @return True if the number has changed since the last time this method was
 	 *         called, false otherwise.
 	 */
