@@ -348,7 +348,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
 		odometryThread.unlockOdometry();
-		Logger.recordOutput("SystemStatus/DriveInputsMS",
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
 				(System.currentTimeMillis() - inputTime));
 		long systemTime = System.currentTimeMillis();
 		isSkidding = calculateSkidding();
@@ -484,7 +484,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
 		collisionDetected = collisionDetected();
 		DrivetrainS.super.periodic();
-		Logger.recordOutput("SystemStatus/DriveProcessMS", (systemTime - System.currentTimeMillis()));
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
 	@SuppressWarnings("removal")
