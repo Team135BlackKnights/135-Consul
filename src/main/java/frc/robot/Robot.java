@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -65,6 +64,7 @@ public class Robot extends LoggedRobot {
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus rioCanBus = new CANBus();
 	public static final CANBus driveCanBus = new CANBus(DriveConstants.canBusName);
+
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
@@ -75,9 +75,9 @@ public class Robot extends LoggedRobot {
 			PortForwarder.add(22, "orangepi@photonvision.local", 22);
 			PortForwarder.add(22, "photonvision.local", 22);
 		}
-		//execute PushOrangePiCode.java
+		// execute PushOrangePiCode.java
 		System.out.println("Pushing code to Orange Pi");
-		//run a new thread where we run the script to push code to the Orange Pi
+		// run a new thread where we run the script to push code to the Orange Pi
 		new Thread(() -> {
 			try {
 				// Check the current user
@@ -100,16 +100,16 @@ public class Robot extends LoggedRobot {
 				}
 				int exitCode = process.waitFor();
 				System.out.println("Process exited with code: " + exitCode);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}).start();
-		// Instantiate our RobotContainer.  This will perform all our button bindings, and put our
+		// Instantiate our RobotContainer. This will perform all our button bindings,
+		// and put our
 		// autonomous chooser on the dashboard
 		Logger.recordMetadata("ProjectName", "The Chef"); // Set a metadata value
 		Logger.recordMetadata("TuningMode",
-		Boolean.toString(Constants.isTuningPID));
+				Boolean.toString(Constants.isTuningPID));
 		Logger.recordMetadata("RuntimeType", getRuntimeType().toString());
 		Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
 		Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -117,36 +117,36 @@ public class Robot extends LoggedRobot {
 		Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
 		Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
 		switch (BuildConstants.DIRTY) {
-		case 0:
-			Logger.recordMetadata("GitDirty", "All changes committed");
-			break;
-		case 1:
-			Logger.recordMetadata("GitDirty", "Uncomitted changes");
-			break;
-		default:
-			Logger.recordMetadata("GitDirty", "Unknown");
-			break;
+			case 0:
+				Logger.recordMetadata("GitDirty", "All changes committed");
+				break;
+			case 1:
+				Logger.recordMetadata("GitDirty", "Uncomitted changes");
+				break;
+			default:
+				Logger.recordMetadata("GitDirty", "Unknown");
+				break;
 		}
 		switch (Constants.currentMode) {
-		case REAL:
-			// Running on a real robot, log to a USB stick ("/U/logs")
-			Logger.addDataReceiver(new WPILOGWriter());
-			Logger.addDataReceiver(new NT4Publisher());
-			SignalLogger.setPath("/media/sda1/");
-			break;
-		case SIM:
-			// Running a physics simulator, log to NT
-			Logger.addDataReceiver(new WPILOGWriter());
-			Logger.addDataReceiver(new NT4Publisher());
-			break;
-		case REPLAY:
-			// Replaying a log, set up replay source
-			setUseTiming(false); // Run as fast as possible
-			String logPath = LogFileUtil.findReplayLog();
-			Logger.setReplaySource(new WPILOGReader(logPath));
-			Logger.addDataReceiver(
-					new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-			break;
+			case REAL:
+				// Running on a real robot, log to a USB stick ("/U/logs")
+				Logger.addDataReceiver(new WPILOGWriter());
+				Logger.addDataReceiver(new NT4Publisher());
+				SignalLogger.setPath("/media/sda1/");
+				break;
+			case SIM:
+				// Running a physics simulator, log to NT
+				Logger.addDataReceiver(new WPILOGWriter());
+				Logger.addDataReceiver(new NT4Publisher());
+				break;
+			case REPLAY:
+				// Replaying a log, set up replay source
+				setUseTiming(false); // Run as fast as possible
+				String logPath = LogFileUtil.findReplayLog();
+				Logger.setReplaySource(new WPILOGReader(logPath));
+				Logger.addDataReceiver(
+						new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+				break;
 		}
 		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
@@ -160,8 +160,9 @@ public class Robot extends LoggedRobot {
 		}
 		pdh = LoggedPowerDistribution.getInstance();
 		SmartDashboard.putBoolean("ShouldEndLog", false);
-		//read the accumated charge from the last boot, so we can set it to that on boot.
-		accumulatedCharge = 0; //TODO: figure out how to read the accumulated charge from the last boot.
+		// read the accumated charge from the last boot, so we can set it to that on
+		// boot.
+		accumulatedCharge = 0; // TODO: figure out how to read the accumulated charge from the last boot.
 
 		// Publish the current mode of the robot (to check in pit display)
 		Logger.recordOutput("SystemStatus/robotMode", Constants.currentMode);
@@ -177,25 +178,28 @@ public class Robot extends LoggedRobot {
 	 */
 	@Override
 	public void robotPeriodic() {
-		Threads.setCurrentThreadPriority(true, 99); //Java magic to speed up loops.
-	
+		Threads.setCurrentThreadPriority(true, 99); // Java magic to speed up loops.
 
-		double currentTime = Logger.getTimestamp();
-		if (Constants.logBatteryPercent){
-			//This is where we update the battery voltage and current draw. Converts current draw (Amps) to Coloumbs.
+		long currentTime = System.currentTimeMillis();
+		if (Constants.logBatteryPercent) {
+			// This is where we update the battery voltage and current draw. Converts
+			// current draw (Amps) to Coloumbs.
 			double deltaTime = currentTime - previousTime;
-			previousTime = currentTime;		
-			// Calculate the charge used since the last update (this is borked by the new AKit PDP)
-			double chargeUsed = 0 * deltaTime;//pdh.getInstance().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
+			previousTime = currentTime;
+			// Calculate the charge used since the last update (this is borked by the new
+			// AKit PDP)
+			double chargeUsed = 0 * deltaTime;// pdh.getInstance().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the
+												// total current draw in amps from the PDP AT THIS MOMENT!
 			accumulatedCharge += chargeUsed;
-	  
+
 			// Calculate the remaining charge percentage
-			double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); //64800 is the total charge of the battery in Coloumbs (18 * 3600s/hr)
+			double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); // 64800 is the total charge of the
+																				// battery in Coloumbs (18 * 3600s/hr)
 			batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
 			Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
 			Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
 		}
-		//Record the current accumated charge, so we can set it to that on next boot.
+		// Record the current accumated charge, so we can set it to that on next boot.
 		Logger.recordOutput("FMS/isFMSAttached", DriverStation.isFMSAttached());
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
@@ -211,14 +215,17 @@ public class Robot extends LoggedRobot {
 				DriveConstants.maxRotationalAcceleration);
 		long dataStartTime = System.currentTimeMillis();
 		DataHandler.updateHandlerState();
-		Logger.recordOutput("SystemStatus/DataUpdateMS", Math.abs(dataStartTime-System.currentTimeMillis()));
+		Logger.recordOutput("SystemStatus/DataUpdateMS", Math.abs(dataStartTime - System.currentTimeMillis()));
 		Logger.recordOutput("MatchState", Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
-		// Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-		// commands, running already-scheduled commands, removing finished or interrupted commands,
-		// and running subsystem periodic() methods.  This must be called from the robot's periodic
+		// Runs the Scheduler. This is responsible for polling buttons, adding
+		// newly-scheduled
+		// commands, running already-scheduled commands, removing finished or
+		// interrupted commands,
+		// and running subsystem periodic() methods. This must be called from the
+		// robot's periodic
 		// block in order for anything in the Command-based framework to work.
 		CommandScheduler.getInstance().run();
 		for (PeriodicFunction f : periodicFunctions) {
@@ -229,15 +236,21 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
-		/*	long statusCalls = System.currentTimeMillis();
-		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
-		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
-		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls - System.currentTimeMillis()));
-		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization * 100.0);
-		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);*/
-		double runtimeMS = (Logger.getTimestamp() - currentTime) / 1000.0;
+		/*
+		 * long statusCalls = System.currentTimeMillis();
+		 * CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
+		 * CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		 * Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
+		 * System.currentTimeMillis()));
+		 * Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *
+		 * 100.0);
+		 * Logger.recordOutput("SystemStatus/DriveCANUtil",
+		 * driveCanBusStatus.BusUtilization * 100.0);
+		 */
+		long runtimeMS = (System.currentTimeMillis() - currentTime);
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
-		Threads.setCurrentThreadPriority(false, 10); //Return to normal thread priority (so when next loop comes, max speed again!)
+		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
+														// speed again!)
 	}
 
 	/** This function is called once each time the robot enters Disabled mode. */
@@ -260,9 +273,16 @@ public class Robot extends LoggedRobot {
 	@Override
 	public void disabledPeriodic() {
 		if (loggerStarted && SmartDashboard.getBoolean("ShouldEndLog", false)) {
+			Logger.recordOutput("EndedProperly", true);
 			Logger.end();
-			loggerStarted = false; //debonuces
+			loggerStarted = false; // debonuces
 			System.out.println("ENDING LOG");
+		} else {
+			{
+				if (loggerStarted) {
+					Logger.recordOutput("EndedProperly", false);
+				}
+			}
 		}
 	}
 
@@ -279,7 +299,7 @@ public class Robot extends LoggedRobot {
 			}
 		}
 		RobotContainer.drivetrainS.zeroHeading();
-		RobotContainer.drivetrainS.zeroHeading(); //ENSURE gyro is reset.
+		RobotContainer.drivetrainS.zeroHeading(); // ENSURE gyro is reset.
 		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
@@ -289,16 +309,18 @@ public class Robot extends LoggedRobot {
 					try {
 						PathPlannerPath path = PathPlannerAuto
 								.getPathGroupFromAutoFile(
-										RobotContainer.currentAuto.getName()).get(0);
-						if (DriveConstants.driveType == DriveTrainType.TANK){
-							RobotContainer.fieldSimulation.getMainDriveSimulation().setSimulationWorldPose(path.getStartingDifferentialPose());
-						}else{
+										RobotContainer.currentAuto.getName())
+								.get(0);
+						if (DriveConstants.driveType == DriveTrainType.TANK) {
 							RobotContainer.fieldSimulation.getMainDriveSimulation()
-							.setSimulationWorldPose(
-								new Pose2d(
-									path.getPoint(0).position,
-									path.getIdealStartingState().rotation()));
-						}		
+									.setSimulationWorldPose(path.getStartingDifferentialPose());
+						} else {
+							RobotContainer.fieldSimulation.getMainDriveSimulation()
+									.setSimulationWorldPose(
+											new Pose2d(
+													path.getPoint(0).position,
+													path.getIdealStartingState().rotation()));
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -326,7 +348,7 @@ public class Robot extends LoggedRobot {
 		}
 		RobotContainer.field.getObject("path").setTrajectory(new Trajectory());
 		RobotContainer.field.getObject("target pose")
-				.setPose(new Pose2d(-50, -50, new Rotation2d())); //the void
+				.setPose(new Pose2d(-50, -50, new Rotation2d())); // the void
 		// This makes sure that the autonomous stops running when
 		// teleop starts running. If you want the autonomous to
 		// continue until interrupted by another command, remove
@@ -339,8 +361,12 @@ public class Robot extends LoggedRobot {
 	/** This function is called periodically during operator control. */
 	@Override
 	public void teleopPeriodic() {
-		/*An FRC teleop period takes 2 minutes and 15 seconds (135 seconds). Endgame occurs during the last 20 seconds.
-		Based on this, endgame should initialize at 115 seconds and end at 135 seconds. */
+		/*
+		 * An FRC teleop period takes 2 minutes and 15 seconds (135 seconds). Endgame
+		 * occurs during the last 20 seconds.
+		 * Based on this, endgame should initialize at 115 seconds and end at 135
+		 * seconds.
+		 */
 		double matchTime = DriverStation.getMatchTime();
 		if (RobotContainer.angleOverrider.isPresent()) {
 			Logger.recordOutput("Odometry/AimGoal",
@@ -359,7 +385,7 @@ public class Robot extends LoggedRobot {
 				Constants.currentMatchState = FRCMatchState.ENDGAME;
 			}
 		} else {
-			if (matchTime % 1 != 0) { //is a double (running on DS)
+			if (matchTime % 1 != 0) { // is a double (running on DS)
 				if (matchTime < lastMatchTime) {
 					isPracticeDSMode = true;
 				}
@@ -367,16 +393,18 @@ public class Robot extends LoggedRobot {
 			}
 			Constants.currentMatchState = FRCMatchState.TELEOP;
 		}
-		/*if (RobotContainer.driveController.getPOV() == 0) {
-			//System.err.println("UP");
-			DataHandler.logData(new double[] { 4.5, 25.4
-			}, "shouldUpdateModel");
-		}
-		if (RobotContainer.manipController.getAButton()) {
-			System.out.println("A");
-			DataHandler.logData(new double[] { 4.5
-			}, "modelInputs");
-		}*/
+		/*
+		 * if (RobotContainer.driveController.getPOV() == 0) {
+		 * //System.err.println("UP");
+		 * DataHandler.logData(new double[] { 4.5, 25.4
+		 * }, "shouldUpdateModel");
+		 * }
+		 * if (RobotContainer.manipController.getAButton()) {
+		 * System.out.println("A");
+		 * DataHandler.logData(new double[] { 4.5
+		 * }, "modelInputs");
+		 * }
+		 */
 	}
 
 	@Override
@@ -389,7 +417,7 @@ public class Robot extends LoggedRobot {
 		}
 		// Cancels all running commands at the start of test mode.
 		CommandScheduler.getInstance().cancelAll();
-		//RobotContainer.allSystemsCheck().schedule();
+		// RobotContainer.allSystemsCheck().schedule();
 	}
 
 	/** This function is called periodically during test mode. */
@@ -405,8 +433,11 @@ public class Robot extends LoggedRobot {
 	/** This function is called once when the robot is first started up. */
 	@Override
 	public void simulationInit() {
-		/*We don't assign a match state for either simulation function because we most likely would want to test features that occur
-		at different game periods like tele and auto in simulation*/
+		/*
+		 * We don't assign a match state for either simulation function because we most
+		 * likely would want to test features that occur
+		 * at different game periods like tele and auto in simulation
+		 */
 	}
 
 	/** This function is called periodically whilst in simulation. */

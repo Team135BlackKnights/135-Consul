@@ -517,23 +517,25 @@ public class RobotContainer {
 					Command currentAutoValue = autoChooser.get();
 
 					// Check if the value has changed
-					if (!currentAutoValue.equals(lastAuto[0])) {
-						// Update the last known value
-						lastAuto[0] = currentAutoValue;
-
-						// Run your logic
-						try {
-							currentAuto = currentAutoValue;
-							Logger.recordOutput("RobotState/autoPath",
-									PathFinder.parseAutoToPose2dList(currentAutoValue.getName()).toArray(Pose2d[]::new));
-							field.getObject("path")
-									.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
-						} catch (Exception e) {
-							System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
-							field.getObject("path").setPoses(
-									new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
-											new Pose2d(-50.2, -50, new Rotation2d())
-									});
+					if (currentAutoValue != null){
+						if (!currentAutoValue.equals(lastAuto[0])) {
+							// Update the last known value
+							lastAuto[0] = currentAutoValue;
+	
+							// Run your logic
+							try {
+								currentAuto = currentAutoValue;
+								Logger.recordOutput("RobotState/autoPath",
+										PathFinder.parseAutoToPose2dList(currentAutoValue.getName()).toArray(Pose2d[]::new));
+								field.getObject("path")
+										.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
+							} catch (Exception e) {
+								System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
+								field.getObject("path").setPoses(
+										new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
+												new Pose2d(-50.2, -50, new Rotation2d())
+										});
+							}
 						}
 					}
 

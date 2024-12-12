@@ -144,12 +144,13 @@ public class DriveAndAimAtPose extends Command {
 		// Command speeds
 		var driveVelocity = new Pose2d(new Translation2d(),
 				currentPose.getTranslation().minus(targetPose).getAngle())
-				.transformBy(GeomUtil
-						.translationToTransform(driveVelocityScalar, 0.0))
-				.getTranslation(); // Calculate X and Y speeds from driveVelocity scalar.
-		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-				driveVelocity.getX(), driveVelocity.getY(), thetaVelocity,
-				currentPose.getRotation())); // assert that we are relative to the current pose
+						.transformBy(GeomUtil
+								.translationToTransform(driveVelocityScalar, 0.0))
+						.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
+		ChassisSpeeds speeds = new ChassisSpeeds(driveVelocity.getX(),
+				driveVelocity.getY(), thetaVelocity);
+		speeds.toRobotRelativeSpeeds(currentPose.getRotation());
+		drive.setChassisSpeeds(speeds); //assert that we are relative to the current pose
 		// Log data for debugging
 		Logger.recordOutput("RotateAndDriveToPose/DriveError", driveErrorAbs);
 		Logger.recordOutput("RotateAndDriveToPose/DriveSpeed",
