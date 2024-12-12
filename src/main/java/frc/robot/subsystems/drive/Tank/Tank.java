@@ -235,8 +235,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Drive", inputs);
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
@@ -275,6 +278,8 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
+
 	}
 
 	/** Run open loop at the specified voltage. */

@@ -215,7 +215,7 @@ public class Robot extends LoggedRobot {
 				DriveConstants.maxRotationalAcceleration);
 		long dataStartTime = System.currentTimeMillis();
 		DataHandler.updateHandlerState();
-		Logger.recordOutput("SystemStatus/DataUpdateMS", Math.abs(dataStartTime - System.currentTimeMillis()));
+		Logger.recordOutput("SystemStatus/Periodic/OrangePiMS", Math.abs(dataStartTime - System.currentTimeMillis()));
 		Logger.recordOutput("MatchState", Constants.currentMatchState.name());
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red

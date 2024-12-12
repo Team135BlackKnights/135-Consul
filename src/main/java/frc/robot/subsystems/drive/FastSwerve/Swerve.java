@@ -331,11 +331,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public void periodic() {
-		long systemTime = System.nanoTime();
 		// Check if modules are skidding
-		isSkidding = calculateSkidding();
 		// Update & process inputs
 		odometryThread.lockOdometry();
+		long inputTime = System.currentTimeMillis();
 		odometryThread.updateInputs(odometryTimestampInputs);
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
@@ -349,6 +348,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
 		odometryThread.unlockOdometry();
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
+				(System.currentTimeMillis() - inputTime));
+		long systemTime = System.currentTimeMillis();
+		isSkidding = calculateSkidding();
 		ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsFree; // implement limiting based off what you
 																			// need
 		// Calculate the min odometry position updates across all modules
@@ -481,7 +484,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
 		collisionDetected = collisionDetected();
 		DrivetrainS.super.periodic();
-		Logger.recordOutput("Drive/CycleTime", (systemTime - System.nanoTime())/1e6);
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
 	@SuppressWarnings("removal")
