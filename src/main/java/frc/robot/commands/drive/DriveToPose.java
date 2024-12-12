@@ -61,18 +61,18 @@ public class DriveToPose extends Command {
 			"DriveToPose/FFMaxRadius");
 	//Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(2.0);
+		driveKp.initDefault(3.0);
 		driveKd.initDefault(0.0);
-		thetaKp.initDefault(12.16);
-		thetaKd.initDefault(0.0);
+		thetaKp.initDefault(6);
+		thetaKd.initDefault(0.1);
 		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0));
 		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(90.0));
-		driveTolerance.initDefault(0.06);
+		driveTolerance.initDefault(0.02);
 		driveToleranceSlow.initDefault(0.03);
 		thetaTolerance.initDefault(Units.degreesToRadians(3.0));
 		thetaToleranceSlow.initDefault(Units.degreesToRadians(1.0));
 		ffMinRadius.initDefault(0.2);
-		ffMaxRadius.initDefault(0.8);
+		ffMaxRadius.initDefault(1);
 	}
 
 	/** Drives to the specified pose under full software control. */
@@ -138,7 +138,7 @@ public class DriveToPose extends Command {
 												.getAngle().unaryMinus())
 										.getX()));
 		thetaController.reset(currentPose.getRotation().getRadians(),
-				drive.getRotation2d().getRadians());
+				0);
 		lastSetpointTranslation = drive.getPose().getTranslation();
 		drive.changeDeadband(.01); //Make sure the commands aren't trying to move tiny movements when the drivetrain wont allow it
 		RobotContainer.currentPath = "DRIVETOPOSE";
@@ -203,8 +203,11 @@ public class DriveToPose extends Command {
 						targetPose.getRotation().getRadians()); //Go to target rotation using FF.
 		thetaErrorAbs = Math.abs(currentPose.getRotation()
 				.minus(targetPose.getRotation()).getRadians());
-		if (thetaErrorAbs < thetaController.getPositionTolerance())
+		if (thetaErrorAbs < thetaController.getPositionTolerance()){
 			thetaVelocity = 0.0;
+			Logger.recordOutput("DriveToPose/NonMove", true);
+		}
+		Logger.recordOutput("DriveToPose/NonMove", false);
 		// Command speeds
 		var driveVelocity = new Pose2d(new Translation2d(),
 				currentPose.getTranslation().minus(targetPose.getTranslation())
@@ -212,13 +215,13 @@ public class DriveToPose extends Command {
 								.transformBy(GeomUtil
 										.translationToTransform(driveVelocityScalar, 0.0))
 								.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
-		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
-				driveVelocity.getX(), driveVelocity.getY(), thetaVelocity,
-				currentPose.getRotation())); //assert that we are relative to the current pose
+		drive.setChassisSpeeds(new ChassisSpeeds(
+				driveVelocity.getX(), driveVelocity.getY(), thetaVelocity)); //assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",
 				driveController.getSetpoint().position);
+		Logger.recordOutput("DriveToPose/ThetaError", Units.radiansToDegrees(thetaErrorAbs));
 		Logger.recordOutput("DriveToPose/ThetaMeasured",
 				currentPose.getRotation().getDegrees());
 		Logger.recordOutput("DriveToPose/ThetaSetpoint",

@@ -332,9 +332,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	public void periodic() {
 		// Check if modules are skidding
-		isSkidding = calculateSkidding();
 		// Update & process inputs
 		odometryThread.lockOdometry();
+		long inputTime = System.currentTimeMillis();
 		odometryThread.updateInputs(odometryTimestampInputs);
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
@@ -348,6 +348,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
 		odometryThread.unlockOdometry();
+		Logger.recordOutput("SystemStatus/DriveInputsMS",
+				(System.currentTimeMillis() - inputTime));
+		long systemTime = System.currentTimeMillis();
+		isSkidding = calculateSkidding();
 		ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsFree; // implement limiting based off what you
 																			// need
 		// Calculate the min odometry position updates across all modules
@@ -480,8 +484,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
 		collisionDetected = collisionDetected();
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
+	@SuppressWarnings("removal")
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		pathplannerIndex = 0;
@@ -529,7 +535,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 			// Assign the adjusted force magnitude
 			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());

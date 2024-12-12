@@ -47,7 +47,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Tank extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 	public static final double TRACK_WIDTH = DriveConstants.kChassisWidth;
 	private final TankIO io;
@@ -235,8 +235,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Drive", inputs);
+		Logger.recordOutput("SystemStatus/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
@@ -275,6 +278,8 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/DriveProcessMS", System.currentTimeMillis() - timestamp);
+
 	}
 
 	/** Run open loop at the specified voltage. */

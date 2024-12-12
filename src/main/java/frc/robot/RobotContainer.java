@@ -5,6 +5,7 @@ package frc.robot;
 
 import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
@@ -107,6 +108,7 @@ import java.util.Optional;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -125,7 +127,6 @@ import java.io.IOException;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -146,7 +147,7 @@ public class RobotContainer {
 	public static SingleJointedArmS armS;
 	public static ElevatorS elevatorS;
 	public static DoubleJointedArmS doubleJointedArmS;
-	private final SendableChooser<Command> autoChooser;
+	private final LoggedDashboardChooser<Command> autoChooser;
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
 	public static XboxController testingController = new XboxController(5);
@@ -749,7 +750,11 @@ public class RobotContainer {
 		armS.setDefaultCommand(new SingleJointedArmC(armS));
 		elevatorS.setDefaultCommand(new ElevatorC(elevatorS));
 		doubleJointedArmS.setDefaultCommand(new DoubleJointedArmC(doubleJointedArmS));
-		autoChooser = AutoBuilder.buildAutoChooser();
+				if (!AutoBuilder.isConfigured()) {
+			throw new RuntimeException(
+					"AutoBuilder was not configured before attempting to build an auto chooser");
+		}
+		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
 		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
@@ -821,22 +826,47 @@ public class RobotContainer {
 						.finallyDo(doubleJointedArmS::endCharacterization)
 						.withName("Double Jointed Arm ELBOW Characterization"));
 		SmartDashboard.putData(field);
-		SmartDashboard.putData("Auto Chooser", autoChooser);
-		autoChooser.onChange(auto -> {
-			try {
-				currentAuto = auto;
-				Logger.recordOutput("RobotState/autoPath",
-						PathFinder.parseAutoToPose2dList(auto.getName()).toArray(Pose2d[]::new));
-				field.getObject("path")
-						.setPoses(PathFinder.parseAutoToPose2dList(auto.getName()));
-			} catch (Exception e) {
-				System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
-				field.getObject("path").setPoses(
-						new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
-								new Pose2d(-50.2, -50, new Rotation2d())
-						});
+		// Store the last known value of autoChooser.get()
+		final Command[] lastAuto = { autoChooser.get() };
+
+		new Thread(() -> {
+			while (true) {
+				try {
+					// Get the current value from autoChooser
+					Command currentAutoValue = autoChooser.get();
+
+					// Check if the value has changed
+					if (currentAutoValue != null){
+						if (!currentAutoValue.equals(lastAuto[0])) {
+							// Update the last known value
+							lastAuto[0] = currentAutoValue;
+	
+							// Run your logic
+							try {
+								currentAuto = currentAutoValue;
+								Logger.recordOutput("RobotState/autoPath",
+										PathFinder.parseAutoToPose2dList(currentAutoValue.getName()).toArray(Pose2d[]::new));
+								field.getObject("path")
+										.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
+							} catch (Exception e) {
+								System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
+								field.getObject("path").setPoses(
+										new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
+												new Pose2d(-50.2, -50, new Rotation2d())
+										});
+							}
+						}
+					}
+
+					// Sleep for a short duration to prevent excessive CPU usage
+					Thread.sleep(100); // Adjust the interval as necessary
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					System.err.println("Polling thread interrupted");
+					break;
+				}
 			}
-		});
+		}).start();
 		// Configure the trigger bindings
 		configureBindings();
 		addNTCommands();
@@ -851,14 +881,18 @@ public class RobotContainer {
 		xButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
-				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
+				.onTrue(new InstantCommand(() -> {
+					System.out.println("Zeroing Gyro");
+					drivetrainS.zeroHeading();
+					drivetrainS.resetPose(FieldConstants.START_POSE);
+				}));
 		// Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
 				.whileTrue(PathFinder.goToPose(
-						new Pose2d(1.9, 7.7,
-								new Rotation2d(Units.degreesToRadians(90))),
+						new Pose2d(3, 5.6,
+								new Rotation2d(Units.degreesToRadians(0))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
 		if (Constants.currentMode == Mode.SIM) {
 			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
@@ -872,7 +906,7 @@ public class RobotContainer {
 	 */
 	public Command getAutonomousCommand() {
 		// An example command will be run in autonomous
-		return autoChooser.getSelected();
+		return autoChooser.get();
 	}
 
 	/**

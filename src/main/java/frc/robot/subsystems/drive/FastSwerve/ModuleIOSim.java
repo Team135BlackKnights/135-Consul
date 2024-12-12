@@ -57,7 +57,7 @@ public class ModuleIOSim implements ModuleIO {
 		inputs.odometryDrivePositionsMeters = Arrays
 				.stream(moduleSimulation.getCachedDriveWheelFinalPositionsRad())
 				.map(position -> position
-						* DriveConstants.TrainConstants.kWheelDiameter / 2)
+						* DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
 				.toArray();
 		inputs.odometryTurnPositions = Arrays
 				.stream(moduleSimulation.getCachedSteerRelativeEncoderPositions())

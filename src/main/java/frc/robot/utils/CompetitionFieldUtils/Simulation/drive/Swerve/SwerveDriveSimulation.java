@@ -294,8 +294,8 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
         }
 
         /* the centripetal friction force during turning */
-        final ChassisSpeeds moduleSpeedsFieldRelative = ChassisSpeeds.fromRobotRelativeSpeeds(
-                moduleSpeeds, getSimulatedDriveTrainPose().getRotation());
+        ChassisSpeeds moduleSpeedsFieldRelative = moduleSpeeds;
+        moduleSpeedsFieldRelative.toFieldRelativeSpeeds(getSimulatedDriveTrainPose().getRotation());
         Logger.recordOutput("Drive/Swerve/Module Speeds (m/s)", moduleSpeeds);
         final Rotation2d dTheta;
         if (GeometryConvertor.getChassisSpeedsTranslationalComponent(moduleSpeedsFieldRelative).getNorm() < 0.01) {

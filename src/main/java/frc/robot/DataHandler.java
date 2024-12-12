@@ -70,7 +70,7 @@ public class DataHandler {
 			} else {
 				PortForwarder.add(port, "10.1.35.2", port);
 			}
-			serverSocket.setSoTimeout(15);
+			serverSocket.setSoTimeout(1);
 		}
 		catch (Exception e) {
 			e.printStackTrace();

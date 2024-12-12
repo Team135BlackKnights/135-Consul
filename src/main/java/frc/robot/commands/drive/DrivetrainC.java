@@ -97,8 +97,8 @@ public class DrivetrainC extends Command {
 		}
 		// Convert ChassisSpeeds into the ChassisSpeeds type
 		if (DriveConstants.fieldOriented) {
-			chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed,
-					turningSpeed, drivetrainS.getRotation2d());
+			chassisSpeeds = new ChassisSpeeds(xSpeed,ySpeed,turningSpeed);
+			chassisSpeeds.toFieldRelativeSpeeds(drivetrainS.getRotation2d());
 		} else {
 			chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
 		}
