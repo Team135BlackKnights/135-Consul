@@ -47,7 +47,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Mecanum extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 
 	public enum DriveMode {
@@ -325,7 +325,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 			}
 			// Assign the adjusted force magnitude
 			double nmVal = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage
 																														// from
 																														// speed

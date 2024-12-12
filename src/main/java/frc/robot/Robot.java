@@ -5,7 +5,6 @@ package frc.robot;
 
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
@@ -38,6 +37,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
@@ -161,6 +161,7 @@ public class Robot extends LoggedRobot {
 		SmartDashboard.putBoolean("ShouldEndLog", false);
 		//read the accumated charge from the last boot, so we can set it to that on boot.
 		accumulatedCharge = 0; //TODO: figure out how to read the accumulated charge from the last boot.
+
 		// Publish the current mode of the robot (to check in pit display)
 		Logger.recordOutput("SystemStatus/robotMode", Constants.currentMode);
 	}
@@ -175,20 +176,26 @@ public class Robot extends LoggedRobot {
 	 */
 	@Override
 	public void robotPeriodic() {
-		//This is where we update the battery voltage and current draw. Converts current draw (Amps) to Coloumbs.
+		Threads.setCurrentThreadPriority(true, 99); //Java magic to speed up loops.
+	
+
 		double currentTime = Logger.getRealTimestamp();
-		double deltaTime = currentTime - previousTime;
-		previousTime = currentTime;		
-		// Calculate the charge used since the last update
-		double chargeUsed = pdh.getInputs().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
-		accumulatedCharge += chargeUsed;
-  
-		// Calculate the remaining charge percentage
-		double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); //64800 is the total charge of the battery in Coloumbs (18 * 3600s/hr)
-		batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
-		Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
+		if (Constants.logBatteryPercent){
+			//This is where we update the battery voltage and current draw. Converts current draw (Amps) to Coloumbs.
+			double deltaTime = currentTime - previousTime;
+			previousTime = currentTime;		
+			// Calculate the charge used since the last update
+			double chargeUsed = pdh.getInputs().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
+			accumulatedCharge += chargeUsed;
+	  
+			// Calculate the remaining charge percentage
+			double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); //64800 is the total charge of the battery in Coloumbs (18 * 3600s/hr)
+			batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
+			Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
+			Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
+		}
 		//Record the current accumated charge, so we can set it to that on next boot.
-		Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
+		Logger.recordOutput("FMS/isFMSAttached", DriverStation.isFMSAttached());
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
 					DriveConstants.pathConstraints.maxVelocityMPS(),
@@ -229,6 +236,7 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);*/
 		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
+		Threads.setCurrentThreadPriority(false, 10); //Return to normal thread priority (so when next loop comes, max speed again!)
 	}
 
 	/** This function is called once each time the robot enters Disabled mode. */

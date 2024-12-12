@@ -519,14 +519,18 @@ public class RobotContainer {
 		xButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
-				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
+				.onTrue(new InstantCommand(() -> {
+					System.out.println("Zeroing Gyro");
+					drivetrainS.zeroHeading();
+					drivetrainS.resetPose(FieldConstants.START_POSE);
+				}));
 		// Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
 				.whileTrue(PathFinder.goToPose(
-						new Pose2d(1.9, 7.7,
-								new Rotation2d(Units.degreesToRadians(90))),
+						new Pose2d(3, 5.6,
+								new Rotation2d(Units.degreesToRadians(0))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
 		VisionConstants.Controls.autoIntake
 				.whileTrue(new DriveToAITarget(drivetrainS));

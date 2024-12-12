@@ -47,7 +47,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Tank extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 	public static final double TRACK_WIDTH = DriveConstants.kChassisWidth;
 	private final TankIO io;

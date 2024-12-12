@@ -35,7 +35,7 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
 		return radPerSecond * TrainConstants.kDriveMotorGearRatio
-				* TrainConstants.kWheelDiameter / 2;
+				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
 	public TankDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroSimulation gyroSim,
@@ -128,7 +128,7 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 					+ moduleFreeSpeedMPS
 							* (1 - FLOOR_SPEED_WEIGHT_IN_ACTUAL_MOTOR_SPEED);
 		final double rotorSpeedRadPerSec = rotorSpeedMetersPerSecond
-				/ DriveConstants.TrainConstants.kWheelDiameter / 2;
+				/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		return Units.radiansToRotations(rotorSpeedRadPerSec);
 	}
 
