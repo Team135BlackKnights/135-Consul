@@ -68,8 +68,10 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	public void simulationSubTick(){
 		tank.updateSim(subPeriodSeconds);
 		//should do the actual motion calculations
-		final ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),
+		
+		ChassisSpeeds tankTheoreticalSpeeds = kinematics
+		.toChassisSpeeds(tankIOSim.getWheelSpeeds());
+		tankTheoreticalSpeeds.toRobotRelativeSpeeds(
 		getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				tankTheoreticalSpeeds);

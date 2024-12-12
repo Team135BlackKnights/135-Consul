@@ -213,9 +213,9 @@ public class AIRobotInSimulation {
                 }
                 return Commands.run(() -> {
                         driveSimulation.runChassisSpeeds(
-                                        ChassisSpeeds.fromRobotRelativeSpeeds(joystickSpeeds.get(),
-                                                        opponentDriverStationFacing.get()),
-                                        true);
+                                joystickSpeeds.get()
+                                        ,
+                                        opponentDriverStationFacing.get());
                         System.out.println("joystick speeds: " + joystick.getLeftY());
                         System.out.println("id: " + id);
                 }, driveSimulation)

@@ -487,6 +487,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
+	@SuppressWarnings("removal")
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		pathplannerIndex = 0;
