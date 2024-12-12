@@ -160,16 +160,16 @@ public class DriveToPose extends Command {
 			driveController.setD(driveKd.get());
 			driveController.setConstraints(new TrapezoidProfile.Constraints(
 					slowMode ? driveMaxVelocitySlow.get()
-							: DriveConstants.kMaxSpeedMetersPerSecond,
-					DriveConstants.maxTranslationalAcceleration.get()));
+							: pathConstraints.maxVelocityMPS(),
+					pathConstraints.maxAccelerationMPSSq()));
 			driveController.setTolerance(
 					slowMode ? driveToleranceSlow.get() : driveTolerance.get());
 			thetaController.setP(thetaKp.get());
 			thetaController.setD(thetaKd.get());
 			thetaController.setConstraints(new TrapezoidProfile.Constraints(
 					slowMode ? thetaMaxVelocitySlow.get()
-							: DriveConstants.kMaxTurningSpeedRadPerSec,
-					DriveConstants.maxRotationalAcceleration.get()));
+							: pathConstraints.maxAngularVelocityRadPerSec(),
+					pathConstraints.maxAngularAccelerationRadPerSecSq()));
 			thetaController.setTolerance(
 					slowMode ? thetaToleranceSlow.get() : thetaTolerance.get());
 		}
