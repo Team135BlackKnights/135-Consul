@@ -238,7 +238,7 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Drive", inputs);
-		Logger.recordOutput("SystemStatus/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
 		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
@@ -278,7 +278,7 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
-		Logger.recordOutput("SystemStatus/DriveProcessMS", System.currentTimeMillis() - timestamp);
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
 
 	}
 
