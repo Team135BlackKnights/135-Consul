@@ -11,7 +11,7 @@ import org.photonvision.simulation.VisionSystemSim;
 
 /** IO implementation for physics sim using PhotonVision simulator. */
 public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
-  private static VisionSystemSim visionSim;
+  private static VisionSystemSim visionSim; // Singleton vision sim
 
   private final Supplier<Pose2d> poseSupplier;
   private final PhotonCameraSim cameraSim;
@@ -42,6 +42,6 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     visionSim.update(poseSupplier.get());
-    super.updateInputs(inputs);
+    super.updateInputs(inputs); // Act as real camera.
   }
 }

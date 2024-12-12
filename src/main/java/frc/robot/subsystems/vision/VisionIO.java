@@ -9,6 +9,7 @@ public interface VisionIO {
 	@AutoLog
 	public static class VisionIOInputs {
 	  public boolean connected = false;
+	  public String name = "";
 	  public TargetObservation latestTargetObservation =
 		  new TargetObservation(new Rotation2d(), new Rotation2d());
 	  public PoseObservation[] poseObservations = new PoseObservation[0];

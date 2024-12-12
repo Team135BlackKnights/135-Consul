@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.VisionConstants;
@@ -66,7 +67,7 @@ public class Vision extends SubsystemChecker {
 		for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
 			// Update disconnected alert
 			if (!inputs[cameraIndex].connected) {
-				addFault("NO heartbeat detected from camera " + cameraIndex);
+				addFault("NO heartbeat detected from " + inputs[cameraIndex].name);
 			}
 
 			// Initialize logging values
@@ -149,16 +150,16 @@ public class Vision extends SubsystemChecker {
 
 			// Log camera datadata
 			Logger.recordOutput(
-					"Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
+					"Vision/" + inputs[cameraIndex].name + "/TagPoses",
 					tagPoses.toArray(new Pose3d[tagPoses.size()]));
 			Logger.recordOutput(
-					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPoses",
+					"Vision/" + inputs[cameraIndex].name + "/RobotPoses",
 					robotPoses.toArray(new Pose3d[robotPoses.size()]));
 			Logger.recordOutput(
-					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesAccepted",
+					"Vision/" + inputs[cameraIndex].name + "/RobotPosesAccepted",
 					robotPosesAccepted.toArray(new Pose3d[robotPosesAccepted.size()]));
 			Logger.recordOutput(
-					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
+					"Vision/" + inputs[cameraIndex].name + "/RobotPosesRejected",
 					robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
 			allTagPoses.addAll(tagPoses);
 			allRobotPoses.addAll(robotPoses);
@@ -194,7 +195,21 @@ public class Vision extends SubsystemChecker {
 		super.registerAllHardware(new ArrayList<SelfChecking>(
 				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));
 	}
-
+	/**
+	 * Calculate the distance from the photon vision camera to the target
+	 * @param cam the camera index, as defined in RobotContainer.java
+	 */
+	public double calculateDistanceFromCam(int cam){
+		double ty = inputs[cam].latestTargetObservation.ty().getDegrees();
+		return calculateDistanceFromtY(ty);
+	}
+	/**
+	 * Get the latest target observation from the photon vision camera
+	 * @param cam the camera index, as defined in RobotContainer.java
+	 */
+	public TargetObservation getLatestTargetObservation(int cam){
+		return new TargetObservation(inputs[cam].latestTargetObservation.tx(), inputs[cam].latestTargetObservation.ty());
+	}
 	/**
 	 * Computes the distance in inches from the limelight network table entry
 	 * 

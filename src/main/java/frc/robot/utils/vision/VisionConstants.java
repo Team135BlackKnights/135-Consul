@@ -147,10 +147,6 @@ public class VisionConstants {
 			robotToRight = new Transform3d(rightCamTranslation3d, rightRot),
 			robotToLeft = new Transform3d(leftCamTranslation3d, leftRot),
 			robotToBack = new Transform3d(backCamTranslation3d, backRot);
-	// Put in an array for easier iterating
-	public static Transform3d[] camTranslations = new Transform3d[] {
-			robotToFront, robotToLeft, robotToRight, robotToBack
-	};
 	 // Basic filtering thresholds
 	 public static double maxAmbiguity = 0.3;
 	 public static double maxZError = 0.75;
