@@ -177,7 +177,7 @@ public class Vision extends SubsystemChecker {
 		Logger.recordOutput(
 				"Vision/Summary/RobotPosesRejected",
 				allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
-		Logger.recordOutput("Vision/ProcessMS", System.currentTimeMillis() - timestamp);
+		Logger.recordOutput("Vision/Periodic/ProcessMS", System.currentTimeMillis() - timestamp);
 	}
 
 	/**

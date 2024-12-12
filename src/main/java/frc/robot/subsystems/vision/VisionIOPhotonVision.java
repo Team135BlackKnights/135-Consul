@@ -87,6 +87,6 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
-    Logger.recordOutput("Vision/"+camera.getName()+"InputMS", System.currentTimeMillis() - timestamp);
+    Logger.recordOutput("Vision/Periodic/"+camera.getName()+"InputMS", System.currentTimeMillis() - timestamp);
   }
 }
