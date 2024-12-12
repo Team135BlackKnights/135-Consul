@@ -102,6 +102,7 @@ public class FlywheelS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		if (encoderIO != null) {
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
 			if (encoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
@@ -111,6 +112,8 @@ public class FlywheelS extends SubsystemChecker {
 			flywheelIOInputs.positionRad = encoderIOInputsAutoLogged.absolutePositionRadians;
 			flywheelIOInputs.velocityRadPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			Logger.processInputs("FlywheelS/FlywheelEncoder", encoderIOInputsAutoLogged);
+			Logger.recordOutput("SystemStatus/Periodic/FlywheelEncoderMS", System.currentTimeMillis() - timestamp);
+			timestamp = System.currentTimeMillis();
 		}
 		m_loop.correct(VecBuilder.fill(flywheelIOInputs.velocityRadPerSec));
 		m_loop.predict(.02);
@@ -121,12 +124,11 @@ public class FlywheelS extends SubsystemChecker {
 		}
 		Logger.recordOutput("FlywheelS/AdjustedRPM",
 				Units.radiansPerSecondToRotationsPerMinute(m_loop.getXHat(0)));
+		Logger.recordOutput("SystemStatus/Periodic/FlywheelProcessMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		flywheelIO.updateInputs(flywheelIOInputs);
 		Logger.processInputs("FlywheelS", flywheelIOInputs);
-
-		// get encoder
-		// override vals for inputs.velocity
-		// log flywheels/encoder
+		Logger.recordOutput("SystemStatus/Periodic/FlywheelInputsMS", System.currentTimeMillis() - timestamp);
 	}
 
 	/** Run open loop at the specified voltage. */

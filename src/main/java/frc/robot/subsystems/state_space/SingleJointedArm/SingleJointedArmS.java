@@ -1,14 +1,14 @@
 package frc.robot.subsystems.state_space.SingleJointedArm;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -117,14 +117,14 @@ public class SingleJointedArmS extends SubsystemChecker {
 	 * It takes the current position of the SingleJointedarm, and is the only thing
 	 * updated constantly because of that
 	 */
-	private final Mechanism2d m_mech2d = new Mechanism2d(
+	private final LoggedMechanism2d m_mech2d = new LoggedMechanism2d(
 			DriveConstants.kChassisWidth, DriveConstants.kChassisLength);
-	private final MechanismRoot2d m_SingleJointedarmPivot = m_mech2d.getRoot(
+	private final LoggedMechanismRoot2d m_SingleJointedarmPivot = m_mech2d.getRoot(
 			"SingleJointedArmPivot",
 			StateSpaceConstants.SingleJointedArm.physicalX,
 			StateSpaceConstants.SingleJointedArm.physicalY);
-	private final MechanismLigament2d m_SingleJointedarm = m_SingleJointedarmPivot
-			.append(new MechanismLigament2d("SingleJointedArm",
+	private final LoggedMechanismLigament2d m_SingleJointedarm = m_SingleJointedarmPivot
+			.append(new LoggedMechanismLigament2d("SingleJointedArm",
 					StateSpaceConstants.SingleJointedArm.armLength,
 					Units.radiansToDegrees(inputs.positionRad), 1,
 					new Color8Bit(Color.kYellow)));
@@ -150,14 +150,16 @@ public class SingleJointedArmS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		if (singleJointedArmEncoderIO != null) {
 			singleJointedArmEncoderIO.updateInputs(singleJointedArmEncoderIOInputs);
 			if (singleJointedArmEncoderIOInputs.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
-
 				inputs.positionRad = singleJointedArmEncoderIOInputs.absolutePositionRadians;
 				inputs.velocityRadPerSec = singleJointedArmEncoderIOInputs.angularVelocityRadPerSec;
 			}
 			Logger.processInputs("SingleJointedArmS/ArmEncoder", singleJointedArmEncoderIOInputs);
+			Logger.recordOutput("SystemStatus/Periodic/SingleJointedArmEncoderMS", System.currentTimeMillis() - timestamp);
+			timestamp = System.currentTimeMillis();
 		}
 		m_position = inputs.positionRad;
 		m_velocity = inputs.velocityRadPerSec;
@@ -177,8 +179,6 @@ public class SingleJointedArmS extends SubsystemChecker {
 			double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
 			singleJointedArmIO.setVoltage(appliedVolts);
 		}
-		singleJointedArmIO.updateInputs(inputs);
-		Logger.processInputs("SingleJointedArmS", inputs);
 		m_SingleJointedarm.setAngle(Units.radiansToDegrees(m_loop.getXHat(0)));
 		Logger.recordOutput("SingleJointedArmMechanism", m_mech2d);
 		// calcualate SingleJointedarm pose
@@ -189,6 +189,12 @@ public class SingleJointedArmS extends SubsystemChecker {
 				new Rotation3d(0, -m_loop.getXHat(0), 0.0));
 		Logger.recordOutput("Mechanism3d/SingleJointedArm/",
 				SingleJointedarmPose);
+		Logger.recordOutput("SystemStatus/Periodic/SingleJointedArmProcessMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
+		singleJointedArmIO.updateInputs(inputs);
+		Logger.processInputs("SingleJointedArmS", inputs);
+		Logger.recordOutput("SystemStatus/Periodic/SingleJointedArmInputsMS", System.currentTimeMillis() - timestamp);
+		
 	}
 
 	/** Run open loop at the specified voltage. */

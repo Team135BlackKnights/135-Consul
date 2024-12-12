@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -44,20 +44,20 @@ public class DoubleJointedArmS extends SubsystemChecker {
 	private double elbowSetRad;
 	public double latency;
 	private Notifier m_updatePositionsNotifier = null; // Checks for updates
-	private final Mechanism2d m_mech2d = new Mechanism2d(
+	private final LoggedMechanism2d  m_mech2d = new LoggedMechanism2d(
 			StateSpaceConstants.DoubleJointedArm.simSizeWidth,
 			StateSpaceConstants.DoubleJointedArm.simSizeLength);
-	private final MechanismRoot2d m_DoubleJointedarmPivot = m_mech2d.getRoot(
+	private final LoggedMechanismRoot2d m_DoubleJointedarmPivot = m_mech2d.getRoot(
 			"DoubleJointedArmPivot",
 			StateSpaceConstants.DoubleJointedArm.physicalX,
 			StateSpaceConstants.DoubleJointedArm.physicalY);
-	private final MechanismLigament2d m_DoubleJointedArm = m_DoubleJointedarmPivot
-			.append(new MechanismLigament2d("DoubleJointedArm",
+	private final LoggedMechanismLigament2d m_DoubleJointedArm = m_DoubleJointedarmPivot
+			.append(new LoggedMechanismLigament2d("DoubleJointedArm",
 					StateSpaceConstants.DoubleJointedArm.armLength,
 					Units.radiansToDegrees(getArmRads()), 1,
 					new Color8Bit(Color.kYellow)));
-	private final MechanismLigament2d m_DoubleJointedElbow = m_DoubleJointedArm
-			.append(new MechanismLigament2d("DoubleJointedElbow",
+	private final LoggedMechanismLigament2d m_DoubleJointedElbow = m_DoubleJointedArm
+			.append(new LoggedMechanismLigament2d("DoubleJointedElbow",
 					StateSpaceConstants.DoubleJointedArm.elbowLength,
 					Units.radiansToDegrees(getElbowRads()), 1,
 					new Color8Bit(Color.kYellow)));
@@ -91,6 +91,7 @@ public class DoubleJointedArmS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		long startTime = System.currentTimeMillis();
 		if (voltages != null && currentState != State.CHARACTERIZATION) {
 			doubleJointedArmIO.setVoltage(voltages);
 		}
@@ -108,10 +109,12 @@ public class DoubleJointedArmS extends SubsystemChecker {
 				doubleJointedArmInputs.positionArmRads = armEncoderIOInputsAutoLogged.absolutePositionRadians;
 				doubleJointedArmInputs.velocityArmRadsPerSec = armEncoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}
-			Logger.processInputs("DoubleJointedArmS/ArmEncoder", armEncoderIOInputsAutoLogged);
+			Logger.processInputs("DoubleJointedArmS/Periodic/ArmEncoder", armEncoderIOInputsAutoLogged);
 		}
 		doubleJointedArmIO.updateInputs(doubleJointedArmInputs);
 		Logger.processInputs("DoubleJointedArmS", doubleJointedArmInputs);
+		Logger.recordOutput("SystemStatus/Periodic/DoubleJointedArmInputsMS", System.currentTimeMillis() - startTime);
+		//processing time will ALWAYS be zero, so don't bother logging it.
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			// send the new qelms/relms to the Pi
 			double[] currentConstants = new double[] { StateSpaceConstants.DoubleJointedArm.qPos.get(),

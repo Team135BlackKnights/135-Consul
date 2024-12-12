@@ -1,13 +1,13 @@
 package frc.robot.subsystems.state_space.Elevator;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.EncoderType;
 import frc.robot.subsystems.SubsystemChecker;
@@ -113,14 +113,14 @@ public class ElevatorS extends SubsystemChecker {
 	 * It takes the current position of the Elevator, and is the only thing updated
 	 * constantly because of that
 	 */
-	private final Mechanism2d m_mech2d = new Mechanism2d(
+	private final LoggedMechanism2d m_mech2d = new LoggedMechanism2d(
 			StateSpaceConstants.Elevator.maxPosition + .25,
 			StateSpaceConstants.Elevator.maxPosition + .25);
-	private final MechanismRoot2d m_mech2dRoot = m_mech2d.getRoot(
+	private final LoggedMechanismRoot2d m_mech2dRoot = m_mech2d.getRoot(
 			"Elevator Root", StateSpaceConstants.Elevator.physicalX,
 			StateSpaceConstants.Elevator.physicalY);
-	private final MechanismLigament2d m_elevatorMech2d = m_mech2dRoot.append(
-			new MechanismLigament2d("Elevator", elevatorIOInputs.positionMeters, 90));
+	private final LoggedMechanismLigament2d m_elevatorMech2d = m_mech2dRoot.append(
+			new LoggedMechanismLigament2d("Elevator", elevatorIOInputs.positionMeters, 90));
 
 	public ElevatorS(ElevatorIO elevatorIO, ElevatorEncoderIO encoderIO) {
 		this.elevatorIO = elevatorIO;
@@ -136,13 +136,17 @@ public class ElevatorS extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		if (encoderIO != null) {
+			
 			encoderIO.updateInputs(encoderIOInputsAutoLogged);
 			if (encoderIOInputsAutoLogged.encoderType != EncoderType.NO_ATTACHED_ENCODER) {
 				elevatorIOInputs.positionMeters = encoderIOInputsAutoLogged.absolutePositionRadians;
 				elevatorIOInputs.velocityMetersPerSec = encoderIOInputsAutoLogged.angularVelocityRadPerSec;
 			}
 			Logger.processInputs("ElevatorS/ElevatorEncoder", encoderIOInputsAutoLogged);
+			Logger.recordOutput("SystemStatus/Periodic/ElevatorEncoderMS", System.currentTimeMillis() - timestamp);
+			timestamp = System.currentTimeMillis();
 		}
 		m_position = elevatorIOInputs.positionMeters;
 		m_velocity = elevatorIOInputs.velocityMetersPerSec;
@@ -162,9 +166,6 @@ public class ElevatorS extends SubsystemChecker {
 			double appliedVolts = MathUtil.clamp(m_loop.getU(0), -12, 12);
 			elevatorIO.setVoltage(appliedVolts);
 		}
-		elevatorIO.updateInputs(elevatorIOInputs);
-		Logger.processInputs("ElevatorS", elevatorIOInputs);
-
 		m_elevatorMech2d.setLength(m_loop.getXHat(0));
 		// Push the mechanism to AdvantageScope
 		Logger.recordOutput("ElevatorMechanism", m_mech2d);
@@ -173,6 +174,12 @@ public class ElevatorS extends SubsystemChecker {
 				StateSpaceConstants.Elevator.simY,
 				StateSpaceConstants.Elevator.simZ, new Rotation3d(0, 0, 0.0));
 		Logger.recordOutput("Mechanism3d/Elevator/", elevatorPose);
+		Logger.recordOutput("SystemStatus/Periodic/ElevatorProcessMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
+		elevatorIO.updateInputs(elevatorIOInputs);
+		Logger.processInputs("ElevatorS", elevatorIOInputs);
+		Logger.recordOutput("SystemStatus/Periodic/ElevatorInputsMS", System.currentTimeMillis() - timestamp);
+		
 	}
 
 	/** Run open loop at the specified voltage. */
