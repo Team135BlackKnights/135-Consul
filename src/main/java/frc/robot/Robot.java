@@ -58,7 +58,8 @@ public class Robot extends LoggedRobot {
 	private RobotContainer m_robotContainer;
 	public static boolean isRed;
 	private boolean isPracticeDSMode = false, loggerStarted = false;
-	private double lastMatchTime = 0, previousTime = Logger.getRealTimestamp(), accumulatedCharge = 0;
+	private double lastMatchTime = 0, previousTime = Logger.getTimestamp(), accumulatedCharge = 0;
+	@SuppressWarnings("unused")
 	private LoggedPowerDistribution pdh;
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus rioCanBus = new CANBus();
@@ -178,13 +179,13 @@ public class Robot extends LoggedRobot {
 		Threads.setCurrentThreadPriority(true, 99); //Java magic to speed up loops.
 	
 
-		double currentTime = Logger.getRealTimestamp();
+		double currentTime = Logger.getTimestamp();
 		if (Constants.logBatteryPercent){
 			//This is where we update the battery voltage and current draw. Converts current draw (Amps) to Coloumbs.
 			double deltaTime = currentTime - previousTime;
 			previousTime = currentTime;		
-			// Calculate the charge used since the last update
-			double chargeUsed = pdh.getInputs().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
+			// Calculate the charge used since the last update (this is borked by the new AKit PDP)
+			double chargeUsed = 0 * deltaTime;//pdh.getInstance().pdpTotalCurrent * deltaTime; //pdpTotalCurrent is the total current draw in amps from the PDP AT THIS MOMENT!
 			accumulatedCharge += chargeUsed;
 	  
 			// Calculate the remaining charge percentage
@@ -233,7 +234,7 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls - System.currentTimeMillis()));
 		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization * 100.0);
 		Logger.recordOutput("SystemStatus/DriveCANUtil", driveCanBusStatus.BusUtilization * 100.0);*/
-		double runtimeMS = (Logger.getRealTimestamp() - currentTime) / 1000.0;
+		double runtimeMS = (Logger.getTimestamp() - currentTime) / 1000.0;
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); //Return to normal thread priority (so when next loop comes, max speed again!)
 	}
