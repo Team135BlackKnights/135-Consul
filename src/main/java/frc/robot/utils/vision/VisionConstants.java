@@ -49,7 +49,7 @@ public class VisionConstants {
 	// trusts.
 	public final static double maxStaleReadingXMeters = Units.inchesToMeters(4),
 			maxStaleReadingYMeters = Units.inchesToMeters(4),
-			maxStaleReadingRotation = Units.degreesToRadians(.02);
+			maxStaleReadingRotation = Units.degreesToRadians(2);
 
 	public static class Controls {
 		public static JoystickButton autoIntake = new JoystickButton(
@@ -126,40 +126,47 @@ public class VisionConstants {
 					Units.inchesToMeters(backCamTranslationX.get()),
 					Units.inchesToMeters(backCamTranslationY.get()),
 					Units.inchesToMeters(backCamTranslationZ.get()));
-	// Pitches of camera, in DEGREES, positive means UPWARD angle
-	public static int
-	// Camera resolution, and FPS
-	camResWidth = 600, camResHeight = 800, camFPS = 60;
-	// Putting all the values together (Creating rotation3ds from the rotation 2ds
-	// and putting them together with the translation2ds)
-	public static Translation3d frontPos = frontCamTranslation3d,
-			rightPos = rightCamTranslation3d, leftPos = leftCamTranslation3d,
-			backPos = backCamTranslation3d;
 	public static Rotation3d frontRot = new Rotation3d(
-			Math.toDegrees(frontCamRoll.get()),
+			Math.toRadians(frontCamRoll.get()),
 			Math.toRadians(frontCamPitch.get()),
 			Math.toRadians(frontCamYaw.get())),
 			rightRot = new Rotation3d(
-					Math.toDegrees(rightCamRoll.get()),
+					Math.toRadians(rightCamRoll.get()),
 					Math.toRadians(rightCamPitch.get()),
 					Math.toRadians(rightCamYaw.get())),
 			leftRot = new Rotation3d(
-					Math.toDegrees(leftCamRoll.get()),
+					Math.toRadians(leftCamRoll.get()),
 					Math.toRadians(leftCamPitch.get()),
 					Math.toRadians(leftCamYaw.get())),
 			backRot = new Rotation3d(
-					Math.toDegrees(backCamRoll.get()),
+					Math.toRadians(backCamRoll.get()),
 					Math.toRadians(backCamPitch.get()),
 					Math.toRadians(backCamYaw.get()));
 	// Transforms, used in the camera declarations
-	public static Transform3d robotToFront = new Transform3d(frontPos, frontRot),
-			robotToRight = new Transform3d(rightPos, rightRot),
-			robotToLeft = new Transform3d(leftPos, leftRot),
-			robotToBack = new Transform3d(backPos, backRot);
+	public static Transform3d robotToFront = new Transform3d(frontCamTranslation3d, frontRot),
+			robotToRight = new Transform3d(rightCamTranslation3d, rightRot),
+			robotToLeft = new Transform3d(leftCamTranslation3d, leftRot),
+			robotToBack = new Transform3d(backCamTranslation3d, backRot);
 	// Put in an array for easier iterating
 	public static Transform3d[] camTranslations = new Transform3d[] {
 			robotToFront, robotToLeft, robotToRight, robotToBack
 	};
+	 // Basic filtering thresholds
+	 public static double maxAmbiguity = 0.3;
+	 public static double maxZError = 0.75;
+   
+	 // Standard deviation baselines, for 1 meter distance and 1 tag
+	 // (Adjusted automatically based on distance and # of tags)
+	 public static double linearStdDevBaseline = 0.02; // Meters
+	 public static double angularStdDevBaseline = 0.06; // Radians
+   
+	 // Standard deviation multipliers for each camera
+	 // (Adjust to trust some cameras more than others)
+	 public static double[] cameraStdDevFactors =
+		 new double[] {
+		   1.0, // Camera 0
+		   1.0 // Camera 1
+		 };   
 	// Used for distance calculations for AI stuff
 	// Offset of your limelight (0 being perpendicular, negative meaning camera lens
 	// down)
@@ -170,25 +177,6 @@ public class VisionConstants {
 	public static String limelightName = "limelight-swerve";
 	// For use in drivetoAITarget (PLACEHOLDER VALUE)
 	public static double DriveToAITargetKp = .3, DriveToAIMaxAutoTime = 2;
-	public static final double kMaxVisionCorrection = Units.inchesToMeters(5); // Jump from fused pose
-	public static final double kMaxVisionCorrectionSkid = Units
-			.inchesToMeters(15); // Jump from fused pose
-	public static final double offsetMaxDistance = 4; // in meters
-	public static final double std_dev_multiplier = 1;
-	public static final double kMaxRotationCorrection = Units
-			.degreesToRadians(10);
-	public static final double kMaxRotationCorrectionSkid = Units
-			.degreesToRadians(20);
-	public static final double lowestDistErrorStdDev = 0; // at .125, (5,.3125) (10,.625), at .25 (5,.625) (10,1.125)
-	public static final double avgDistErrorStdDev = .025; // at .2, (10, 1) (20, 2), at .4 (10, 2) (20, 4) SET : .025
-	public static final double poseAmbiguityErrorStdDev = .25; // at 4, (.15, .3) (.5, 1), at 8 (.15, .6) (.5, 2) SET :
-																// .5
-	public static final double weighAverageErrorStdDev = .05; // at .25, (.9, .1389) (.5, .25), at .5 (.9, .2777) (.5,
-																// .5) SET : .05
-	public static final double numTagsMultiplier = 1;
-	public static final double kMaxPoseAmbiguity = .6;
-	public static final double kMaxPoseAmbiguitySkid = .8;
-
 	public static class FieldConstants {
 		public static final double kFieldBorderMargin = 0.5;
 		public static final double kFieldTagMinTrust = .8;

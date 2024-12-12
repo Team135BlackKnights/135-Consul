@@ -3,6 +3,7 @@ package frc.robot.subsystems.vision;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -16,147 +17,166 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.utils.GeomUtil;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.VisionConstants;
-import frc.robot.utils.vision.VisionConstants.PVCameras;
 
 public class Vision extends SubsystemChecker {
-	private final VisionIO io;
-	private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
-	private boolean override = false, staleReading = false;
-	private Timer timer = new Timer();
+	private final VisionIO[] io;
+	private final VisionIOInputsAutoLogged[] inputs;
+	private boolean staleReading = false;
 	private Pose2d lastOdomPose = new Pose2d(0, 0, new Rotation2d(0));
 
-	public Vision(VisionIO io) {
+	public Vision(VisionIO... io) {
 		this.io = io;
+		this.inputs = new VisionIOInputsAutoLogged[io.length];
+		for (int i = 0; i < io.length; i++) {
+			this.inputs[i] = new VisionIOInputsAutoLogged();
+		}
 		registerSelfCheckHardware();
-		System.out.println(
-				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 2"
-						+ "\n" + getEstimationStdDevs(10, 5, .9, .15, 2));
-		System.out.println(
-				"Results from avgDist of 20, lowestDist of 10, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 2"
-						+ "\n" + getEstimationStdDevs(20, 10, .9, .15, 2));
-		System.out.println(
-				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .15, and numTags of 4"
-						+ "\n" + getEstimationStdDevs(10, 5, .9, .15, 4));
-		System.out.println(
-				"Results from avgDist of 10, lowestDist of 5, weightAverage of .5, avgPoseAmbiguity of .15, and numTags of 2"
-						+ "\n" + getEstimationStdDevs(10, 5, .5, .15, 2));
-		System.out.println(
-				"Results from avgDist of 10, lowestDist of 5, weightAverage of .9, avgPoseAmbiguity of .5, and numTags of 2"
-						+ "\n" + getEstimationStdDevs(10, 5, .9, .5, 2));
 	}
 
 	@Override
 	public void periodic() {
-		io.updateInputs(inputs);
-		Logger.processInputs("VisionS", inputs);
-		if (timer.get() > 1) {
-			timer.stop();
-			override = false;
+		
+		for (int i = 0; i < io.length; i++) {
+			io[i].updateInputs(inputs[i]);
+			Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
 		}
-		Pose2d currentOdomPose = RobotContainer.drivetrainS.getPose();
-		staleReading = (Math.abs(currentOdomPose.getX()-lastOdomPose.getX()) > VisionConstants.maxStaleReadingXMeters || Math.abs(currentOdomPose.getY()-lastOdomPose.getY()) > VisionConstants.maxStaleReadingYMeters || Math.abs(currentOdomPose.getRotation().getDegrees()-lastOdomPose.getRotation().getDegrees()) > VisionConstants.maxStaleReadingRotation);
-		//Update the global pose for each camera
-		for (int i = 0; i < 4; i++) {
-			PVCameras camera = PVCameras.getCameraByIndex(i);
-			switch (camera) {
-			case Front_Camera:
-				if (!inputs.frontCamHeartbeat)
-					addFault("No heartbeat from Front Camera", true, false);
-				break;
-			case Left_Camera:
-				if (!inputs.leftCamHeartbeat)
-					addFault("No heartbeat from Left Camera", true, false);
-				break;
-			case Right_Camera:
-				if (!inputs.rightCamHeartbeat)
-					addFault("No heartbeat from Right Camera", true, false);
-				break;
-			case Back_Camera:
-				if (!inputs.backCamHeartbeat)
-					addFault("No heartbeat from Back Camera", true, false);
-				break;
-			}
-			if (!inputs.estPose[i].equals(new Pose2d())) { //if not default
-				int[] aprilTagList = {};
-				switch (camera) {
-				case Front_Camera:
-					aprilTagList = inputs.frontCamTagList;
-					break;
-				case Left_Camera:
-					aprilTagList = inputs.leftCamTagList;
-					break;
-				case Right_Camera:
-					aprilTagList = inputs.rightCamTagList;
-					break;
-				case Back_Camera:
-					aprilTagList = inputs.backCamTagList;
-					break;
-				}
-				String response = shouldAcceptVision(inputs.time[i],
-						inputs.estPose[i], RobotContainer.drivetrainS.getPose(),
-						RobotContainer.drivetrainS.getChassisSpeeds(), aprilTagList,
-						inputs.avgPoseAmbiguity[i]);
-				if (response == "OK") {
-					// Change our trust in the measurement based on the tags we can see
-					// We do this because we should trust cam estimates with closer apriltags than farther ones.
-					Matrix<N3, N1> estStdDevs = getEstimationStdDevs(
-							inputs.avgDist[i], inputs.lowestDist[i],
-							inputs.weightAverage[i], inputs.avgPoseAmbiguity[i],
-							aprilTagList.length);
-					addVisionMeasurement(inputs.estPose[i], inputs.time[i],
-							estStdDevs);
 
-					if (!staleReading){
-						for (int tag : aprilTagList) {
-						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
-								.min(1,
-										VisionConstants.FieldConstants.aprilTagOffsets[tag]
-												+ .001);
-					}
-					}
-					
-				} else {
-					if ((response == "Min trust") && !staleReading) {
-						for (int tag : aprilTagList) {
-							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
-									.min(1,
-											VisionConstants.FieldConstants.aprilTagOffsets[tag]
-													+ .001);
-						}
-					} else if ((response != "Max ambiguity") && !staleReading) {
-						for (int tag : aprilTagList) {
-							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math
-									.max(0,
-											VisionConstants.FieldConstants.aprilTagOffsets[tag]
-													- .001);
-						}
-					}
-				}
-				if (VisionConstants.debug) {
-					SmartDashboard.putNumberArray("OFFSETS",
-							VisionConstants.FieldConstants.aprilTagOffsets);
-				}
-				
+		// Initialize logging values
+		List<Pose3d> allTagPoses = new LinkedList<>();
+		List<Pose3d> allRobotPoses = new LinkedList<>();
+		List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
+		List<Pose3d> allRobotPosesRejected = new LinkedList<>();
+		Pose2d currentOdomPose = RobotContainer.drivetrainS.getPose();
+		staleReading = (Math.abs(currentOdomPose.getX() - lastOdomPose.getX()) < VisionConstants.maxStaleReadingXMeters 
+				|| Math.abs(currentOdomPose.getY() - lastOdomPose.getY()) < VisionConstants.maxStaleReadingYMeters
+				|| Math.abs(currentOdomPose.getRotation().getDegrees()
+						- lastOdomPose.getRotation().getDegrees()) < VisionConstants.maxStaleReadingRotation);
+		Logger.recordOutput("Vision/Stale", staleReading);
+		// Loop over cameras
+		for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
+			// Update disconnected alert
+			if (!inputs[cameraIndex].connected) {
+				addFault("NO heartbeat detected from camera " + cameraIndex);
 			}
+
+			// Initialize logging values
+			List<Pose3d> tagPoses = new LinkedList<>();
+			List<Pose3d> robotPoses = new LinkedList<>();
+			List<Pose3d> robotPosesAccepted = new LinkedList<>();
+			List<Pose3d> robotPosesRejected = new LinkedList<>();
+			double averageTrust = 0.0;
+			// Add tag poses
+			for (int tagId : inputs[cameraIndex].tagIds) {
+				var tagPose = VisionConstants.kTagLayout.getTagPose(tagId);
+				if (tagPose.isPresent()) {
+					tagPoses.add(tagPose.get());
+				}
+				averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId]; // default is 1.0
+			}
+			averageTrust /= inputs[cameraIndex].tagIds.length;
+			// Loop over pose observations
+			for (var observation : inputs[cameraIndex].poseObservations) {
+				// Check whether to reject pose
+				boolean rejectPose = observation.tagCount() == 0 // Must have at least one tag
+						|| (observation.tagCount() == 1
+								&& observation.ambiguity() > VisionConstants.maxAmbiguity) // Cannot be high ambiguity
+						|| Math.abs(observation.pose().getZ()) > VisionConstants.maxZError // Must have realistic Z
+																							// coordinate
+
+						// Must be reasonable apriltag trust
+						|| averageTrust < VisionConstants.FieldConstants.kFieldTagMinTrust
+
+						// Must be within the field boundaries
+						|| observation.pose().getX() < 0.0
+						|| observation.pose().getX() > VisionConstants.kTagLayout.getFieldLength()
+						|| observation.pose().getY() < 0.0
+						|| observation.pose().getY() > VisionConstants.kTagLayout.getFieldWidth();
+
+				// Add pose to log
+				robotPoses.add(observation.pose());
+				if (rejectPose) {
+					robotPosesRejected.add(observation.pose());
+				} else {
+					robotPosesAccepted.add(observation.pose());
+				}
+
+				// Skip if rejected
+				if (rejectPose) {
+					if (!staleReading){
+						// update tag trusts
+						for (int tag : inputs[cameraIndex].tagIds) {
+							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.min(10, //max of 10x deviation
+									VisionConstants.FieldConstants.aprilTagOffsets[tag]
+											+ .002);
+						}
+					}
+					continue;
+				}
+
+				// Calculate standard deviations
+				double stdDevFactor = Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
+				double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor;
+				double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor;
+				if (cameraIndex < VisionConstants.cameraStdDevFactors.length) {
+					linearStdDev *= VisionConstants.cameraStdDevFactors[cameraIndex];
+					angularStdDev *= VisionConstants.cameraStdDevFactors[cameraIndex];
+				}
+				linearStdDev *= averageTrust;
+				angularStdDev *= averageTrust;
+				// Send vision observation
+				addVisionMeasurement(
+						observation.pose().toPose2d(),
+						observation.timestamp(),
+						VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+				if (!staleReading){
+					//update tag trusts
+					for (int tag : inputs[cameraIndex].tagIds) {
+						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.max(1,VisionConstants.FieldConstants.aprilTagOffsets[tag]
+						- .002);
+					}
+				}
+			}
+
+			// Log camera datadata
+			Logger.recordOutput(
+					"Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
+					tagPoses.toArray(new Pose3d[tagPoses.size()]));
+			Logger.recordOutput(
+					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPoses",
+					robotPoses.toArray(new Pose3d[robotPoses.size()]));
+			Logger.recordOutput(
+					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesAccepted",
+					robotPosesAccepted.toArray(new Pose3d[robotPosesAccepted.size()]));
+			Logger.recordOutput(
+					"Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
+					robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
+			allTagPoses.addAll(tagPoses);
+			allRobotPoses.addAll(robotPoses);
+			allRobotPosesAccepted.addAll(robotPosesAccepted);
+			allRobotPosesRejected.addAll(robotPosesRejected);
 		}
-		lastOdomPose = currentOdomPose;
+
+		// Log summary data
+		Logger.recordOutput(
+				"Vision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[allTagPoses.size()]));
+		Logger.recordOutput(
+				"Vision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[allRobotPoses.size()]));
+		Logger.recordOutput(
+				"Vision/Summary/RobotPosesAccepted",
+				allRobotPosesAccepted.toArray(new Pose3d[allRobotPosesAccepted.size()]));
+		Logger.recordOutput(
+				"Vision/Summary/RobotPosesRejected",
+				allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
 	}
 
 	/**
@@ -170,158 +190,9 @@ public class Vision extends SubsystemChecker {
 				estStdDevs);
 	}
 
-	public String shouldAcceptVision(double timestamp, Pose2d newEst,
-			Pose2d lastPosition, ChassisSpeeds robotVelocity, int[] aprilTagList,
-			double averagePoseAmbig) {
-		// Check out of field
-		if (newEst.getTranslation()
-				.getX() < -VisionConstants.FieldConstants.kFieldBorderMargin
-				|| newEst.getTranslation()
-						.getX() > FieldConstants.FIELD_WIDTH
-								+ VisionConstants.FieldConstants.kFieldBorderMargin
-				|| newEst.getTranslation()
-						.getY() < -VisionConstants.FieldConstants.kFieldBorderMargin
-				|| newEst.getTranslation()
-						.getY() > FieldConstants.FIELD_HEIGHT
-								+ VisionConstants.FieldConstants.kFieldBorderMargin) {
-			SmartDashboard.putString("Vision validation", "Outside field");
-			return "Outside field";
-		}
-		boolean[] moduleSkids = RobotContainer.drivetrainS.isSkidding();
-		if (moduleSkids[0] || moduleSkids[1] || moduleSkids[2] || moduleSkids[3]
-				|| RobotContainer.drivetrainS.isCollisionDetected() || override) {
-			if (RobotContainer.drivetrainS.isCollisionDetected()) {
-				override = true;
-				timer.restart();
-			}
-			if (Constants.currentMatchState == FRCMatchState.AUTO) {
-				if (GeomUtil.distancePose(lastPosition,
-						newEst) > VisionConstants.kMaxVisionCorrectionSkid) {
-					SmartDashboard.putString("Vision validation", "Max correction");
-					return "Max correction";
-				}
-			}
-			if (Math
-					.abs(newEst.getRotation().minus(lastPosition.getRotation())
-							.getRadians()) > VisionConstants.kMaxRotationCorrectionSkid
-					&& (RobotContainer.drivetrainS.isConnected())) {
-				SmartDashboard.putString("Vision validation", "Max rotation");
-				return "Max rotation";
-			}
-			if (averagePoseAmbig > VisionConstants.kMaxPoseAmbiguitySkid) {
-				SmartDashboard.putString("Vision validation", "Max ambiguity");
-				return "Max ambiguity";
-			}
-			SmartDashboard.putString("Vision validation", "Override");
-			return "OK";
-		}
-		// Check max correction
-		if (Constants.currentMatchState == FRCMatchState.AUTO) {
-			if (GeomUtil.distancePose(lastPosition,
-					newEst) > VisionConstants.kMaxVisionCorrection) {
-				SmartDashboard.putString("Vision validation", "Max correction");
-				return "Max correction";
-			}
-		}
-		if (Math
-				.abs(newEst.getRotation().minus(lastPosition.getRotation())
-						.getRadians()) > VisionConstants.kMaxRotationCorrection
-				&& (RobotContainer.drivetrainS.isConnected())) {
-			SmartDashboard.putString("Vision validation", "Max rotation");
-			return "Max rotation";
-		}
-		for (int aprilTagID : aprilTagList) {
-			if (VisionConstants.FieldConstants.aprilTagOffsets[aprilTagID] < VisionConstants.FieldConstants.kFieldTagMinTrust) {
-				SmartDashboard.putString("Vision validation", "Min trust");
-			}
-		}
-		if (averagePoseAmbig > VisionConstants.kMaxPoseAmbiguity) {
-			SmartDashboard.putString("Vision validation", "Max ambiguity");
-			return "Max ambiguity";
-		}
-		SmartDashboard.putString("Vision validation", "OK");
-		return "OK";
-	}
-
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(new ArrayList<SelfChecking>(
 				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));
-	}
-
-	/**
-	 * Compute the standard deviation based on the parameters given.
-	 * 
-	 * @param estimatedPose   the estimated pose that is being returned
-	 * @param photonEstimator the pose estimator to use
-	 * @param cam             the camera to use
-	 * @return A matrix of the standard deviations
-	 */
-	private Matrix<N3, N1> getEstimationStdDevs(double avgDist,
-			double lowestDist, double weightAverage, double avgPoseAmbiguity,
-			int numTags) {
-		double xyStdDev = calculateXYStdDev(avgDist, lowestDist, weightAverage,
-				avgPoseAmbiguity, numTags);
-		double thetaStdDev = calculateThetaStdDev(avgDist, lowestDist,
-				weightAverage, avgPoseAmbiguity, numTags);
-		xyStdDev = applyAdditionalAdjustments(xyStdDev, numTags);
-		thetaStdDev = applyAdditionalAdjustments(thetaStdDev, numTags);
-		return VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev);
-	}
-
-	/**
-	 * Calculate xyStdDev based on distance, average distance, average pose
-	 * ambiguity, weigh average, and number of tags.
-	 */
-	private double calculateXYStdDev(double avgDist, double lowestDist,
-			double weighAverage, double avgPoseAmbiguity, int numTags) {
-		double distWeight = lowestDist * VisionConstants.lowestDistErrorStdDev;
-		double avgDistWeight = avgDist * VisionConstants.avgDistErrorStdDev;
-		double poseWeight = avgPoseAmbiguity
-				* VisionConstants.poseAmbiguityErrorStdDev;
-		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
-				/ (0.00001 + weighAverage); // divide by zero protection
-		return VisionConstants.std_dev_multiplier
-				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
-				/ (numTags * VisionConstants.numTagsMultiplier);
-	}
-
-	/**
-	 * Calculate thetaStdDev based on distance, average distance, average pose
-	 * ambiguity, weigh average, and number of tags.
-	 */
-	private double calculateThetaStdDev(double avgDist, double lowestDist,
-			double weighAverage, double avgPoseAmbiguity, int numTags) {
-		double distWeight = lowestDist * VisionConstants.lowestDistErrorStdDev;
-		double avgDistWeight = avgDist * VisionConstants.avgDistErrorStdDev;
-		double poseWeight = avgPoseAmbiguity
-				* VisionConstants.poseAmbiguityErrorStdDev;
-		double weighAverageWeight = VisionConstants.weighAverageErrorStdDev
-				/ (0.00001 + weighAverage); // divide by zero protection
-		return VisionConstants.std_dev_multiplier
-				* (distWeight + poseWeight + weighAverageWeight + avgDistWeight)
-				/ (numTags * VisionConstants.numTagsMultiplier);
-	}
-
-	/**
-	 * Apply any additional adjustments or constraints to the calculated standard
-	 * deviation.
-	 */
-	private double applyAdditionalAdjustments(double stdDev, double tagCount) {
-		boolean[] moduleSkids = RobotContainer.drivetrainS.isSkidding();
-		for (boolean moduleSkid : moduleSkids) {
-			if (moduleSkid) {
-				stdDev /= 2;
-			}
-		}
-		if (RobotContainer.drivetrainS.isCollisionDetected() || override) {
-			stdDev /= 4;
-		}
-		if (moduleSkids[0] || moduleSkids[1] || moduleSkids[2]
-				|| moduleSkids[3]) {
-			return Math.max(0.05, stdDev);
-		}
-		// Add more adjustments as needed
-		return Math.max(0.02, stdDev); // Minimum threshold
 	}
 
 	/**

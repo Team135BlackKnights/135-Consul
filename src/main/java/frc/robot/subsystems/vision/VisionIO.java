@@ -2,41 +2,35 @@ package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.utils.vision.VisionConstants;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public interface VisionIO {
 	@AutoLog
 	public static class VisionIOInputs {
-		public double[] avgDist = { 0, 0, 0, 0
-		};
-		public double[] lowestDist = { 0, 0, 0, 0
-		};
-		public double[] weightAverage = { 0, 0, 0, 0
-		};
-		public double[] avgPoseAmbiguity = { 0, 0, 0, 0
-		};
-		public double[] time = { 0, 0, 0, 0
-		};
-		public double[] aprilTagOffsets = VisionConstants.FieldConstants.aprilTagOffsets;
-		public int[] frontCamTagList = {};
-		public int[] leftCamTagList = {};
-		public int[] rightCamTagList = {};
-		public int[] backCamTagList = {};
-		public boolean frontCamHeartbeat = false;
-		public boolean leftCamHeartbeat = false;
-		public boolean rightCamHeartbeat = false;
-		public boolean backCamHeartbeat = false;
-		public Pose2d[] estPose = { new Pose2d(), new Pose2d(), new Pose2d(),
-				new Pose2d()
-		};
+	  public boolean connected = false;
+	  public TargetObservation latestTargetObservation =
+		  new TargetObservation(new Rotation2d(), new Rotation2d());
+	  public PoseObservation[] poseObservations = new PoseObservation[0];
+	  public int[] tagIds = new int[0];
 	}
-
-	/** Updates the set of loggable inputs. */
+  
+	/** Represents the angle to a simple target, not used for pose estimation. */
+	public static record TargetObservation(Rotation2d tx, Rotation2d ty) {}
+  
+	/** Represents a robot pose sample used for pose estimation. */
+	public static record PoseObservation(
+		double timestamp,
+		Pose3d pose,
+		double ambiguity,
+		int tagCount,
+		double averageTagDistance,
+		PoseObservationType type) {}
+  
+	public static enum PoseObservationType {
+	  PHOTONVISION
+	  //QuestNav?
+	}
+  
 	public default void updateInputs(VisionIOInputs inputs) {}
-
-	public default void updateVisionSim(String objectName,
-			Pose2d estimatedPose) {}
-
-	public default void updateVisionObject(String objectName) {}
-}
+  }

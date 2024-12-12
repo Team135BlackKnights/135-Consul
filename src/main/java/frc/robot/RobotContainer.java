@@ -41,6 +41,7 @@ import frc.robot.commands.drive.vision.DriveToAITarget;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.utils.vision.VisionConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;
@@ -292,7 +293,11 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
-				visionS = new Vision(new VisionIOPhotonVision());
+				visionS = new Vision(
+						new VisionIOPhotonVision(VisionConstants.frontCamName, VisionConstants.robotToFront),
+						new VisionIOPhotonVision(VisionConstants.leftCamName, VisionConstants.robotToLeft),
+						new VisionIOPhotonVision(VisionConstants.rightCamName, VisionConstants.robotToRight),
+						new VisionIOPhotonVision(VisionConstants.backCamName, VisionConstants.robotToBack));
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -412,7 +417,11 @@ public class RobotContainer {
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
 				autoCommands.addAll(createBranches());
-				visionS = new Vision(new VisionIOPhotonVision()); //yes, they're the same!
+				visionS = new Vision(
+						new VisionIOPhotonVisionSim(VisionConstants.frontCamName, VisionConstants.robotToFront, drivetrainS::getPose),
+						new VisionIOPhotonVisionSim(VisionConstants.leftCamName, VisionConstants.robotToLeft, drivetrainS::getPose),
+						new VisionIOPhotonVisionSim(VisionConstants.rightCamName, VisionConstants.robotToRight, drivetrainS::getPose),
+						new VisionIOPhotonVisionSim(VisionConstants.backCamName, VisionConstants.robotToBack, drivetrainS::getPose));
 				break;
 			default:
 				switch (DriveConstants.driveType) {
@@ -445,7 +454,12 @@ public class RobotContainer {
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				visionS = new Vision(new VisionIO(){}); 
+				visionS = new Vision(new VisionIO() {
+				}, new VisionIO() {
+				},
+						new VisionIO() {
+						}, new VisionIO() {
+						}); // MUST be same number of cameras as in real robot
 				autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
