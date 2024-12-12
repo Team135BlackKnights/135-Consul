@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 
 public class VisionIOPhotonVision implements VisionIO {
@@ -26,8 +28,9 @@ public class VisionIOPhotonVision implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    long timestamp = System.currentTimeMillis();
     inputs.connected = camera.isConnected();
-	inputs.name = camera.getName();
+	  inputs.name = camera.getName();
     // Read new camera observations
     Set<Short> tagIds = new HashSet<>();
     List<PoseObservation> poseObservations = new LinkedList<>();
@@ -54,9 +57,7 @@ public class VisionIOPhotonVision implements VisionIO {
         // Calculate average tag distance
         double totalTagDistance = 0.0;
         for (var target : result.targets) {
-          totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
-		  //TODO: add april tag trusts.
-		  
+          totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();		  
         }
 
         // Add tag IDs
@@ -86,5 +87,6 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+    Logger.recordOutput("Vision/"+camera.getName()+"InputMS", System.currentTimeMillis() - timestamp);
   }
 }

@@ -5,6 +5,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.utils.vision.VisionConstants;
 
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -15,6 +17,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
 
   private final Supplier<Pose2d> poseSupplier;
   private final PhotonCameraSim cameraSim;
+  private final String cameraName;
 
   /**
    * Creates a new VisionIOPhotonVisionSim.
@@ -25,6 +28,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
   public VisionIOPhotonVisionSim(
       String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier) {
     super(name, robotToCamera);
+    this.cameraName = name;
     this.poseSupplier = poseSupplier;
 
     // Initialize vision sim
@@ -41,7 +45,10 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    long timestamp = System.currentTimeMillis();
     visionSim.update(poseSupplier.get());
+    Logger.recordOutput("Vision/"+cameraName+"SimMS",  System.currentTimeMillis() - timestamp);
     super.updateInputs(inputs); // Act as real camera.
+
   }
 }

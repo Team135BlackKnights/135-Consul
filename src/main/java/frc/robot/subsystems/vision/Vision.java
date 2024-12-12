@@ -46,13 +46,12 @@ public class Vision extends SubsystemChecker {
 
 	@Override
 	public void periodic() {
-		
 		for (int i = 0; i < io.length; i++) {
 			io[i].updateInputs(inputs[i]);
 			Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
 		}
-
 		// Initialize logging values
+		long timestamp = System.currentTimeMillis();
 		List<Pose3d> allTagPoses = new LinkedList<>();
 		List<Pose3d> allRobotPoses = new LinkedList<>();
 		List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
@@ -178,6 +177,7 @@ public class Vision extends SubsystemChecker {
 		Logger.recordOutput(
 				"Vision/Summary/RobotPosesRejected",
 				allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
+		Logger.recordOutput("Vision/ProcessMS", System.currentTimeMillis() - timestamp);
 	}
 
 	/**
