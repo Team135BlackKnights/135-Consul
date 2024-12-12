@@ -484,6 +484,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/CycleTime", (systemTime - System.nanoTime())/1e6);
 	}
 
+	@SuppressWarnings("removal")
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		pathplannerIndex = 0;
