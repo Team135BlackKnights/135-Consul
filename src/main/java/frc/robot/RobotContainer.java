@@ -418,10 +418,10 @@ public class RobotContainer {
 				));
 				autoCommands.addAll(createBranches());
 				visionS = new Vision(
-						new VisionIOPhotonVisionSim(VisionConstants.frontCamName, VisionConstants.robotToFront, drivetrainS::getPose),
-						new VisionIOPhotonVisionSim(VisionConstants.leftCamName, VisionConstants.robotToLeft, drivetrainS::getPose),
-						new VisionIOPhotonVisionSim(VisionConstants.rightCamName, VisionConstants.robotToRight, drivetrainS::getPose),
-						new VisionIOPhotonVisionSim(VisionConstants.backCamName, VisionConstants.robotToBack, drivetrainS::getPose));
+						new VisionIOPhotonVisionSim(VisionConstants.frontCamName, VisionConstants.robotToFront, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.leftCamName, VisionConstants.robotToLeft, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.rightCamName, VisionConstants.robotToRight, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.backCamName, VisionConstants.robotToBack, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
 				break;
 			default:
 				switch (DriveConstants.driveType) {
