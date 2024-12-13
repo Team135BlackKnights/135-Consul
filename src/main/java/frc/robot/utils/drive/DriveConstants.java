@@ -29,7 +29,7 @@ public class DriveConstants {
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
 	public static final String canBusName = "canivore-drive"; //Leave "" if CTRE_ON_RIO
-	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
+	public static final DriveTrainType driveType = DriveTrainType.TANK;
 	//This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
 	public static final GyroType gyroType = GyroType.PIGEON;

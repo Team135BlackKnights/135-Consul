@@ -218,8 +218,8 @@ public abstract class AbstractDriveTrainSimulation extends Body implements Robot
 	 */
 	public ChassisSpeeds getDriveTrainSimulatedChassisSpeedsRobotRelative() {
 		ChassisSpeeds speeds = getDriveTrainSimulatedChassisSpeedsFieldRelative();
-		speeds.toFieldRelativeSpeeds(getSimulatedDriveTrainPose().getRotation());
-		return speeds;
+        speeds.toRobotRelativeSpeeds(getSimulatedDriveTrainPose().getRotation());
+        return speeds;
 	}
 
 	/**
