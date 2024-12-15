@@ -13,8 +13,8 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class WheelRadiusCharacterization extends Command {
-  private static final LoggableTunedNumber characterizationSpeed =
-      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.5);
+  private static LoggableTunedNumber characterizationSpeed =
+      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.25);
   private static final DoubleSupplier gyroYawRadsSupplier =
       () -> RobotContainer.drivetrainS.getPose().getRotation().getRadians();
 

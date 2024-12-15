@@ -27,9 +27,9 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrain
 public class DriveConstants {
 	//If true, tank/mecanum use their native PIDs. If false, tank/mech output their voltages directly
 	public static final boolean enablePID = true;
-	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_RIO;
-	public static final String canBusName = ""; //Leave "" if CTRE_ON_RIO
-	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
+	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
+	public static final String canBusName = "canivore-drive"; //Leave "" if CTRE_ON_RIO
+	public static final DriveTrainType driveType = DriveTrainType.TANK;
 	//This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
 	public static final GyroType gyroType = GyroType.PIGEON;
@@ -112,7 +112,7 @@ public class DriveConstants {
 					kChassisLength * kChassisLength + kChassisWidth * kChassisWidth)
 					/ 2,
 			// Distance from center of robot to the farthest module
-			kMaxSpeedMetersPerSecond = Units.feetToMeters(15.1), //15.1
+			kMaxSpeedMetersPerSecond = 4.6, //15.1
 			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI, // 1.33655 *2 *Math.PI
 			// To find these set them to zero, then turn the robot on and manually set the
 			// wheels straight.
@@ -155,7 +155,7 @@ public class DriveConstants {
 	public static final boolean kFrontLeftDriveReversed = true,
 			kFrontLeftTurningReversed = true, kFrontLeftAbsEncoderReversed = false,
 			kFrontRightDriveReversed = false, kFrontRightTurningReversed = true,
-			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = false,
+			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = true,
 			kBackLeftTurningReversed = true, kBackLeftAbsEncoderReversed = false,
 			kBackRightDriveReversed = false, kBackRightTurningReversed = true,
 			kBackRightAbsEncoderReversed = false;
@@ -168,16 +168,17 @@ public class DriveConstants {
 		 * Which swerve module it is (SWERVE EXCLUSIVE)
 		 */
 		public enum ModulePosition {
-			FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
+			FRONT_LEFT, FRONT_RIGHT, BACK_LsEFT, BACK_RIGHT
 		}
 		//Mecanum exclusive, shows the initial offset of the wheel
 		public static final double mecanumInitialAngleOffsetDegrees = 135, odomHz = 250;
 		public static final Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); //90 degrees makes robot front = facing left, 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
-				VecBuilder.fill(0.003, 0.003, 0.0002));
+				VecBuilder.fill(0.003, 0.003, 0.002));
 		public static double kDeadband = 0.05;
-		public static final double kWheelDiameter = Units.inchesToMeters(4),
-		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter),
+		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter",.099);
+		public static final double 
+		kMaxAngularSpeedRadiansPerSecond = 2*DriveConstants.kMaxSpeedMetersPerSecond/(kWheelDiameter.get()),
 				kDriveMotorGearRatio = 6.75, kTurningMotorGearRatio = 150 / 7,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				weight = Units.lbsToKilograms(40); //test chassis
@@ -193,11 +194,11 @@ public class DriveConstants {
 	static{
 		if (driveType == DriveTrainType.TANK){
 
-			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
+			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get()/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(2,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 2);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), kBumperToBumperWidth, MAX_G);
 		}else{
-		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
+		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get()/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
 			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
 			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
 		}
@@ -210,9 +211,9 @@ public class DriveConstants {
 			if (robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 					|| robotMotorController == MotorVendor.CTRE_ON_RIO) {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						2.5, 4, 0.001, 40, 10, 5); // Average the turning motors for these vals.
-				overallDriveMotorConstantContainer = new MotorConstantContainer(2, // 5 for CTRE
-						.1, 0.001, 5, 0.25, 0.05);
+						1.65, 125, 0.6, 200, 35, 13.25); // Average the turning motors for these vals.
+				overallDriveMotorConstantContainer = new MotorConstantContainer(.21, // 5 for CTRE
+						.1255, 0.001, 35, 0.25, 0.05);
 			} else {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001); // Average the turning motors for these vals.

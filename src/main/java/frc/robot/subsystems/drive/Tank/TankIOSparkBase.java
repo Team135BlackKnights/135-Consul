@@ -179,7 +179,7 @@ public class TankIOSparkBase implements TankIO {
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+		return 12*radPerSec*(TrainConstants.kWheelDiameter.get()/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
 
 	}
 

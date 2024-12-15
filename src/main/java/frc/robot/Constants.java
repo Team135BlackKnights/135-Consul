@@ -28,9 +28,10 @@ public final class Constants {
 
 
 	//FRCMatchState of the robot
-	public static boolean isCompetition = false;
+	public static final boolean isCompetition = false;
 	public static FRCMatchState currentMatchState = FRCMatchState.DISABLED;
-	public static boolean isTuningPID = true;
+	public static final boolean isTuningPID = true;
+	public static final boolean logBatteryPercent = false;
 		static {
 			//MUST BE "AT EVENT" TO REPLAY!
 		if (isCompetition){
