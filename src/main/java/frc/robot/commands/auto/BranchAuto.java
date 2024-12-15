@@ -21,77 +21,87 @@ public class BranchAuto extends Command {
 	private final Pose2d nextGamePiece;
 	private final double endSpeed;
 	private final DrivetrainS drive;
-	private final double delayBotAborterBeforeIntake, delayBotAborterToNextPose;
+	private final double delayBotAborterToNextPose;
 	private final boolean useChoreo;
+
 	/**
 	 * Intake, Score, and go to next game piece, all dynamically, and with vision
 	 * detecting other robots/field elements.
 	 * 
 	 * @param drive
-	 * @param nextGamePiece               Pose2d of the next game piece to go to
-	 * @param endSpeed                    Speed to end the path at (m/s) usually 2-3
-	 *                                    m/s
-	 * @param delayBotAborterBeforeIntake Delay before the bot aborter is run WHILE
-	 *                                    intaking. (usually very short)
-	 * @param delayBotAborterToNextPose   Delay before the bot aborter is run AFTER
-	 *                                    scoring. (usually longer)
+	 * @param nextGamePiece             Pose2d of the next game piece to go to
+	 * @param endSpeed                  Speed to end the path at (m/s) usually 2-3
+	 *                                  m/s
+	 * @param delayBotAborterToNextPose Delay before the bot aborter is run AFTER
+	 *                                  scoring. (usually longer)
 	 */
-	public BranchAuto(DrivetrainS drive, Pose2d nextGamePiece, double endSpeed, double delayBotAborterBeforeIntake,
+	public BranchAuto(DrivetrainS drive, Pose2d nextGamePiece, double endSpeed,
 			double delayBotAborterToNextPose, boolean useChoreo) {
 		this.drive = drive;
 		this.endSpeed = endSpeed;
 		this.nextGamePiece = nextGamePiece;
-		this.delayBotAborterBeforeIntake = delayBotAborterBeforeIntake;
 		this.delayBotAborterToNextPose = delayBotAborterToNextPose;
 		this.useChoreo = useChoreo;
 	}
 
-
 	private SequentialCommandGroup botAbortWithDelay(double delay) {
 		return new SequentialCommandGroup(new WaitCommand(delay), new BotAborter(drive));
 	}
+
+	private InstantCommand changePath(String prefix) {
+		return new InstantCommand(
+				() -> {
+					if (drive instanceof Swerve) {
+						((Swerve) drive).pathplannerIndex = 0;
+					}
+					RobotContainer.currentPath = prefix + "_" + this.getName();
+				});
+	}
+
 	public void initialize() {
 		isFinished = false;
 		// PathPlannerPath.fromChoreoTrajectory will automatically execute any event
 		// markers in the choreo Traj.
 		commandGroup = new SequentialCommandGroup(
-				new ParallelRaceGroup(
-						new DriveToTargetUsingDriveAndAimAtPose(drive, Vision::updateNotePose,
-								RobotContainer.visionS::objectVisionOkay, () -> true), //use a sensor to determine if gamempiece detected
-						botAbortWithDelay(delayBotAborterBeforeIntake)),
-				new ConditionalCommand(// finished intaking, go score the game piece if we have it
-						new InstantCommand(() -> {
-							if (drive instanceof Swerve){
-								((Swerve) drive).pathplannerIndex = 0;
-							}
-							RobotContainer.currentPath = "Scoring_" + this.getName();
-						}).andThen(
-								new PoseBreakoff(drive, PoseBreakoff.BreakoffType.shoot,
+			new ConditionalCommand(
+				// if we didn't abort the drive to gamepiece, then we can go to the next game piece
+				changePath("Intaking").andThen(
+					new DriveToTargetUsingDriveAndAimAtPose(drive, Vision::updateNotePose,
+							RobotContainer.visionS::objectVisionOkay, () -> false))
+					.andThen(
+						new ConditionalCommand(// finished intaking, go score the game piece if we have it
+							changePath("Scoring")
+								.andThen(
+									new PoseBreakoff(drive, PoseBreakoff.BreakoffType.shoot,
 										DriveConstants.pathConstraints,
 										endSpeed,
 										!useChoreo).andThen( // finished scoring, go to next game piece
-										new InstantCommand(() -> {
-											if (drive instanceof Swerve){
-												((Swerve) drive).pathplannerIndex = 0;
-											}
-										})).andThen(
-												new ParallelRaceGroup(
-														PathFinder.goToPose(nextGamePiece,
-																() -> DriveConstants.pathConstraints, drive, true,
-																endSpeed),
-														botAbortWithDelay(delayBotAborterToNextPose)))),
-						new InstantCommand(() -> {
-							if (drive instanceof Swerve){
-								((Swerve) drive).pathplannerIndex = 0;
-							}
-							RobotContainer.currentPath = "SkipScoring_" + this.getName();
-						}).andThen(
+											changePath("NextGamePiece"))
+										.andThen(
+											new ParallelRaceGroup(
+													PathFinder.goToPose(
+															nextGamePiece,
+															() -> DriveConstants.pathConstraints,
+															drive,
+															true,
+															endSpeed),
+													botAbortWithDelay(
+															delayBotAborterToNextPose)))),
+							changePath("SkipScoring").andThen(
 								new ParallelRaceGroup( // finished skipping scoring, go to next game piece
 										PathFinder.goToPose(nextGamePiece,
-												() -> DriveConstants.pathConstraints, drive, true,
+												() -> DriveConstants.pathConstraints, drive,
+												true,
 												endSpeed),
 										botAbortWithDelay(delayBotAborterToNextPose))),
-						() -> RobotContainer.currentGamePieceStatus == RobotContainer.GamePieceState.HAS_NOTE));
+							() -> RobotContainer.currentGamePieceStatus == RobotContainer.GamePieceState.HAS_NOTE)),  //use a sensor
+				changePath("SkipIntaking").andThen(
+						new ParallelRaceGroup( // finished skipping scoring, go to next game piece
+								PathFinder.goToPose(nextGamePiece,
+										() -> DriveConstants.pathConstraints, drive, true,
+										endSpeed),
+								botAbortWithDelay(delayBotAborterToNextPose))),
+				() -> RobotContainer.currentGamePieceStatus != RobotContainer.GamePieceState.ABORT));
 
 		RobotContainer.currentPath = "Intaking_" + this.getName();
 		commandGroup.initialize();

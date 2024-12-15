@@ -8,6 +8,7 @@ import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.auto.BranchAuto;
+import frc.robot.commands.drive.DriveToTargetUsingDriveAndAimAtPose;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -37,7 +38,6 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDrive
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
 import frc.robot.utils.drive.DriveConstants;
-import frc.robot.commands.drive.vision.DriveToAITarget;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
@@ -359,8 +359,8 @@ public class RobotContainer {
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 						new Pair<String, Command>("SmartShoot", new PrintCommand("SmartShoot")),
 						new Pair<String, Command>("SmartIntake", Commands.none()),
-						new Pair<String, Command>("BranchIntakeToSpike3", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[0], new Rotation2d()), 1, .5, 1, true)),
-						new Pair<String, Command>("BranchIntakeToSpike1", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[2], new Rotation2d()), 0, .5, 1, true))
+						new Pair<String, Command>("BranchIntakeToSpike3", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[0], new Rotation2d()), 1, 1, true)),
+						new Pair<String, Command>("BranchIntakeToSpike1", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[2], new Rotation2d()), 0,  1, true))
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
@@ -522,7 +522,8 @@ public class RobotContainer {
 								new Rotation2d(Units.degreesToRadians(0))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
 		VisionConstants.Controls.autoIntake
-				.whileTrue(new DriveToAITarget(drivetrainS));
+				.whileTrue(new DriveToTargetUsingDriveAndAimAtPose(drivetrainS, Vision::updateNotePose,
+				RobotContainer.visionS::objectVisionOkay, () -> false));
 		if (Constants.currentMode == Mode.SIM) {
 			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
 		}

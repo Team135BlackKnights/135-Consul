@@ -124,7 +124,7 @@ public class BotAborter extends Command {
 				estimatedgamePiecePose3d);
 		gamePieceDistance = GeomUtil.calculateDistanceFromPose3d(currentPose,
 				estimatedgamePiecePose3d);
-		if (robotTv && gamePieceTv && RobotContainer.currentPath != "INTAKING") {
+		if (robotTv && gamePieceTv && RobotContainer.currentPath != "INTAKING_DRIVEPOSE") {
 			Pose3d estimatedOpposingBotPose3d = GeomUtil
 					.calculateFieldRelativePose3d(currentPose, robotTx, robotTy,
 							Units.inchesToMeters(
