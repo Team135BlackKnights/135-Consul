@@ -31,6 +31,19 @@ public class FieldConstants {
 			new Translation2d(13.64, 4.1), new Translation2d(13.64, 5.55),
 			new Translation2d(13.64, 7),
 	};
+	public static Translation2d getClosestGamePieceFromListOfNotes(
+			Translation2d robotPosition, Translation2d[] gamePieces) {
+		Translation2d closestGamePiece = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (Translation2d gamePiece : gamePieces) {
+			double distance = gamePiece.getDistance(robotPosition);
+			if (distance < closestDistance) {
+				closestGamePiece = gamePiece;
+				closestDistance = distance;
+			}
+		}
+		return closestGamePiece;
+	}
 	/* https://www.andymark.com/products/frc-2024-am-4999 */
 	public static final double NOTE_HEIGHT = Units.inchesToMeters(2),
 			NOTE_DIAMETER = Units.inchesToMeters(14);

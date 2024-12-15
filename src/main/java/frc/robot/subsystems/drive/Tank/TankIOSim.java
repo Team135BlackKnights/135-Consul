@@ -23,7 +23,7 @@ public class TankIOSim implements TankIO {
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
 			.getD();
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 	private final DCMotorSim frontLeft, backLeft, frontRight, backRight;
 	private double leftAppliedVolts = 0.0;

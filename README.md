@@ -2,7 +2,7 @@
 ![blocks_logo](https://github.com/Team135BlackKnights/135-Blocks/assets/49589065/488cddd6-688f-4a2d-b0a6-cc395535b318)
 
 # 135 Blocks
-This is designed to be a template-based framework for FRC programming.
+This is meant to be a template-based framework for FRC programming.
 
 This is designed so that the only files that need changing to combine different subsystems is RobotContainer.java if used properly.
 
@@ -52,6 +52,8 @@ This is designed so that the only files that need changing to combine different 
   - Will run the given Choreo trajectory UNLESS the GamePiece status is not zero
   - Will pathfind to a given Pose2d if gamepiece status is not zero
 
+### Battery Percentage Algorithm:
+All blocks contain a rough coloumb-counting algorithm to approximate battery percentage. 
 
 
 ### SubsystemChecker Overhaul: 

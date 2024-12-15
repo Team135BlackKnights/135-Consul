@@ -40,7 +40,7 @@ public class MecanumIOSim implements MecanumIO {
 	private double backRightFFVolts = 0.0;
 	private final GyroIO gyro;
 	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 
 	public MecanumIOSim(GyroIO gyroSim) {
