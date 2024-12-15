@@ -81,7 +81,7 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
 import frc.robot.utils.drive.DriveConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;
@@ -603,15 +603,13 @@ public class RobotContainer {
 								moduleSimulations[i] = SwerveModuleSimulation
 								.getMark4i(DriveConstants.getDriveTrainMotors(1),
 										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
+										WHEEL_GRIP.COLSONS.cof, 2)
 								.get();
 								break;
 								case THRIFTYSWERVE:
-								moduleSimulations[i] = SwerveModuleSimulation.getThrifty(DriveConstants.getDriveTrainMotors(1),
+								moduleSimulations[i] = SwerveModuleSimulation.getThriftySwerve(DriveConstants.getDriveTrainMotors(1),
 								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2).get();
+								WHEEL_GRIP.COLSONS.cof, 2).get();
 								break;
 								default:
 								throw new IllegalArgumentException(
