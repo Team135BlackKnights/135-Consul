@@ -262,7 +262,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		inputs.turnMotorTemp = turnTemp.getValueAsDouble();
 		inputs.odometryDrivePositionsMeters = drivePositionQueue.stream()
 				.mapToDouble(signalValue -> Units.rotationsToRadians(signalValue)
-						* (DriveConstants.TrainConstants.kWheelDiameter / 2))
+						* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
 				.toArray();
 		inputs.odometryTurnPositions = turnPositionQueue.stream()
 				.map(Rotation2d::fromRotations).toArray(Rotation2d[]::new);

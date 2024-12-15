@@ -202,9 +202,9 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.busVoltagePeriodMs((int) (1000 / DriveConstants.TrainConstants.odomHz));
 		driveConfig = driveConfig.apply(driveSignalsConfig);
 		driveMaxMotionConfig = new MAXMotionConfig()
-				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond / DriveConstants.TrainConstants.kWheelDiameter / 2)
+				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond / DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
 				.maxAcceleration(DriveConstants.maxTranslationalAcceleration.get()
-						/ DriveConstants.TrainConstants.kWheelDiameter / 2);
+						/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 		driveClosedLoopConfig = new ClosedLoopConfig().pidf(
 				DriveConstants.overallDriveMotorConstantContainer.getP(),
 				DriveConstants.overallDriveMotorConstantContainer.getI(),
@@ -251,7 +251,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			driveMaxMotionConfig = driveMaxMotionConfig
 					.maxAcceleration(DriveConstants.maxTranslationalAcceleration.get()
-							/ DriveConstants.TrainConstants.kWheelDiameter / 2);
+							/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 			driveClosedLoopConfig = driveClosedLoopConfig.apply(driveMaxMotionConfig);
 			driveConfig = driveConfig.apply(driveClosedLoopConfig);
 		}, DriveConstants.maxTranslationalAcceleration);
@@ -270,7 +270,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 		inputs.turnMotorTemp = turnSpark.getMotorTemperature();
 		inputs.odometryDrivePositionsMeters = drivePositionQueue.stream()
 				.mapToDouble(motorPositionRevs -> motorPositionRevs
-						* (DriveConstants.TrainConstants.kWheelDiameter / 2))
+						* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
 				.toArray();
 		inputs.odometryTurnPositions = turnPositionQueue.stream()
 				.map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);

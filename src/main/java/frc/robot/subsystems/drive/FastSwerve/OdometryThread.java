@@ -46,8 +46,8 @@ public interface OdometryThread {
 	static OdometryThread createInstance() {
 		return switch (Constants.currentMode) {
 		case REAL -> new OdometryThreadReal(
-				registeredInputs.toArray(new OdometryDoubleInput[0]),
-				registeredStatusSignals.toArray(new BaseStatusSignal[0]));
+				registeredInputs,
+				registeredStatusSignals);
 		case SIM -> new AbstractDriveTrainSimulation.OdometryTimeStampsSim.OdometryThreadSim();
 		case REPLAY -> inputs -> {
 		};

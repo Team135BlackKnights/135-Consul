@@ -36,7 +36,7 @@ public abstract class SubsystemChecker extends SubsystemBase
 	private final String statusTable;
 	private boolean checkErrors;
 	private Thread checkerThread;
-	private volatile boolean running = true; // volatile to ensure visibility between main and checker threads
+	private volatile boolean running = false; // volatile to ensure visibility between main and checker threads
 
 	public SubsystemChecker() {
 		this.statusTable = "SystemStatus/" + this.getName();

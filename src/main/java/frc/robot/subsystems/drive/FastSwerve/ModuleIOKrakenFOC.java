@@ -82,13 +82,14 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				if (DriveConstants.canBusName == "") {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
-
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kFrontLeftAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.canBusName);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kFrontLeftAbsEncoderPort,DriveConstants.canBusName);
 				}
-				turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontLeftAbsEncoderPort);
 				driveName = "FrontLeftDrive";
 				turnName = "FrontLeftTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -100,12 +101,15 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				if (DriveConstants.canBusName == "") {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
-				} else {
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kFrontRightAbsEncoderPort);
+					} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.canBusName);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kFrontRightAbsEncoderPort,DriveConstants.canBusName);
 				}
-				turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontRightAbsEncoderPort);
+				
 				driveName = "FrontRightDrive";
 				turnName = "FrontRightTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -117,12 +121,15 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				if (DriveConstants.canBusName == "") {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kBackLeftAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.canBusName);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.canBusName);
 				}
-				turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackLeftAbsEncoderPort);
+
 				driveName = "BackLeftDrive";
 				turnName = "BackLeftTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -134,14 +141,17 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				if (DriveConstants.canBusName == "") {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kBackRightAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.canBusName);
+					turnAbsoluteEncoder = new CANcoder(
+						DriveConstants.kBackRightAbsEncoderPort,DriveConstants.canBusName);
 				}
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";
-				turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackRightAbsEncoderPort);
+
 				absoluteEncoderOffset = new Rotation2d(
 						DriveConstants.kBackRightAbsEncoderOffsetRad);
 				isDriveMotorInverted = DriveConstants.kBackRightDriveReversed;
@@ -248,7 +258,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		inputs.turnMotorTemp = turnTemp.getValueAsDouble();
 		inputs.odometryDrivePositionsMeters = drivePositionQueue.stream()
 				.mapToDouble(signalValue -> Units.rotationsToRadians(signalValue)
-						* (DriveConstants.TrainConstants.kWheelDiameter / 2))
+						* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
 				.toArray();
 		inputs.odometryTurnPositions = turnPositionQueue.stream()
 				.map(Rotation2d::fromRotations).toArray(Rotation2d[]::new);

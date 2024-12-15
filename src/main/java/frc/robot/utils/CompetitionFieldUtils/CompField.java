@@ -22,7 +22,9 @@ public class CompField {
 
 		Pose3d getPose3d();
 
-		default boolean on2dField() { return false; }
+		default boolean on2dField() {
+			return false;
+		}
 	}
 
 	public interface Object2dOnFieldDisplay extends ObjectOnFieldDisplay {
@@ -37,32 +39,47 @@ public class CompField {
 		}
 
 		@Override
-		default boolean on2dField() { return true; }
+		default boolean on2dField() {
+			return true;
+		}
 	}
 
 	private final Map<String, Set<ObjectOnFieldDisplay>> objectsOnFieldWithGivenType;
 	private final RobotOnFieldDisplay mainRobot;
+	private Set<RobotOnFieldDisplay> robotsOnField;
 	private final Field2d dashboardField2d;
 
 	public CompField(RobotOnFieldDisplay mainRobot) {
 		this.mainRobot = mainRobot;
 		objectsOnFieldWithGivenType = new HashMap<>();
+		robotsOnField = new HashSet<>();
 		dashboardField2d = new Field2d();
-		//SmartDashboard.putData("FieldPhysics", dashboardField2d);
+		// SmartDashboard.putData("FieldPhysics", dashboardField2d);
 	}
 
 	public ObjectOnFieldDisplay addObject(ObjectOnFieldDisplay object) {
-		if (!objectsOnFieldWithGivenType.containsKey(object.getTypeName()))
-			objectsOnFieldWithGivenType.put(object.getTypeName(), new HashSet<>());
-		objectsOnFieldWithGivenType.get(object.getTypeName()).add(object);
+		if (object instanceof RobotOnFieldDisplay)
+			// add to local list
+			robotsOnField.add((RobotOnFieldDisplay) object);
+		else {
+			if (!objectsOnFieldWithGivenType.containsKey(object.getTypeName()))
+				objectsOnFieldWithGivenType.put(object.getTypeName(), new HashSet<>());
+			objectsOnFieldWithGivenType.get(object.getTypeName()).add(object);
+		}
 		return object;
 	}
 
 	public ObjectOnFieldDisplay deleteObject(ObjectOnFieldDisplay object) {
-		if (!objectsOnFieldWithGivenType.containsKey(object.getTypeName()))
-			return null;
-		if (objectsOnFieldWithGivenType.get(object.getTypeName()).remove(object))
-			return object;
+		if (object instanceof RobotOnFieldDisplay)
+			// remove from local list
+			robotsOnField.remove(object);
+		else {
+
+			if (!objectsOnFieldWithGivenType.containsKey(object.getTypeName()))
+				return null;
+			if (objectsOnFieldWithGivenType.get(object.getTypeName()).remove(object))
+				return object;
+		}
 		return null;
 	}
 
@@ -84,6 +101,11 @@ public class CompField {
 		}
 		dashboardField2d.setRobotPose(mainRobot.getObjectOnFieldPose2d());
 		Logger.recordOutput("Field/Robot", mainRobot.getObjectOnFieldPose2d());
+		//recordOutput of all robots, increasing key by 1 for each robot
+		for (int i = 0; i < robotsOnField.size(); i++) {
+			final RobotOnFieldDisplay robot = (RobotOnFieldDisplay) robotsOnField.toArray()[i];
+			Logger.recordOutput("Field/EnemyRobot" + i, robot.getObjectOnFieldPose2d());
+		}
 	}
 
 	private static List<Pose2d> getPose2ds(Set<ObjectOnFieldDisplay> objects) {
