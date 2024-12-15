@@ -15,7 +15,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.PathFinder;
 
-public class BranchAuto extends Command {
+public class BranchAutoSegment extends Command {
 	private boolean isFinished = false;
 	private SequentialCommandGroup commandGroup = new SequentialCommandGroup();
 	private final Pose2d nextGamePiece;
@@ -35,7 +35,7 @@ public class BranchAuto extends Command {
 	 * @param delayBotAborterToNextPose Delay before the bot aborter is run AFTER
 	 *                                  scoring. (usually longer)
 	 */
-	public BranchAuto(DrivetrainS drive, Pose2d nextGamePiece, double endSpeed,
+	public BranchAutoSegment(DrivetrainS drive, Pose2d nextGamePiece, double endSpeed,
 			double delayBotAborterToNextPose, boolean useChoreo) {
 		this.drive = drive;
 		this.endSpeed = endSpeed;
