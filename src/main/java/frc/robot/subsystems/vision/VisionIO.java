@@ -11,13 +11,13 @@ public interface VisionIO {
 	  public boolean connected = false;
 	  public String name = "";
 	  public TargetObservation latestTargetObservation =
-		  new TargetObservation(new Rotation2d(), new Rotation2d());
+		  new TargetObservation(new Rotation2d(), new Rotation2d(), -1);
 	  public PoseObservation[] poseObservations = new PoseObservation[0];
 	  public int[] tagIds = new int[0];
 	}
   
 	/** Represents the angle to a simple target, not used for pose estimation. */
-	public static record TargetObservation(Rotation2d tx, Rotation2d ty) {}
+	public static record TargetObservation(Rotation2d tx, Rotation2d ty, int id) {}
   
 	/** Represents a robot pose sample used for pose estimation. */
 	public static record PoseObservation(
@@ -32,6 +32,11 @@ public interface VisionIO {
 	  PHOTONVISION
 	  //QuestNav?
 	}
-  
+	public static enum CameraID{
+		FRONT_LEFT,
+		FRONT_RIGHT,
+		BACK_LEFT,
+		BACK_RIGHT
+	}
 	public default void updateInputs(VisionIOInputs inputs) {}
   }

@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
@@ -213,8 +214,8 @@ public class Vision extends SubsystemChecker {
 	 * Get the latest target observation from the photon vision camera
 	 * @param cam the camera index, as defined in RobotContainer.java
 	 */
-	public TargetObservation getLatestTargetObservation(int cam){
-		return new TargetObservation(inputs[cam].latestTargetObservation.tx(), inputs[cam].latestTargetObservation.ty());
+	public TargetObservation getLatestTargetObservation(CameraID cam){
+		return new TargetObservation(inputs[cam.ordinal()].latestTargetObservation.tx(), inputs[cam.ordinal()].latestTargetObservation.ty(), inputs[cam.ordinal()].latestTargetObservation.id());
 	}
 	/**
 	 * Computes the distance in inches from the limelight network table entry

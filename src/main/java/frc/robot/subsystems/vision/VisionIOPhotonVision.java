@@ -45,7 +45,8 @@ public class VisionIOPhotonVision implements VisionIO {
         inputs.latestTargetObservation =
             new TargetObservation(
                 Rotation2d.fromDegrees(result.getBestTarget().getYaw()),
-                Rotation2d.fromDegrees(result.getBestTarget().getPitch()));
+                Rotation2d.fromDegrees(result.getBestTarget().getPitch()),
+                result.getBestTarget().getFiducialId());
         Optional<EstimatedRobotPose> visionEst = photonEstimator.update(result);
         if (visionEst.isPresent()) {
           var visionResult = visionEst.get();
@@ -77,7 +78,7 @@ public class VisionIOPhotonVision implements VisionIO {
           }
         }
        else {
-        inputs.latestTargetObservation = new TargetObservation(new Rotation2d(), new Rotation2d());
+        inputs.latestTargetObservation = new TargetObservation(new Rotation2d(), new Rotation2d(), -1);
       }
     }
     
