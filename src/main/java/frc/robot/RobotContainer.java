@@ -7,7 +7,6 @@ import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.state_space.DoubleJointedArmC;
 import frc.robot.commands.state_space.ElevatorC;
@@ -94,18 +93,14 @@ import frc.robot.utils.drive.Sensors.GyroIOSim;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
-import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.revrobotics.spark.SparkBase;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -121,10 +116,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.io.File;
-import java.io.IOException;
 
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -183,45 +175,6 @@ public class RobotContainer {
 	// Simulation
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
 	public static Command currentAuto;
-
-	/**
-	 * Reads every Choreo file in the deploy folder and creates a command for
-	 * each Checks within Filesystem.getDeployDirectory(), "choreo/" for all
-	 * files NOT having two . in the name (including the one . in .traj)
-	 * 
-	 * @return
-	 */
-	private Collection<Pair<String, Command>> createBranches() {
-		Collection<Pair<String, Command>> commands = new ArrayList<>();
-		File choreoDirectory = new File(Filesystem.getDeployDirectory(),
-				"choreo/");
-		for (String choreo : choreoDirectory.list()) {
-			// count number of . in the name using regex
-			int dotCount = choreo.split("\\.", -1).length - 1;
-			if (choreo.contains(".traj") && dotCount == 1) {
-				// remove the .traj from the name
-				choreo = choreo.replace(".traj", "");
-				try {
-					List<PathPlannerPath> auto = PathPlannerAuto.getPathGroupFromAutoFile(choreo);
-					for (PathPlannerPath path : auto) {
-						commands.add(new Pair<String, Command>("Branch" + path.name,
-								new BranchAuto(path.name,
-										new Pose2d(
-												path.getPoint(path.getAllPathPoints().size() - 1).position,
-												path.getGoalEndState().rotation()),
-										path.getGoalEndState().velocity().magnitude())));
-						System.out.println("Added Branch" + path.name);
-					}
-					auto.clear();
-					auto = null;
-				} catch (FileVersionException | IOException | ParseException | NullPointerException e) {
-					e.printStackTrace();
-				}
-
-			}
-		}
-		return commands;
-	}
 
 	// POVButton manipPOVZero = new POVButton(manipController, 0);
 	// POVButton manipPOV180 = new POVButton(manipController, 180);
@@ -341,16 +294,12 @@ public class RobotContainer {
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 				//Control logic assumes CTRE for CTRE, REV or CTRE for REV. This is due to REVLib's 2025 changes to AbsoluteEncoders requiring a SPARK to run them.
 				FlywheelIO flywheelIO = null;
 				switch (StateSpaceConstants.Flywheel.motorVendor) {
@@ -679,18 +628,13 @@ public class RobotContainer {
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 						new Pair<String, Command>("SmartShoot", Commands.none()),
-						new Pair<String, Command>("SmartIntake", Commands.none()),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+						new Pair<String, Command>("SmartIntake", Commands.none())
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-
-				autoCommands.addAll(createBranches());
 				break;
 			default:
 				switch (DriveConstants.driveType) {
@@ -718,16 +662,12 @@ public class RobotContainer {
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));

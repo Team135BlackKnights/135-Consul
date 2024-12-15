@@ -22,6 +22,7 @@ import org.littletonrobotics.urcl.URCL;
 
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
@@ -318,6 +319,9 @@ public class Robot extends LoggedRobot {
 											new Pose2d(
 													path.getPoint(0).position,
 													path.getIdealStartingState().rotation()));
+							if (RobotContainer.drivetrainS instanceof Swerve){
+								((Swerve) RobotContainer.drivetrainS).pathplannerIndex = 0;
+							}
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
