@@ -152,29 +152,19 @@ public class DriveAndAimToRotation extends Command {
 		driveControllerCommand = new DriveToTranslation(drive, slowMode, positionSupplier, constraints);
 		thetaControllerCommand.initialize();
 		driveControllerCommand.initialize();
+		System.out.println("DriveAndAimToRotation initialized");
 	}
 
-	private boolean drivingFinishedOverride = false, thetaFinishedOverride = false;
 
 	@Override
 	public void execute() {
-		if ((driveControllerCommand.atGoal() || drivingFinishedOverride)
-				&& (thetaControllerCommand.atGoal() || thetaFinishedOverride)) {
+		if ((driveControllerCommand.atGoal())
+				&& (thetaControllerCommand.atGoal())) {
+			System.out.println("DriveAndAimToRotation finished");
 			isFinished = true;
 		} else {
-			if (thetaControllerCommand.atGoal()) {
-				thetaControllerCommand.end(false);
-				thetaFinishedOverride = true;
-
-			} else {
-				thetaControllerCommand.execute();
-			}
-			if (driveControllerCommand.atGoal()) {
-				driveControllerCommand.end(false);
-				drivingFinishedOverride = true;
-			} else {
-				driveControllerCommand.execute();
-			}
+			thetaControllerCommand.execute();
+			driveControllerCommand.execute();
 		}
 	}
 
@@ -188,6 +178,7 @@ public class DriveAndAimToRotation extends Command {
 		}
 		// force angle rider to be empty
 		RobotContainer.angleOverrider = Optional.empty();
+		RobotContainer.angularSpeed = 0;
 		RobotContainer.userDrive = true;
 		drive.stopModules();
 	}

@@ -11,7 +11,6 @@ import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.GeomUtil.ApproachDirection;
 import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.EqualsUtil;
 import frc.robot.utils.GeomUtil;
 
 import java.util.Optional;
@@ -23,7 +22,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 
 public class AimToRotation extends Command {
-	private static final LoggableTunedNumber kP = new LoggableTunedNumber("HeadingController/kP", 4);
+	private static final LoggableTunedNumber kP = new LoggableTunedNumber("HeadingController/kP", 10);
 	private static final LoggableTunedNumber kD = new LoggableTunedNumber("HeadingController/kD", 0);
 	private static final LoggableTunedNumber toleranceDegrees = new LoggableTunedNumber(
 			"HeadingController/ToleranceDegrees", 1.0);
@@ -108,10 +107,7 @@ public class AimToRotation extends Command {
 	/** Returns true if within tolerance of aiming at speaker */
 	@AutoLogOutput(key = "Drive/HeadingController/AtGoal")
 	public boolean atGoal() {
-		return EqualsUtil.epsilonEquals(
-				controller.getSetpoint().position,
-				controller.getGoal().position,
-				Units.degreesToRadians(toleranceDegrees.get()));
+		return controller.atGoal();
 	}
 	@Override
 	public void initialize() {
