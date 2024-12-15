@@ -47,7 +47,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Mecanum extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 
 	public enum DriveMode {
@@ -229,8 +229,11 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Mecanum", inputs);
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
@@ -273,6 +276,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
 	}
 
 	/** Run open loop at the specified voltage. */
@@ -325,7 +329,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 			}
 			// Assign the adjusted force magnitude
 			double nmVal = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage
 																														// from
 																														// speed

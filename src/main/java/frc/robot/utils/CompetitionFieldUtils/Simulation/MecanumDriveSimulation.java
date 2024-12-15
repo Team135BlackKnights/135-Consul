@@ -35,7 +35,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
 		return radPerSecond * TrainConstants.kDriveMotorGearRatio
-				* TrainConstants.kWheelDiameter / 2;
+				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
 	public MecanumDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroSimulation gyroSim,
@@ -61,8 +61,10 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 		mecanum.updateSim(subPeriodSeconds);
 		// should do the actual motion calculations
-		final ChassisSpeeds mecanumTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-				.toChassisSpeeds(mecanumIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
+		ChassisSpeeds mecanumTheoreticalSpeeds = kinematics
+		.toChassisSpeeds(mecanumIOSim.getWheelSpeeds());
+		mecanumTheoreticalSpeeds.toRobotRelativeSpeeds(
+		getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				mecanumTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
@@ -128,7 +130,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 					+ moduleFreeSpeedMPS
 							* (1 - FLOOR_SPEED_WEIGHT_IN_ACTUAL_MOTOR_SPEED);
 		final double rotorSpeedRadPerSec = rotorSpeedMetersPerSecond
-				/ DriveConstants.TrainConstants.kWheelDiameter / 2;
+				/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		return Units.radiansToRotations(rotorSpeedRadPerSec);
 	}
 
