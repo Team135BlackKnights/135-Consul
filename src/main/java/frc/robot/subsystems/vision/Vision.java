@@ -17,19 +17,24 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
+import frc.robot.utils.GeomUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.AITargets;
 
 public class Vision extends SubsystemChecker {
 	private final VisionIO[] io;
@@ -188,6 +193,73 @@ public class Vision extends SubsystemChecker {
 		Logger.recordOutput("SystemStatus/Periodic/VisionProcessMS", System.currentTimeMillis() - timestamp);
 	}
 
+	static int counter = 0;
+	static double lastTx = 0, lastTy = 0;
+	static boolean noteDetected = false;
+
+	public static Translation2d updateNotePose() {
+		double gamePieceTx = 0, gamePieceTy = 0;
+		Pose2d currentPose = RobotContainer.drivetrainS.getPose();
+		if (Constants.currentMode == Mode.SIM) {
+			// In simulation, get the current pose, and set the degree value to
+			Translation2d targetPieceLocation = RobotContainer.fieldSimulation
+					.getClosestGamePieceOnGround().getPose3d().toPose2d()
+					.getTranslation();
+			Logger.recordOutput("ClosestGamePiece", targetPieceLocation);
+			double deltaX = targetPieceLocation.getX() - currentPose.getX();
+			double deltaY = targetPieceLocation.getY() - currentPose.getY();
+			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
+			gamePieceTx -= currentPose.getRotation().getDegrees();
+			gamePieceTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(gamePieceTx));
+			double d = currentPose.getTranslation()
+					.getDistance(targetPieceLocation);
+			double tyRad = Math.PI
+					- Units.degreesToRadians(
+							VisionConstants.limeLightAngleOffsetDegrees)
+					- (Math.PI * 0.5D - Math.atan(d / Units.inchesToMeters(
+							VisionConstants.limelightLensHeightoffFloorInches)));
+			gamePieceTy = Units.radiansToDegrees(tyRad);
+			noteDetected = true;
+		} else {
+			// THESE ARE IN D E G R E E S
+			LimelightHelpers.LimelightTarget_Detector[] results = LimelightHelpers
+					.getLatestResults(
+							VisionConstants.limelightName).targetingResults.targets_Detector;
+			System.out.println(results);
+			for (LimelightHelpers.LimelightTarget_Detector object : results) {
+				if (object.confidence < .4) {
+					continue;
+				}
+				if (object.classID == AITargets.kGamePiece.getValue()) {
+					gamePieceTx = -object.tx;
+					gamePieceTy = object.ty;
+					noteDetected = true;
+					Logger.recordOutput("Vision/NoteDetected", true);
+				} else {
+					noteDetected = false;
+					Logger.recordOutput("Vision/NoteDetected", false);
+				}
+			}
+		}
+		if (gamePieceTx == lastTx && gamePieceTy == lastTy) {
+			counter++;
+		} else {
+			counter = 0;
+		}
+		if (counter > 10) { // prevent flickering of note detection
+			noteDetected = false;
+		}
+		if (noteDetected)
+			return GeomUtil
+					.calculateFieldRelativePose3d(currentPose, gamePieceTx, gamePieceTy,
+							Units.inchesToMeters(
+									VisionConstants.limelightLensHeightoffFloorInches),
+							Units.inchesToMeters(2),
+							VisionConstants.limeLightAngleOffsetDegrees)
+					.getTranslation().toTranslation2d();
+		return null;
+	}
+
 	/**
 	 * Adds the vision measurement to the poseEstimator. This is the same as the
 	 * default poseEstimator function, we just do it this way to fit our block
@@ -232,10 +304,14 @@ public class Vision extends SubsystemChecker {
 					new Transform3d(), 0.0);
 		}
 		return new TargetObservation(inputs[cam.ordinal()].targetObservations[0].tx(),
-				inputs[cam.ordinal()].targetObservations[0].ty(), inputs[cam.ordinal()].targetObservations[0].id(), inputs[cam.ordinal()].targetObservations[0].cameraToTarget(), inputs[cam.ordinal()].targetObservations[0].timestamp());
+				inputs[cam.ordinal()].targetObservations[0].ty(), inputs[cam.ordinal()].targetObservations[0].id(),
+				inputs[cam.ordinal()].targetObservations[0].cameraToTarget(),
+				inputs[cam.ordinal()].targetObservations[0].timestamp());
 	}
+
 	/**
 	 * Get all latest target observations from the photon vision cameras
+	 * 
 	 * @return an array of target observations, in the order of the CameraID enum
 	 */
 	public TargetObservation[] getLatestTargetObservations() {

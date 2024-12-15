@@ -54,7 +54,7 @@ public class AimToAprilTag extends Command {
     @Override
     public void initialize() {
         RobotContainer.currentPath = "AIMTOAPRILTAG";
-        aimToRotationCommand = new AimToRotation(getAimGoal(), drive);
+        aimToRotationCommand = new AimToRotation(getAimGoal(), drive, DriveConstants.pathConstraints);
         aimToRotationCommand.initialize(); // Manually initialize the command
     }
 

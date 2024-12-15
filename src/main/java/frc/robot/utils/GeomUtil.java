@@ -50,11 +50,13 @@ public class GeomUtil {
 	 * Works similar to swerveS.optimize but for any angle
 	 * 
 	 * @param angle the angle to check
-	 * @return the optimized distance to rotate to reach an ideal angle
+	 * @return the optimized distance to rotate to reach an ideal angle IN DEGREES
 	 */
 	public static double closerAngleToZero(Rotation2d angle) {
 		// Normalize the angle to be within the range of -180 to 180 degrees
-		return Math.atan2(angle.getSin(), angle.getCos());
+		double angleDegrees = angle.getDegrees();
+		double normalizedAngle = MathUtil.inputModulus(angleDegrees, -180, 180);
+		return normalizedAngle;
 	}
 
 	/**

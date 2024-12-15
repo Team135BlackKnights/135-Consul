@@ -1,29 +1,19 @@
 package frc.robot.commands.auto;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.Constants;
-import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.commands.drive.DriveToTargetUsingDriveAndAimAtPose;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
-import frc.robot.utils.GeomUtil;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.PathFinder;
-import frc.robot.utils.vision.LimelightHelpers;
-import frc.robot.utils.vision.VisionConstants;
-import frc.robot.utils.vision.VisionConstants.AITargets;
 
 public class BranchAuto extends Command {
 	private boolean isFinished = false;
@@ -56,72 +46,6 @@ public class BranchAuto extends Command {
 		this.useChoreo = useChoreo;
 	}
 
-	int counter = 0;
-	double lastTx = 0, lastTy = 0;
-	boolean noteDetected = false;
-
-	private Translation2d updateNotePose() {
-		double gamePieceTx = 0, gamePieceTy = 0;
-		Pose2d currentPose = drive.getPose();
-		if (Constants.currentMode == Mode.SIM) {
-			// In simulation, get the current pose, and set the degree value to
-			Translation2d targetPieceLocation = RobotContainer.fieldSimulation
-					.getClosestGamePieceOnGround().getPose3d().toPose2d()
-					.getTranslation();
-			Logger.recordOutput("ClosestGamePiece", targetPieceLocation);
-			double deltaX = targetPieceLocation.getX() - currentPose.getX();
-			double deltaY = targetPieceLocation.getY() - currentPose.getY();
-			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
-			gamePieceTx -= currentPose.getRotation().getDegrees();
-			gamePieceTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(gamePieceTx));
-			double d = currentPose.getTranslation()
-					.getDistance(targetPieceLocation);
-			double tyRad = Math.PI
-					- Units.degreesToRadians(
-							VisionConstants.limeLightAngleOffsetDegrees)
-					- (Math.PI * 0.5D - Math.atan(d / Units.inchesToMeters(
-							VisionConstants.limelightLensHeightoffFloorInches)));
-			gamePieceTy = Units.radiansToDegrees(tyRad);
-			noteDetected = true;
-		} else {
-			// THESE ARE IN D E G R E E S
-			LimelightHelpers.LimelightTarget_Detector[] results = LimelightHelpers
-					.getLatestResults(
-							VisionConstants.limelightName).targetingResults.targets_Detector;
-			System.out.println(results);
-			for (LimelightHelpers.LimelightTarget_Detector object : results) {
-				if (object.confidence < .4) {
-					continue;
-				}
-				if (object.classID == AITargets.kGamePiece.getValue()) {
-					gamePieceTx = -object.tx;
-					gamePieceTy = object.ty;
-					noteDetected = true;
-					Logger.recordOutput("Vision/NoteDetected", true);
-				} else {
-					noteDetected = false;
-					Logger.recordOutput("Vision/NoteDetected", false);
-				}
-			}
-		}
-		if (gamePieceTx == lastTx && gamePieceTy == lastTy) {
-			counter++;
-		} else {
-			counter = 0;
-		}
-		if (counter > 10) { // prevent flickering of note detection
-			noteDetected = false;
-		}
-		if (noteDetected)
-			return GeomUtil
-					.calculateFieldRelativePose3d(currentPose, gamePieceTx, gamePieceTy,
-							Units.inchesToMeters(
-									VisionConstants.limelightLensHeightoffFloorInches),
-							Units.inchesToMeters(2),
-							VisionConstants.limeLightAngleOffsetDegrees)
-					.getTranslation().toTranslation2d();
-		return null;
-	}
 
 	private SequentialCommandGroup botAbortWithDelay(double delay) {
 		return new SequentialCommandGroup(new WaitCommand(delay), new BotAborter(drive));
@@ -132,7 +56,7 @@ public class BranchAuto extends Command {
 		// markers in the choreo Traj.
 		commandGroup = new SequentialCommandGroup(
 				new ParallelRaceGroup(
-						new DriveToTargetUsingDriveAndAimAtPose(drive, this::updateNotePose,
+						new DriveToTargetUsingDriveAndAimAtPose(drive, Vision::updateNotePose,
 								RobotContainer.visionS::objectVisionOkay, () -> true), //use a sensor to determine if gamempiece detected
 						botAbortWithDelay(delayBotAborterBeforeIntake)),
 				new ConditionalCommand(// finished intaking, go score the game piece if we have it
