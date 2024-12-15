@@ -234,6 +234,17 @@ public class Vision extends SubsystemChecker {
 		return new TargetObservation(inputs[cam.ordinal()].targetObservations[0].tx(),
 				inputs[cam.ordinal()].targetObservations[0].ty(), inputs[cam.ordinal()].targetObservations[0].id(), inputs[cam.ordinal()].targetObservations[0].cameraToTarget(), inputs[cam.ordinal()].targetObservations[0].timestamp());
 	}
+	/**
+	 * Get all latest target observations from the photon vision cameras
+	 * @return an array of target observations, in the order of the CameraID enum
+	 */
+	public TargetObservation[] getLatestTargetObservations() {
+		TargetObservation[] observations = new TargetObservation[CameraID.values().length];
+		for (CameraID cam : CameraID.values()) {
+			observations[cam.ordinal()] = getLatestTargetObservation(cam);
+		}
+		return observations;
+	}
 
 	/**
 	 * Computes the distance in inches from the limelight network table entry

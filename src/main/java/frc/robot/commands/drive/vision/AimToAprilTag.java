@@ -13,7 +13,6 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.drive.AimToRotation;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.drive.DriveConstants;
@@ -55,7 +54,7 @@ public class AimToAprilTag extends Command {
     @Override
     public void initialize() {
         RobotContainer.currentPath = "AIMTOAPRILTAG";
-        aimToRotationCommand = new AimToRotation(getAimGoal(), drive); // Initialize with a dummy rotation
+        aimToRotationCommand = new AimToRotation(getAimGoal(), drive);
         aimToRotationCommand.initialize(); // Manually initialize the command
     }
 
@@ -71,22 +70,31 @@ public class AimToAprilTag extends Command {
         };
     }
 
+    private boolean hasTarget = false;
+
     @Override
     public void execute() {
         // Try to get the pose from vision
-        TargetObservation observation = vision.getLatestTargetObservation(CameraID.FRONT_RIGHT);
-        System.out.println(observation.timestamp());
-        if (observation.id() == tagId && Math.abs(TimeUtil.getLogTimeSeconds() - observation.timestamp()) < 1) {
-            Pose3d fieldToCameraPose = new Pose3d(drive.getPose()).transformBy(VisionConstants.robotToFR);
-            Pose3d fieldToTagPose = fieldToCameraPose.transformBy(observation.cameraToTarget());
-            targetPose = fieldToTagPose.toPose2d();
-            Logger.recordOutput("TagPose (Vision)", fieldToTagPose);
-        } else if (shouldUseDefaultPoseIfNotFound) {
-            // Fall back to the known tag pose
-            targetPose = knownTagPose.toPose2d();
-            Logger.recordOutput("TagPose (Fallback)", knownTagPose);
-        } else {
-            targetPose = null;
+        TargetObservation[] observations = vision.getLatestTargetObservations();
+        hasTarget = false;
+        for (int i = 0; i < observations.length; i++) {
+            if (observations[i].id() == tagId && Math.abs(TimeUtil.getLogTimeSeconds() - observations[i].timestamp()) < 1) {
+                Pose3d fieldToCameraPose = new Pose3d(drive.getPose()).transformBy(VisionConstants.robotToCameraTransforms[i]);
+                Pose3d fieldToTagPose = fieldToCameraPose.transformBy(observations[i].cameraToTarget());
+                targetPose = fieldToTagPose.toPose2d();
+                hasTarget = true;
+                Logger.recordOutput("TagPose (Vision)", fieldToTagPose);
+                break;
+            }
+        }
+        if (!hasTarget) {
+            if (shouldUseDefaultPoseIfNotFound) {
+                // Fall back to the known tag pose
+                targetPose = knownTagPose.toPose2d();
+                Logger.recordOutput("TagPose (Fallback)", knownTagPose);
+            } else {
+                targetPose = null;
+            }
         }
         aimToRotationCommand.execute();
     }

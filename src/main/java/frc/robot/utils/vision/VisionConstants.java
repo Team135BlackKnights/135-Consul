@@ -55,19 +55,6 @@ public class VisionConstants {
 		public static JoystickButton autoIntake = new JoystickButton(
 				RobotContainer.driveController, 1); // a
 	}
-
-	// We put the cameras into an enum to make iteration easier
-	public static enum PVCameras {
-		FL_Camera, BL_Camera, FR_Camera, BR_Camera;
-
-		public static PVCameras getCameraByIndex(int index) {
-			if (index < 0 || index >= PVCameras.values().length) {
-				throw new IndexOutOfBoundsException(
-						"Index out of bounds for PVCameras enum.");
-			}
-			return PVCameras.values()[index];
-		}
-	}
 	// We used 2 cameras for our 2024 year, adjust these accordingly by removing
 	// camera names (there are two extra cameras here)
 	// Camera names, from photonVision web interface
@@ -148,6 +135,9 @@ public class VisionConstants {
 			robotToFR = new Transform3d(FRCamTranslation3d, FRRot),
 			robotToBL = new Transform3d(BLCamTranslation3d, BLRot),
 			robotToBR = new Transform3d(BRCamTranslation3d, BRRot);
+	//Transforms in a list, for easy iteration
+	public static Transform3d[] robotToCameraTransforms = new Transform3d[] {
+			robotToFL, robotToFR, robotToBL, robotToBR};
 	 // Basic filtering thresholds
 	 public static double maxAmbiguity = 0.3;
 	 public static double maxZError = 0.75;
