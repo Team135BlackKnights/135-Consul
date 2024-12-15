@@ -7,6 +7,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -66,6 +67,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -81,6 +83,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
@@ -93,7 +96,7 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
-	private static Vision visionS;
+	public static Vision visionS;
 	private final LoggedDashboardChooser<Command> autoChooser;
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
@@ -124,7 +127,9 @@ public class RobotContainer {
 	public enum GamePieceState {
 		NO_GAME_PIECE, HAS_NOTE, ABORT
 	}
+	public static Translation2d[] gamePieceLocations = FieldConstants.NOTE_INITIAL_POSITIONS;
 
+	@AutoLogOutput(key = "RobotState/currentGamePieceStatus")
 	public static GamePieceState currentGamePieceStatus = GamePieceState.NO_GAME_PIECE;
 	public static boolean userDrive = true;
 	// Simulation
@@ -352,8 +357,10 @@ public class RobotContainer {
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("SmartShoot", Commands.none()),
-						new Pair<String, Command>("SmartIntake", Commands.none())
+						new Pair<String, Command>("SmartShoot", new PrintCommand("SmartShoot")),
+						new Pair<String, Command>("SmartIntake", Commands.none()),
+						new Pair<String, Command>("BranchIntakeToSpike3", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[0], new Rotation2d()), 1, .5, 1, true)),
+						new Pair<String, Command>("BranchIntakeToSpike1", new BranchAuto(drivetrainS, new Pose2d(FieldConstants.NOTE_INITIAL_POSITIONS[2], new Rotation2d()), 0, .5, 1, true))
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new

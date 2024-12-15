@@ -27,6 +27,7 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
+import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
 
 public class Vision extends SubsystemChecker {
@@ -193,7 +194,9 @@ public class Vision extends SubsystemChecker {
 		RobotContainer.drivetrainS.newVisionMeasurement(pose, timestamp,
 				estStdDevs);
 	}
-
+	public boolean objectVisionOkay(){
+		return LimelightHelpers.getLatestResults(VisionConstants.limelightName).error == "";
+	}
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(new ArrayList<SelfChecking>(
 				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));

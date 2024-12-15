@@ -105,7 +105,7 @@ public final class Constants {
 		public static final double shotSpeed = 15;
 		public static final double intakeSpeed = 3;
 		public static double intakeOffset = Units.inchesToMeters(17.5);
-		public static double ObjectDistanceZeroSpeed = Units.inchesToMeters(1.5);
+		public static double ObjectDistanceZeroSpeed = Units.inchesToMeters(12);
 		//Launcher position compared to the robot
 		public static final Transform3d launcherTransform = new Transform3d(0,0,0, new Rotation3d(0, 0, 0.0));
 		//Intake position compared to the robot
