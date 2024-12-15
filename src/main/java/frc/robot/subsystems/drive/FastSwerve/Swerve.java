@@ -500,7 +500,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 	}
 
-	int pathplannerIndex = 0;
+	public int pathplannerIndex = 0;
 	boolean movingRight = false;
 
 	@Override
@@ -514,7 +514,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// only the robot relative x and y forces are provided for Choreo.
 			double xForce = feedforwards.robotRelativeForcesXNewtons()[i];
 			double yForce = feedforwards.robotRelativeForcesYNewtons()[i];
-			if (pathplannerIndex == 1) {
+			if (pathplannerIndex == 0) {
 				double angle = Math.atan2(yForce, xForce);
 				if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
 					movingRight = true;
@@ -534,7 +534,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				signAdjustment = 1;
 			}
 			// Assign the adjusted force magnitude
-			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)
+			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : 1)
 					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
