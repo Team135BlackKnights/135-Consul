@@ -6,10 +6,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.GeomUtil.ApproachDirection;
 import frc.robot.utils.drive.DriveConstants;
@@ -22,14 +20,11 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 
 public class AimToRotation extends Command {
 	private static final LoggableTunedNumber kP = new LoggableTunedNumber("HeadingController/kP", 4);
 	private static final LoggableTunedNumber kD = new LoggableTunedNumber("HeadingController/kD", 0);
-	private static final LoggableTunedNumber maxVelocityMultipler = new LoggableTunedNumber(
-			"HeadingController/MaxVelocityMultipler", 0.8);
-	private static final LoggableTunedNumber maxAccelerationMultipler = new LoggableTunedNumber(
-			"HeadingController/MaxAccelerationMultipler", 0.8);
 	private static final LoggableTunedNumber toleranceDegrees = new LoggableTunedNumber(
 			"HeadingController/ToleranceDegrees", 1.0);
 
@@ -37,31 +32,51 @@ public class AimToRotation extends Command {
 	private final Supplier<Rotation2d> goalHeadingSupplier;
 
 	private final DrivetrainS drive;
-
+	/**
+	 * Aim the robot at a specific pose2d
+	 * @param goalPose
+	 * @param approachDirection
+	 * @param drive
+	 */
 	public AimToRotation(Supplier<Pose2d> goalPose, ApproachDirection approachDirection, DrivetrainS drive) {
 		this(() -> GeomUtil.rotationFromCurrentToTarget(
 			drive.getPose().getTranslation(),
 			goalPose.get().getTranslation(), // Fixed: Call goalPose.get() to retrieve the Pose2d
 			approachDirection
-		), drive);
+		), drive,DriveConstants.pathConstraints);
 	}
+	/**
+	 * Aim the robot at a specific pose2d
+	 * @param goalPose
+	 * @param drive
+	 */
 	public AimToRotation(Pose2d goalPose, ApproachDirection approachDirection, DrivetrainS drive) {
 		this(() -> GeomUtil.rotationFromCurrentToTarget(
 			drive.getPose().getTranslation(),
 			goalPose.getTranslation(),
 			approachDirection
-		), drive);
+		), drive, DriveConstants.pathConstraints);
 	}
+	/**
+	 * Aim the robot at a specific heading (tell the robot to go to x rotation)
+	 * @param goalHeading
+	 * @param drive
+	 */
 	public AimToRotation(Rotation2d goalHeading, DrivetrainS drive) {
-		this(() -> goalHeading, drive);
+		this(() -> goalHeading, drive, DriveConstants.pathConstraints);
 	}
-
-	public AimToRotation(Supplier<Rotation2d> goalHeadingSupplier, DrivetrainS drive) {
+	/**
+	 * Aim the robot at a specific heading (tell the robot to go to x rotation)
+	 * @param goalHeading
+	 * @param drive
+	 * @param constraints
+	 */
+	public AimToRotation(Supplier<Rotation2d> goalHeadingSupplier, DrivetrainS drive, PathConstraints constraints) {
 		controller = new ProfiledPIDController(
 				kP.get(),
 				0,
 				kD.get(),
-				new TrapezoidProfile.Constraints(0.0, 0.0),
+				new TrapezoidProfile.Constraints(constraints.maxAngularVelocityRadPerSec(), constraints.maxAngularAccelerationRadPerSecSq()),
 				.02);
 		controller.enableContinuousInput(-Math.PI, Math.PI);
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
@@ -72,22 +87,14 @@ public class AimToRotation extends Command {
 				drive.getPose().getRotation().getRadians(),
 				drive.getFieldVelocity().dtheta);
 	}
-
+	public void updateConstraints(PathConstraints constraints) {
+		controller.setConstraints(new TrapezoidProfile.Constraints(constraints.maxAngularVelocityRadPerSec(), constraints.maxAngularAccelerationRadPerSecSq()));
+	}
 	@Override
 	public void execute() {
 		// Update controller
 		controller.setPID(kP.get(), 0, kD.get());
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
-
-		ModuleLimits moduleLimits = DriveConstants.moduleLimitsFree;
-		double maxAngularAcceleration = moduleLimits.maxDriveAcceleration()
-				/ DriveConstants.kDriveBaseRadius
-				* maxAccelerationMultipler.get();
-		double maxAngularVelocity = moduleLimits.maxDriveVelocity()
-				/ DriveConstants.kDriveBaseRadius
-				* maxVelocityMultipler.get();
-		controller.setConstraints(
-				new TrapezoidProfile.Constraints(maxAngularVelocity, maxAngularAcceleration));
 
 		var output = controller.calculate(
 				drive.getPose().getRotation().getRadians(),
@@ -95,9 +102,7 @@ public class AimToRotation extends Command {
 
 		Logger.recordOutput("Drive/HeadingController/HeadingError", controller.getPositionError());
 		PPHolonomicDriveController.overrideRotationFeedback(() -> output);
-		if (Constants.currentMatchState == Constants.FRCMatchState.TELEOP) {
-			RobotContainer.angularSpeed = output;
-		}
+		RobotContainer.angularSpeed = output;
 	}
 
 	/** Returns true if within tolerance of aiming at speaker */
