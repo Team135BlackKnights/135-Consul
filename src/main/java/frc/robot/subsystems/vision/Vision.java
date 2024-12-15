@@ -61,7 +61,7 @@ public class Vision extends SubsystemChecker {
 		List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
 		List<Pose3d> allRobotPosesRejected = new LinkedList<>();
 		Pose2d currentOdomPose = RobotContainer.drivetrainS.getPose();
-		staleReading = (Math.abs(currentOdomPose.getX() - lastOdomPose.getX()) < VisionConstants.maxStaleReadingXMeters 
+		staleReading = (Math.abs(currentOdomPose.getX() - lastOdomPose.getX()) < VisionConstants.maxStaleReadingXMeters
 				|| Math.abs(currentOdomPose.getY() - lastOdomPose.getY()) < VisionConstants.maxStaleReadingYMeters
 				|| Math.abs(currentOdomPose.getRotation().getDegrees()
 						- lastOdomPose.getRotation().getDegrees()) < VisionConstants.maxStaleReadingRotation);
@@ -96,7 +96,9 @@ public class Vision extends SubsystemChecker {
 								&& observation.ambiguity() > VisionConstants.maxAmbiguity) // Cannot be high ambiguity
 						|| Math.abs(observation.pose().getZ()) > VisionConstants.maxZError // Must have realistic Z
 																							// coordinate
-
+						|| Math.abs(observation.pose().getRotation().toRotation2d().getDegrees()
+								- RobotContainer.drivetrainS.getPose().getRotation()
+										.getDegrees()) > VisionConstants.maxYawError // Must have realistic yaw
 						// Must be reasonable apriltag trust
 						|| averageTrust < VisionConstants.FieldConstants.kFieldTagMinTrust
 
@@ -116,10 +118,10 @@ public class Vision extends SubsystemChecker {
 
 				// Skip if rejected
 				if (rejectPose) {
-					if (!staleReading){
+					if (!staleReading) {
 						// update tag trusts
 						for (int tag : inputs[cameraIndex].tagIds) {
-							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.min(10, //max of 10x deviation
+							VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.min(10, // max of 10x deviation
 									VisionConstants.FieldConstants.aprilTagOffsets[tag]
 											+ .002);
 						}
@@ -142,11 +144,12 @@ public class Vision extends SubsystemChecker {
 						observation.pose().toPose2d(),
 						observation.timestamp(),
 						VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
-				if (!staleReading){
-					//update tag trusts
+				if (!staleReading) {
+					// update tag trusts
 					for (int tag : inputs[cameraIndex].tagIds) {
-						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.max(1,VisionConstants.FieldConstants.aprilTagOffsets[tag]
-						- .002);
+						VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.max(1,
+								VisionConstants.FieldConstants.aprilTagOffsets[tag]
+										- .002);
 					}
 				}
 			}
@@ -195,28 +198,36 @@ public class Vision extends SubsystemChecker {
 		RobotContainer.drivetrainS.newVisionMeasurement(pose, timestamp,
 				estStdDevs);
 	}
-	public boolean objectVisionOkay(){
+
+	public boolean objectVisionOkay() {
 		return LimelightHelpers.getLatestResults(VisionConstants.limelightName).error == "";
 	}
+
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(new ArrayList<SelfChecking>(
 				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));
 	}
+
 	/**
 	 * Calculate the distance from the photon vision camera to the target
+	 * 
 	 * @param cam the camera index, as defined in RobotContainer.java
 	 */
-	public double calculateDistanceFromCam(int cam){
+	public double calculateDistanceFromCam(int cam) {
 		double ty = inputs[cam].latestTargetObservation.ty().getDegrees();
 		return calculateDistanceFromtY(ty);
 	}
+
 	/**
 	 * Get the latest target observation from the photon vision camera
+	 * 
 	 * @param cam the camera index, as defined in RobotContainer.java
 	 */
-	public TargetObservation getLatestTargetObservation(CameraID cam){
-		return new TargetObservation(inputs[cam.ordinal()].latestTargetObservation.tx(), inputs[cam.ordinal()].latestTargetObservation.ty(), inputs[cam.ordinal()].latestTargetObservation.id());
+	public TargetObservation getLatestTargetObservation(CameraID cam) {
+		return new TargetObservation(inputs[cam.ordinal()].latestTargetObservation.tx(),
+				inputs[cam.ordinal()].latestTargetObservation.ty(), inputs[cam.ordinal()].latestTargetObservation.id());
 	}
+
 	/**
 	 * Computes the distance in inches from the limelight network table entry
 	 * 

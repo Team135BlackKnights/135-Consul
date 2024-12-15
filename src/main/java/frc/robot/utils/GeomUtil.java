@@ -24,7 +24,26 @@ public class GeomUtil {
 	}
 
 	public enum ApproachDirection {
-		FRONT, RIGHT, BACK, LEFT
+		FRONT(0),
+		FRONT_RIGHT(Math.PI / 4),
+		RIGHT(Math.PI / 2),
+		BACK_RIGHT(3 * Math.PI / 4),
+		BACK(Math.PI),
+		BACK_LEFT(-3 * Math.PI / 4),
+		LEFT(-Math.PI / 2),
+		FRONT_LEFT(-Math.PI / 4);
+	
+		private final double angle;
+	
+		// Constructor to initialize the angle
+		ApproachDirection(double angle) {
+			this.angle = angle;
+		}
+	
+		// Getter method to retrieve the angle
+		public double getAngle() {
+			return angle;
+		}
 	}
 
 	/**
@@ -69,21 +88,7 @@ public class GeomUtil {
 		// Compute angle from currentPose to targetPose
 		double angle = Math.atan2(dy, dx);
 		// Convert angle from radians to degrees
-		switch (direction) {
-		case RIGHT:
-			angle -= Math.PI / 2;
-			break;
-		case BACK:
-			angle += Math.PI;
-			break;
-		case LEFT:
-			angle += Math.PI / 2;
-			break;
-		case FRONT:
-		default:
-			// No adjustment needed for FRONT
-			break;
-		}
+		angle += direction.getAngle();
 		//wrap the angle to be within -pi to pi
 		Rotation2d rotationFromCurrentToTarget = new Rotation2d(MathUtil.inputModulus(angle,-Math.PI, Math.PI));
 		return rotationFromCurrentToTarget;

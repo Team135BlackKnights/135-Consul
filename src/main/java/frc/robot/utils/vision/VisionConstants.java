@@ -34,7 +34,7 @@ public class VisionConstants {
 	}
 	//Command specific constants
 	//Aim To Pose
-	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.BACK;
+	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.BACK_LEFT;
 	//Drive And Aim At Pose
 	public static final ApproachDirection driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT;
 	//Drive To AI Target
@@ -151,7 +151,7 @@ public class VisionConstants {
 	 // Basic filtering thresholds
 	 public static double maxAmbiguity = 0.3;
 	 public static double maxZError = 0.75;
-   
+	 public static double maxYawError = 2;
 	 // Standard deviation baselines, for 1 meter distance and 1 tag
 	 // (Adjusted automatically based on distance and # of tags)
 	 public static double linearStdDevBaseline = 0.005; // Meters
