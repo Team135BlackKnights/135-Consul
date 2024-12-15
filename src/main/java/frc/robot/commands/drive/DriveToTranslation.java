@@ -48,7 +48,7 @@ public class DriveToTranslation extends Command {
 			"DriveToPose/FFMaxRadius");
 	//Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(3.0);
+		driveKp.initDefault(3);
 		driveKd.initDefault(0.0);
 		
 		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0));
@@ -176,8 +176,10 @@ public class DriveToTranslation extends Command {
 								.transformBy(GeomUtil
 										.translationToTransform(driveVelocityScalar, 0.0))
 								.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
-		drive.setChassisSpeeds(new ChassisSpeeds(
-				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed)); //if using aim, should use output
+		ChassisSpeeds speeds = new ChassisSpeeds(driveVelocity.getX(),
+				driveVelocity.getY(), RobotContainer.angularSpeed);
+		speeds.toRobotRelativeSpeeds(currentPose.getRotation());
+		drive.setChassisSpeeds(speeds); //if using aim, should use output
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",
@@ -193,6 +195,8 @@ public class DriveToTranslation extends Command {
 	@Override
 	public void end(boolean interrupted) {
 		RobotContainer.currentPath = "";
+		RobotContainer.angularSpeed = 0;
+
 		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); //go back to normal deadband
 		drive.stopModules();
 	}
