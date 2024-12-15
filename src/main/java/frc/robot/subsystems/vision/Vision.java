@@ -30,6 +30,7 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.LimelightHelpers;
@@ -278,6 +279,36 @@ public class Vision extends SubsystemChecker {
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(new ArrayList<SelfChecking>(
 				List.of(new SelfCheckingLimelight(VisionConstants.limelightName))));
+	}
+
+	/**
+	 * Calculates the error from the apriltag translation to the KNOWN translation
+	 * of the apriltag.
+	 * 
+	 */
+	public void poseErrorApproximation(int apriltagID) {
+		TargetObservation[] observations = getLatestTargetObservations();
+		Pose3d targetPose = null;
+		boolean hasTarget = false;
+		for (int i = 0; i < observations.length; i++) {
+			if (observations[i].id() == apriltagID
+					&& Math.abs(TimeUtil.getLogTimeSeconds() - observations[i].timestamp()) < 1) {
+				Pose3d fieldToCameraPose = new Pose3d(RobotContainer.drivetrainS.getPose())
+						.transformBy(VisionConstants.robotToCameraTransforms[i]);
+				Pose3d fieldToTagPose = fieldToCameraPose.transformBy(observations[i].cameraToTarget());
+				targetPose = fieldToTagPose;
+				hasTarget = true;
+				Logger.recordOutput("Vision/poseErrorTagPose" + apriltagID, targetPose);
+				break;
+			}
+		}
+		if (!hasTarget) {
+			Logger.recordOutput("Vision/poseError" + apriltagID, Double.NaN);
+		} else {
+			Pose3d knownPose = VisionConstants.kTagLayout.getTagPose(apriltagID).get();
+			double error = knownPose.getTranslation().getDistance(targetPose.getTranslation());
+			Logger.recordOutput("Vision/poseError" + apriltagID, error);
+		}
 	}
 
 	/**

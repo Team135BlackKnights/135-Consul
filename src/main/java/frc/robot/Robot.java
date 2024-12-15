@@ -248,6 +248,11 @@ public class Robot extends LoggedRobot {
 		 * Logger.recordOutput("SystemStatus/DriveCANUtil",
 		 * driveCanBusStatus.BusUtilization * 100.0);
 		 */
+		// Run an approximation of the error of the robot position using april tags
+		// (if in replay or sim mode)
+		if (Constants.currentMode == Constants.Mode.SIM || Constants.currentMode == Constants.Mode.REPLAY) {
+			RobotContainer.visionS.poseErrorApproximation(7);
+		}
 		long runtimeMS = (System.currentTimeMillis() - currentTime);
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
