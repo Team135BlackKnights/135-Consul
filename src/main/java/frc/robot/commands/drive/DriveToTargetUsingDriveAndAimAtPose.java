@@ -205,6 +205,7 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.userDrive = true; //give user control
 		RobotContainer.angleOverrider = Optional.empty();
+		RobotContainer.angularSpeed = 0;
 		if (Constants.currentMode == Mode.SIM) {
 			if (!interrupted) {
 				RobotContainer.fieldSimulation.intakeNote();
