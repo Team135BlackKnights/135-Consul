@@ -178,8 +178,7 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 
 	@Override
 	public void execute() {
-		// determine if game piece loaded
-		RobotContainer.currentPath = "INTAKING_DRIVEPOSE";
+		//determine if game piece loaded
 		if (gamePieceCollectedSupplier.get()) {
 			isFinished = true;
 		}
@@ -221,6 +220,7 @@ public class DriveToTargetUsingDriveAndAimAtPose extends Command {
 						0.2 * DriveConstants.kMaxTurningSpeedRadPerSec));
 			}
 		}
+		RobotContainer.currentPath = "INTAKING_DRIVEPOSE";
 	}
 
 	@Override
