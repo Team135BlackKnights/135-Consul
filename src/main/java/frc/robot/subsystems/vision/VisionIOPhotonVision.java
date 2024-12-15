@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.vision.VisionConstants;
 
 import java.util.HashSet;
@@ -39,14 +40,10 @@ public class VisionIOPhotonVision implements VisionIO {
     // Read new camera observations
     Set<Short> tagIds = new HashSet<>();
     List<PoseObservation> poseObservations = new LinkedList<>();
+    List<TargetObservation> targetObservations = new LinkedList<>();
     for (var result : camera.getAllUnreadResults()) {
       // Update latest target observation
       if (result.hasTargets()) {
-        inputs.latestTargetObservation =
-            new TargetObservation(
-                Rotation2d.fromDegrees(result.getBestTarget().getYaw()),
-                Rotation2d.fromDegrees(result.getBestTarget().getPitch()),
-                result.getBestTarget().getFiducialId());
         Optional<EstimatedRobotPose> visionEst = photonEstimator.update(result);
         if (visionEst.isPresent()) {
           var visionResult = visionEst.get();
@@ -60,7 +57,13 @@ public class VisionIOPhotonVision implements VisionIO {
           double totalTagDistance = 0.0;
           
           for (var target : visionResult.targetsUsed) {
-            
+            targetObservations.add(
+            new TargetObservation(
+                Rotation2d.fromDegrees(target.getYaw()),
+                Rotation2d.fromDegrees(target.getPitch()),
+                target.getFiducialId(),
+                target.getBestCameraToTarget(),
+                TimeUtil.getRealTimeSeconds()));
             totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();		  
           }
 
@@ -77,9 +80,6 @@ public class VisionIOPhotonVision implements VisionIO {
                   PoseObservationType.PHOTONVISION)); // Observation type
           }
         }
-       else {
-        inputs.latestTargetObservation = new TargetObservation(new Rotation2d(), new Rotation2d(), -1);
-      }
     }
     
 
@@ -87,6 +87,11 @@ public class VisionIOPhotonVision implements VisionIO {
     inputs.poseObservations = new PoseObservation[poseObservations.size()];
     for (int i = 0; i < poseObservations.size(); i++) {
       inputs.poseObservations[i] = poseObservations.get(i);
+    }
+    // Save target observations to inputs object
+    inputs.targetObservations = new TargetObservation[targetObservations.size()];
+    for (int i = 0; i < targetObservations.size(); i++) {
+      inputs.targetObservations[i] = targetObservations.get(i);
     }
 
     // Save tag IDs to inputs objects

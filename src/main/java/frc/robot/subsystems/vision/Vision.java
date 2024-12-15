@@ -214,7 +214,10 @@ public class Vision extends SubsystemChecker {
 	 * @param cam the camera index, as defined in RobotContainer.java
 	 */
 	public double calculateDistanceFromCam(int cam) {
-		double ty = inputs[cam].latestTargetObservation.ty().getDegrees();
+		if (inputs[cam].targetObservations.length == 0) {
+			return 0;
+		}
+		double ty = inputs[cam].targetObservations[0].ty().getDegrees();
 		return calculateDistanceFromtY(ty);
 	}
 
@@ -224,8 +227,12 @@ public class Vision extends SubsystemChecker {
 	 * @param cam the camera index, as defined in RobotContainer.java
 	 */
 	public TargetObservation getLatestTargetObservation(CameraID cam) {
-		return new TargetObservation(inputs[cam.ordinal()].latestTargetObservation.tx(),
-				inputs[cam.ordinal()].latestTargetObservation.ty(), inputs[cam.ordinal()].latestTargetObservation.id());
+		if (inputs[cam.ordinal()].targetObservations.length == 0) {
+			return new TargetObservation(Rotation2d.fromDegrees(0), Rotation2d.fromDegrees(0), 0,
+					new Transform3d(), 0.0);
+		}
+		return new TargetObservation(inputs[cam.ordinal()].targetObservations[0].tx(),
+				inputs[cam.ordinal()].targetObservations[0].ty(), inputs[cam.ordinal()].targetObservations[0].id(), inputs[cam.ordinal()].targetObservations[0].cameraToTarget(), inputs[cam.ordinal()].targetObservations[0].timestamp());
 	}
 
 	/**

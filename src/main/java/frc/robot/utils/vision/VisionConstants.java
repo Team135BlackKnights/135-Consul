@@ -34,7 +34,7 @@ public class VisionConstants {
 	}
 	//Command specific constants
 	//Aim To Pose
-	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.BACK_LEFT;
+	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.FRONT;
 	//Drive And Aim At Pose
 	public static final ApproachDirection driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT;
 	//Drive To AI Target
