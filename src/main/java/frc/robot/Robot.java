@@ -207,7 +207,7 @@ public class Robot extends LoggedRobot {
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.pathConstraints.maxAngularVelocityRadPerSec(),
 					DriveConstants.maxRotationalAcceleration.get());
-			DriveConstants.moduleLimitsFree = new ModuleLimits(
+			DriveConstants.moduleLimitsLow = new ModuleLimits(
 					DriveConstants.kMaxSpeedMetersPerSecond,
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.maxRotationalAcceleration.get());

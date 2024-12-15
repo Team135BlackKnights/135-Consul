@@ -43,18 +43,15 @@ public class LoggableTunedNumber {
 	}
 
 	/**
-	 * Set the default value of the number. The default value can only be set
-	 * once.
+	 * Set the default value of the number.
 	 *
 	 * @param defaultValue The default value
 	 */
 	public void initDefault(double defaultValue) {
-		if (!hasDefault) {
-			hasDefault = true;
-			this.defaultValue = defaultValue;
-			if (Constants.isTuningPID) {
-				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
-			}
+		hasDefault = true;
+		this.defaultValue = defaultValue;
+		if (Constants.isTuningPID) {
+			dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
 		}
 	}
 
