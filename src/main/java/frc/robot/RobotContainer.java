@@ -294,10 +294,10 @@ public class RobotContainer {
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
 				visionS = new Vision(
-						new VisionIOPhotonVision(VisionConstants.frontCamName, VisionConstants.robotToFront),
-						new VisionIOPhotonVision(VisionConstants.leftCamName, VisionConstants.robotToLeft),
-						new VisionIOPhotonVision(VisionConstants.rightCamName, VisionConstants.robotToRight),
-						new VisionIOPhotonVision(VisionConstants.backCamName, VisionConstants.robotToBack));
+						new VisionIOPhotonVision(VisionConstants.FLCamName, VisionConstants.robotToFL),
+						new VisionIOPhotonVision(VisionConstants.FRCamName, VisionConstants.robotToFR),
+						new VisionIOPhotonVision(VisionConstants.BLCamName, VisionConstants.robotToBL),
+						new VisionIOPhotonVision(VisionConstants.BRCamName, VisionConstants.robotToBR));
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -416,10 +416,10 @@ public class RobotContainer {
 				));
 				autoCommands.addAll(createBranches());
 				visionS = new Vision(
-						new VisionIOPhotonVisionSim(VisionConstants.frontCamName, VisionConstants.robotToFront, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(VisionConstants.leftCamName, VisionConstants.robotToLeft, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(VisionConstants.rightCamName, VisionConstants.robotToRight, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(VisionConstants.backCamName, VisionConstants.robotToBack, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
+						new VisionIOPhotonVisionSim(VisionConstants.FLCamName, VisionConstants.robotToFL, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.FRCamName, VisionConstants.robotToFR, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.BLCamName, VisionConstants.robotToBL, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(VisionConstants.BRCamName, VisionConstants.robotToBR, () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
 				break;
 			default:
 				switch (DriveConstants.driveType) {

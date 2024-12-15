@@ -126,7 +126,7 @@ public class Vision extends SubsystemChecker {
 				}
 
 				// Calculate standard deviations
-				double stdDevFactor = Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
+				double stdDevFactor = Math.pow(observation.averageTagDistance(), 1.0) / observation.tagCount();
 				double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor;
 				double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor;
 				if (cameraIndex < VisionConstants.cameraStdDevFactors.length) {
@@ -179,6 +179,7 @@ public class Vision extends SubsystemChecker {
 		Logger.recordOutput(
 				"Vision/Summary/RobotPosesRejected",
 				allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
+		Logger.recordOutput("Vision/FieldTrusts", VisionConstants.FieldConstants.aprilTagOffsets);
 		Logger.recordOutput("SystemStatus/Periodic/VisionProcessMS", System.currentTimeMillis() - timestamp);
 	}
 

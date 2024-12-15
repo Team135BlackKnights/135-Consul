@@ -58,7 +58,7 @@ public class VisionConstants {
 
 	// We put the cameras into an enum to make iteration easier
 	public static enum PVCameras {
-		Front_Camera, Left_Camera, Right_Camera, Back_Camera;
+		FL_Camera, BL_Camera, FR_Camera, BR_Camera;
 
 		public static PVCameras getCameraByIndex(int index) {
 			if (index < 0 || index >= PVCameras.values().length) {
@@ -74,94 +74,97 @@ public class VisionConstants {
 
 	// This is a goofy declaration but we use case statements later on and this is
 	// the only form of input they accept
-	public final static String frontCamName = "Front_Camera",
-			backCamName = "Back_Camera", leftCamName = "Left_Camera",
-			rightCamName = "Right_Camera";
+	public final static String FLCamName = "FL_Camera",
+			BRCamName = "BR_Camera", BLCamName = "BL_Camera",
+			FRCamName = "FR_Camera";
 	// Check WPILIB Coordinate System
 	// Translations should be in inches, Rotations should be in degrees
 	public static LoggableTunedNumber
 
-	frontCamTranslationX = new LoggableTunedNumber("Vision/FrontCamX", 12.75),
-			frontCamTranslationY = new LoggableTunedNumber("Vision/FrontCamY", 12.75),
-			frontCamTranslationZ = new LoggableTunedNumber("Vision/FrontCamZ", 19.75),
-			frontCamRoll = new LoggableTunedNumber("Vision/FrontCamRoll", 180),
-			frontCamYaw = new LoggableTunedNumber("Vision/FrontCamYaw", 95.8),
-			frontCamPitch = new LoggableTunedNumber("Vision/FrontCamPitch", -32),
+	FRCamTranslationX = new LoggableTunedNumber("Vision/FRCamX", 12.626),
+			FRCamTranslationY = new LoggableTunedNumber("Vision/FRCamY", -11.001),
+			FRCamTranslationZ = new LoggableTunedNumber("Vision/FRCamZ", 8.364),
+			FRCamRoll = new LoggableTunedNumber("Vision/FRCamRoll", 0),
+			FRCamYaw = new LoggableTunedNumber("Vision/FRCamYaw", -56.8),
+			FRCamPitch = new LoggableTunedNumber("Vision/FRCamPitch", -28.125),
 
-			rightCamTranslationX = new LoggableTunedNumber("Vision/RightCamX", 12.75),
-			rightCamTranslationY = new LoggableTunedNumber("Vision/RightCamY", 12.75),
-			rightCamTranslationZ = new LoggableTunedNumber("Vision/RightCamZ", 19.75),
-			rightCamRoll = new LoggableTunedNumber("Vision/RightCamRoll", 180),
-			rightCamYaw = new LoggableTunedNumber("Vision/RightCamYaw", 95.8),
-			rightCamPitch = new LoggableTunedNumber("Vision/RightCamPitch", -32),
+			FLCamTranslationX = new LoggableTunedNumber("Vision/FLCamX", 12.626),
+			FLCamTranslationY = new LoggableTunedNumber("Vision/FLCamY", 11.001),
+			FLCamTranslationZ = new LoggableTunedNumber("Vision/FLCamZ", 8.364),
+			FLCamRoll = new LoggableTunedNumber("Vision/FLCamRoll", 0),
+			FLCamYaw = new LoggableTunedNumber("Vision/FLCamYaw", 33.2),
+			FLCamPitch = new LoggableTunedNumber("Vision/FLCamPitch", -28.125),
 
-			leftCamTranslationX = new LoggableTunedNumber("Vision/LeftCamX", 11.125),
-			leftCamTranslationY = new LoggableTunedNumber("Vision/LeftCamY", -12.125),
-			leftCamTranslationZ = new LoggableTunedNumber("Vision/LeftCamZ", 14.125),
-			leftCamRoll = new LoggableTunedNumber("Vision/LeftCamRoll", 174),
-			leftCamYaw = new LoggableTunedNumber("Vision/LeftCamYaw", -100),
-			leftCamPitch = new LoggableTunedNumber("Vision/LeftCamPitch", -5),
+			BRCamTranslationX = new LoggableTunedNumber("Vision/BRCamX", -12.626),
+			BRCamTranslationY = new LoggableTunedNumber("Vision/BRCamY", -11.001),
+			BRCamTranslationZ = new LoggableTunedNumber("Vision/BRCamZ", 8.364),
+			BRCamRoll = new LoggableTunedNumber("Vision/BRCamRoll", 0),
+			BRCamYaw = new LoggableTunedNumber("Vision/BRCamYaw", -146.8),
+			BRCamPitch = new LoggableTunedNumber("Vision/BRCamPitch", -28.125),
 
-			backCamTranslationX = new LoggableTunedNumber("Vision/BackCamX", 12.125),
-			backCamTranslationY = new LoggableTunedNumber("Vision/BackCamY", 25.5),
-			backCamTranslationZ = new LoggableTunedNumber("Vision/BackCamZ", 21.25),
-			backCamPitch = new LoggableTunedNumber("Vision/BackCamPitch", 38),
-			backCamRoll = new LoggableTunedNumber("Vision/BackCamRoll", 180),
-			backCamYaw = new LoggableTunedNumber("Vision/BackCamYaw", 183);
+			BLCamTranslationX = new LoggableTunedNumber("Vision/BLCamX", -12.626),
+			BLCamTranslationY = new LoggableTunedNumber("Vision/BLCamY", 11.001),
+			BLCamTranslationZ = new LoggableTunedNumber("Vision/BLCamZ", 8.364),
+			BLCamRoll = new LoggableTunedNumber("Vision/BLCamRoll", 0),
+			BLCamYaw = new LoggableTunedNumber("Vision/BLCamYaw", 123.2),
+			BLCamPitch = new LoggableTunedNumber("Vision/BLCamPitch", -28.125);
+
 
 	// To figure out what these should be, look at the WPILIB Coordinate System
-	public static Translation3d frontCamTranslation3d = new Translation3d(
-			Units.inchesToMeters(frontCamTranslationX.get()),
-			Units.inchesToMeters(frontCamTranslationY.get()),
-			Units.inchesToMeters(frontCamTranslationZ.get())),
-			rightCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(rightCamTranslationX.get()),
-					Units.inchesToMeters(rightCamTranslationY.get()),
-					Units.inchesToMeters(rightCamTranslationZ.get())),
-			leftCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(leftCamTranslationX.get()),
-					Units.inchesToMeters(leftCamTranslationY.get()),
-					Units.inchesToMeters(leftCamTranslationZ.get())),
-			backCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(backCamTranslationX.get()),
-					Units.inchesToMeters(backCamTranslationY.get()),
-					Units.inchesToMeters(backCamTranslationZ.get()));
-	public static Rotation3d frontRot = new Rotation3d(
-			Math.toRadians(frontCamRoll.get()),
-			Math.toRadians(frontCamPitch.get()),
-			Math.toRadians(frontCamYaw.get())),
-			rightRot = new Rotation3d(
-					Math.toRadians(rightCamRoll.get()),
-					Math.toRadians(rightCamPitch.get()),
-					Math.toRadians(rightCamYaw.get())),
-			leftRot = new Rotation3d(
-					Math.toRadians(leftCamRoll.get()),
-					Math.toRadians(leftCamPitch.get()),
-					Math.toRadians(leftCamYaw.get())),
-			backRot = new Rotation3d(
-					Math.toRadians(backCamRoll.get()),
-					Math.toRadians(backCamPitch.get()),
-					Math.toRadians(backCamYaw.get()));
+	public static Translation3d FLCamTranslation3d = new Translation3d(
+			Units.inchesToMeters(FLCamTranslationX.get()),
+			Units.inchesToMeters(FLCamTranslationY.get()),
+			Units.inchesToMeters(FLCamTranslationZ.get())),
+			FRCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(FRCamTranslationX.get()),
+					Units.inchesToMeters(FRCamTranslationY.get()),
+					Units.inchesToMeters(FRCamTranslationZ.get())),
+			BLCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(BLCamTranslationX.get()),
+					Units.inchesToMeters(BLCamTranslationY.get()),
+					Units.inchesToMeters(BLCamTranslationZ.get())),
+			BRCamTranslation3d = new Translation3d(
+					Units.inchesToMeters(BRCamTranslationX.get()),
+					Units.inchesToMeters(BRCamTranslationY.get()),
+					Units.inchesToMeters(BRCamTranslationZ.get()));
+	public static Rotation3d FLRot = new Rotation3d(
+			Math.toRadians(FLCamRoll.get()),
+			Math.toRadians(FLCamPitch.get()),
+			Math.toRadians(FLCamYaw.get())),
+			FRRot = new Rotation3d(
+					Math.toRadians(FRCamRoll.get()),
+					Math.toRadians(FRCamPitch.get()),
+					Math.toRadians(FRCamYaw.get())),
+			BLRot = new Rotation3d(
+					Math.toRadians(BLCamRoll.get()),
+					Math.toRadians(BLCamPitch.get()),
+					Math.toRadians(BLCamYaw.get())),
+			BRRot = new Rotation3d(
+					Math.toRadians(BRCamRoll.get()),
+					Math.toRadians(BRCamPitch.get()),
+					Math.toRadians(BRCamYaw.get()));
 	// Transforms, used in the camera declarations
-	public static Transform3d robotToFront = new Transform3d(frontCamTranslation3d, frontRot),
-			robotToRight = new Transform3d(rightCamTranslation3d, rightRot),
-			robotToLeft = new Transform3d(leftCamTranslation3d, leftRot),
-			robotToBack = new Transform3d(backCamTranslation3d, backRot);
+	public static Transform3d robotToFL = new Transform3d(FLCamTranslation3d, FLRot),
+			robotToFR = new Transform3d(FRCamTranslation3d, FRRot),
+			robotToBL = new Transform3d(BLCamTranslation3d, BLRot),
+			robotToBR = new Transform3d(BRCamTranslation3d, BRRot);
 	 // Basic filtering thresholds
 	 public static double maxAmbiguity = 0.3;
 	 public static double maxZError = 0.75;
    
 	 // Standard deviation baselines, for 1 meter distance and 1 tag
 	 // (Adjusted automatically based on distance and # of tags)
-	 public static double linearStdDevBaseline = 0.02; // Meters
-	 public static double angularStdDevBaseline = 0.06; // Radians
+	 public static double linearStdDevBaseline = 0.005; // Meters
+	 public static double angularStdDevBaseline = 0.04; // Radians
    
 	 // Standard deviation multipliers for each camera
 	 // (Adjust to trust some cameras more than others)
 	 public static double[] cameraStdDevFactors =
 		 new double[] {
 		   1.0, // Camera 0
-		   1.0 // Camera 1
+		   1.0, // Camera 1
+		   1.0,
+		   1.0
 		 };   
 	// Used for distance calculations for AI stuff
 	// Offset of your limelight (0 being perpendicular, negative meaning camera lens
