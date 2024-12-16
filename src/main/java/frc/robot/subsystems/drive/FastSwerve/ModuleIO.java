@@ -30,6 +30,8 @@ public interface ModuleIO {
 		public double turnMotorTemp = 0.0;
 		public double[] odometryDrivePositionsMeters = new double[] {};
 		public Rotation2d[] odometryTurnPositions = new Rotation2d[] {};
+		public boolean inLowGear = true;
+		public double driveRotorRPM = 0.0;
 	}
 
 	/** Updates the set of loggable inputs. */
@@ -68,7 +70,8 @@ public interface ModuleIO {
 
 	/** Disable output to all motors */
 	default void stop() {}
-
+	/** Shift the module into high or low gear */
+	default void shift(boolean lowGear) {}
 	/**
 	 * Get a list of the SelfChecking interface for all hardware in that
 	 * implementation
