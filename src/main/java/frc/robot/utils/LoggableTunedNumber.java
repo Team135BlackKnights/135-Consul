@@ -43,17 +43,18 @@ public class LoggableTunedNumber {
 	}
 
 	/**
-	 * Set the default value of the number. The default value can only be set
-	 * once.
+	 * Set the default value of the number.
 	 *
 	 * @param defaultValue The default value
 	 */
 	public void initDefault(double defaultValue) {
+		this.defaultValue = defaultValue;
 		if (!hasDefault) {
 			hasDefault = true;
-			this.defaultValue = defaultValue;
-			if (Constants.isTuningPID) {
+			if (Constants.isTuningPID && dashboardNumber == null) {
 				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
+			}else if (dashboardNumber != null) {
+				dashboardNumber.setDefault(defaultValue);
 			}
 		}
 	}
@@ -90,8 +91,8 @@ public class LoggableTunedNumber {
 	 * Checks whether the number has changed since our last check
 	 *
 	 * @param id Unique identifier for the caller to avoid conflicts when shared
-	 *              between multiple objects. Recommended approach is to pass the
-	 *              result of "hashCode()"
+	 *           between multiple objects. Recommended approach is to pass the
+	 *           result of "hashCode()"
 	 * @return True if the number has changed since the last time this method was
 	 *         called, false otherwise.
 	 */
