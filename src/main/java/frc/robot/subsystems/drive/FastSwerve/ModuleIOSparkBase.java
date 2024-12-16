@@ -186,9 +186,9 @@ public class ModuleIOSparkBase implements ModuleIO {
 		driveConfig = driveConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		driveConfig = turnConfig.smartCurrentLimit(DriveConstants.kMaxTurnCurrent);
 		driveEncoder.setPosition(0.0);
-		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatio;
+		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 		double turnVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kTurningMotorGearRatio;
-		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatio * (2 * Math.PI);
+		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow * (2 * Math.PI);
 		double turnPositionConversionFactor = 1 / DriveConstants.TrainConstants.kTurningMotorGearRatio * (2 * Math.PI);
 		driveEncoderConfig = new EncoderConfig().quadratureAverageDepth(2).quadratureMeasurementPeriod(10)
 				.uvwAverageDepth(2).uvwMeasurementPeriod(10).velocityConversionFactor(driveVelocityConversionFactor)

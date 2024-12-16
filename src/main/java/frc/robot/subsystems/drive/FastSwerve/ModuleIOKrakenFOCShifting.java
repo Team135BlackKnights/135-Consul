@@ -19,6 +19,8 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -29,17 +31,19 @@ import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class ModuleIOKrakenFOC implements ModuleIO {
+public class ModuleIOKrakenFOCShifting implements ModuleIO {
 	// Hardware
 	private final TalonFX driveTalon;
 	private final TalonFX turnTalon;
 	private final CANcoder turnAbsoluteEncoder;
+	private final DoubleSolenoid shifter;
 	private final Rotation2d absoluteEncoderOffset;
 	private final String driveName;
 	private final String turnName;
 	// Status Signals
 	private final StatusSignal<Angle> drivePosition;
 	private final StatusSignal<AngularVelocity> driveVelocity;
+	private final StatusSignal<AngularVelocity> rotorVelocity;
 	private final StatusSignal<Voltage> driveAppliedVolts;
 	private final StatusSignal<Current> driveSupplyCurrent;
 	private final StatusSignal<Current> driveTorqueCurrent;
@@ -75,7 +79,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	 *          user manual works
 	 */
 	@SuppressWarnings("unused")
-	public ModuleIOKrakenFOC(int index) {
+	public ModuleIOKrakenFOCShifting(int index) {
 		// Init controllers and encoders from config constants
 		switch (index) {
 			case 0:
@@ -90,6 +94,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					turnAbsoluteEncoder = new CANcoder(
 						DriveConstants.kFrontLeftAbsEncoderPort,DriveConstants.canBusName);
 				}
+				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH,DriveConstants.kFrontLeftShifterForward,
+				DriveConstants.kFrontLeftShifterReverse);
 				driveName = "FrontLeftDrive";
 				turnName = "FrontLeftTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -109,7 +115,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					turnAbsoluteEncoder = new CANcoder(
 						DriveConstants.kFrontRightAbsEncoderPort,DriveConstants.canBusName);
 				}
-				
+				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH,DriveConstants.kFrontRightShifterForward,
+				DriveConstants.kFrontRightShifterReverse);
 				driveName = "FrontRightDrive";
 				turnName = "FrontRightTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -129,7 +136,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					turnAbsoluteEncoder = new CANcoder(
 						DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.canBusName);
 				}
-
+				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH,DriveConstants.kBackLeftShifterForward,
+				DriveConstants.kBackLeftShifterReverse);
 				driveName = "BackLeftDrive";
 				turnName = "BackLeftTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -149,6 +157,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					turnAbsoluteEncoder = new CANcoder(
 						DriveConstants.kBackRightAbsEncoderPort,DriveConstants.canBusName);
 				}
+				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH,DriveConstants.kBackRightShifterForward,
+				DriveConstants.kBackRightShifterReverse);
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";
 
@@ -194,7 +204,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		// 250hz signals
 		drivePosition = driveTalon.getPosition();
 		turnPosition = turnTalon.getPosition();
-		BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.TrainConstants.odomHz, drivePosition,
+		rotorVelocity = driveTalon.getRotorVelocity();
+		BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.TrainConstants.odomHz, drivePosition, rotorVelocity,
 				turnPosition);
 		drivePositionQueue = OdometryThread
 				.registerSignalInput(driveTalon.getPosition());
@@ -226,12 +237,34 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveTalon.optimizeBusUtilization(0, 1.0);
 		turnTalon.optimizeBusUtilization(0, 1.0);
 	}
-
+	@Override
+	public void shift(boolean lowGear) {
+		//In a new thread, set the shifter to the desired gear ratio for a quarter second to ensure it is set
+		new Thread(() -> {
+			shifter.set(lowGear ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse);
+			try {
+				Thread.sleep((long)DriveConstants.TrainConstants.extendTime.get()); //wait for the solenoid to get shifted, tune this
+				driveTalonConfig.Feedback.SensorToMechanismRatio = lowGear
+						? DriveConstants.TrainConstants.kDriveMotorGearRatioLow
+						: DriveConstants.TrainConstants.kDriveMotorGearRatioHigh;
+				shifter.set(DoubleSolenoid.Value.kOff);
+				for (int i = 0; i < 4; i++) {
+					boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,
+							0.1) == StatusCode.OK;
+					if (!error)
+						break;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}).start();
+		
+	}
 	@Override
 	public void updateInputs(ModuleIOInputs inputs) {
 		inputs.hasCurrentControl = true;
 		inputs.driveMotorConnected = BaseStatusSignal
-				.refreshAll(drivePosition, driveVelocity, driveAppliedVolts,
+				.refreshAll(drivePosition, driveVelocity, rotorVelocity, driveAppliedVolts,
 						driveSupplyCurrent, driveTorqueCurrent, driveTemp)
 				.isOK();
 		inputs.turnMotorConnected = BaseStatusSignal.refreshAll(turnPosition,
@@ -241,6 +274,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				.rotationsToRadians(drivePosition.getValueAsDouble());
 		inputs.driveVelocityRadsPerSec = Units
 				.rotationsToRadians(driveVelocity.getValueAsDouble());
+		inputs.driveRotorRPM = rotorVelocity.getValueAsDouble();
 		inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
 		inputs.driveSupplyCurrentAmps = driveSupplyCurrent.getValueAsDouble();
 		inputs.driveTorqueCurrentAmps = driveTorqueCurrent.getValueAsDouble();
@@ -264,6 +298,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				.map(Rotation2d::fromRotations).toArray(Rotation2d[]::new);
 		drivePositionQueue.clear();
 		turnPositionQueue.clear();
+		inputs.inLowGear = driveTalonConfig.Feedback.SensorToMechanismRatio == DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	}
 
 	@Override

@@ -36,7 +36,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 
 public class MecanumIOSparkBase implements MecanumIO {
 
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer

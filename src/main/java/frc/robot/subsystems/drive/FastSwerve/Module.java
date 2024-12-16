@@ -96,7 +96,9 @@ public class Module {
 				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get(), turnkV.get()),
 				turnkP, turnkI, turnkD, turnkS, turnkV);
 	}
-
+	public void shift(boolean lowGear) {
+		io.shift(lowGear);
+	}
 	/** Runs to {@link SwerveModuleState} */
 	public void runSetpoint(SwerveModuleState setpoint,
 			SwerveModuleState torqueFF) {
@@ -170,7 +172,14 @@ public class Module {
 		}
 		return positions;
 	}
-
+	/** Get the current shift state as boolean */
+	public boolean inLowGear() {
+		return inputs.inLowGear;
+	}
+	/** Get the current RPS of the motor ROTOR */
+	public double getDriveMotorRPM() {
+		return inputs.driveRotorRPM;
+	}
 	/** Get turn angle of module as {@link Rotation2d}. */
 	public Rotation2d getAngle() {
 		return inputs.turnPosition;
