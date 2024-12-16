@@ -13,6 +13,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
+import frc.robot.utils.Elastic;
+import frc.robot.utils.Elastic.Notification.NotificationLevel;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -25,8 +28,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.littletonrobotics.junction.Logger;
 
-public abstract class SubsystemChecker extends SubsystemBase
-		implements Runnable {
+public abstract class SubsystemChecker extends SubsystemBase {
 	public enum SystemStatus {
 		OK, WARNING, ERROR
 	}
@@ -35,9 +37,6 @@ public abstract class SubsystemChecker extends SubsystemBase
 	private final ConcurrentLinkedQueue<SelfChecking> hardware = new ConcurrentLinkedQueue<>();
 	private final String statusTable;
 	private boolean checkErrors;
-	private Thread checkerThread;
-	private volatile boolean running = false; // volatile to ensure visibility between main and checker threads
-
 	public SubsystemChecker() {
 		this.statusTable = "SystemStatus/" + this.getName();
 		Command systemCheck = getSystemCheckCommand();
@@ -79,44 +78,8 @@ public abstract class SubsystemChecker extends SubsystemBase
 	public abstract void setCurrentLimit(int amps);
 
 	private void setupCallbacks() {
-		checkerThread = new Thread(this);
-		checkerThread.setDaemon(true);
-		checkerThread.setPriority(Thread.MIN_PRIORITY);
-		checkerThread.setName(statusTable + "Checker");
-		checkerThread.start();
-		/* 
-		Robot.addPeriodic(this::checkForFaults, 0.5);
-		Robot.addPeriodic(this::publishStatus, 1.5);*/
-	}
-
-	@Override
-	public void run() {
-		while (running) {
-			try {
-				if (checkErrors){
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				publishStatus(true);
-				}
-			}
-			catch (InterruptedException e) {
-				Thread.currentThread().interrupt(); // Restore interrupted status
-				break;
-			}
-		}
-	}
-
-	public void stopCheckerThread() {
-		running = false;
-		if (checkerThread != null) {
-			checkerThread.interrupt();
-		}
+		Robot.addPeriodic(() -> checkForFaults(false), 0.5);
+		Robot.addPeriodic(() -> publishStatus(false), 1.5);
 	}
 
 	private void publishStatus(boolean override) {
@@ -136,6 +99,8 @@ public abstract class SubsystemChecker extends SubsystemBase
 			if (faultStrings.length > 0) {
 				Logger.recordOutput(statusTable + "/LastFault",
 						faultStrings[faultStrings.length - 1]);
+				Elastic.Notification notification = new Elastic.Notification(this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR, statusTable + ": "+status.name(), faultStrings[faultStrings.length - 1], this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
+				Elastic.sendNotification(notification);
 			} else {
 				Logger.recordOutput(statusTable + "/LastFault", "");
 			}

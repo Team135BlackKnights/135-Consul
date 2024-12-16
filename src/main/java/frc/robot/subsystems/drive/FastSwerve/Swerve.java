@@ -159,6 +159,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		this.odometryThread = OdometryThread.createInstance();
 		this.odometryTimestampInputs = new OdometryThreadInputsAutoLogged();
 		this.odometryThread.start();
+		addFault("UHOH",false,true);
 	}
 
 	/** Add odometry observation */
