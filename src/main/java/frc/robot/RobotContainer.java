@@ -575,7 +575,7 @@ public class RobotContainer {
 
 	public static HashMap<String, Double> getAllTemps() {
 		// List of HashMaps
-		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps());
+		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps(), visionS.getTemps());
 		// Combine all maps
 		HashMap<String, Double> combinedMap = combineMaps(maps);
 		return combinedMap;
@@ -599,8 +599,9 @@ public class RobotContainer {
 	}
 
 	public static Subsystem[] getAllSubsystems() {
-		Subsystem[] subsystems = new Subsystem[1];
+		Subsystem[] subsystems = new Subsystem[2];
 		subsystems[0] = drivetrainS;
+		subsystems[1] = visionS;
 		return subsystems;
 	}
 
