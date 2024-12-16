@@ -34,7 +34,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Consumer<Pose2d> resetOdometryCallBack;
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
-		return radPerSecond * TrainConstants.kDriveMotorGearRatio
+		return radPerSecond * TrainConstants.kDriveMotorGearRatioLow
 				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
