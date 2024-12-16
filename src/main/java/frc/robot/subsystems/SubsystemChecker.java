@@ -8,6 +8,7 @@ import com.revrobotics.spark.SparkBase;
 import com.studica.frc.AHRS;
 
 import au.grapplerobotics.LaserCan;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -37,6 +38,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	private final ConcurrentLinkedQueue<SelfChecking> hardware = new ConcurrentLinkedQueue<>();
 	private final String statusTable;
 	private boolean checkErrors;
+
 	public SubsystemChecker() {
 		this.statusTable = "SystemStatus/" + this.getName();
 		Command systemCheck = getSystemCheckCommand();
@@ -82,6 +84,9 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		Robot.addPeriodic(() -> publishStatus(false), 1.5);
 	}
 
+	Elastic.Notification currentNotif;
+	Timer lastSentFaultTimer = new Timer();
+
 	private void publishStatus(boolean override) {
 		if (checkErrors || override) {
 			SystemStatus status = getSystemStatus();
@@ -93,14 +98,35 @@ public abstract class SubsystemChecker extends SubsystemBase {
 			for (SubsystemFault fault : this.faults) {
 				faultStrings[i] = String.format("[%.2f] %s", fault.timestamp,
 						fault.description);
-				i++; //doing seperate from for loop to avoid concurrent modification exception
+				i++; // doing seperate from for loop to avoid concurrent modification exception
 			}
 			Logger.recordOutput(statusTable + "/Faults", faultStrings);
 			if (faultStrings.length > 0) {
 				Logger.recordOutput(statusTable + "/LastFault",
 						faultStrings[faultStrings.length - 1]);
-				Elastic.Notification notification = new Elastic.Notification(this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR, statusTable + ": "+status.name(), faultStrings[faultStrings.length - 1], this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
-				Elastic.sendNotification(notification);
+				if (currentNotif == null) {
+					currentNotif = new Elastic.Notification(
+							this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR,
+							statusTable + ": " + status.name(), faultStrings[faultStrings.length - 1],
+							this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
+					Elastic.sendNotification(currentNotif);
+					lastSentFaultTimer.restart();
+				} else {
+					// get after the first ] to the end of the string
+					String faultString = faultStrings[faultStrings.length - 1].split("]")[1];
+					if (!faultString.equals(currentNotif.getDescription().split("]")[1])
+							|| lastSentFaultTimer.hasElapsed(currentNotif.getDisplayTimeMillis() / 1000 + 1)) { // new
+																												// fault
+						currentNotif = new Elastic.Notification(
+								this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR,
+								statusTable + ": " + status.name(), faultStrings[faultStrings.length - 1],
+								this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
+						Elastic.sendNotification(currentNotif);
+						lastSentFaultTimer.restart();
+					}
+
+					// currentNotif.setMessage(String.join("\n", faultStrings));
+				}
 			} else {
 				Logger.recordOutput(statusTable + "/LastFault", "");
 			}
@@ -133,7 +159,9 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		return this.faults;
 	}
 
-	public void clearFaults() { this.faults.clear(); }
+	public void clearFaults() {
+		this.faults.clear();
+	}
 
 	public SystemStatus getSystemStatus() {
 		SystemStatus worstStatus = SystemStatus.OK;
