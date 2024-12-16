@@ -155,7 +155,7 @@ public class Robot extends LoggedRobot {
 		DataHandler.startHandler();
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		pdh = LoggedPowerDistribution.getInstance();
@@ -264,7 +264,7 @@ public class Robot extends LoggedRobot {
 		}
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 	}
@@ -294,7 +294,7 @@ public class Robot extends LoggedRobot {
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		RobotContainer.drivetrainS.zeroHeading();
@@ -345,7 +345,7 @@ public class Robot extends LoggedRobot {
 		Constants.currentMatchState = FRCMatchState.TELEOPINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		RobotContainer.field.getObject("path").setTrajectory(new Trajectory());
