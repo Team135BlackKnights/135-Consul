@@ -155,7 +155,7 @@ public class Robot extends LoggedRobot {
 		DataHandler.startHandler();
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		pdh = LoggedPowerDistribution.getInstance();
@@ -207,7 +207,7 @@ public class Robot extends LoggedRobot {
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.pathConstraints.maxAngularVelocityRadPerSec(),
 					DriveConstants.maxRotationalAcceleration.get());
-			DriveConstants.moduleLimitsFree = new ModuleLimits(
+			DriveConstants.moduleLimitsLow = new ModuleLimits(
 					DriveConstants.kMaxSpeedMetersPerSecond,
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.maxRotationalAcceleration.get());
@@ -264,7 +264,7 @@ public class Robot extends LoggedRobot {
 		}
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 	}
@@ -294,7 +294,7 @@ public class Robot extends LoggedRobot {
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		RobotContainer.drivetrainS.zeroHeading();
@@ -345,7 +345,7 @@ public class Robot extends LoggedRobot {
 		Constants.currentMatchState = FRCMatchState.TELEOPINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(false);
+				((SubsystemChecker) subsys).allowFaultPolling(true);
 			}
 		}
 		RobotContainer.field.getObject("path").setTrajectory(new Trajectory());
