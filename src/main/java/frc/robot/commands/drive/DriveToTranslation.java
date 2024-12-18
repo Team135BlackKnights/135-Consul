@@ -31,7 +31,7 @@ public class DriveToTranslation extends Command {
 	private double driveErrorAbs;
 	private PathConstraints pathConstraints;
 	private Translation2d lastSetpointTranslation;
-	//allow live updating via LoggableTunedNumbers
+	// allow live updating via LoggableTunedNumbers
 	private static final LoggableTunedNumber driveKp = new LoggableTunedNumber(
 			"DriveToPose/DriveKp");
 	private static final LoggableTunedNumber driveKd = new LoggableTunedNumber(
@@ -46,11 +46,11 @@ public class DriveToTranslation extends Command {
 			"DriveToPose/FFMinRadius");
 	private static final LoggableTunedNumber ffMaxRadius = new LoggableTunedNumber(
 			"DriveToPose/FFMaxRadius");
-	//Default the TunedNumbers on boot
+	// Default the TunedNumbers on boot
 	static {
 		driveKp.initDefault(3);
 		driveKd.initDefault(0.0);
-		
+
 		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0));
 		driveTolerance.initDefault(0.02);
 		driveToleranceSlow.initDefault(0.03);
@@ -58,18 +58,25 @@ public class DriveToTranslation extends Command {
 		ffMaxRadius.initDefault(1);
 	}
 
-	/** Drives to the specified position under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified position under full software control. Will NOT
+	 * rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, Translation2d position,
 			PathConstraints pathConstraints) {
 		this(drive, false, position, pathConstraints);
 	}
 
-	/** Drives to the specified pose under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified pose under full software control. Will NOT rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, Translation2d pose) {
 		this(drive, false, pose);
 	}
 
-	/** Drives to the specified pose under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified pose under full software control. Will NOT rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, boolean slowMode, Translation2d pose) {
 		this(drive, slowMode, () -> pose,
 				new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
@@ -78,13 +85,17 @@ public class DriveToTranslation extends Command {
 						DriveConstants.maxRotationalAcceleration.get()));
 	}
 
-	/** Drives to the specified pose under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified pose under full software control. Will NOT rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, boolean slowMode, Translation2d pose,
 			PathConstraints pathConstraints) {
 		this(drive, slowMode, () -> pose, pathConstraints);
 	}
 
-	/** Drives to the specified pose under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified pose under full software control. Will NOT rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, Supplier<Translation2d> poseSupplier) {
 		this(drive, false, poseSupplier,
 				new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
@@ -93,7 +104,9 @@ public class DriveToTranslation extends Command {
 						DriveConstants.maxRotationalAcceleration.get()));
 	}
 
-	/** Drives to the specified pose under full software control. Will NOT rotate.*/
+	/**
+	 * Drives to the specified pose under full software control. Will NOT rotate.
+	 */
 	public DriveToTranslation(DrivetrainS drive, boolean slowMode,
 			Supplier<Translation2d> poseSupplier, PathConstraints pathConstraints) {
 		this.drive = drive;
@@ -111,25 +124,28 @@ public class DriveToTranslation extends Command {
 		driveController.reset(
 				currentPose.getTranslation()
 						.getDistance(poseSupplier.get()),
-				Math.min( //get our CURRENT speed, and rotate it by our actual position.
+				Math.min( // get our CURRENT speed, and rotate it by our actual position.
 						0.0,
 						-new Translation2d(drive.getFieldVelocity().dx,
 								drive.getFieldVelocity().dy)
-										.rotateBy(poseSupplier.get()
-												.minus(drive.getPose().getTranslation())
-												.getAngle().unaryMinus())
-										.getX()));
+								.rotateBy(poseSupplier.get()
+										.minus(drive.getPose().getTranslation())
+										.getAngle().unaryMinus())
+								.getX()));
 		lastSetpointTranslation = drive.getPose().getTranslation();
-		drive.changeDeadband(.02); //Make sure the commands aren't trying to move tiny movements when the drivetrain wont allow it
+		drive.changeDeadband(.02); // Make sure the commands aren't trying to move tiny movements when the
+									// drivetrain wont allow it
 		RobotContainer.currentPath = "DRIVETOPOSE";
 	}
+
 	public void updateConstraints(PathConstraints pathConstraints) {
 		this.pathConstraints = pathConstraints;
 		driveController.setConstraints(new TrapezoidProfile.Constraints(
-			slowMode ? driveMaxVelocitySlow.get()
-					: pathConstraints.maxVelocityMPS(),
-			pathConstraints.maxAccelerationMPSSq()));
+				slowMode ? driveMaxVelocitySlow.get()
+						: pathConstraints.maxVelocityMPS(),
+				pathConstraints.maxAccelerationMPSSq()));
 	}
+
 	@Override
 	public void execute() {
 		// Update from tunable numbers
@@ -140,9 +156,9 @@ public class DriveToTranslation extends Command {
 			driveController.setP(driveKp.get());
 			driveController.setD(driveKd.get());
 			driveController.setConstraints(new TrapezoidProfile.Constraints(
-				slowMode ? driveMaxVelocitySlow.get()
-						: pathConstraints.maxVelocityMPS(),
-				pathConstraints.maxAccelerationMPSSq()));
+					slowMode ? driveMaxVelocitySlow.get()
+							: pathConstraints.maxVelocityMPS(),
+					pathConstraints.maxAccelerationMPSSq()));
 			driveController.setTolerance(
 					slowMode ? driveToleranceSlow.get() : driveTolerance.get());
 		}
@@ -153,7 +169,8 @@ public class DriveToTranslation extends Command {
 		// Calculate drive speed
 		double currentDistance = currentPose.getTranslation()
 				.getDistance(poseSupplier.get());
-		//how fast should we be moving relative to distance? use circles based off relative distances to figure that out. 
+		// how fast should we be moving relative to distance? use circles based off
+		// relative distances to figure that out.
 		double ffScaler = MathUtil.clamp((currentDistance - ffMinRadius.get())
 				/ (ffMaxRadius.get() - ffMinRadius.get()), 0.0, 1.0);
 		driveErrorAbs = currentDistance;
@@ -161,25 +178,25 @@ public class DriveToTranslation extends Command {
 				lastSetpointTranslation.getDistance(targetPose),
 				driveController.getSetpoint().velocity);
 		double driveVelocityScalar = driveController.getSetpoint().velocity
-				* ffScaler + driveController.calculate(driveErrorAbs, 0.0); //Go to error of zero from wanted pose, using ff
+				* ffScaler + driveController.calculate(driveErrorAbs, 0.0); // Go to error of zero from wanted pose,
+																			// using ff
 		if (currentDistance < driveController.getPositionTolerance())
-			driveVelocityScalar = 0.0; //if there, STOP.
+			driveVelocityScalar = 0.0; // if there, STOP.
 		lastSetpointTranslation = new Pose2d(targetPose,
 				currentPose.getTranslation().minus(targetPose)
 						.getAngle())
-								.transformBy(GeomUtil.translationToTransform(
-										driveController.getSetpoint().position, 0.0))
-								.getTranslation();
+				.transformBy(GeomUtil.translationToTransform(
+						driveController.getSetpoint().position, 0.0))
+				.getTranslation();
 		var driveVelocity = new Pose2d(new Translation2d(),
 				currentPose.getTranslation().minus(targetPose)
 						.getAngle())
-								.transformBy(GeomUtil
-										.translationToTransform(driveVelocityScalar, 0.0))
-								.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
-		ChassisSpeeds speeds = new ChassisSpeeds(driveVelocity.getX(),
-				driveVelocity.getY(), RobotContainer.angularSpeed);
-		speeds.toRobotRelativeSpeeds(currentPose.getRotation());
-		drive.setChassisSpeeds(speeds); //if using aim, should use output
+				.transformBy(GeomUtil
+						.translationToTransform(driveVelocityScalar, 0.0))
+				.getTranslation(); // Calculate X and Y speeds from driveVelocity scalar.
+		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
+				currentPose.getRotation())); // assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",
@@ -189,7 +206,7 @@ public class DriveToTranslation extends Command {
 						currentPose.getRotation()));
 		Logger.recordOutput("Odometry/DriveToPoseGoal", targetPose);
 		if (atGoal())
-			running = false; //If we've reached our goal, stop command.
+			running = false; // If we've reached our goal, stop command.
 	}
 
 	@Override
@@ -197,7 +214,7 @@ public class DriveToTranslation extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.angularSpeed = 0;
 
-		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); //go back to normal deadband
+		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // go back to normal deadband
 		drive.stopModules();
 	}
 
@@ -212,9 +229,11 @@ public class DriveToTranslation extends Command {
 	public boolean withinTolerance(double driveTolerance,
 			Rotation2d thetaTolerance) {
 		return Math.abs(driveErrorAbs) < driveTolerance;
-				
+
 	}
 
 	@Override
-	public boolean isFinished() { return !running; }
+	public boolean isFinished() {
+		return !running;
+	}
 }

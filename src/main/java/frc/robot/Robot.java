@@ -247,7 +247,8 @@ public class Robot extends LoggedRobot {
 		 * Logger.recordOutput("SystemStatus/DriveCANUtil",
 		 * driveCanBusStatus.BusUtilization * 100.0);
 		 */
-		long runtimeMS = (System.currentTimeMillis() - currentTime);
+		double runtimeMS = (System.currentTimeMillis() - currentTime);
+		//long to double for the recordOutput
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
 														// speed again!)
