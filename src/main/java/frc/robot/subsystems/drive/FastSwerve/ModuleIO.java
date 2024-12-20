@@ -13,6 +13,7 @@ public interface ModuleIO {
 	class ModuleIOInputs {
 		public boolean driveMotorConnected = true;
 		public boolean turnMotorConnected = true;
+		public boolean encoderConnected = true;
 		public boolean hasCurrentControl = false;
 		public boolean negateFF = false;
 		public double drivePositionRads = 0.0;
