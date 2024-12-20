@@ -4,6 +4,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
@@ -193,7 +194,7 @@ public class Robot extends LoggedRobot {
 			accumulatedCharge += chargeUsed;
 
 			// Calculate the remaining charge percentage
-			double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); // 64800 is the total charge of the
+			double batteryPercentage = 100 * (1 - (accumulatedCharge / (64800-4800))); // 64800 is the total charge of the
 																				// battery in Coloumbs (18 * 3600s/hr)
 			batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
 			Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
@@ -236,18 +237,22 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
-		/*
-		 * long statusCalls = System.currentTimeMillis();
-		 * CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
-		 * CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
-		 * Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
-		 * System.currentTimeMillis()));
-		 * Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *
-		 * 100.0);
-		 * Logger.recordOutput("SystemStatus/DriveCANUtil",
-		 * driveCanBusStatus.BusUtilization * 100.0);
-		 */
-		long runtimeMS = (System.currentTimeMillis() - currentTime);
+
+		long statusCalls = System.currentTimeMillis();
+		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
+		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
+				System.currentTimeMillis()));
+		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *
+				100.0);
+		Logger.recordOutput("SystemStatus/DriveCANUtil",
+				driveCanBusStatus.BusUtilization * 100.0);
+		for (Map.Entry<String, Double> set : RobotContainer.getAllTemps()
+				.entrySet()) {
+			Logger.recordOutput("Temps/" + set.getKey(), set.getValue());
+		}
+		double runtimeMS = (System.currentTimeMillis() - currentTime);
+		// long to double for the recordOutput
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
 														// speed again!)
@@ -319,7 +324,7 @@ public class Robot extends LoggedRobot {
 											new Pose2d(
 													path.getPoint(0).position,
 													path.getIdealStartingState().rotation()));
-							if (RobotContainer.drivetrainS instanceof Swerve){
+							if (RobotContainer.drivetrainS instanceof Swerve) {
 								((Swerve) RobotContainer.drivetrainS).pathplannerIndex = 0;
 							}
 						}
@@ -425,10 +430,6 @@ public class Robot extends LoggedRobot {
 	/** This function is called periodically during test mode. */
 	@Override
 	public void testPeriodic() {
-		for (Map.Entry<String, Double> set : RobotContainer.getAllTemps()
-				.entrySet()) {
-			Logger.recordOutput("Temps/" + set.getKey(), set.getValue());
-		}
 		Constants.currentMatchState = FRCMatchState.TEST;
 	}
 

@@ -3,8 +3,6 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.subsystems.drive.Tank;
 
-import static edu.wpi.first.units.Units.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +30,6 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -290,13 +287,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	/** Run closed loop at the specified voltage. */
 	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds, boolean setSpeeds) {
 		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
-		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
-		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
-		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
-		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity, MetersPerSecond.of(leftRadPerSec)).magnitude(),
-			feedforward.calculate(rightVelocity, MetersPerSecond.of(rightRadPerSec)).magnitude()});
+		double rightRadsPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculateWithVelocities(getLeftVelocityMetersPerSec() / WHEEL_RADIUS, leftRadPerSec),
+			feedforward.calculateWithVelocities(getRightVelocityMetersPerSec() / WHEEL_RADIUS, rightRadsPerSec)});
 		if (setSpeeds)
-			io.setVelocity(leftRadPerSec, rightRadPerSec,
+			io.setVelocity(leftRadPerSec, rightRadsPerSec,
 					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
 	}
 

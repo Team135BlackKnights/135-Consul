@@ -356,6 +356,15 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
 				(System.currentTimeMillis() - inputTime));
 		long systemTime = System.currentTimeMillis();
+		//for each, see if we're disconnected
+		for (Module module : modules){
+			if (!module.isDriveConnected()){
+				addFault("Drive Motor Disconnect on "+ module.name,false, true);
+			}
+			if (!module.isTurnConnected()){
+				addFault("Turn Motor Disconnect on "+ module.name,false, true);
+			}
+		}
 		isSkidding = calculateSkidding();
 		// Calculate the min odometry position updates across all modules
 		int minOdometryUpdates = IntStream
@@ -424,6 +433,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			coastRequest = CoastRequest.AUTOMATIC;
 		}
 		lastEnabled = DriverStation.isEnabled();
+		//debug error
 		switch (coastRequest) {
 			case AUTOMATIC -> {
 				if (DriverStation.isEnabled()) {
@@ -519,7 +529,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
-	@SuppressWarnings("removal")
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		pathplannerIndex = 0;

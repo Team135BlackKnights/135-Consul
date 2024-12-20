@@ -22,7 +22,8 @@ public class DrivetrainC extends Command {
 
 	public DrivetrainC(DrivetrainS drivetrainS) {
 		this.drivetrainS = drivetrainS;
-		// These guys limit acceleration, they aren't the most necessary but it makes movement smoother
+		// These guys limit acceleration, they aren't the most necessary but it makes
+		// movement smoother
 		this.xLimiter = new SlewRateLimiter(
 				DriveConstants.maxTranslationalAcceleration.get());
 		this.yLimiter = new SlewRateLimiter(
@@ -33,7 +34,8 @@ public class DrivetrainC extends Command {
 	}
 
 	@Override
-	public void initialize() {}
+	public void initialize() {
+	}
 
 	@Override
 	public void execute() {
@@ -52,10 +54,12 @@ public class DrivetrainC extends Command {
 		double turningSpeed = RobotContainer.driveController.getRightX();
 		xSpeed = Math.pow(xSpeed, 2) * (xSpeed < 0 ? -1 : 1);
 		ySpeed = Math.pow(ySpeed, 2) * (ySpeed < 0 ? -1 : 1);
-		/*if (SwerveS.autoLock == true && CameraS.aprilTagVisible() == true) {
-			turningSpeed = swerveS.autoLockController
-					.calculate(CameraS.getXError(), 0.0);
-		}*/
+		/*
+		 * if (SwerveS.autoLock == true && CameraS.aprilTagVisible() == true) {
+		 * turningSpeed = swerveS.autoLockController
+		 * .calculate(CameraS.getXError(), 0.0);
+		 * }
+		 */
 		// If the desired ChassisSpeeds are really small (ie from controller drift) make
 		// them even smaller so that the robot doesn't move
 		xSpeed = Math.abs(xSpeed) > DriveConstants.TrainConstants.kDeadband
@@ -64,18 +68,21 @@ public class DrivetrainC extends Command {
 		ySpeed = Math.abs(ySpeed) > DriveConstants.TrainConstants.kDeadband
 				? ySpeed
 				: 0.0000;
-		/*if (SwerveS.autoLock == true && CameraS.aprilTagVisible() == true) {
-			turningSpeed = Math
-					.abs(turningSpeed) > DriveConstants.TrainConstants.kAutoDeadband
-							? turningSpeed
-							: 0.0000;
-		} else {*/
+		/*
+		 * if (SwerveS.autoLock == true && CameraS.aprilTagVisible() == true) {
+		 * turningSpeed = Math
+		 * .abs(turningSpeed) > DriveConstants.TrainConstants.kAutoDeadband
+		 * ? turningSpeed
+		 * : 0.0000;
+		 * } else {
+		 */
 		turningSpeed = Math
 				.abs(turningSpeed) > DriveConstants.TrainConstants.kDeadband
 						? turningSpeed
 						: 0.0000;
-		//}
-		// Limit the acceleration and convert -1 to 1 from the controller into actual speeds
+		// }
+		// Limit the acceleration and convert -1 to 1 from the controller into actual
+		// speeds
 		xSpeed = xLimiter.calculate(xSpeed)
 				* DriveConstants.kMaxSpeedMetersPerSecond;
 		ySpeed = yLimiter.calculate(ySpeed)
@@ -97,8 +104,8 @@ public class DrivetrainC extends Command {
 		}
 		// Convert ChassisSpeeds into the ChassisSpeeds type
 		if (DriveConstants.fieldOriented) {
-			chassisSpeeds = new ChassisSpeeds(xSpeed,ySpeed,turningSpeed);
-			chassisSpeeds.toRobotRelativeSpeeds(drivetrainS.getRotation2d());
+			chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed,
+					turningSpeed, drivetrainS.getRotation2d());
 		} else {
 			chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
 		}
@@ -110,43 +117,54 @@ public class DrivetrainC extends Command {
 				&& Math.abs(ySpeed) < DriveConstants.TrainConstants.kDeadband
 				&& Math.abs(
 						turningSpeed) < DriveConstants.TrainConstants.kDeadband) {
-			drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));//for odom
+			drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
 			drivetrainS.stopModules();
 		} else {
 			drivetrainS.setChassisSpeeds(chassisSpeeds);
 		}
 	}
-	/*Use this link to compute the regression model:https://planetcalc.com/5992/#google_vignette 
-	 Each of the files has an x and y output so put those in the respective lists, or use a ti-84 stats bar*/
-	/*public void printData() {
-		//outputs collected distance vs angle graph to console and also sends it to the data logging file. 
-		System.out.println("Distance (X)                              Angle (Y)");
-		for (var i = 0; i < arrayIndex; i++) {
-			String output = " " + Double.toString(variableAngleLog[0][i]) + "    "
-					+ Double.toString(variableAngleLog[1][i]);
-			System.out.println(output);
-			DataHandler
-					.logData(new String[] { Double.toString(variableAngleLog[0][i]),
-							Double.toString(variableAngleLog[1][i])
-					});
-		}
-		System.out.println("Distance (X)");
-		for (var i = 0; i < arrayIndex; i++) {
-			String output = Double.toString(variableAngleLog[0][i]) + " ";
-			System.out.println(output);
-		}
-		System.out.println("Angle (Y)");
-		for (var i = 0; i < arrayIndex; i++) {
-			String output = Double.toString(variableAngleLog[1][i]) + " ";
-			System.out.println(output);
-		}
-		variableAngleLog = new double[2][20];
-		arrayIndex = 0;
-	} */
+	/*
+	 * Use this link to compute the regression
+	 * model:https://planetcalc.com/5992/#google_vignette
+	 * Each of the files has an x and y output so put those in the respective lists,
+	 * or use a ti-84 stats bar
+	 */
+	/*
+	 * public void printData() {
+	 * //outputs collected distance vs angle graph to console and also sends it to
+	 * the data logging file.
+	 * System.out.println("Distance (X)                              Angle (Y)");
+	 * for (var i = 0; i < arrayIndex; i++) {
+	 * String output = " " + Double.toString(variableAngleLog[0][i]) + "    "
+	 * + Double.toString(variableAngleLog[1][i]);
+	 * System.out.println(output);
+	 * DataHandler
+	 * .logData(new String[] { Double.toString(variableAngleLog[0][i]),
+	 * Double.toString(variableAngleLog[1][i])
+	 * });
+	 * }
+	 * System.out.println("Distance (X)");
+	 * for (var i = 0; i < arrayIndex; i++) {
+	 * String output = Double.toString(variableAngleLog[0][i]) + " ";
+	 * System.out.println(output);
+	 * }
+	 * System.out.println("Angle (Y)");
+	 * for (var i = 0; i < arrayIndex; i++) {
+	 * String output = Double.toString(variableAngleLog[1][i]) + " ";
+	 * System.out.println(output);
+	 * }
+	 * variableAngleLog = new double[2][20];
+	 * arrayIndex = 0;
+	 * }
+	 */
 
 	@Override
-	public void end(boolean interrupted) { drivetrainS.stopModules(); }
+	public void end(boolean interrupted) {
+		drivetrainS.stopModules();
+	}
 
 	@Override
-	public boolean isFinished() { return false; }
+	public boolean isFinished() {
+		return false;
+	}
 }
