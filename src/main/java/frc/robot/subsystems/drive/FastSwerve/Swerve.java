@@ -26,6 +26,7 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.EqualsUtil;
 import frc.robot.utils.drive.LocalADStarAK;
+import frc.robot.utils.drive.DriveConstants.SwerveModuleType;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -471,27 +472,29 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		else if (DriveConstants.TrainConstants.RPMMatch.get() < getAverageRPM() && !modules[0].inLowGear()){
 			Arrays.stream(modules).forEach(module -> module.shift(true));
 		}
-		if (modules[0].inLowGear()){
-			//set max speed / acceleration for low gear
-			currentModuleLimits = DriveConstants.moduleLimitsLow;
-			DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
-			DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
-			DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
-			//don't change our rotational accel
-			DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
-					DriveConstants.maxTranslationalAcceleration.get(),
-					DriveConstants.kMaxTurningSpeedRadPerSec,
-					DriveConstants.maxRotationalAcceleration.get());
-		}else{
-			currentModuleLimits = DriveConstants.moduleLimitsHigh;
-			DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
-			DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
-			DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
-			//don't change our rotational accel
-			DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
-					DriveConstants.maxTranslationalAcceleration.get(),
-					DriveConstants.kMaxTurningSpeedRadPerSec,
-					DriveConstants.maxRotationalAcceleration.get());	
+		if (DriveConstants.swerveModuleType == SwerveModuleType.SHIFTING_THIFTYSWERVE){
+			if (modules[0].inLowGear()){
+				//set max speed / acceleration for low gear
+				currentModuleLimits = DriveConstants.moduleLimitsLow;
+				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
+				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
+				//don't change our rotational accel
+				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
+						DriveConstants.maxTranslationalAcceleration.get(),
+						DriveConstants.kMaxTurningSpeedRadPerSec,
+						DriveConstants.maxRotationalAcceleration.get());
+			}else{
+				currentModuleLimits = DriveConstants.moduleLimitsHigh;
+				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
+				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
+				//don't change our rotational accel
+				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
+						DriveConstants.maxTranslationalAcceleration.get(),
+						DriveConstants.kMaxTurningSpeedRadPerSec,
+						DriveConstants.maxRotationalAcceleration.get());	
+			}
 		}
 		// Run modules
 		if (!modulesOrienting && currentDriveMode != DriveMode.MODULE_CHARACTERIZATION) {
@@ -535,7 +538,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
+		//desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
 		for (int i = 0; i < 4; i++) {
 			pathPlannerNM[i] = 0;
 		}

@@ -80,7 +80,6 @@ public class AimToRotation extends Command {
 		controller.enableContinuousInput(-Math.PI, Math.PI);
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
 		this.goalHeadingSupplier = goalHeadingSupplier;
-		drive.changeDeadband(.02);
 		this.drive = drive;
 		controller.reset(
 				drive.getPose().getRotation().getRadians(),
@@ -119,7 +118,6 @@ public class AimToRotation extends Command {
 		RobotContainer.angleOverrider = Optional.empty();
 		RobotContainer.angularSpeed = 0;
 		PPHolonomicDriveController.clearRotationFeedbackOverride();
-		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Reset deadband to normal
 	}
 	@Override
 	public boolean isFinished() {
