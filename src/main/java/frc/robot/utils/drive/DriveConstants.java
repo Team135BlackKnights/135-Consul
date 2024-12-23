@@ -242,7 +242,7 @@ public class DriveConstants {
 		} else {
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(1, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 1);
-			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth, kChassisLength);
+			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kModuleTranslations);
 			mainController = new PPHolonomicDriveController(
 					new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(),
 							TrainConstants.pathplannerTranslationConstantContainer.getI(),
