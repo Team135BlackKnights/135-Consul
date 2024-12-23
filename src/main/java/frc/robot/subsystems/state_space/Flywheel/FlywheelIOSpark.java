@@ -42,7 +42,7 @@ public class FlywheelIOSpark implements FlywheelIO {
 		config.voltageCompensation(12);
 		config.idleMode(StateSpaceConstants.Flywheel.isBrake ? IdleMode.kBrake : IdleMode.kCoast);
 		flywheel.setCANTimeout(250);
-		flywheel.setInverted(StateSpaceConstants.Flywheel.inverted);
+		config.inverted(StateSpaceConstants.Flywheel.inverted);
 		config.smartCurrentLimit(StateSpaceConstants.Flywheel.currentLimit);
 		encoder = flywheel.getEncoder();
 		flywheel.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);

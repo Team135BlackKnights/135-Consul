@@ -46,7 +46,7 @@ public class SingleJointedArmIOSpark implements SingleJointedArmIO {
 				StateSpaceConstants.SingleJointedArm.isBrake ? IdleMode.kBrake
 						: IdleMode.kCoast);
 		arm.setCANTimeout(250);
-		arm.setInverted(StateSpaceConstants.SingleJointedArm.inverted);
+		config.inverted(StateSpaceConstants.SingleJointedArm.inverted);
 		config.smartCurrentLimit(
 				StateSpaceConstants.SingleJointedArm.currentLimit);
 		encoder = arm.getEncoder();

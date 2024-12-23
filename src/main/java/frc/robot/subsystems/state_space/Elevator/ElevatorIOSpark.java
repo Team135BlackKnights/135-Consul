@@ -42,7 +42,7 @@ public class ElevatorIOSpark implements ElevatorIO {
 		config.voltageCompensation(12);
 		config.idleMode(StateSpaceConstants.Elevator.isBrake ? IdleMode.kBrake : IdleMode.kCoast);
 		elevator.setCANTimeout(250);
-		elevator.setInverted(StateSpaceConstants.Elevator.inverted);
+		config.inverted(StateSpaceConstants.Elevator.inverted);
 		config.smartCurrentLimit(StateSpaceConstants.Elevator.currentLimit);
 		encoder = elevator.getEncoder();
 		elevator.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
