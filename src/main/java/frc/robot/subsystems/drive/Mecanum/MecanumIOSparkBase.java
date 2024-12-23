@@ -87,10 +87,7 @@ public class MecanumIOSparkBase implements MecanumIO {
 		frontRight.setCANTimeout(250);
 		backLeft.setCANTimeout(250);
 		backRight.setCANTimeout(250);
-		frontLeft.setInverted(DriveConstants.kFrontLeftDriveReversed);
-		frontRight.setInverted(DriveConstants.kFrontRightDriveReversed);
-		backLeft.setInverted(DriveConstants.kBackLeftDriveReversed);
-		backRight.setInverted(DriveConstants.kBackRightDriveReversed);
+		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		sparkConfig.idleMode(IdleMode.kBrake);
@@ -109,8 +106,11 @@ public class MecanumIOSparkBase implements MecanumIO {
 		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
 		sparkConfig.apply(loopConfig);
 		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
 		frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed);
 		backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackRightDriveReversed);
 		backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		
 
