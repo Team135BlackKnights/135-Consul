@@ -35,6 +35,13 @@ public class DriveConstants {
 	// This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.SDSMK4I;
 	public static final GyroType gyroType = GyroType.PIGEON;
+	public static final boolean useThriftyEncoder = true;
+	public static final WHEEL_GRIP gripType = WHEEL_GRIP.COLSONS;
+
+	public class DriverConstants {
+		public static final double kDeadband = 0.1, translationalResponseCurveExponent = 2.4,
+				rotationalResponseCurveExponent = 1.8;
+	}
 
 	public static DCMotor getDriveTrainMotors(int number) {
 		switch (robotMotorController) {
@@ -94,7 +101,8 @@ public class DriveConstants {
 
 	public enum SwerveModuleType {
 		SDSMK4I,
-		THRIFTYSWERVE
+		THRIFTYSWERVE,
+		SHIFTING_THIFTYSWERVE
 	}
 
 	/**
@@ -176,7 +184,7 @@ public class DriveConstants {
 			kBackRightAbsEncoderReversed = false;
 	public static ModuleLimits moduleLimitsLow = new ModuleLimits(
 			DriveConstants.kMaxSpeedMetersPerSecond,
-			maxTranslationalAcceleration.get(), maxRotationalAcceleration.get());
+			maxTranslationalAcceleration.get(), DriveConstants.kMaxTurningSpeedRadPerSec);
 	public static ModuleLimits moduleLimitsHigh = new ModuleLimits(
 			getDriveTrainMotors(1).freeSpeedRadPerSec / TrainConstants.kDriveMotorGearRatioHigh
 					* TrainConstants.kWheelDiameter.get() / 2,
@@ -204,7 +212,6 @@ public class DriveConstants {
 																								// 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.002));
-		public static double kDeadband = 0.05;
 		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .099),
 				RPMMatch = new LoggableTunedNumber("Drive/Module/RPMMatch", 4000),
 				extendTime = new LoggableTunedNumber("Drive/Module/extendTime", 200);;
