@@ -42,7 +42,7 @@ public abstract class GenericRollerSystemIOSparkBase implements GenericRollerSys
     }
     this.name = name;
     config = config.smartCurrentLimit(currentLimitAmps).voltageCompensation(12);
-    motor.setInverted(invert);
+    config.inverted(invert);
     motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     encoder = motor.getEncoder();
   }
