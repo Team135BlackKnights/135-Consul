@@ -23,6 +23,8 @@ import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIO;
@@ -80,7 +82,6 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
 import frc.robot.utils.drive.DriveConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;
@@ -192,19 +193,53 @@ public class RobotContainer {
 			case REAL:
 				switch (DriveConstants.driveType) {
 					case SWERVE:
+
 						switch (DriveConstants.robotMotorController) {
 							case CTRE_ON_RIO:
 							case CTRE_ON_CANIVORE:
 								switch (DriveConstants.gyroType) {
 									case NAVX:
-										drivetrainS = new Swerve(new GyroIONavX(),
-												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										switch (DriveConstants.swerveModuleType) {
+											case SHIFTING_THIFTYSWERVE:
+												// ignore encoder type, assume cancoder
+												drivetrainS = new Swerve(new GyroIONavX(),
+														new ModuleIOKrakenFOCShifting(0),
+														new ModuleIOKrakenFOCShifting(1),
+														new ModuleIOKrakenFOCShifting(2),
+														new ModuleIOKrakenFOCShifting(3));
+												break;
+											case THRIFTYSWERVE:
+											case SDSMK4I:
+												if (DriveConstants.useThriftyEncoder) {
+													drivetrainS = new Swerve(new GyroIONavX(),
+															new ModuleIOKrakenFOCWithThrifty(0),
+															new ModuleIOKrakenFOCWithThrifty(1),
+															new ModuleIOKrakenFOCWithThrifty(2),
+															new ModuleIOKrakenFOCWithThrifty(3));
+												} else {
+													drivetrainS = new Swerve(new GyroIONavX(),
+															new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+															new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+												}
+												break;
+										}
 										break;
 									case PIGEON:
-										drivetrainS = new Swerve(new GyroIOPigeon2(),
-												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										switch (DriveConstants.swerveModuleType) {
+											case SHIFTING_THIFTYSWERVE:
+												drivetrainS = new Swerve(new GyroIOPigeon2(),
+														new ModuleIOKrakenFOCShifting(0),
+														new ModuleIOKrakenFOCShifting(1),
+														new ModuleIOKrakenFOCShifting(2),
+														new ModuleIOKrakenFOCShifting(3));
+												break;
+											case THRIFTYSWERVE:
+											case SDSMK4I:
+												drivetrainS = new Swerve(new GyroIOPigeon2(),
+														new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+														new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+												break;
+										}
 										break;
 									default:
 										break;
@@ -292,8 +327,8 @@ public class RobotContainer {
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
 				autoCommands.addAll(Arrays.asList(
-						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
@@ -546,35 +581,37 @@ public class RobotContainer {
 					case SWERVE:
 						SwerveModuleSimulation[] moduleSimulations = new SwerveModuleSimulation[4];
 						ModuleIO[] moduleIOSims = new ModuleIO[4];
-						for (int i = 0; i < 4; i++){
-							switch (DriveConstants.swerveModuleType){
+						for (int i = 0; i < 4; i++) {
+							switch (DriveConstants.swerveModuleType) {
 								case SDSMK4I:
-								moduleSimulations[i] = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										WHEEL_GRIP.COLSONS.cof, 2)
-								.get();
-								break;
+									moduleSimulations[i] = SwerveModuleSimulation
+											.getMark4i(DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.gripType.cof, 2)
+											.get();
+									break;
 								case THRIFTYSWERVE:
-								moduleSimulations[i] = SwerveModuleSimulation.getThriftySwerve(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								WHEEL_GRIP.COLSONS.cof, 2).get();
-								break;
+								case SHIFTING_THIFTYSWERVE:
+									moduleSimulations[i] = SwerveModuleSimulation
+											.getThriftySwerve(DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.gripType.cof, 2)
+											.get();
+									break;
 								default:
-								throw new IllegalArgumentException(
-									"Unknown implementation type for module, please check DriveConstants.java!");
-								}
+									throw new IllegalArgumentException(
+											"Unknown implementation type for module, please check DriveConstants.java!");
+							}
 							moduleIOSims[i] = new ModuleIOSim(moduleSimulations[i]);
 						}
 
-		
 						drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), moduleIOSims[0],
 								moduleIOSims[1], moduleIOSims[2], moduleIOSims[3]);
 						SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
 								DriveConstants.mainRobotProfile.robotMass,
 								DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
 								new SwerveModuleSimulation[] { moduleSimulations[0], moduleSimulations[1],
-									moduleSimulations[2], moduleSimulations[3]
+										moduleSimulations[2], moduleSimulations[3]
 								}, DriveConstants.kModuleTranslations, gyroSimulation,
 								FieldConstants.START_POSE, drivetrainS::resetPose);
 						fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
@@ -660,8 +697,8 @@ public class RobotContainer {
 							elevatorS = new ElevatorS(new ElevatorIO(){}, new ElevatorEncoderIO(){});
 							doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){}, new DoubleJointedArmArmEncoderIO(){}, new DoubleJointedArmElbowEncoderIO(){});
 				autoCommands.addAll(Arrays.asList(
-						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
@@ -688,7 +725,7 @@ public class RobotContainer {
 		armS.setDefaultCommand(new SingleJointedArmC(armS));
 		elevatorS.setDefaultCommand(new ElevatorC(elevatorS));
 		doubleJointedArmS.setDefaultCommand(new DoubleJointedArmC(doubleJointedArmS));
-				if (!AutoBuilder.isConfigured()) {
+		if (!AutoBuilder.isConfigured()) {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
@@ -713,7 +750,7 @@ public class RobotContainer {
 						.withName("Drive Static Characterization"));
 		autoChooser.addOption("Drive FeedForward Characterization",
 				new FeedForwardCharacterization(drivetrainS, drivetrainS::runCharacterization,
-						drivetrainS::getCharacterizationVelocity, () -> false) //NEVER automatically end. MUST disable to end.
+						drivetrainS::getCharacterizationVelocity, () -> false) // NEVER automatically end. MUST disable to end.
 						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
 		autoChooser.addOption("Flywheel Static Characterization",
@@ -774,16 +811,16 @@ public class RobotContainer {
 					Command currentAutoValue = autoChooser.get();
 
 					// Check if the value has changed
-					if (currentAutoValue != null){
+					if (currentAutoValue != null) {
 						if (!currentAutoValue.equals(lastAuto[0])) {
 							// Update the last known value
 							lastAuto[0] = currentAutoValue;
-	
 							// Run your logic
 							try {
 								currentAuto = currentAutoValue;
 								Logger.recordOutput("RobotState/autoPath",
-										PathFinder.parseAutoToPose2dList(currentAutoValue.getName()).toArray(Pose2d[]::new));
+										PathFinder.parseAutoToPose2dList(currentAutoValue.getName())
+												.toArray(Pose2d[]::new));
 								field.getObject("path")
 										.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
 							} catch (Exception e) {
