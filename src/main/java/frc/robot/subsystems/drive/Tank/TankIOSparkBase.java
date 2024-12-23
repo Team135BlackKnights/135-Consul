@@ -82,8 +82,7 @@ public class TankIOSparkBase implements TankIO {
 		rightLeader.setCANTimeout(250);
 		leftFollower.setCANTimeout(250);
 		rightFollower.setCANTimeout(250);
-		leftLeader.setInverted(DriveConstants.kFrontLeftDriveReversed);
-		rightLeader.setInverted(DriveConstants.kFrontRightDriveReversed);
+		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		ClosedLoopConfig loopConfig = new ClosedLoopConfig();
@@ -91,6 +90,7 @@ public class TankIOSparkBase implements TankIO {
 		loopConfig.d(KD);
 		sparkConfig.apply(loopConfig);
 		leftLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
 		rightLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		sparkConfig.follow(leftLeader);
 		leftFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
