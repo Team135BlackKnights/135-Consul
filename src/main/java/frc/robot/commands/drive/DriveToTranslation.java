@@ -133,8 +133,6 @@ public class DriveToTranslation extends Command {
 										.getAngle().unaryMinus())
 								.getX()));
 		lastSetpointTranslation = drive.getPose().getTranslation();
-		drive.changeDeadband(.02); // Make sure the commands aren't trying to move tiny movements when the
-									// drivetrain wont allow it
 		RobotContainer.currentPath = "DRIVETOPOSE";
 	}
 
@@ -214,7 +212,6 @@ public class DriveToTranslation extends Command {
 		RobotContainer.currentPath = "";
 		RobotContainer.angularSpeed = 0;
 
-		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // go back to normal deadband
 		drive.stopModules();
 	}
 
