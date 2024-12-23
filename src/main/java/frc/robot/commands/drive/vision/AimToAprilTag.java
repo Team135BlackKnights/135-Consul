@@ -105,7 +105,6 @@ public class AimToAprilTag extends Command {
         aimToRotationCommand.end(interrupted); // Manually end the command
         RobotContainer.angleOverrider = Optional.empty();
         RobotContainer.angularSpeed = 0;
-        drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Reset deadband to normal
     }
 
     @Override
