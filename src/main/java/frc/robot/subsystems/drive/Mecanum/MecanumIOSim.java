@@ -40,19 +40,19 @@ public class MecanumIOSim implements MecanumIO {
 	private double backRightFFVolts = 0.0;
 	private final GyroIO gyro;
 	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 
 	public MecanumIOSim(GyroIO gyroSim) {
 		gyro = gyroSim;
 		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
-				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
 		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
-				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
 		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
-				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
 		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
-				DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1, .1);
+				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
 	}
 
 	@Override

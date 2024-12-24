@@ -35,7 +35,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 public class TankIOTalonFX implements TankIO {
 	private final GyroIO gyro;
 	private GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -220,7 +220,7 @@ public class TankIOTalonFX implements TankIO {
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12 * radPerSec * (TrainConstants.kWheelDiameter / 2) / DriveConstants.kMaxSpeedMetersPerSecond;
+		return 12 * radPerSec * (TrainConstants.kWheelDiameter.get() / 2) / DriveConstants.kMaxSpeedMetersPerSecond;
 
 	}
 

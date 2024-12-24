@@ -31,8 +31,6 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelPositions;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -47,7 +45,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Mecanum extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 
 	public enum DriveMode {
@@ -229,8 +227,11 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Mecanum", inputs);
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
@@ -273,6 +274,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
 	}
 
 	/** Run open loop at the specified voltage. */
@@ -325,7 +327,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 			}
 			// Assign the adjusted force magnitude
 			double nmVal = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 			double speedVoltage = wheelRadSpeedsArray[i] / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt; // Voltage
 																														// from
 																														// speed
@@ -349,23 +351,15 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 				/ WHEEL_RADIUS;
 		double backRightRadPerSec = wheelSpeeds.rearRightMetersPerSecond
 				/ WHEEL_RADIUS;
-		LinearVelocity setpointFrontLeftVelocity = Units.MetersPerSecond.of(frontLeftRadPerSec);
-		LinearVelocity setpointFrontRightVelocity = Units.MetersPerSecond.of(frontRightRadPerSec);
-		LinearVelocity setpointBackLeftVelocity = Units.MetersPerSecond.of(backLeftRadPerSec);
-		LinearVelocity setpointBackRightVelocity = Units.MetersPerSecond.of(backRightRadPerSec);
-		LinearVelocity currentFrontLefVelocity = Units.MetersPerSecond.of(getFrontLeftVelocityMetersPerSec());
-		LinearVelocity currentFrontRightVelocity = Units.MetersPerSecond.of(getFrontRightVelocityMetersPerSec());
-		LinearVelocity currentBackLeftVelocity = Units.MetersPerSecond.of(getBackLeftVelocityMetersPerSec());
-		LinearVelocity currentBackRightVelocity = Units.MetersPerSecond.of(getBackRightVelocityMetersPerSec());
 		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[] {
-				feedforward.calculate(currentFrontLefVelocity,
-						setpointFrontLeftVelocity).magnitude(),
-				feedforward.calculate(currentFrontRightVelocity,
-						setpointFrontRightVelocity).magnitude(),
-				feedforward.calculate(currentBackLeftVelocity,
-						setpointBackLeftVelocity).magnitude(),
-				feedforward.calculate(currentBackRightVelocity,
-						setpointBackRightVelocity).magnitude()
+				feedforward.calculateWithVelocities(getFrontLeftVelocityMetersPerSec() /WHEEL_RADIUS,
+						frontLeftRadPerSec),
+				feedforward.calculateWithVelocities(getFrontRightVelocityMetersPerSec() / WHEEL_RADIUS,
+						frontRightRadPerSec),
+				feedforward.calculateWithVelocities(getBackLeftVelocityMetersPerSec() /WHEEL_RADIUS,
+						backLeftRadPerSec),
+				feedforward.calculateWithVelocities(getBackRightVelocityMetersPerSec() /WHEEL_RADIUS,
+						backRightRadPerSec)
 		});
 		if (setSpeeds) {
 			io.setVelocity(frontLeftRadPerSec, frontRightRadPerSec, backLeftRadPerSec,

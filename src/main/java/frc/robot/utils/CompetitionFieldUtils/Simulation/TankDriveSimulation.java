@@ -34,8 +34,8 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Consumer<Pose2d> resetOdometryCallBack;
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
-		return radPerSecond * TrainConstants.kDriveMotorGearRatio
-				* TrainConstants.kWheelDiameter / 2;
+		return radPerSecond * TrainConstants.kDriveMotorGearRatioLow
+				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
 	public TankDriveSimulation(DriveTrainSimulationProfile robotProfile, GyroSimulation gyroSim,
@@ -68,9 +68,9 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	public void simulationSubTick(){
 		tank.updateSim(subPeriodSeconds);
 		//should do the actual motion calculations
+		
 		final ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),
-		getObjectOnFieldPose2d().getRotation().unaryMinus());
+		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				tankTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
@@ -128,7 +128,7 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 					+ moduleFreeSpeedMPS
 							* (1 - FLOOR_SPEED_WEIGHT_IN_ACTUAL_MOTOR_SPEED);
 		final double rotorSpeedRadPerSec = rotorSpeedMetersPerSecond
-				/ DriveConstants.TrainConstants.kWheelDiameter / 2;
+				/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		return Units.radiansToRotations(rotorSpeedRadPerSec);
 	}
 

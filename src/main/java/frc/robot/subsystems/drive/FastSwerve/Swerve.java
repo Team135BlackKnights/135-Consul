@@ -26,6 +26,7 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.EqualsUtil;
 import frc.robot.utils.drive.LocalADStarAK;
+import frc.robot.utils.drive.DriveConstants.SwerveModuleType;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -38,6 +39,7 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
@@ -307,7 +309,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		odometryPose = initialPose;
 		poseBuffer.clear();
 	}
-
+	ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsLow; // implement limiting based off what you
+	// need
 	@AutoLogOutput(key = "RobotState/FieldVelocity")
 	@Override
 	public Twist2d getFieldVelocity() {
@@ -329,12 +332,15 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		return estimatedPose.plus(new Transform2d(new Translation2d(),
 				DriveConstants.TrainConstants.robotOffsetAngleDirection));
 	}
-
+	@Override
+	public ModuleLimits getModuleLimits() {
+		return currentModuleLimits;
+	}
 	public void periodic() {
 		// Check if modules are skidding
-		isSkidding = calculateSkidding();
 		// Update & process inputs
 		odometryThread.lockOdometry();
+		long inputTime = System.currentTimeMillis();
 		odometryThread.updateInputs(odometryTimestampInputs);
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
@@ -348,8 +354,19 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
 		odometryThread.unlockOdometry();
-		ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsFree; // implement limiting based off what you
-																			// need
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
+				(System.currentTimeMillis() - inputTime));
+		long systemTime = System.currentTimeMillis();
+		//for each, see if we're disconnected
+		for (Module module : modules){
+			if (!module.isDriveConnected()){
+				addFault("Drive Motor Disconnect on "+ module.name,false, true);
+			}
+			if (!module.isTurnConnected()){
+				addFault("Turn Motor Disconnect on "+ module.name,false, true);
+			}
+		}
+		isSkidding = calculateSkidding();
 		// Calculate the min odometry position updates across all modules
 		int minOdometryUpdates = IntStream
 				.of(odometryTimestampInputs.measurementTimeStamps.length,
@@ -417,6 +434,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			coastRequest = CoastRequest.AUTOMATIC;
 		}
 		lastEnabled = DriverStation.isEnabled();
+		//debug error
 		switch (coastRequest) {
 			case AUTOMATIC -> {
 				if (DriverStation.isEnabled()) {
@@ -445,6 +463,37 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 			default -> {
 				break;
+			}
+		}
+		//Shift
+		if (DriveConstants.TrainConstants.RPMMatch.get() > getAverageRPM() && modules[0].inLowGear()){
+			Arrays.stream(modules).forEach(module -> module.shift(false));
+		}
+		else if (DriveConstants.TrainConstants.RPMMatch.get() < getAverageRPM() && !modules[0].inLowGear()){
+			Arrays.stream(modules).forEach(module -> module.shift(true));
+		}
+		if (DriveConstants.swerveModuleType == SwerveModuleType.SHIFTING_THIFTYSWERVE){
+			if (modules[0].inLowGear()){
+				//set max speed / acceleration for low gear
+				currentModuleLimits = DriveConstants.moduleLimitsLow;
+				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
+				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
+				//don't change our rotational accel
+				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
+						DriveConstants.maxTranslationalAcceleration.get(),
+						DriveConstants.kMaxTurningSpeedRadPerSec,
+						DriveConstants.maxRotationalAcceleration.get());
+			}else{
+				currentModuleLimits = DriveConstants.moduleLimitsHigh;
+				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
+				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
+				//don't change our rotational accel
+				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
+						DriveConstants.maxTranslationalAcceleration.get(),
+						DriveConstants.kMaxTurningSpeedRadPerSec,
+						DriveConstants.maxRotationalAcceleration.get());	
 			}
 		}
 		// Run modules
@@ -480,6 +529,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
 		collisionDetected = collisionDetected();
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
 	@Override
@@ -488,13 +538,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
+		//desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
 		for (int i = 0; i < 4; i++) {
 			pathPlannerNM[i] = 0;
 		}
 	}
 
-	int pathplannerIndex = 0;
+	public int pathplannerIndex = 0;
 	boolean movingRight = false;
 
 	@Override
@@ -508,7 +558,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// only the robot relative x and y forces are provided for Choreo.
 			double xForce = feedforwards.robotRelativeForcesXNewtons()[i];
 			double yForce = feedforwards.robotRelativeForcesYNewtons()[i];
-			if (pathplannerIndex == 1) {
+			if (pathplannerIndex == 0) {
 				double angle = Math.atan2(yForce, xForce);
 				if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
 					movingRight = true;
@@ -528,8 +578,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				signAdjustment = 1;
 			}
 			// Assign the adjusted force magnitude
-			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : -1)
-					* DriveConstants.TrainConstants.kWheelDiameter / 2;
+			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : 1)
+					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
@@ -620,6 +670,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			driveVelocityAverage += module.getCharacterizationVelocity();
 		}
 		return driveVelocityAverage / 4.0;
+	}
+	public double getAverageRPM(){
+		double driveRPM = 0.0;
+		for (var module : modules) {
+			driveRPM += module.getDriveMotorRPM();
+		}
+		return driveRPM / 4.0;
 	}
 
 	@Override

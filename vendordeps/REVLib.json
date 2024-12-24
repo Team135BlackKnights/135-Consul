@@ -1,25 +1,25 @@
 {
-    "fileName": "libgrapplefrc2024.json",
-    "name": "libgrapplefrc",
-    "version": "2025.0.0-beta-1",
+    "fileName": "REVLib.json",
+    "name": "REVLib",
+    "version": "2025.0.0-beta-4",
     "frcYear": "2025",
-    "uuid": "8ef3423d-9532-4665-8339-206dae1d7168",
+    "uuid": "3f48eb8c-50fe-43a6-9cb7-44c86353c4cb",
     "mavenUrls": [
-        "https://storage.googleapis.com/grapple-frc-maven"
+        "https://maven.revrobotics.com/"
     ],
-    "jsonUrl": "https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2024.json",
+    "jsonUrl": "https://software-metadata.revrobotics.com/REVLib-2025.json",
     "javaDependencies": [
         {
-            "groupId": "au.grapplerobotics",
-            "artifactId": "libgrapplefrcjava",
-            "version": "2024.3.1"
+            "groupId": "com.revrobotics.frc",
+            "artifactId": "REVLib-java",
+            "version": "2025.0.0-beta-4"
         }
     ],
     "jniDependencies": [
         {
-            "groupId": "au.grapplerobotics",
-            "artifactId": "libgrapplefrcdriver",
-            "version": "2024.3.1",
+            "groupId": "com.revrobotics.frc",
+            "artifactId": "REVLib-driver",
+            "version": "2025.0.0-beta-4",
             "skipInvalidPlatforms": true,
             "isJar": false,
             "validPlatforms": [
@@ -35,12 +35,12 @@
     ],
     "cppDependencies": [
         {
-            "groupId": "au.grapplerobotics",
-            "artifactId": "libgrapplefrccpp",
-            "version": "2024.3.1",
-            "libName": "grapplefrc",
+            "groupId": "com.revrobotics.frc",
+            "artifactId": "REVLib-cpp",
+            "version": "2025.0.0-beta-4",
+            "libName": "REVLib",
             "headerClassifier": "headers",
-            "sharedLibrary": true,
+            "sharedLibrary": false,
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
                 "windowsx86-64",
@@ -53,12 +53,12 @@
             ]
         },
         {
-            "groupId": "au.grapplerobotics",
-            "artifactId": "libgrapplefrcdriver",
-            "version": "2024.3.1",
-            "libName": "grapplefrcdriver",
+            "groupId": "com.revrobotics.frc",
+            "artifactId": "REVLib-driver",
+            "version": "2025.0.0-beta-4",
+            "libName": "REVLibDriver",
             "headerClassifier": "headers",
-            "sharedLibrary": true,
+            "sharedLibrary": false,
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
                 "windowsx86-64",

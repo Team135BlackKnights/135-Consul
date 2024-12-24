@@ -5,8 +5,8 @@ package frc.robot;
 
 import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -19,6 +19,8 @@ import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIO;
@@ -34,7 +36,6 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
 import frc.robot.utils.drive.DriveConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;
@@ -47,18 +48,15 @@ import frc.robot.utils.drive.Sensors.GyroIOSim;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
-import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import java.util.List;
 import java.util.Optional;
 
-import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -71,13 +69,9 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.io.File;
-import java.io.IOException;
 
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -94,7 +88,7 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
-	private final SendableChooser<Command> autoChooser;
+	private final LoggedDashboardChooser<Command> autoChooser;
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
 	public static XboxController testingController = new XboxController(5);
@@ -131,45 +125,6 @@ public class RobotContainer {
 	public static Crescendo2024FieldSimulation fieldSimulation = null;
 	public static Command currentAuto;
 
-	/**
-	 * Reads every Choreo file in the deploy folder and creates a command for
-	 * each Checks within Filesystem.getDeployDirectory(), "choreo/" for all
-	 * files NOT having two . in the name (including the one . in .traj)
-	 * 
-	 * @return
-	 */
-	private Collection<Pair<String, Command>> createBranches() {
-		Collection<Pair<String, Command>> commands = new ArrayList<>();
-		File choreoDirectory = new File(Filesystem.getDeployDirectory(),
-				"choreo/");
-		for (String choreo : choreoDirectory.list()) {
-			// count number of . in the name using regex
-			int dotCount = choreo.split("\\.", -1).length - 1;
-			if (choreo.contains(".traj") && dotCount == 1) {
-				// remove the .traj from the name
-				choreo = choreo.replace(".traj", "");
-				try {
-					List<PathPlannerPath> auto = PathPlannerAuto.getPathGroupFromAutoFile(choreo);
-					for (PathPlannerPath path : auto) {
-						commands.add(new Pair<String, Command>("Branch" + path.name,
-								new BranchAuto(path.name,
-										new Pose2d(
-												path.getPoint(path.getAllPathPoints().size() - 1).position,
-												path.getGoalEndState().rotation()),
-										path.getGoalEndState().velocity().magnitude())));
-						System.out.println("Added Branch" + path.name);
-					}
-					auto.clear();
-					auto = null;
-				} catch (FileVersionException | IOException | ParseException | NullPointerException e) {
-					e.printStackTrace();
-				}
-
-			}
-		}
-		return commands;
-	}
-
 	// POVButton manipPOVZero = new POVButton(manipController, 0);
 	// POVButton manipPOV180 = new POVButton(manipController, 180);
 	/**
@@ -186,19 +141,53 @@ public class RobotContainer {
 			case REAL:
 				switch (DriveConstants.driveType) {
 					case SWERVE:
+
 						switch (DriveConstants.robotMotorController) {
 							case CTRE_ON_RIO:
 							case CTRE_ON_CANIVORE:
 								switch (DriveConstants.gyroType) {
 									case NAVX:
-										drivetrainS = new Swerve(new GyroIONavX(),
-												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										switch (DriveConstants.swerveModuleType) {
+											case SHIFTING_THIFTYSWERVE:
+												// ignore encoder type, assume cancoder
+												drivetrainS = new Swerve(new GyroIONavX(),
+														new ModuleIOKrakenFOCShifting(0),
+														new ModuleIOKrakenFOCShifting(1),
+														new ModuleIOKrakenFOCShifting(2),
+														new ModuleIOKrakenFOCShifting(3));
+												break;
+											case THRIFTYSWERVE:
+											case SDSMK4I:
+												if (DriveConstants.useThriftyEncoder) {
+													drivetrainS = new Swerve(new GyroIONavX(),
+															new ModuleIOKrakenFOCWithThrifty(0),
+															new ModuleIOKrakenFOCWithThrifty(1),
+															new ModuleIOKrakenFOCWithThrifty(2),
+															new ModuleIOKrakenFOCWithThrifty(3));
+												} else {
+													drivetrainS = new Swerve(new GyroIONavX(),
+															new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+															new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+												}
+												break;
+										}
 										break;
 									case PIGEON:
-										drivetrainS = new Swerve(new GyroIOPigeon2(),
-												new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
-												new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+										switch (DriveConstants.swerveModuleType) {
+											case SHIFTING_THIFTYSWERVE:
+												drivetrainS = new Swerve(new GyroIOPigeon2(),
+														new ModuleIOKrakenFOCShifting(0),
+														new ModuleIOKrakenFOCShifting(1),
+														new ModuleIOKrakenFOCShifting(2),
+														new ModuleIOKrakenFOCShifting(3));
+												break;
+											case THRIFTYSWERVE:
+											case SDSMK4I:
+												drivetrainS = new Swerve(new GyroIOPigeon2(),
+														new ModuleIOKrakenFOC(0), new ModuleIOKrakenFOC(1),
+														new ModuleIOKrakenFOC(2), new ModuleIOKrakenFOC(3));
+												break;
+										}
 										break;
 									default:
 										break;
@@ -286,18 +275,14 @@ public class RobotContainer {
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
 				autoCommands.addAll(Arrays.asList(
-						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 				break;
 			case SIM:
 				GyroSimulation gyroSimulation = null;
@@ -313,37 +298,37 @@ public class RobotContainer {
 					case SWERVE:
 						SwerveModuleSimulation[] moduleSimulations = new SwerveModuleSimulation[4];
 						ModuleIO[] moduleIOSims = new ModuleIO[4];
-						for (int i = 0; i < 4; i++){
-							switch (DriveConstants.swerveModuleType){
+						for (int i = 0; i < 4; i++) {
+							switch (DriveConstants.swerveModuleType) {
 								case SDSMK4I:
-								moduleSimulations[i] = SwerveModuleSimulation
-								.getMark4i(DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.getDriveTrainMotors(1),
-										DriveConstants.kMaxDriveCurrent,
-										DRIVE_WHEEL_TYPE.RUBBER, 2)
-								.get();
-								break;
+									moduleSimulations[i] = SwerveModuleSimulation
+											.getMark4i(DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.gripType.cof, 2)
+											.get();
+									break;
 								case THRIFTYSWERVE:
-								moduleSimulations[i] = SwerveModuleSimulation.getThrifty(DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.getDriveTrainMotors(1),
-								DriveConstants.kMaxDriveCurrent,
-								DRIVE_WHEEL_TYPE.RUBBER, 2).get();
-								break;
+								case SHIFTING_THIFTYSWERVE:
+									moduleSimulations[i] = SwerveModuleSimulation
+											.getThriftySwerve(DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.getDriveTrainMotors(1),
+													DriveConstants.gripType.cof, 2)
+											.get();
+									break;
 								default:
-								throw new IllegalArgumentException(
-									"Unknown implementation type for module, please check DriveConstants.java!");
-								}
+									throw new IllegalArgumentException(
+											"Unknown implementation type for module, please check DriveConstants.java!");
+							}
 							moduleIOSims[i] = new ModuleIOSim(moduleSimulations[i]);
 						}
 
-		
 						drivetrainS = new Swerve(new GyroIOSim(gyroSimulation), moduleIOSims[0],
 								moduleIOSims[1], moduleIOSims[2], moduleIOSims[3]);
 						SwerveDriveSimulation driveSim = new SwerveDriveSimulation(
 								DriveConstants.mainRobotProfile.robotMass,
 								DriveConstants.kBumperToBumperWidth, DriveConstants.kBumperToBumperLength,
 								new SwerveModuleSimulation[] { moduleSimulations[0], moduleSimulations[1],
-									moduleSimulations[2], moduleSimulations[3]
+										moduleSimulations[2], moduleSimulations[3]
 								}, DriveConstants.kModuleTranslations, gyroSimulation,
 								FieldConstants.START_POSE, drivetrainS::resetPose);
 						fieldSimulation = new Crescendo2024FieldSimulation(driveSim);
@@ -393,17 +378,13 @@ public class RobotContainer {
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 						new Pair<String, Command>("SmartShoot", Commands.none()),
-						new Pair<String, Command>("SmartIntake", Commands.none()),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+						new Pair<String, Command>("SmartIntake", Commands.none())
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 				break;
 			default:
 				switch (DriveConstants.driveType) {
@@ -425,18 +406,14 @@ public class RobotContainer {
 						});
 				}
 				autoCommands.addAll(Arrays.asList(
-						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 		}
 		drivetrainS.resetPose(FieldConstants.START_POSE);
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
@@ -454,7 +431,11 @@ public class RobotContainer {
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
-		autoChooser = AutoBuilder.buildAutoChooser();
+		if (!AutoBuilder.isConfigured()) {
+			throw new RuntimeException(
+					"AutoBuilder was not configured before attempting to build an auto chooser");
+		}
+		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
 		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
@@ -475,26 +456,52 @@ public class RobotContainer {
 						.withName("Drive Static Characterization"));
 		autoChooser.addOption("Drive FeedForward Characterization",
 				new FeedForwardCharacterization(drivetrainS, drivetrainS::runCharacterization,
-						drivetrainS::getCharacterizationVelocity, () -> false) //NEVER automatically end. MUST disable to end.
+						drivetrainS::getCharacterizationVelocity, () -> false) // NEVER automatically end. MUST disable to end.
 						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
+		autoChooser.addOption("FUNI SONG", new OrchestraC("mii"));
 		SmartDashboard.putData(field);
-		SmartDashboard.putData("Auto Chooser", autoChooser);
-		autoChooser.onChange(auto -> {
-			try {
-				currentAuto = auto;
-				Logger.recordOutput("RobotState/autoPath",
-						PathFinder.parseAutoToPose2dList(auto.getName()).toArray(Pose2d[]::new));
-				field.getObject("path")
-						.setPoses(PathFinder.parseAutoToPose2dList(auto.getName()));
-			} catch (Exception e) {
-				System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
-				field.getObject("path").setPoses(
-						new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
-								new Pose2d(-50.2, -50, new Rotation2d())
-						});
+		// Store the last known value of autoChooser.get()
+		final Command[] lastAuto = { autoChooser.get() };
+
+		new Thread(() -> {
+			while (true) {
+				try {
+					// Get the current value from autoChooser
+					Command currentAutoValue = autoChooser.get();
+
+					// Check if the value has changed
+					if (currentAutoValue != null) {
+						if (!currentAutoValue.equals(lastAuto[0])) {
+							// Update the last known value
+							lastAuto[0] = currentAutoValue;
+							// Run your logic
+							try {
+								currentAuto = currentAutoValue;
+								Logger.recordOutput("RobotState/autoPath",
+										PathFinder.parseAutoToPose2dList(currentAutoValue.getName())
+												.toArray(Pose2d[]::new));
+								field.getObject("path")
+										.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
+							} catch (Exception e) {
+								System.err.println("NO FOUND PATH FOR DESIRED AUTO!!");
+								field.getObject("path").setPoses(
+										new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
+												new Pose2d(-50.2, -50, new Rotation2d())
+										});
+							}
+						}
+					}
+
+					// Sleep for a short duration to prevent excessive CPU usage
+					Thread.sleep(100); // Adjust the interval as necessary
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					System.err.println("Polling thread interrupted");
+					break;
+				}
 			}
-		});
+		}).start();
 		// Configure the trigger bindings
 		configureBindings();
 		addNTCommands();
@@ -509,14 +516,18 @@ public class RobotContainer {
 		xButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
-				.onTrue(new InstantCommand(() -> drivetrainS.zeroHeading()));
+				.onTrue(new InstantCommand(() -> {
+					System.out.println("Zeroing Gyro");
+					drivetrainS.zeroHeading();
+					drivetrainS.resetPose(FieldConstants.START_POSE);
+				}));
 		// Example Drive To 2024 Amp Pose, Bind to what you need.
 		yButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
 						.negate())
 				.whileTrue(PathFinder.goToPose(
-						new Pose2d(1.9, 7.7,
-								new Rotation2d(Units.degreesToRadians(90))),
+						new Pose2d(3, 5.6,
+								new Rotation2d(Units.degreesToRadians(0))),
 						() -> DriveConstants.pathConstraints, drivetrainS, false, 0));
 		if (Constants.currentMode == Mode.SIM) {
 			// ButtonDrive.whileTrue(testOpponentRobot.getAutoCyleCommand());
@@ -530,7 +541,7 @@ public class RobotContainer {
 	 */
 	public Command getAutonomousCommand() {
 		// An example command will be run in autonomous
-		return autoChooser.getSelected();
+		return autoChooser.get();
 	}
 
 	/**

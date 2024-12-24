@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.SubsystemChecker.SystemStatus;
-import frc.robot.utils.drive.DriveConstants;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.drive.Position;
 import frc.robot.utils.maths.TimeUtil;
 
@@ -37,10 +37,6 @@ public interface DrivetrainS extends Subsystem {
 	 * @return the ChassisSpeeds of the drivetrain
 	 */
 	ChassisSpeeds getChassisSpeeds();
-
-	default void changeDeadband(double newDeadband) {
-		DriveConstants.TrainConstants.kDeadband = newDeadband;
-	}
 
 	/**
 	 * Reset the drivetrain's odometry to a particular pose
@@ -160,7 +156,9 @@ public interface DrivetrainS extends Subsystem {
 		return new boolean[] { false, false, false, false
 		};
 	}
-
+	default ModuleLimits getModuleLimits() {
+		return null;
+	}
 	@Override
 	default void periodic() {
 		robotField.setRobotPose(getPose());

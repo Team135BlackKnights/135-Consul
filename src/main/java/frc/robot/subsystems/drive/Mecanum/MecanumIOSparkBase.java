@@ -36,7 +36,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 
 public class MecanumIOSparkBase implements MecanumIO {
 
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -87,10 +87,7 @@ public class MecanumIOSparkBase implements MecanumIO {
 		frontRight.setCANTimeout(250);
 		backLeft.setCANTimeout(250);
 		backRight.setCANTimeout(250);
-		frontLeft.setInverted(DriveConstants.kFrontLeftDriveReversed);
-		frontRight.setInverted(DriveConstants.kFrontRightDriveReversed);
-		backLeft.setInverted(DriveConstants.kBackLeftDriveReversed);
-		backRight.setInverted(DriveConstants.kBackRightDriveReversed);
+		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		sparkConfig.idleMode(IdleMode.kBrake);
@@ -109,8 +106,11 @@ public class MecanumIOSparkBase implements MecanumIO {
 		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
 		sparkConfig.apply(loopConfig);
 		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
 		frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed);
 		backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackRightDriveReversed);
 		backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		
 
@@ -211,7 +211,7 @@ public class MecanumIOSparkBase implements MecanumIO {
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+		return 12*radPerSec*(TrainConstants.kWheelDiameter.get()/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
 
 	}
 

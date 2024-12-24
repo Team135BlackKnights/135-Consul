@@ -32,7 +32,7 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class TankIOSparkBase implements TankIO {
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -82,8 +82,7 @@ public class TankIOSparkBase implements TankIO {
 		rightLeader.setCANTimeout(250);
 		leftFollower.setCANTimeout(250);
 		rightFollower.setCANTimeout(250);
-		leftLeader.setInverted(DriveConstants.kFrontLeftDriveReversed);
-		rightLeader.setInverted(DriveConstants.kFrontRightDriveReversed);
+		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		ClosedLoopConfig loopConfig = new ClosedLoopConfig();
@@ -91,6 +90,7 @@ public class TankIOSparkBase implements TankIO {
 		loopConfig.d(KD);
 		sparkConfig.apply(loopConfig);
 		leftLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
 		rightLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		sparkConfig.follow(leftLeader);
 		leftFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -179,7 +179,7 @@ public class TankIOSparkBase implements TankIO {
 	 * @return the voltage that should be sent to the motor
 	 */
 	public double convertRadPerSecondToVoltage(double radPerSec) {
-		return 12*radPerSec*(TrainConstants.kWheelDiameter/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
+		return 12*radPerSec*(TrainConstants.kWheelDiameter.get()/2)/DriveConstants.kMaxSpeedMetersPerSecond; 
 
 	}
 

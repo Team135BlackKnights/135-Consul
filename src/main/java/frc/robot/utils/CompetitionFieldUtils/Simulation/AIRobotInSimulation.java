@@ -63,8 +63,12 @@ public class AIRobotInSimulation {
                                         DCMotor.getFalcon500(1).withReduction(8.14),
                                         60,
                                         1),
-                        0.6,
-                        0.6);
+                        new Translation2d[]{
+                                new Translation2d(.6 / 2, .6 / 2),
+                                new Translation2d(.6 / 2, -.6 / 2),
+                                new Translation2d(-.6 / 2, .6 / 2),
+                                new Translation2d(-.6 / 2, -.6 / 2)
+                        });
         private static final PPHolonomicDriveController driveController = new PPHolonomicDriveController(
                         new PIDConstants(5.0, 0.02),
                         new PIDConstants(7.0, 0.05));
@@ -213,9 +217,9 @@ public class AIRobotInSimulation {
                 }
                 return Commands.run(() -> {
                         driveSimulation.runChassisSpeeds(
-                                        ChassisSpeeds.fromRobotRelativeSpeeds(joystickSpeeds.get(),
-                                                        opponentDriverStationFacing.get()),
-                                        true);
+                                joystickSpeeds.get()
+                                        ,
+                                        opponentDriverStationFacing.get());
                         System.out.println("joystick speeds: " + joystick.getLeftY());
                         System.out.println("id: " + id);
                 }, driveSimulation)

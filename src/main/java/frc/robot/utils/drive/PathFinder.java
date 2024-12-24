@@ -11,7 +11,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.commands.drive.DriveToPose;
+import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.RobotContainer;
 import java.util.List;
@@ -45,7 +45,7 @@ public class PathFinder {
 							.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
 		}
 		return AutoBuilder.pathfindToPose((pose), constraints.get(), endVelocity)
-				.andThen(new DriveToPose(drive, pose, constraints.get()))
+				.andThen(new DriveAndAimToRotation(drive, pose, constraints.get()))
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
 

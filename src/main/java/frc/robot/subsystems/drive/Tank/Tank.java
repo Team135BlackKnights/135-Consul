@@ -3,8 +3,6 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.subsystems.drive.Tank;
 
-import static edu.wpi.first.units.Units.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +30,6 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -47,7 +44,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Tank extends SubsystemChecker implements DrivetrainS {
-	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter
+	public static final double WHEEL_RADIUS = DriveConstants.TrainConstants.kWheelDiameter.get()
 			/ 2;
 	public static final double TRACK_WIDTH = DriveConstants.kChassisWidth;
 	private final TankIO io;
@@ -235,8 +232,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
+		long timestamp = System.currentTimeMillis();
 		io.updateInputs(inputs);
 		Logger.processInputs("Drive", inputs);
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
+		timestamp = System.currentTimeMillis();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
@@ -275,6 +275,8 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
+
 	}
 
 	/** Run open loop at the specified voltage. */
@@ -285,13 +287,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	/** Run closed loop at the specified voltage. */
 	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds, boolean setSpeeds) {
 		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
-		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
-		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
-		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
-		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity, MetersPerSecond.of(leftRadPerSec)).magnitude(),
-			feedforward.calculate(rightVelocity, MetersPerSecond.of(rightRadPerSec)).magnitude()});
+		double rightRadsPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculateWithVelocities(getLeftVelocityMetersPerSec() / WHEEL_RADIUS, leftRadPerSec),
+			feedforward.calculateWithVelocities(getRightVelocityMetersPerSec() / WHEEL_RADIUS, rightRadsPerSec)});
 		if (setSpeeds)
-			io.setVelocity(leftRadPerSec, rightRadPerSec,
+			io.setVelocity(leftRadPerSec, rightRadsPerSec,
 					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
 	}
 
