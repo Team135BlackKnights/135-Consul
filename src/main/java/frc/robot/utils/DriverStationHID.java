@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 public class DriverStationHID {
     private final GenericHID HID;
     private DSLEDPattern currentLEDPattern = DSLEDPattern.LEDS_OFF;
-
     /**
      * Create a new DriverStationHID controller (combination button board and led
      * handler). Button indexes begin at 1.
@@ -68,8 +67,8 @@ public class DriverStationHID {
         HID.setOutput(pattern.value, true);
         currentLEDPattern = pattern;
     }
-    public boolean checkCurrentLEDPattern(DSLEDPattern pattern){
-        return (pattern == currentLEDPattern);
+    public DSLEDPattern getCurrentLEDPattern(){
+        return currentLEDPattern;
     }
     // This needs to be updated to match the functions inside
     // https://github.com/Team135BlackKnights/DriverStationHID/commits/main/
