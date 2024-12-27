@@ -41,7 +41,7 @@ public class DataHandler {
 	private static ServerSocket serverSocket;
 	private static final boolean usingLaptop = true;
 	private static int oldTime = 0;
-
+	private static long oldTimestamp = 0; 
 	/**
 	 * Call this in Robot.java. Starts the handler and has contingencies to use
 	 * the NetworkTables, write to usb, or write to a sim disk drive
@@ -307,7 +307,7 @@ public class DataHandler {
 				RobotContainer.currentAiOutputs = list;
 				//Remove brackets
 			}
-			/* Interaction with Double Jointed Arm
+			// Interaction with Double Jointed Arm
 			if (receivedData.has("voltages")) {
 				String rawData = receivedData.get("voltages").getAsString();
 				List<Double> voltages = makeDoubleList(rawData);
@@ -325,7 +325,12 @@ public class DataHandler {
 				if (responseData.containsKey("DoubleJointedEncoders")){
 					responseData.remove("DoubleJointedEncoders");
 				}
-			}*/
+			}
+			if (receivedData.has("gotConstants")){
+				if (responseData.containsKey("DoubleJointedArmConstants")){
+					responseData.remove("DoubleJointedArmConstants");
+				}
+			}
 			responseData.put("status", "running");
 			// Prepare response JSON
 			if (receivedData.has("currentStatus")) {

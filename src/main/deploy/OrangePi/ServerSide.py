@@ -8,12 +8,13 @@ import re
 import io
 import joblib
 import numpy as np
-#from frccontrol import DcBrushedMotor
+from frccontrol import DcBrushedMotor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.multioutput import MultiOutputRegressor
 
 #Custom Imports
-#from DoubleJointedArm import DoubleJointedArm
+from DoubleJointedArm import DoubleJointedArm
+
 #Gradient Booster is a tree algorithm that uses "trees" (estimators) like neural network layers.
 model = GradientBoostingRegressor(n_estimators=100)
 #We are always going to be using at least one input and one output, so we require this wrapper
@@ -22,7 +23,7 @@ wrapper = MultiOutputRegressor(model)
 #Do not edit the directories. It will crash.
 model_naming = re.compile(r"model_v(\d+)\.pkl")
 directory = "../ModelsPI/"
-#MOTOR_KRAKEN_X60_FOC = DcBrushedMotor(12.0, 9.36, 476.1, 2, 6000.0)
+MOTOR_KRAKEN_X60_FOC = DcBrushedMotor(12.0, 9.36, 476.1, 2, 6000.0)
 dt = 0.02  #what's the periodic time OF DoubleJointedArmS.java ?
 length1 = 46.25 * .0254  # in meters, so .0254 conversion factor
 length2 = 41.8 * .0254
@@ -47,15 +48,19 @@ motor_count1 = 1  #How many motors on arm
 motor_count2 = 1  #How many motors on elbow
 
 # Motor Type. ALL ARM MOTORS MUST BE SAME
-#motor_type = MOTOR_KRAKEN_X60_FOC
+motor_type = MOTOR_KRAKEN_X60_FOC
 # Gravity
 gravity = 9.806
-
+# Qelms/Relms (ONLY TWEAK THIS!
+q_pos = 0.01745
+q_vel = 0.1745329
+q_error = 10
+r_pos = 0.01745 / 4
 #Real controls and outputs.
 voltages = np.zeros(4)
 angleShoulder = 0  #auto updated on boot
 angleElbow = 0  #auto updated on boot
-
+stop_event = threading.Event()
 
 def to_state(x, y, invert, arm):
     """
@@ -73,8 +78,9 @@ def initialize_arm(target_state):
     """
     Initialize the arm.
     """
-    #return DoubleJointedArm(dt, length1, length2, mass1, mass2, pivot_to_CG1, pivot_to_CG2, MOI1, MOI2, gearing1,
-    #                       gearing2, motor_count1, motor_count2, motor_type, gravity, target_state)
+    return DoubleJointedArm(dt, length1, length2, mass1, mass2, pivot_to_CG1, pivot_to_CG2, MOI1, MOI2, gearing1,
+                            gearing2, motor_count1, motor_count2, motor_type, gravity, target_state, q_pos, q_vel,
+                            q_error, r_pos)
 
 
 def initialize_arm_with_encoders():
@@ -87,7 +93,7 @@ def initialize_arm_with_encoders():
     arm = initialize_arm(target_state)
     # Set initial state based on encoder values
     arm.x = target_state  # Initial state [angle1, angle2, velocity1, velocity2]
-    #arm.observer.x_hat = arm.x  #override the Kalman filter to have the target_state (since it's our start pos)
+    arm.observer.x_hat = arm.x  #override the Kalman filter to have the target_state (since it's our start pos)
 
     return arm
 
@@ -102,7 +108,7 @@ def arm_loop(arm):
     #(almost never done)
     global voltages
     #fig, ax, arm_line, ref_line = initialize_plot_live(arm)
-    while True:
+    while not stop_event.is_set():
         arm.update()
         #arm_line, ref_line = update_plot_live(arm, arm_line, arm.target_state, ref_line)
         volts = arm.getVolt()
@@ -114,7 +120,24 @@ def arm_loop(arm):
 
 
 arm = None
+arm_thread = None
 failCount = 0
+
+
+def update_arm_tunables(q_pos_new, q_vel_new, q_error_new, r_pos_new):
+    global q_pos, q_vel, q_error, r_pos, arm, arm_thread
+    q_pos = q_pos_new
+    q_vel = q_vel_new
+    q_error = q_error_new
+    r_pos = r_pos_new
+    if arm_thread is not None:
+        stop_event.set()  # Signal the thread to stop
+        arm_thread.join()  # Wait for the thread to finish
+        arm_thread = None
+        stop_event.clear()  # Reset the event for the next thread
+
+        # Reset the arm object
+    arm = None
 
 
 def send_to_roborio(data, roborio_ip, roborio_port):
@@ -125,7 +148,7 @@ def send_to_roborio(data, roborio_ip, roborio_port):
     :param roborio_ip: depending on if sim or not (10.1.35.2 or localhost)
     :param roborio_port: almost always 5802.
     """
-    global angleShoulder, angleElbow, arm, failCount, nextConsoleLog
+    global angleShoulder, angleElbow, arm, failCount, nextConsoleLog, arm_thread
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((roborio_ip, roborio_port))
         #add the nextConsoleLog to data
@@ -139,7 +162,7 @@ def send_to_roborio(data, roborio_ip, roborio_port):
                 if not chunk:
                     break  # No more data from the server
                 received_data += chunk  # Append each chunk to the full message
-                
+
                 # Optionally: Check if a known delimiter (like newline '\n') exists in chunk
                 if b'\n' in received_data:
                     break  # We assume the message is complete when we see a newline character
@@ -148,7 +171,7 @@ def send_to_roborio(data, roborio_ip, roborio_port):
             json_string = received_data.decode('utf-8').strip()  # Remove any extra newlines/whitespace
             print("Received raw data:", json_string)
 
-    # Parse the JSON string
+            # Parse the JSON string
             data_from_robot = json.loads(json_string)
             print("Received JSON:", data_from_robot)
             #If you're using a confirmed send (response contains a marker) you'll need an else on your if check.
@@ -160,14 +183,24 @@ def send_to_roborio(data, roborio_ip, roborio_port):
                 #so that we avoid having to deal with uploading code to the Pi's. All done via ClientSide (hopefully)
                 if arm is None:
                     arm = initialize_arm_with_encoders()
+                    stop_event.clear()  # Reset stop_event for the new thread
                     arm_thread = threading.Thread(target=arm_loop, args=(arm,))
                     arm_thread.daemon = True  # Allow the thread to be terminated when the main thread exits
                     arm_thread.start()
-                #arm.updatePosition(angleShoulder, angleElbow)
+                arm.updatePosition(angleShoulder, angleElbow)
                 data["gotEncoder"] = str("RECEIVED ENCODERS")
             else:
                 if 'gotEncoder' in data:
                     data.pop('gotEncoder')
+            if "DoubleJointedArmConstants" in data_from_robot:
+                constants_string = data_from_robot["DoubleJointedArmConstants"]
+                constants = [float(value) for value in constants_string.split(",")]
+                update_arm_tunables(constants[0], constants[1], constants[2], constants[3])
+                data["gotConstants"] = str("RECEIVED CONSTANTS")
+                print("UPDATED!")
+            else:
+                if 'gotConstants' in data:
+                    data.pop('gotConstants')
             if "modelInputs" in data_from_robot:
                 m_input_string = data_from_robot["modelInputs"]
                 m_input = [float(value) for value in m_input_string.split(",")]
@@ -182,18 +215,19 @@ def send_to_roborio(data, roborio_ip, roborio_port):
                 rawData = data_from_robot["DoubleJointSetpoint"]
                 wantedPos = [float(value) for value in rawData.split(",")]
                 if arm is None:
-                    #arm = initialize_arm_with_encoders()
+                    arm = initialize_arm_with_encoders()
+                    stop_event.clear()  # Reset stop_event for the new thread
                     arm_thread = threading.Thread(target=arm_loop, args=(arm,))
                     arm_thread.daemon = True  # Allow the thread to be terminated when the main thread exits
                     arm_thread.start()
-                #newState = to_state(wantedPos[0], wantedPos[1], bool(wantedPos[2]), arm)
-                #arm.set_target_state(newState)
+                newState = to_state(wantedPos[0], wantedPos[1], bool(wantedPos[2]), arm)
+                arm.set_target_state(newState)
             failCount = 0
-        except Exception as e:  #we use a global exception case to prevent crashing here, it gives ugly behaviour.
+        except Exception as e:  # we use a global exception case to prevent crashing here, it gives ugly behaviour.
             failCount += 1
             print("FAILED TO READ BECAUSE OF EXCEPTION")
             print(str(e))
-            pass  #don't crash.
+            pass  # don't crash.
 
 
 def latest_model():
@@ -331,6 +365,7 @@ def main():
                 s.close()
                 print("CRASHED BECAUSE CONNECTION TERMINATED... REBOOTING")
                 raise ConnectionError
+            data_to_robot['voltages'] = str(voltages)  # 3/4 are the wanted positions #5/6 are the (expected) velocities
             data_to_robot['timestamp'] = str(heartbeat)
             try:
                 send_to_roborio(data_to_robot, roborio_ip, roborio_port)

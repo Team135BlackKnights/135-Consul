@@ -82,7 +82,6 @@ public final class Constants {
 		THRIFTY_ABSOLUTE,
 		REV_ABSOLUTE
 	}
-	public static enum SysIdRoutines { swerveDrive }
 
 	public static int PowerDistributionID = 1;
 

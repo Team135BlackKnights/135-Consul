@@ -6,7 +6,6 @@ package frc.robot.utils.drive.Sensors;
 import frc.robot.Constants.EncoderType;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +33,9 @@ public class EncoderIOThriftyAbsolute implements EncoderIO {
         this.encoderOffsetRadians = encoderOffsetRadians;
         this.isAbsoluteEncoderInverted = isInverted;
     }
-
+    public EncoderIOThriftyAbsolute(int rioPort, double conversionFactor, double encoderOffsetRadians) {
+        this(rioPort, conversionFactor, encoderOffsetRadians, false);
+    }
     public EncoderIOThriftyAbsolute(int rioPort, double conversionFactor) {
         this(rioPort, conversionFactor, 0, false);
     }

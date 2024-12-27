@@ -25,7 +25,10 @@
   },
   "NTProvider": {
     "types": {
+      "/AdvantageKit/RealOutputs/DoubleJointedArmS/DoubleJointedArmMechanism": "Mechanism2d",
+      "/AdvantageKit/RealOutputs/ElevatorMechanism": "Mechanism2d",
       "/AdvantageKit/RealOutputs/MyMechanism": "Mechanism2d",
+      "/AdvantageKit/RealOutputs/SingleJointedArmMechanism": "Mechanism2d",
       "/FMSInfo": "FMSInfo",
       "/Field": "Field2d",
       "/SmartDashboard/AIRobotBehaviors/Opponent Robot 1 Behavior": "String Chooser",
@@ -38,7 +41,11 @@
       "/SmartDashboard/Field": "Field2d",
       "/SmartDashboard/Mech2d": "Mechanism2d",
       "/SmartDashboard/SystemStatus/AllSystemsCheck": "Command",
+      "/SmartDashboard/SystemStatus/DoubleJointedArmS/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/ElevatorS/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/FlywheelS/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Mecanum/SystemCheck": "Command",
+      "/SmartDashboard/SystemStatus/SingleJointedArmS/SystemCheck": "Command",
       "/SmartDashboard/SystemStatus/Swerve/SystemCheck": "Command",
       "/SmartDashboard/VisionSystemSim-Vision Sim/Sim Field": "Field2d"
     },

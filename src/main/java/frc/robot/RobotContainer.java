@@ -5,9 +5,12 @@ package frc.robot;
 
 import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.OrchestraC;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.drive.DrivetrainC;
+import frc.robot.commands.state_space.DoubleJointedArmC;
+import frc.robot.commands.state_space.ElevatorC;
+import frc.robot.commands.state_space.SingleJointedArmC;
+import frc.robot.commands.state_space.FlywheelC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -28,6 +31,48 @@ import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
+import frc.robot.subsystems.state_space.DoubleJointedArm.DoubleJointedArmIO;
+import frc.robot.subsystems.state_space.DoubleJointedArm.DoubleJointedArmIOSim;
+import frc.robot.subsystems.state_space.DoubleJointedArm.DoubleJointedArmIOTalon;
+import frc.robot.subsystems.state_space.DoubleJointedArm.DoubleJointedArmS;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIO;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIOCANCoder;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIODutyCycle;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ArmEncoder.DoubleJointedArmArmEncoderIOThriftyAbsolute;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIO;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIOCANCoder;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIODutyCycle;
+import frc.robot.subsystems.state_space.DoubleJointedArm.ElbowEncoder.DoubleJointedArmElbowEncoderIOThriftyAbsolute;
+import frc.robot.subsystems.state_space.Elevator.ElevatorIO;
+import frc.robot.subsystems.state_space.Elevator.ElevatorIOSim;
+import frc.robot.subsystems.state_space.Elevator.ElevatorIOSpark;
+import frc.robot.subsystems.state_space.Elevator.ElevatorIOTalon;
+import frc.robot.subsystems.state_space.Elevator.ElevatorS;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIO;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIOCANCoder;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIODutyCycle;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIOREVAbsolute;
+import frc.robot.subsystems.state_space.Elevator.Encoder.ElevatorEncoderIOThriftyAbsolute;
+import frc.robot.subsystems.state_space.Flywheel.FlywheelIO;
+import frc.robot.subsystems.state_space.Flywheel.FlywheelIOSim;
+import frc.robot.subsystems.state_space.Flywheel.FlywheelIOSpark;
+import frc.robot.subsystems.state_space.Flywheel.FlywheelIOTalon;
+import frc.robot.subsystems.state_space.Flywheel.FlywheelS;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIO;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIOCANCoder;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIODutyCycle;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIOREVAbsolute;
+import frc.robot.subsystems.state_space.Flywheel.Encoder.FlywheelEncoderIOThriftyAbsolute;
+import frc.robot.subsystems.state_space.SingleJointedArm.SingleJointedArmIO;
+import frc.robot.subsystems.state_space.SingleJointedArm.SingleJointedArmIOSim;
+import frc.robot.subsystems.state_space.SingleJointedArm.SingleJointedArmIOSpark;
+import frc.robot.subsystems.state_space.SingleJointedArm.SingleJointedArmIOTalon;
+import frc.robot.subsystems.state_space.SingleJointedArm.SingleJointedArmS;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIO;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOCANCoder;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIODutyCycle;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOREVAbsolute;
+import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOThriftyAbsolute;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
@@ -51,6 +96,8 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import com.revrobotics.spark.SparkBase;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -79,6 +126,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.utils.DriverStationHID;
+import frc.robot.utils.state_space.StateSpaceConstants;
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
  * Phoenix-6 2025 (non-replay), REVLib 2025, URCL, GrappleLib 2025, AKit 2025,
@@ -88,6 +136,10 @@ import frc.robot.utils.DriverStationHID;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static FlywheelS flywheelS;
+	public static SingleJointedArmS armS;
+	public static ElevatorS elevatorS;
+	public static DoubleJointedArmS doubleJointedArmS;
 	private final LoggedDashboardChooser<Command> autoChooser;
 	public static XboxController driveController = new XboxController(0);
 	public static XboxController manipController = new XboxController(1);
@@ -284,7 +336,238 @@ public class RobotContainer {
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
+				//Control logic assumes CTRE for CTRE, REV or CTRE for REV. This is due to REVLib's 2025 changes to AbsoluteEncoders requiring a SPARK to run them.
+				FlywheelIO flywheelIO = null;
+				switch (StateSpaceConstants.Flywheel.motorVendor) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+						flywheelIO = new FlywheelIOTalon();
+						break;
+					// We're on REV
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						flywheelIO = new FlywheelIOSpark();
+						break;
+					default:	
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				FlywheelEncoderIO flywheelEncoder = null;
+				switch (StateSpaceConstants.Flywheel.encoderType) {
+					case CTRE:
+						flywheelEncoder = new FlywheelEncoderIOCANCoder(StateSpaceConstants.Flywheel.kEncoderID,
+								StateSpaceConstants.Flywheel.CANBus, "FlywheelEncoder",
+								StateSpaceConstants.Flywheel.encoderGearing,
+								StateSpaceConstants.Flywheel.encoderOffsetRotations,
+								StateSpaceConstants.Flywheel.isEncoderInverted);
+						break;
+					case REV_ABSOLUTE:
+						if (flywheelIO instanceof FlywheelIOSpark) {
+							flywheelEncoder = new FlywheelEncoderIOREVAbsolute(
+									(SparkBase) flywheelIO.getSelfCheckingHardware().get(0).getHardware(),
+									StateSpaceConstants.Flywheel.encoderGearing,
+									StateSpaceConstants.Flywheel.encoderOffsetRotations,
+									StateSpaceConstants.Flywheel.isEncoderInverted);
+						} else {
+							throw new IllegalArgumentException("REV Absolute Encoders require a SPARK to run them!");
+						}
+						break;
+					case THRIFTY_ABSOLUTE:
+						flywheelEncoder = new FlywheelEncoderIOThriftyAbsolute(
+								StateSpaceConstants.Flywheel.kEncoderID,
+								StateSpaceConstants.Flywheel.encoderGearing,
+								StateSpaceConstants.Flywheel.encoderOffsetRotations,
+								StateSpaceConstants.Flywheel.isEncoderInverted);
+						break;
+					case DUTY_CYCLE:
+						flywheelEncoder = new FlywheelEncoderIODutyCycle(
+								StateSpaceConstants.Flywheel.kEncoderID,
+								StateSpaceConstants.Flywheel.encoderGearing,
+								StateSpaceConstants.Flywheel.encoderOffsetRotations,
+								StateSpaceConstants.Flywheel.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						flywheelEncoder = null;
+						// No absolute Encoder
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				//create flywheelS
+				flywheelS = new FlywheelS(flywheelIO, flywheelEncoder);
+				//throw away old copy of flywheelIO and encoder
+				flywheelIO = null;
+				flywheelEncoder = null;
+
+				SingleJointedArmIO armIO = null;
+				switch (StateSpaceConstants.SingleJointedArm.motorVendor) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+						armIO = new SingleJointedArmIOTalon();
+						break;
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						armIO = new SingleJointedArmIOSpark();
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
+						
+				}
+				SingleJointedArmEncoderIO singleJointedArmEncoder = null;
+				switch (StateSpaceConstants.SingleJointedArm.encoderType) {
+					case CTRE:
+						singleJointedArmEncoder = new SingleJointedArmEncoderIOCANCoder(StateSpaceConstants.SingleJointedArm.kEncoderID,
+								StateSpaceConstants.SingleJointedArm.CANBus,
+								"SingleJointedArmEncoder", StateSpaceConstants.SingleJointedArm.encoderGearing,
+								StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+								StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case REV_ABSOLUTE:
+						if (armIO instanceof SingleJointedArmIOSpark) {
+							singleJointedArmEncoder = new SingleJointedArmEncoderIOREVAbsolute(
+									(SparkBase) armIO.getSelfCheckingHardware().get(0).getHardware(),
+									StateSpaceConstants.SingleJointedArm.encoderGearing,
+									StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+									StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						} else {
+							throw new IllegalArgumentException("REV Absolute Encoders require a SPARK to run them!");
+						}
+						break;
+					case THRIFTY_ABSOLUTE:
+						singleJointedArmEncoder = new SingleJointedArmEncoderIOThriftyAbsolute(
+								StateSpaceConstants.SingleJointedArm.kEncoderID,
+								StateSpaceConstants.SingleJointedArm.encoderGearing,
+								StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+								StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case DUTY_CYCLE:
+						singleJointedArmEncoder = new SingleJointedArmEncoderIODutyCycle(
+								StateSpaceConstants.SingleJointedArm.kEncoderID,
+								StateSpaceConstants.SingleJointedArm.encoderGearing,
+								StateSpaceConstants.SingleJointedArm.encoderOffsetRotations,
+								StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						singleJointedArmEncoder = null;
+						// No absolute Encoder
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				armS = new SingleJointedArmS(armIO, singleJointedArmEncoder);
+				//throw away old copy of armIO and encoder
+				armIO = null;
+				singleJointedArmEncoder = null;
+
+				ElevatorIO elevatorIO = null;
+				switch (StateSpaceConstants.Elevator.motorVendor) {
+					case CTRE_ON_RIO:
+					case CTRE_ON_CANIVORE:
+					
+						elevatorIO = new ElevatorIOTalon();
+						break;
+					case NEO_SPARK_MAX:
+					case VORTEX_SPARK_FLEX:
+						elevatorIO = new ElevatorIOSpark();
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				ElevatorEncoderIO elevatorEncoder = null;
+				switch (StateSpaceConstants.Elevator.encoderType) {
+					case CTRE:
+						elevatorEncoder = 
+								new ElevatorEncoderIOCANCoder(StateSpaceConstants.Elevator.kEncoderID,
+										StateSpaceConstants.SingleJointedArm.CANBus, "elevatorEncoder",StateSpaceConstants.Elevator.encoderGearing,
+										StateSpaceConstants.Elevator.encoderOffsetRotations,
+										StateSpaceConstants.SingleJointedArm.isEncoderInverted);
+						break;
+					case REV_ABSOLUTE:
+						if (elevatorIO instanceof ElevatorIOSpark) {
+							elevatorEncoder = new ElevatorEncoderIOREVAbsolute(
+									(SparkBase) elevatorIO.getSelfCheckingHardware().get(0).getHardware(),
+									StateSpaceConstants.Elevator.encoderGearing,
+									StateSpaceConstants.Elevator.encoderOffsetRotations,
+									StateSpaceConstants.Elevator.isEncoderInverted);
+						} else {
+							throw new IllegalArgumentException("REV Absolute Encoders require a SPARK to run them!");
+						}
+						break;
+					case THRIFTY_ABSOLUTE:
+						elevatorEncoder = new ElevatorEncoderIOThriftyAbsolute(
+								StateSpaceConstants.Elevator.kEncoderID,
+								StateSpaceConstants.Elevator.encoderGearing,
+								StateSpaceConstants.Elevator.encoderOffsetRotations,
+								StateSpaceConstants.Elevator.isEncoderInverted);
+						break;
+					case DUTY_CYCLE:
+						elevatorEncoder = new ElevatorEncoderIODutyCycle(
+								StateSpaceConstants.Elevator.kEncoderID,
+								StateSpaceConstants.Elevator.encoderGearing,
+								StateSpaceConstants.Elevator.encoderOffsetRotations,
+								StateSpaceConstants.Elevator.isEncoderInverted);
+						break;
+					case NO_ATTACHED_ENCODER:
+						elevatorEncoder = null;
+						// No absolute Encoder
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown implementation type, please check StateSpaceConstants.java!");
+				}
+				elevatorS = new ElevatorS(elevatorIO, elevatorEncoder);
+				//throw away old copy of elevatorIO and encoder
+				elevatorIO = null;
+				elevatorEncoder = null;
+				
+				// Double Jointed Arm will always be CTRE for latency reasons
+				switch (StateSpaceConstants.DoubleJointedArm.doubleJointedEncoderType) {
+					case CTRE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new DoubleJointedArmArmEncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmArmEncoder",
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new DoubleJointedArmElbowEncoderIOCANCoder(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.CANBus, "doubleJointedArmElbowEncoder",
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					case NO_ATTACHED_ENCODER:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(), null, null);
+						break;
+					case DUTY_CYCLE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new DoubleJointedArmArmEncoderIODutyCycle(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new DoubleJointedArmElbowEncoderIODutyCycle(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					case THRIFTY_ABSOLUTE:
+						doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOTalon(),
+								new DoubleJointedArmArmEncoderIOThriftyAbsolute(StateSpaceConstants.DoubleJointedArm.kArmEncoderID,
+										StateSpaceConstants.DoubleJointedArm.armEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.armEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isArmEncoderInverted),
+								new DoubleJointedArmElbowEncoderIOThriftyAbsolute(StateSpaceConstants.DoubleJointedArm.kElbowEncoderID,
+										StateSpaceConstants.DoubleJointedArm.elbowEncoderGearing,
+										Units.rotationsToRadians(StateSpaceConstants.DoubleJointedArm.elbowEncoderOffsetRotations),
+										StateSpaceConstants.DoubleJointedArm.isElbowEncoderInverted));
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Due to REVLib 2025's changes to absolute encoders, sparkAnalog and REVAbsoluteEncoder are not supported for double jointed arms");
+
+				}
 				break;
+
 			case SIM:
 				GyroSimulation gyroSimulation = null;
 				switch (DriveConstants.gyroType) {
@@ -375,6 +658,10 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
+			flywheelS = new FlywheelS(new FlywheelIOSim(), new FlywheelEncoderIO(){});
+			armS = new SingleJointedArmS(new SingleJointedArmIOSim(), new SingleJointedArmEncoderIO(){});
+			elevatorS = new ElevatorS(new ElevatorIOSim(), new ElevatorEncoderIO(){});
+			doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIOSim(),new DoubleJointedArmArmEncoderIO(){}, new DoubleJointedArmElbowEncoderIO(){});
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -406,6 +693,10 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
+				flywheelS = new FlywheelS(new FlywheelIO(){}, new FlywheelEncoderIO(){});
+							armS = new SingleJointedArmS(new SingleJointedArmIO(){}, new SingleJointedArmEncoderIO(){});
+							elevatorS = new ElevatorS(new ElevatorIO(){}, new ElevatorEncoderIO(){});
+							doubleJointedArmS = new DoubleJointedArmS(new DoubleJointedArmIO(){}, new DoubleJointedArmArmEncoderIO(){}, new DoubleJointedArmElbowEncoderIO(){});
 				autoCommands.addAll(Arrays.asList(
 				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
@@ -420,7 +711,6 @@ public class RobotContainer {
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		NamedCommands.registerCommands(autoCommands);
-		PathfindingCommand.warmupCommand().schedule();
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
 		}
@@ -432,6 +722,10 @@ public class RobotContainer {
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
+		flywheelS.setDefaultCommand(new FlywheelC(flywheelS));
+		armS.setDefaultCommand(new SingleJointedArmC(armS));
+		elevatorS.setDefaultCommand(new ElevatorC(elevatorS));
+		doubleJointedArmS.setDefaultCommand(new DoubleJointedArmC(doubleJointedArmS));
 		if (!AutoBuilder.isConfigured()) {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
@@ -460,7 +754,53 @@ public class RobotContainer {
 						drivetrainS::getCharacterizationVelocity, () -> false) // NEVER automatically end. MUST disable to end.
 						.finallyDo(drivetrainS::endCharacterization)
 						.withName("Drive FeedForward Characterization"));
-		autoChooser.addOption("FUNI SONG", new OrchestraC("mii"));
+		autoChooser.addOption("Flywheel Static Characterization",
+				new StaticCharacterization(flywheelS, flywheelS::runVolts, flywheelS::getCharacterizationVelocity)
+						.finallyDo(flywheelS::endCharacterization)
+						.withName("Flywheel Static Characterization"));
+		autoChooser.addOption("Flywheel Characterization",
+				new FeedForwardCharacterization(flywheelS, flywheelS::runVolts,
+						flywheelS::getCharacterizationVelocity, () -> false)
+						.finallyDo(flywheelS::endCharacterization)
+						.withName("Flywheel Characterization"));
+		autoChooser.addOption("Single Jointed Arm Static Characterization",
+				new StaticCharacterization(armS, armS::runVolts, armS::getCharacterizationVelocity)
+						.finallyDo(armS::endCharacterization)
+						.withName("Single Jointed Arm Static Characterization"));
+		autoChooser.addOption("Single Jointed Arm Characterization",
+				new FeedForwardCharacterization(armS, armS::runVolts,
+						armS::getCharacterizationVelocity, armS::isCharacterizationInLimit)
+						.finallyDo(armS::endCharacterization)
+						.withName("Single Jointed Arm Characterization"));
+		autoChooser.addOption("Elevator Static Characterization",
+				new StaticCharacterization(elevatorS, elevatorS::runVolts, elevatorS::getCharacterizationVelocity)
+						.finallyDo(elevatorS::endCharacterization)
+						.withName("Elevator Static Characterization"));
+		autoChooser.addOption("Elevator Characterization",
+				new FeedForwardCharacterization(elevatorS, elevatorS::runVolts,
+						elevatorS::getCharacterizationVelocity, elevatorS::isCharacterizationInLimit)
+						.finallyDo(elevatorS::endCharacterization)
+						.withName("Elevator Characterization"));
+		autoChooser.addOption("Double Jointed Arm ARM Static Characterization",
+				new StaticCharacterization(doubleJointedArmS, doubleJointedArmS::runArmVolts,
+						doubleJointedArmS::getArmRadsPerSec)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ARM Static Characterization"));
+		autoChooser.addOption("Double Jointed Arm ARM Characterization",
+				new FeedForwardCharacterization(doubleJointedArmS, doubleJointedArmS::runArmVolts,
+						doubleJointedArmS::getArmRadsPerSec, doubleJointedArmS::isArmCharacterizationAtLimit)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ARM Characterization"));
+		autoChooser.addOption("Double Jointed Arm ELBOW Static Characterization",
+				new StaticCharacterization(doubleJointedArmS, doubleJointedArmS::runElbowVolts,
+						doubleJointedArmS::getElbowRadsPerSec)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ELBOW Static Characterization"));
+		autoChooser.addOption("Double Jointed Arm ELBOW Characterization",
+				new FeedForwardCharacterization(doubleJointedArmS, doubleJointedArmS::runElbowVolts,
+						doubleJointedArmS::getElbowRadsPerSec, doubleJointedArmS::isElbowCharacterizationAtLimit)
+						.finallyDo(doubleJointedArmS::endCharacterization)
+						.withName("Double Jointed Arm ELBOW Characterization"));
 		SmartDashboard.putData(field);
 		// Store the last known value of autoChooser.get()
 		final Command[] lastAuto = { autoChooser.get() };
@@ -551,7 +891,11 @@ public class RobotContainer {
 	 * @return Current in amps.
 	 */
 	public static double[] getCurrentDraw() {
-		return new double[] { Math.min(drivetrainS.getCurrent(), 200)
+		return new double[] { Math.min(drivetrainS.getCurrent(), 200),
+      flywheelS.getCurrent(),
+			armS.getCurrent(),
+			elevatorS.getCurrent(),
+			doubleJointedArmS.getCurrent()
 		};
 	}
 
@@ -565,7 +909,7 @@ public class RobotContainer {
 	 * @return a command with all of them in a sequence.
 	 */
 	public static Command allSystemsCheck() {
-		return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand());
+	return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand(),flywheelS.getSystemCheckCommand(),armS.getSystemCheckCommand(),elevatorS.getSystemCheckCommand(),doubleJointedArmS.getSystemCheckCommand());
 	}
 
 	public static HashMap<String, Double> combineMaps(
@@ -580,7 +924,12 @@ public class RobotContainer {
 
 	public static HashMap<String, Double> getAllTemps() {
 		// List of HashMaps
-		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps());
+		List<HashMap<String, Double>> maps = List.of(drivetrainS.getTemps(),
+		flywheelS.getTemps(),
+		armS.getTemps(),
+		elevatorS.getTemps(),
+		doubleJointedArmS.getTemps());
+
 		// Combine all maps
 		HashMap<String, Double> combinedMap = combineMaps(maps);
 		return combinedMap;
@@ -592,19 +941,30 @@ public class RobotContainer {
 	 * @return true if ALL systems were good.
 	 */
 	public static boolean allSystemsOK() {
-		return drivetrainS
-				.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK;
-	}
-
+		return drivetrainS.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK
+		&& flywheelS.getSystemStatus() == SubsystemChecker.SystemStatus.OK
+		&& elevatorS.getSystemStatus() == SubsystemChecker.SystemStatus.OK
+		&& armS.getSystemStatus() == SubsystemChecker.SystemStatus.OK
+		&& doubleJointedArmS.getSystemStatus() == SubsystemChecker.SystemStatus.OK;
+	 }
 	public static Collection<ParentDevice> getOrchestraDevices() {
+    
 		Collection<ParentDevice> devices = new ArrayList<>();
 		devices.addAll(drivetrainS.getDriveOrchestraDevices());
-		return devices;
-	}
+		devices.addAll(flywheelS.getOrchestraDevices());
+		devices.addAll(elevatorS.getOrchestraDevices());
+    	devices.addAll(armS.getOrchestraDevices());
+		devices.addAll(doubleJointedArmS.getOrchestraDevices());
 
-	public static Subsystem[] getAllSubsystems() {
-		Subsystem[] subsystems = new Subsystem[1];
+    return devices;
+	}
+	public static Subsystem[] getAllSubsystems(){
+		Subsystem[] subsystems = new Subsystem[5];
 		subsystems[0] = drivetrainS;
+    	subsystems[1] = flywheelS;
+    	subsystems[2] = elevatorS;
+    	subsystems[3] = armS;
+    	subsystems[4] = doubleJointedArmS;
 		return subsystems;
 	}
 
