@@ -99,7 +99,7 @@ An example branch directory could be:
 ```
 
 ## Usage
-Refer to the [DriverStationHID](https://github.com/Team135BlackKnights/DriverStationHID/commits/main/) repository for instructions on how to configure the API for the driverStationHID
+Refer to the [DriverStationHID](https://github.com/Team135BlackKnights/DriverStationHID/commits/main/) repository for instructions on how to configure the API for the driverStationHID.
 Refer to the [PyDriverStation](https://github.com/Team135BlackKnights/PyDriverStation) repository for instructions on how to use the API for the neural network.
 Refer to the [135_Pit_Display](https://github.com/Team135BlackKnights/135_Pit_Display) repository for instructions on how to use the Pit Display testing and diagnostics.
 
