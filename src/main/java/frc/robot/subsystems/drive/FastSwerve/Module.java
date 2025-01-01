@@ -69,25 +69,26 @@ public class Module {
 					.getKv(),
 			0.0);
 	public final String name;
+
 	public Module(ModuleIO io, int index) {
 		this.io = io;
 		this.index = index;
-		switch (index){
+		switch (index) {
 			case 0:
-			name = "FrontLeftModule";
-			break;
+				name = "FrontLeftModule";
+				break;
 			case 1:
-			name = "FrontRightModule";
-			break;
+				name = "FrontRightModule";
+				break;
 			case 2:
-			name = "BackLeftModule";
-			break;
+				name = "BackLeftModule";
+				break;
 			case 3:
-			name = "BackRightModule";
-			break;
+				name = "BackRightModule";
+				break;
 			default:
-			name = "Unknown";
-			break;
+				name = "Unknown";
+				break;
 		}
 	}
 
@@ -262,12 +263,15 @@ public class Module {
 	public SwerveModuleState getSetpointState() {
 		return setpointState;
 	}
-	public boolean isDriveConnected(){
+
+	public boolean isDriveConnected() {
 		return inputs.driveMotorConnected;
 	}
-	public boolean isTurnConnected(){
+
+	public boolean isTurnConnected() {
 		return inputs.turnMotorConnected;
 	}
+
 	public List<SelfChecking> getSelfCheckingHardware() {
 		return io.getSelfCheckingHardware();
 	}
