@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.RobotContainer;
 import frc.robot.commands.drive.DriveToTargetUsingDriveAndAimAtPose;
 import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.PathFinder;
@@ -51,9 +50,6 @@ public class BranchAutoSegment extends Command {
 	private InstantCommand changePath(String prefix) {
 		return new InstantCommand(
 				() -> {
-					if (drive instanceof Swerve) {
-						((Swerve) drive).pathplannerIndex = 0;
-					}
 					RobotContainer.currentPath = prefix + "_" + this.getName();
 				});
 	}
