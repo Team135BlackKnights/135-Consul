@@ -156,27 +156,27 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
 			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
 		});
-		//SwerveDrive view
+		// SwerveDrive view
 		SmartDashboard.putData("Swerve Drive", new Sendable() {
 			@Override
 			public void initSendable(SendableBuilder builder) {
-			  builder.setSmartDashboardType("SwerveDrive");
-			  SwerveModuleState[] moduleStates = getModuleStates();
-			  builder.addDoubleProperty("Front Left Angle", () -> moduleStates[0].angle.getRadians(), null);
-			  builder.addDoubleProperty("Front Left Velocity", () -> moduleStates[0].speedMetersPerSecond, null);
-		  
-			  builder.addDoubleProperty("Front Right Angle", () -> moduleStates[1].angle.getRadians(), null);
-			  builder.addDoubleProperty("Front Right Velocity", () -> moduleStates[1].speedMetersPerSecond, null);
-		  
-			  builder.addDoubleProperty("Back Left Angle", () -> moduleStates[2].angle.getRadians(), null);
-			  builder.addDoubleProperty("Back Left Velocity", () -> moduleStates[2].speedMetersPerSecond, null);
-		  
-			  builder.addDoubleProperty("Back Right Angle", () -> moduleStates[3].angle.getRadians(), null);
-			  builder.addDoubleProperty("Back Right Velocity", () -> moduleStates[3].speedMetersPerSecond, null);
-		  
-			  builder.addDoubleProperty("Robot Angle", () -> getRotation2d().getRadians(), null);
+				builder.setSmartDashboardType("SwerveDrive");
+				SwerveModuleState[] moduleStates = getModuleStates();
+				builder.addDoubleProperty("Front Left Angle", () -> moduleStates[0].angle.getRadians(), null);
+				builder.addDoubleProperty("Front Left Velocity", () -> moduleStates[0].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Front Right Angle", () -> moduleStates[1].angle.getRadians(), null);
+				builder.addDoubleProperty("Front Right Velocity", () -> moduleStates[1].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Back Left Angle", () -> moduleStates[2].angle.getRadians(), null);
+				builder.addDoubleProperty("Back Left Velocity", () -> moduleStates[2].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Back Right Angle", () -> moduleStates[3].angle.getRadians(), null);
+				builder.addDoubleProperty("Back Right Velocity", () -> moduleStates[3].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Robot Angle", () -> getRotation2d().getRadians(), null);
 			}
-		  });
+		});
 		setBrakeMode(true);
 		registerSelfCheckHardware();
 		this.odometryThread = OdometryThread.createInstance();
@@ -559,7 +559,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
-		pathplannerIndex = 0;
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
@@ -569,18 +568,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 	}
 
-	public int pathplannerIndex = 0;
-	boolean movingRight = false;
-
 	@Override
 	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		pathplannerIndex++;
 		double[] robotRelativeForcesXNewtons = feedforwards.robotRelativeForcesXNewtons();
-		double[] robotRelativeForcesYNewtons = feedforwards.robotRelativeForcesYNewtons(); 
-		//calculate angles at that chassis speed
+		double[] robotRelativeForcesYNewtons = feedforwards.robotRelativeForcesYNewtons();
+		// calculate angles at that chassis speed
 		SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);
 		for (int i = 0; i < 4; i++) {
 			// Get the angle of the wheel in radians
@@ -590,9 +585,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			double forceX = robotRelativeForcesXNewtons[i];
 			double forceY = robotRelativeForcesYNewtons[i];
 			double feedforwardForce = forceX * Math.cos(moduleAngleRadians) + forceY * Math.sin(moduleAngleRadians);
-	
+
 			// Calculate feedforward torque in Newton-meters
-			pathPlannerNM[i] = feedforwardForce * (DriveConstants.TrainConstants.kWheelDiameter.get() / 2) / DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+			pathPlannerNM[i] = feedforwardForce * (DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
+					/ DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
