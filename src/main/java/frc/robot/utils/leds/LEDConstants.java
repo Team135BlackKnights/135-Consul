@@ -11,8 +11,8 @@ public class LEDConstants {
 			ledColsInFrame = 16, ledRowsInFrame = 16, ledColsPerPanel = 16, ledRowsPerPanel = 16,
 			// amount of LEDs in the light trip
 			ledBufferLength = 512;
-	public static int[] bufferCutoffs = new int[]{256}; //The index of the first LED in each section, BESIDES the first section
-	public static boolean[] sectionIsPanel = new boolean[]{true,false}; //Whether the section is a panel or a strip
+	public static int[] bufferCutoffs = new int[]{256,310,350,390,410,430}; //The index of the first LED in each section, BESIDES the first section
+	public static boolean[] sectionIsPanel = new boolean[]{true,false,false,false,false,false,false}; //Whether the section is a panel or a strip
 	public static int[] noteRGB = new int[] { 255, 55, 10
 	}, redRGB = new int[] { 255, 0, 0
 	}, blueRGB = new int[] { 0, 0, 255
@@ -24,7 +24,7 @@ public class LEDConstants {
 	};
 
 	public enum LEDStates {
-		OFF, SOLID_COLOR, RAINBOW, SINE_WAVE, WAVE2, BREATHING, GIF, FIRE, TEXT, DEBUG_PIXEL
+		OFF, DEBUG_PIXEL,SOLID_COLOR, RAINBOW, BLINK, PROGRESS, SINE_WAVE, WAVE2, BREATHING, GIF, FIRE, TEXT,STEPS
 	}
 	public enum PanelOrientation{
 		TOP_RIGHT, TOP_LEFT, BOTTOM_RIGHT, BOTTOM_LEFT

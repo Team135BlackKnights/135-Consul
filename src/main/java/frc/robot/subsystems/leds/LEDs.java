@@ -3,6 +3,7 @@ package frc.robot.subsystems.leds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.simulation.AddressableLEDSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import javax.imageio.ImageIO;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -641,7 +644,9 @@ public class LEDs extends SubsystemChecker {
 	private double[] brightness; // 1 is max
 	private double currentTimeMs;
 	private int[][] altColor;
-
+	private BooleanSupplier[] shouldBlink;
+	private DoubleSupplier[] progressSupplier;
+	private Map<Double, Color>[] steps;
 	// Rainbow variables
 	private double[] m_firstHue; // Holds the current hue of the rainbow
 
@@ -663,10 +668,10 @@ public class LEDs extends SubsystemChecker {
 	private static final boolean reverseDirection = true;
 
 	// Text variables
-	private static String[] fontString;
 	private static String[] text;
 	private double[] offsetX;
 
+	@SuppressWarnings("unchecked")
 	public LEDs() {
 		int sections = (int) LEDConstants.bufferCutoffs.length + 1;
 		currentLEDState = new LEDStates[(int) sections];
@@ -680,26 +685,29 @@ public class LEDs extends SubsystemChecker {
 		currentImageState = new ImageStates[(int) sections];
 		currentImageIndex = new int[(int) sections];
 		lastUpdateTimeMs = new double[(int) sections];
-		fontString = new String[(int) sections];
 		text = new String[(int) sections];
 		offsetX = new double[(int) sections];
+		shouldBlink = new BooleanSupplier[(int) sections];
+		progressSupplier = new DoubleSupplier[(int) sections];
+		steps = new Map[(int) sections];
 
-		// initialize all the variables
 		for (int i = 0; i < sections; i++) {
 			currentLEDState[i] = LEDStates.SOLID_COLOR;
 			color[i] = LEDConstants.whiteRGB; // Replace with appropriate default RGB array
 			flashRateMs[i] = 1000;
 			brightness[i] = 1.0;
-			altColor[i] = LEDConstants.redRGB; // Replace with appropriate default alternate color
+			altColor[i] = LEDConstants.disabledRGB; // Replace with appropriate default alternate color
 			m_firstHue[i] = 0.0;
 			wavePhaseOffset[i] = 0.0;
 			breathingPhaseOffset[i] = 0.0;
 			currentImageState[i] = ImageStates.debug;
 			currentImageIndex[i] = 0;
 			lastUpdateTimeMs[i] = Double.NEGATIVE_INFINITY;
-			fontString[i] = "Monospaced";
 			text[i] = "ROBOT?";
 			offsetX[i] = 0.0;
+			shouldBlink[i] = null;
+			progressSupplier[i] = () -> 0.0;
+			steps[i] = Map.of(0.0, Color.kAntiqueWhite);// Initialize an empty map for steps
 		}
 		currentTimeMs = TimeUtil.getLogTimeSeconds() * 1000.0;
 
@@ -765,6 +773,15 @@ public class LEDs extends SubsystemChecker {
 				case DEBUG_PIXEL:
 					setDebugPixel(i);
 					break;
+				case BLINK:
+					setBlink(i);
+					break;
+				case PROGRESS:
+					setProgress(i);
+					break;
+				case STEPS:
+					setSteps(i);
+					break;
 			}
 		}
 		leds.setData(ledBuffer);
@@ -814,6 +831,106 @@ public class LEDs extends SubsystemChecker {
 					(int) (color[panelIndex][0] * brightness[panelIndex]),
 					(int) (color[panelIndex][1] * brightness[panelIndex]),
 					(int) (color[panelIndex][2] * brightness[panelIndex]));
+		}
+	}
+
+	/**
+	 * Sets the LEDs to blink, using a BooleanSupplier for custom conditions.
+	 */
+	private void setBlink(int panelIndex) {
+		double startVal = getStartVal(panelIndex);
+		double endVal = getEndVal(panelIndex);
+		boolean isOn;
+		// if the boolean supplier is null, just blink at the set rate
+		if (shouldBlink[panelIndex] == null) {
+			isOn = ((int) (currentTimeMs / flashRateMs[panelIndex]) % 2) == 0;
+		} else {
+			isOn = shouldBlink[panelIndex].getAsBoolean();
+			System.out.println(isOn);
+		}
+		for (var i = (int) startVal; i < endVal; i++) {
+			if (isOn) {
+				ledBuffer.setRGB(i,
+						(int) (color[panelIndex][0] * brightness[panelIndex]),
+						(int) (color[panelIndex][1] * brightness[panelIndex]),
+						(int) (color[panelIndex][2] * brightness[panelIndex]));
+			} else {
+				ledBuffer.setRGB(i,
+						(int) (altColor[panelIndex][0] * brightness[panelIndex]),
+						(int) (altColor[panelIndex][1] * brightness[panelIndex]),
+						(int) (altColor[panelIndex][2] * brightness[panelIndex]));
+			}
+		}
+	}
+
+	/**
+	 * Sets the LEDs to a progress bar, using a DoubleSupplier for custom progress.
+	 * 
+	 * @param panelIndex
+	 */
+	private void setProgress(int panelIndex) {
+		double startVal = getStartVal(panelIndex);
+
+		double endVal = getEndVal(panelIndex);
+
+		double length = getLength(panelIndex);
+		System.out.println(length);
+		double progress = progressSupplier[panelIndex].getAsDouble();
+		int progressIndex = (int) Math.floor(progress * length) + (int) startVal;
+		for (var i = (int) startVal; i < endVal; i++) {
+			if (i < progressIndex) {
+				ledBuffer.setRGB(i,
+						(int) (color[panelIndex][0] * brightness[panelIndex]),
+						(int) (color[panelIndex][1] * brightness[panelIndex]),
+						(int) (color[panelIndex][2] * brightness[panelIndex]));
+			} else {
+				ledBuffer.setRGB(i,
+						(int) (altColor[panelIndex][0] * brightness[panelIndex]),
+						(int) (altColor[panelIndex][1] * brightness[panelIndex]),
+						(int) (altColor[panelIndex][2] * brightness[panelIndex]));
+			}
+		}
+	}
+
+	/**
+	 * Sets the LEDs on a panel based on percentage-based color mappings.
+	 *
+	 * @param steps      A map of percentages to colors, defining the gradient for
+	 *                   the panel.
+	 * @param panelIndex The index of the panel to set.
+	 */
+	public void setSteps(int panelIndex) {
+		if (steps[panelIndex].isEmpty()) {
+			DriverStation.reportWarning("Setting LED steps with no colors!", false);
+			return;
+		}
+
+		if (steps[panelIndex].size() == 1 && steps[panelIndex].keySet().iterator().next() == 0.0) {
+			DriverStation.reportWarning("Setting LED steps with only one color!", false);
+			// Set a solid color and exit
+			setSolidColor(panelIndex);
+			return;
+		}
+		// Get the buffer length for the panel
+		double startVal = getStartVal(panelIndex);
+		double endVal = getEndVal(panelIndex);
+		int bufLen = (int) getLength(panelIndex);
+
+		// Precompute stop positions
+		Map<Integer, Color> stopPositions = new HashMap<>();
+		steps[panelIndex].forEach((progress, colorD) -> {
+			int ledPosition = (int) Math.floor(progress * bufLen);
+			stopPositions.put(ledPosition, colorD);
+		});
+		System.out.println(stopPositions);
+		// Apply colors to the LED buffer
+		Color currentColor = Color.kBlack; // Default to black before first step
+		for (int led = (int) startVal; led < endVal; led++) {
+			int localIndex = led - (int) startVal;
+			currentColor = stopPositions.getOrDefault(localIndex, currentColor);
+
+			// Set the LED color in the buffer
+			ledBuffer.setLED(led, currentColor);
 		}
 	}
 
@@ -1153,10 +1270,10 @@ public class LEDs extends SubsystemChecker {
 
 	private int getLedIndex(int index, boolean isLEDPanel) {
 		if (Constants.currentMode == Mode.SIM) {
-			return index; //already not serpentined
+			return index; // already not serpentined
 		}
 		if (!isLEDPanel) {
-			return index; //already not serpentined, just a row of LEDS
+			return index; // already not serpentined, just a row of LEDS
 		}
 		int translatedY = index / (int) LEDConstants.ledColsInFrame;
 		int translatedX = index % (int) LEDConstants.ledColsInFrame;
@@ -1311,13 +1428,21 @@ public class LEDs extends SubsystemChecker {
 	 *              milliseconds.</li>
 	 *              <li>An ImageState object representing the image
 	 *              state.</li>
+	 *              <li>A string representing the text to display.</li>
+	 *              <li>A boolean supplier representing when the strip/panel should
+	 *              be the MAIN color.</li>
+	 *              <li>A double supplier representing what the strip/panel
+	 *              percentage should be for MAIN color.</li>
+	 *              <li>A map of percentages to colors, defining the sections WITHIN
+	 *              the strip/panel for stepping.</li>
 	 *              </ul>
 	 *              The order of these arguments does not matter.
 	 */
+	@SuppressWarnings("unchecked")
 	public void updateLEDState(LEDState state, Object... args) {
 		if (state.state != currentLEDState[state.panelIndex])
 			updateState(state);
-		boolean hasColor = false, hasText = false;
+		boolean hasColor = false;
 		for (Object arg : args) {
 			if (arg instanceof int[]) {
 				if (!hasColor) {
@@ -1336,14 +1461,15 @@ public class LEDs extends SubsystemChecker {
 				}
 				updateImageState((ImageStates) arg, state.panelIndex);
 			} else if (arg instanceof String) {
-				if (!hasText) {
-					text[state.panelIndex] = (String) arg;
-					offsetX[state.panelIndex] = 0;
-					// reset
-					hasText = true;
-				} else {
-					fontString[state.panelIndex] = (String) arg;
-				}
+				text[state.panelIndex] = (String) arg;
+				offsetX[state.panelIndex] = 0;
+
+			} else if (arg instanceof BooleanSupplier) {
+				setBooleanSupplier((BooleanSupplier) arg, state.panelIndex);
+			} else if (arg instanceof DoubleSupplier) {
+				progressSupplier[state.panelIndex] = (DoubleSupplier) arg;
+			} else if (arg instanceof Map) {
+				steps[state.panelIndex] = (Map<Double, Color>) arg;
 			} else {
 				throw new IllegalArgumentException("Unexpected argument type: "
 						+ arg.getClass().getSimpleName());
@@ -1444,22 +1570,46 @@ public class LEDs extends SubsystemChecker {
 		return;
 	}
 
+	/**
+	 * Sets a custom BooleanSupplier to control blinking behavior.
+	 */
+	public void setBooleanSupplier(BooleanSupplier shouldBlink, int panelIndex) {
+		this.shouldBlink[panelIndex] = shouldBlink;
+	}
+
+	/**
+	 * Resets the BooleanSupplier to default time-based blinking.
+	 */
+	public void resetBooleanSupplier(int panelIndex) {
+		this.shouldBlink[panelIndex] = null;
+	}
+
 	public void runHandler() {
 		// Handle the LED logic here
 		if (Constants.currentMatchState == FRCMatchState.DISABLED) {
-			updateLEDState(new LEDState(LEDStates.SOLID_COLOR, 0),
+			updateLEDState(new LEDState(LEDStates.GIF, 0),
+					LEDConstants.blueRGB);
+			updateLEDState(new LEDState(LEDStates.SINE_WAVE, 1),
+					LEDConstants.goldRGB);
+			updateLEDState(new LEDState(LEDStates.WAVE2, 2),
+					LEDConstants.blueRGB);
+			updateLEDState(new LEDState(LEDStates.BREATHING, 3),
+					LEDConstants.goldRGB);
+			updateLEDState(new LEDState(LEDStates.RAINBOW, 4),
+					LEDConstants.blueRGB);
+			updateLEDState(new LEDState(LEDStates.BLINK, 5),
+					LEDConstants.goldRGB);
+			updateLEDState(new LEDState(LEDStates.STEPS, 6),
 					LEDConstants.blueRGB);
 		} else if (Constants.currentMatchState == FRCMatchState.AUTO) {
 			updateLEDState(new LEDState(LEDStates.RAINBOW, 0), 1000);
 		} else if (Constants.currentMatchState == FRCMatchState.TELEOP) {
 			// updateLEDState(new LEDState(LEDStates.WAVE2, 1), 4000, ImageStates.gif1);
 			updateLEDState(new LEDState(LEDStates.TEXT, 0), 1000);
-
-			updateLEDState(new LEDState(LEDStates.TEXT, 1), 1000);
-
+			updateLEDState(new LEDState(LEDStates.STEPS, 6),
+					Map.of(0.0, Color.kBrown, 0.6, Color.kAqua, .67, Color.kAntiqueWhite));
 		} else if (Constants.currentMatchState == FRCMatchState.TEST) {
 			updateLEDState(new LEDState(LEDStates.FIRE, 0), 40, ImageStates.gif2);
-			updateLEDState(new LEDState(LEDStates.GIF, 1), 40, ImageStates.gif1);
 		}
 	}
 }
