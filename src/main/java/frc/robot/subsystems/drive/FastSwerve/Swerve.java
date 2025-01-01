@@ -443,7 +443,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			case AUTOMATIC -> {
 				if (DriverStation.isEnabled()) {
 					setBrakeMode(true);
-				} else {
+				} else if (lastMovementTimer.hasElapsed(coastWaitTime.get())) {
 					setBrakeMode(false);
 				}
 			}
