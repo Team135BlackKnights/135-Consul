@@ -1,7 +1,5 @@
-
-![blocks_logo](https://github.com/Team135BlackKnights/135-Blocks/assets/49589065/488cddd6-688f-4a2d-b0a6-cc395535b318)
-
 # 135 Blocks
+![blocks_logo](https://github.com/Team135BlackKnights/135-Blocks/assets/49589065/488cddd6-688f-4a2d-b0a6-cc395535b318)
 This is meant to be a template-based framework for FRC programming.
 
 This is designed so that the only files that need changing to combine different subsystems is RobotContainer.java if used properly.
@@ -99,7 +97,7 @@ An example branch directory could be:
 ```
 
 ## Usage
-Refer to the [DriverStationHID](https://github.com/Team135BlackKnights/DriverStationHID/commits/main/) repository for instructions on how to configure the API for the driverStationHID
+Refer to the [DriverStationHID](https://github.com/Team135BlackKnights/DriverStationHID/commits/main/) repository for instructions on how to configure the API for the driverStationHID.
 Refer to the [PyDriverStation](https://github.com/Team135BlackKnights/PyDriverStation) repository for instructions on how to use the API for the neural network.
 Refer to the [135_Pit_Display](https://github.com/Team135BlackKnights/135_Pit_Display) repository for instructions on how to use the Pit Display testing and diagnostics.
 
