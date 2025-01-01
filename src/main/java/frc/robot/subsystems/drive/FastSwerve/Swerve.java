@@ -45,8 +45,6 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 public class Swerve extends SubsystemChecker implements DrivetrainS {
-	// This is used
-	@SuppressWarnings("unused")
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
@@ -309,8 +307,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		odometryPose = initialPose;
 		poseBuffer.clear();
 	}
+
 	ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsLow; // implement limiting based off what you
 	// need
+
 	@AutoLogOutput(key = "RobotState/FieldVelocity")
 	@Override
 	public Twist2d getFieldVelocity() {
@@ -332,10 +332,12 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		return estimatedPose.plus(new Transform2d(new Translation2d(),
 				DriveConstants.TrainConstants.robotOffsetAngleDirection));
 	}
+
 	@Override
 	public ModuleLimits getModuleLimits() {
 		return currentModuleLimits;
 	}
+
 	public void periodic() {
 		// Check if modules are skidding
 		// Update & process inputs
@@ -357,13 +359,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
 				(System.currentTimeMillis() - inputTime));
 		long systemTime = System.currentTimeMillis();
-		//for each, see if we're disconnected
-		for (Module module : modules){
-			if (!module.isDriveConnected()){
-				addFault("Drive Motor Disconnect on "+ module.name,false, true);
+		// for each, see if we're disconnected
+		for (Module module : modules) {
+			if (!module.isDriveConnected()) {
+				addFault("Drive Motor Disconnect on " + module.name, false, true);
 			}
-			if (!module.isTurnConnected()){
-				addFault("Turn Motor Disconnect on "+ module.name,false, true);
+			if (!module.isTurnConnected()) {
+				addFault("Turn Motor Disconnect on " + module.name, false, true);
 			}
 		}
 		isSkidding = calculateSkidding();
@@ -434,12 +436,12 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			coastRequest = CoastRequest.AUTOMATIC;
 		}
 		lastEnabled = DriverStation.isEnabled();
-		//debug error
+		// debug error
 		switch (coastRequest) {
 			case AUTOMATIC -> {
 				if (DriverStation.isEnabled()) {
 					setBrakeMode(true);
-				} else {
+				} else if (lastMovementTimer.hasElapsed(coastWaitTime.get())) {
 					setBrakeMode(false);
 				}
 			}
@@ -465,35 +467,34 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				break;
 			}
 		}
-		//Shift
-		if (DriveConstants.TrainConstants.RPMMatch.get() > getAverageRPM() && modules[0].inLowGear()){
+		// Shift
+		if (DriveConstants.TrainConstants.RPMMatch.get() > getAverageRPM() && modules[0].inLowGear()) {
 			Arrays.stream(modules).forEach(module -> module.shift(false));
-		}
-		else if (DriveConstants.TrainConstants.RPMMatch.get() < getAverageRPM() && !modules[0].inLowGear()){
+		} else if (DriveConstants.TrainConstants.RPMMatch.get() < getAverageRPM() && !modules[0].inLowGear()) {
 			Arrays.stream(modules).forEach(module -> module.shift(true));
 		}
-		if (DriveConstants.swerveModuleType == SwerveModuleType.SHIFTING_THIFTYSWERVE){
-			if (modules[0].inLowGear()){
-				//set max speed / acceleration for low gear
+		if (DriveConstants.swerveModuleType == SwerveModuleType.SHIFTING_THIFTYSWERVE) {
+			if (modules[0].inLowGear()) {
+				// set max speed / acceleration for low gear
 				currentModuleLimits = DriveConstants.moduleLimitsLow;
 				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
 				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
 				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
-				//don't change our rotational accel
+				// don't change our rotational accel
 				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.maxTranslationalAcceleration.get(),
 						DriveConstants.kMaxTurningSpeedRadPerSec,
 						DriveConstants.maxRotationalAcceleration.get());
-			}else{
+			} else {
 				currentModuleLimits = DriveConstants.moduleLimitsHigh;
 				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
 				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
 				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration);
-				//don't change our rotational accel
+				// don't change our rotational accel
 				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.maxTranslationalAcceleration.get(),
 						DriveConstants.kMaxTurningSpeedRadPerSec,
-						DriveConstants.maxRotationalAcceleration.get());	
+						DriveConstants.maxRotationalAcceleration.get());
 			}
 		}
 		// Run modules
@@ -538,7 +539,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		//desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
+		// desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
 		for (int i = 0; i < 4; i++) {
 			pathPlannerNM[i] = 0;
 		}
@@ -671,7 +672,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		return driveVelocityAverage / 4.0;
 	}
-	public double getAverageRPM(){
+
+	public double getAverageRPM() {
 		double driveRPM = 0.0;
 		for (var module : modules) {
 			driveRPM += module.getDriveMotorRPM();
