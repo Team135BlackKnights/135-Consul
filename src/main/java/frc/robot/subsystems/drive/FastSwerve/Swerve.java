@@ -12,8 +12,11 @@ import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -152,6 +155,27 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		});
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
 			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+		});
+		// SwerveDrive view
+		SmartDashboard.putData("Swerve Drive", new Sendable() {
+			@Override
+			public void initSendable(SendableBuilder builder) {
+				builder.setSmartDashboardType("SwerveDrive");
+				SwerveModuleState[] moduleStates = getModuleStates();
+				builder.addDoubleProperty("Front Left Angle", () -> moduleStates[0].angle.getRadians(), null);
+				builder.addDoubleProperty("Front Left Velocity", () -> moduleStates[0].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Front Right Angle", () -> moduleStates[1].angle.getRadians(), null);
+				builder.addDoubleProperty("Front Right Velocity", () -> moduleStates[1].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Back Left Angle", () -> moduleStates[2].angle.getRadians(), null);
+				builder.addDoubleProperty("Back Left Velocity", () -> moduleStates[2].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Back Right Angle", () -> moduleStates[3].angle.getRadians(), null);
+				builder.addDoubleProperty("Back Right Velocity", () -> moduleStates[3].speedMetersPerSecond, null);
+
+				builder.addDoubleProperty("Robot Angle", () -> getRotation2d().getRadians(), null);
+			}
 		});
 		setBrakeMode(true);
 		registerSelfCheckHardware();
@@ -535,7 +559,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
-		pathplannerIndex = 0;
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
@@ -545,42 +568,27 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 	}
 
-	public int pathplannerIndex = 0;
-	boolean movingRight = false;
-
 	@Override
 	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
 		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		pathplannerIndex++;
+		double[] robotRelativeForcesXNewtons = feedforwards.robotRelativeForcesXNewtons();
+		double[] robotRelativeForcesYNewtons = feedforwards.robotRelativeForcesYNewtons();
+		// calculate angles at that chassis speed
+		SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);
 		for (int i = 0; i < 4; i++) {
+			// Get the angle of the wheel in radians
+			double moduleAngleRadians = states[i].angle.getRadians();
 
-			// only the robot relative x and y forces are provided for Choreo.
-			double xForce = feedforwards.robotRelativeForcesXNewtons()[i];
-			double yForce = feedforwards.robotRelativeForcesYNewtons()[i];
-			if (pathplannerIndex == 0) {
-				double angle = Math.atan2(yForce, xForce);
-				if (angle > -Math.PI / 2 && angle < Math.PI / 2) {
-					movingRight = true;
-				} else {
-					movingRight = false;
-				}
-			}
-			double linearForce = Math.sqrt(xForce * xForce + yForce * yForce);
-			double velocityMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+			// Project the forces onto the module's direction of motion
+			double forceX = robotRelativeForcesXNewtons[i];
+			double forceY = robotRelativeForcesYNewtons[i];
+			double feedforwardForce = forceX * Math.cos(moduleAngleRadians) + forceY * Math.sin(moduleAngleRadians);
 
-			// Calculate the dot product to determine if force aligns with velocity
-			double dotProduct = (xForce * speeds.vxMetersPerSecond + yForce * speeds.vyMetersPerSecond);
-
-			// Sign adjustment based on alignment with velocity direction
-			double signAdjustment = Math.signum(dotProduct / (linearForce * velocityMagnitude));
-			if (Double.isNaN(signAdjustment)) {
-				signAdjustment = 1;
-			}
-			// Assign the adjusted force magnitude
-			pathPlannerNM[i] = linearForce * signAdjustment * (movingRight ? 1 : 1)
-					* DriveConstants.TrainConstants.kWheelDiameter.get() / 2;
+			// Calculate feedforward torque in Newton-meters
+			pathPlannerNM[i] = feedforwardForce * (DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
+					/ DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
