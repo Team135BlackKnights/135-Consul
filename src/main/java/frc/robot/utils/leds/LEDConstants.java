@@ -8,11 +8,11 @@ public class LEDConstants {
 	//The physical port where the LED strip is plugged in 
 	ledPort = 9,
 			//The number of LEDs in the PANELS (if there are multiple, they are daisy chained and MUST be the same dimensions)
-			ledCols = 16, ledRows = 32, ledColsPerPanel = 16, ledRowsPerPanel = 16,
-			// amount of LEDs in the light strip
-			ledBufferLength = 512,
-			//at what LED index the 2nd panel starts (if there is only 1 panel, this is the same as ledBufferLength)		
-			ledBufferCutoff = ledBufferLength;
+			ledColsInFrame = 16, ledRowsInFrame = 16, ledColsPerPanel = 16, ledRowsPerPanel = 16,
+			// amount of LEDs in the light trip
+			ledBufferLength = 512;
+	public static int[] bufferCutoffs = new int[]{256}; //The index of the first LED in each section, BESIDES the first section
+	public static boolean[] sectionIsPanel = new boolean[]{true,false}; //Whether the section is a panel or a strip
 	public static int[] noteRGB = new int[] { 255, 55, 10
 	}, redRGB = new int[] { 255, 0, 0
 	}, blueRGB = new int[] { 0, 0, 255
@@ -29,7 +29,7 @@ public class LEDConstants {
 	public enum PanelOrientation{
 		TOP_RIGHT, TOP_LEFT, BOTTOM_RIGHT, BOTTOM_LEFT
 	}
-	public static PanelOrientation panelOrientation = PanelOrientation.BOTTOM_LEFT;
+	public static PanelOrientation panelOrientation = PanelOrientation.BOTTOM_LEFT; //The orientation of ALL panels (MUST be same)
 	//String constants
 	public static String[] phrases = new String[]{
 		"TOUCHDOWN", "GO PENN", "WIN!" 

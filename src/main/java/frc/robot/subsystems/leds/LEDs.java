@@ -45,13 +45,20 @@ public class LEDs extends SubsystemChecker {
 		// Character 'A'
 		CHAR_MAP.put('A', new boolean[][] {
 				{ false, false, true, true, true, true, false, false
-				}, { false, true, false, false, false, false, true, false
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, true, true, true, true, true, true, true, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, true, true, true, true, true, true, true, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'B'
@@ -129,13 +136,20 @@ public class LEDs extends SubsystemChecker {
 		// Character 'H'
 		CHAR_MAP.put('H', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, true, true, true, true, true, true, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, true, true, true, true, true, true, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'I'
@@ -153,61 +167,96 @@ public class LEDs extends SubsystemChecker {
 		// Character 'J'
 		CHAR_MAP.put('J', new boolean[][] {
 				{ false, false, false, false, true, true, true, true
-				}, { false, false, false, false, false, false, true, true
-				}, { false, false, false, false, false, false, true, true
-				}, { false, false, false, false, false, false, true, true
-				}, { false, false, false, false, false, false, true, true
-				}, { true, false, false, false, false, false, true, true
-				}, { true, false, false, false, false, false, true, true
-				}, { false, true, true, true, true, true, false, false
+				},
+				{ false, false, false, false, false, false, true, true
+				},
+				{ false, false, false, false, false, false, true, true
+				},
+				{ false, false, false, false, false, false, true, true
+				},
+				{ false, false, false, false, false, false, true, true
+				},
+				{ true, false, false, false, false, false, true, true
+				},
+				{ true, false, false, false, false, false, true, true
+				},
+				{ false, true, true, true, true, true, false, false
 				}
 		});
 		// Character 'K'
 		CHAR_MAP.put('K', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, true, false
-				}, { true, false, false, false, false, true, false, false
-				}, { true, true, true, true, true, false, false, false
-				}, { true, false, false, false, false, true, false, false
-				}, { true, false, false, false, false, false, true, false
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, true, false
+				},
+				{ true, false, false, false, false, true, false, false
+				},
+				{ true, true, true, true, true, false, false, false
+				},
+				{ true, false, false, false, false, true, false, false
+				},
+				{ true, false, false, false, false, false, true, false
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'L'
 		CHAR_MAP.put('L', new boolean[][] {
 				{ true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, false, false, false, false, false, false, false
-				}, { true, true, true, true, true, true, true, true
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ true, true, true, true, true, true, true, true
 				}
 		});
 		// Character 'M'
 		CHAR_MAP.put('M', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, true, false, false, false, false, true, true
-				}, { true, false, true, false, false, true, false, true
-				}, { true, false, false, true, true, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, true, false, false, false, false, true, true
+				},
+				{ true, false, true, false, false, true, false, true
+				},
+				{ true, false, false, true, true, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'N'
 		CHAR_MAP.put('N', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, true, false, false, false, false, false, true
-				}, { true, false, true, false, false, false, false, true
-				}, { true, false, false, true, false, false, false, true
-				}, { true, false, false, false, true, false, false, true
-				}, { true, false, false, false, false, true, false, true
-				}, { true, false, false, false, false, false, true, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, true, false, false, false, false, false, true
+				},
+				{ true, false, true, false, false, false, false, true
+				},
+				{ true, false, false, true, false, false, false, true
+				},
+				{ true, false, false, false, true, false, false, true
+				},
+				{ true, false, false, false, false, true, false, true
+				},
+				{ true, false, false, false, false, false, true, true
 				}
 		});
 		// Character 'O'
@@ -261,13 +310,20 @@ public class LEDs extends SubsystemChecker {
 		// Character 'S'
 		CHAR_MAP.put('S', new boolean[][] {
 				{ false, false, true, true, true, true, true, false
-				}, { false, true, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, false
-				}, { false, true, true, true, true, true, true, true
-				}, { false, false, false, false, false, false, false, true
-				}, { false, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { false, true, true, true, true, true, true, false
+				},
+				{ false, true, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, false
+				},
+				{ false, true, true, true, true, true, true, true
+				},
+				{ false, false, false, false, false, false, false, true
+				},
+				{ false, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ false, true, true, true, true, true, true, false
 				}
 		});
 		// Character 'T'
@@ -285,61 +341,96 @@ public class LEDs extends SubsystemChecker {
 		// Character 'U'
 		CHAR_MAP.put('U', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { false, true, true, true, true, true, true, false
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ false, true, true, true, true, true, true, false
 				}
 		});
 		// Character 'V'
 		CHAR_MAP.put('V', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { false, true, false, false, false, false, true, false
-				}, { false, true, false, false, false, false, true, false
-				}, { false, false, true, false, false, true, false, false
-				}, { false, false, true, false, false, true, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ false, false, true, false, false, true, false, false
+				},
+				{ false, false, true, false, false, true, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
 				}
 		});
 		// Character 'W'
 		CHAR_MAP.put('W', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { true, false, false, true, true, false, false, true
-				}, { true, false, true, false, false, true, false, true
-				}, { true, true, false, false, false, false, true, true
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, true, true, false, false, true
+				},
+				{ true, false, true, false, false, true, false, true
+				},
+				{ true, true, false, false, false, false, true, true
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'X'
 		CHAR_MAP.put('X', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { false, true, false, false, false, false, true, false
-				}, { false, false, true, false, false, true, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, true, false, false, true, false, false
-				}, { false, true, false, false, false, false, true, false
-				}, { true, false, false, false, false, false, false, true
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ false, false, true, false, false, true, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, true, false, false, true, false, false
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ true, false, false, false, false, false, false, true
 				}
 		});
 		// Character 'Y'
 		CHAR_MAP.put('Y', new boolean[][] {
 				{ true, false, false, false, false, false, false, true
-				}, { true, false, false, false, false, false, false, true
-				}, { false, true, false, false, false, false, true, false
-				}, { false, false, true, false, false, true, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
+				},
+				{ true, false, false, false, false, false, false, true
+				},
+				{ false, true, false, false, false, false, true, false
+				},
+				{ false, false, true, false, false, true, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
 				}
 		});
 		// Character 'Z'
@@ -369,13 +460,20 @@ public class LEDs extends SubsystemChecker {
 		// Character '1'
 		CHAR_MAP.put('1', new boolean[][] {
 				{ false, false, true, false, false, false, false, false
-				}, { false, true, true, false, false, false, false, false
-				}, { true, false, true, false, false, false, false, false
-				}, { false, false, true, false, false, false, false, false
-				}, { false, false, true, false, false, false, false, false
-				}, { false, false, true, false, false, false, false, false
-				}, { false, false, true, false, false, false, false, false
-				}, { true, true, true, true, true, true, true, true
+				},
+				{ false, true, true, false, false, false, false, false
+				},
+				{ true, false, true, false, false, false, false, false
+				},
+				{ false, false, true, false, false, false, false, false
+				},
+				{ false, false, true, false, false, false, false, false
+				},
+				{ false, false, true, false, false, false, false, false
+				},
+				{ false, false, true, false, false, false, false, false
+				},
+				{ true, true, true, true, true, true, true, true
 				}
 		});
 		// Character '2'
@@ -405,13 +503,20 @@ public class LEDs extends SubsystemChecker {
 		// Character '4'
 		CHAR_MAP.put('4', new boolean[][] {
 				{ false, false, false, false, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, true, false, true, false, false, false
-				}, { false, true, false, false, true, false, false, false
-				}, { true, true, true, true, true, true, true, true
-				}, { false, false, false, false, true, false, false, false
-				}, { false, false, false, false, true, false, false, false
-				}, { false, false, false, false, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, true, false, true, false, false, false
+				},
+				{ false, true, false, false, true, false, false, false
+				},
+				{ true, true, true, true, true, true, true, true
+				},
+				{ false, false, false, false, true, false, false, false
+				},
+				{ false, false, false, false, true, false, false, false
+				},
+				{ false, false, false, false, true, false, false, false
 				}
 		});
 		// Character '5'
@@ -477,25 +582,39 @@ public class LEDs extends SubsystemChecker {
 		// Character ' '
 		CHAR_MAP.put(' ', new boolean[][] {
 				{ false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
 				}
 		});
 		// Character '!'
 		CHAR_MAP.put('!', new boolean[][] {
 				{ false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, false, false, false, false, false
-				}, { false, false, false, true, true, false, false, false
-				}, { false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, false, false, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
+				},
+				{ false, false, false, true, true, false, false, false
 				}
 		});
 		// Character '?'
@@ -515,76 +634,97 @@ public class LEDs extends SubsystemChecker {
 	public static AddressableLEDBuffer ledBuffer;
 	public static AddressableLEDSim ledSim;
 	public static String gifStorage;
-	public static boolean override = false, debounce = false;
-	public static LEDStates[] currentLEDState = { LEDStates.SOLID_COLOR,
-			LEDStates.SOLID_COLOR
-	};
-	private int[][] color = new int[][] { LEDConstants.whiteRGB,
-			LEDConstants.whiteRGB
-	};
-	public int[] flashRateMs = new int[] { 1000, 1000
-	};
-	private double[] brightness = new double[] { 1, 1
-	}; //1 is max
-	private double currentTimeMs = TimeUtil.getLogTimeSeconds() * 1000.0;
-	private int[][] altColor = new int[][] { LEDConstants.redRGB,
-			LEDConstants.greenRGB
-	};
-	//Rainbow variables
-	private double[] m_firstHue = new double[] { 0, 0
-	}; //Holds the current hue of the rainbow
-	//Wave variables
-	private double[] wavePhaseOffset = new double[] { 0, 0
-	}; //Holds the current phase of the wave
-	//Breathing variables
-	private double[] breathingPhaseOffset = new double[] { 0, 0
-	}; //Holds the current phase of the breathing
-	//Gif variables
-	public static ImageStates[] currentImageState = new ImageStates[] {
-			ImageStates.debug, ImageStates.debug
-	}; //Holds the current image state
-	private static int[] currentImageIndex = new int[] { 0, 0
-	}; //Holds the current image index WITHIN the image state
-	private static double[] lastUpdateTimeMs = new double[] {
-			Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY
-	}; //Holds the last time the gif (or fire) was updated
-	//Fire variables ONLY USABLE WITH ONE DISPLAY
-	private static final int[] heat = new int[(int) LEDConstants.ledBufferLength];
-	private static int COOLING = 55;
-	private static int SPARKING = 120;
-	private static boolean reverseDirection = true;
-	//Text variables
-	private static String[] fontString = new String[] { "Monospaced",
-			"Monospaced"
-	};
-	private static String[] text = new String[] { "ROBOT?", "135"
-	};
-	private double[] offsetX = new double[] { 0, 0
-	};
-	public static int textIndex = 0;
+	public static LEDStates[] currentLEDState;
+	int timeCheck = 0;
+	private int[][] color;
+	public int[] flashRateMs;
+	private double[] brightness; // 1 is max
+	private double currentTimeMs;
+	private int[][] altColor;
+
+	// Rainbow variables
+	private double[] m_firstHue; // Holds the current hue of the rainbow
+
+	// Wave variables
+	private double[] wavePhaseOffset; // Holds the current phase of the wave
+
+	// Breathing variables
+	private double[] breathingPhaseOffset; // Holds the current phase of the breathing
+
+	// Gif variables
+	public static ImageStates[] currentImageState; // Holds the current image state
+	private static int[] currentImageIndex; // Holds the current image index WITHIN the image state
+	private static double[] lastUpdateTimeMs; // Holds the last time the gif (or fire) was updated
+
+	// Fire variables ONLY USABLE WITH ONE DISPLAY
+	private static final int[] heat = new int[(int) LEDConstants.ledBufferLength];;
+	private static final int COOLING = 55;
+	private static final int SPARKING = 120;
+	private static final boolean reverseDirection = true;
+
+	// Text variables
+	private static String[] fontString;
+	private static String[] text;
+	private double[] offsetX;
 
 	public LEDs() {
-		switch (Constants.currentMode) {
-		case REAL:
-			gifStorage = "/U/images";
-			break;
-		default:
-			ledSim = new AddressableLEDSim(leds);
-			gifStorage = "src\\main\\java\\frc\\robot\\utils\\leds\\images";
-			break;
+		int sections = (int) LEDConstants.bufferCutoffs.length + 1;
+		currentLEDState = new LEDStates[(int) sections];
+		color = new int[(int) sections][];
+		flashRateMs = new int[(int) sections];
+		brightness = new double[(int) sections];
+		altColor = new int[(int) sections][];
+		m_firstHue = new double[(int) sections];
+		wavePhaseOffset = new double[(int) sections];
+		breathingPhaseOffset = new double[(int) sections];
+		currentImageState = new ImageStates[(int) sections];
+		currentImageIndex = new int[(int) sections];
+		lastUpdateTimeMs = new double[(int) sections];
+		fontString = new String[(int) sections];
+		text = new String[(int) sections];
+		offsetX = new double[(int) sections];
+
+		// initialize all the variables
+		for (int i = 0; i < sections; i++) {
+			currentLEDState[i] = LEDStates.SOLID_COLOR;
+			color[i] = LEDConstants.whiteRGB; // Replace with appropriate default RGB array
+			flashRateMs[i] = 1000;
+			brightness[i] = 1.0;
+			altColor[i] = LEDConstants.redRGB; // Replace with appropriate default alternate color
+			m_firstHue[i] = 0.0;
+			wavePhaseOffset[i] = 0.0;
+			breathingPhaseOffset[i] = 0.0;
+			currentImageState[i] = ImageStates.debug;
+			currentImageIndex[i] = 0;
+			lastUpdateTimeMs[i] = Double.NEGATIVE_INFINITY;
+			fontString[i] = "Monospaced";
+			text[i] = "ROBOT?";
+			offsetX[i] = 0.0;
 		}
-		//creates LED objects (the actual LEDs, and a buffer that stores data to be sent to them)
+		currentTimeMs = TimeUtil.getLogTimeSeconds() * 1000.0;
+
+		switch (Constants.currentMode) {
+			case REAL:
+				gifStorage = "/U/images";
+				break;
+			default:
+				ledSim = new AddressableLEDSim(leds);
+				gifStorage = "src\\main\\java\\frc\\robot\\utils\\leds\\images";
+				break;
+		}
+		// creates LED objects (the actual LEDs, and a buffer that stores data to be
+		// sent to them)
 		leds = new AddressableLED((int) LEDConstants.ledPort);
 		ledBuffer = new AddressableLEDBuffer((int) LEDConstants.ledBufferLength);
-		//sets length of the LED strip to buffer length
+		// sets length of the LED strip to buffer length
 		leds.setLength(ledBuffer.getLength());
-		//starts LED strips
-		leds.start(); //FOR THE LOVE OF GOD PLEASE REMEMBER THIS IF YOU'RE GONNA CODE YOUR OWN SUBSYSTEM I SPENT LIKE 6 HOURS TROUBLESHOOTING AND IT DIDNT WORK BECAUSE OF THIS -N
-		//if the robot is a simulation, create a simulation for the addressableLEDs
+		// starts LED strips
+		leds.start(); // FOR THE LOVE OF GOD PLEASE REMEMBER THIS IF YOU'RE GONNA CODE YOUR OWN
+						// SUBSYSTEM I SPENT LIKE 6 HOURS TROUBLESHOOTING AND IT DIDNT WORK BECAUSE OF
+						// THIS -N
+		// if the robot is a simulation, create a simulation for the addressableLEDs
 		LEDConstants.imageLedStates = preprocessImages(LEDConstants.imageList);
 	}
-
-	int timeCheck = 0;
 
 	@Override
 	public void periodic() {
@@ -594,37 +734,37 @@ public class LEDs extends SubsystemChecker {
 		runHandler();
 		for (int i = 0; i < currentLEDState.length; i++) {
 			switch (currentLEDState[i]) {
-			case OFF:
-				color[i] = LEDConstants.disabledRGB;
-				setSolidColor(i);
-				break;
-			case SOLID_COLOR:
-				setSolidColor(i);
-				break;
-			case RAINBOW:
-				setRainbow(i);
-				break;
-			case SINE_WAVE:
-				setWave(i);
-				break;
-			case WAVE2:
-				setWave2(i);
-				break;
-			case BREATHING:
-				setBreathing(i);
-				break;
-			case GIF:
-				setGif(i);
-				break;
-			case FIRE:
-				setFire(i);
-				break;
-			case TEXT:
-				setText(i);
-				break;
-			case DEBUG_PIXEL:
-				setDebugPixel(i);
-				break;
+				case OFF:
+					color[i] = LEDConstants.disabledRGB;
+					setSolidColor(i);
+					break;
+				case SOLID_COLOR:
+					setSolidColor(i);
+					break;
+				case RAINBOW:
+					setRainbow(i);
+					break;
+				case SINE_WAVE:
+					setWave(i);
+					break;
+				case WAVE2:
+					setWave2(i);
+					break;
+				case BREATHING:
+					setBreathing(i);
+					break;
+				case GIF:
+					setGif(i);
+					break;
+				case FIRE:
+					setFire(i);
+					break;
+				case TEXT:
+					setText(i);
+					break;
+				case DEBUG_PIXEL:
+					setDebugPixel(i);
+					break;
 			}
 		}
 		leds.setData(ledBuffer);
@@ -637,35 +777,30 @@ public class LEDs extends SubsystemChecker {
 
 	private double getStartVal(int panelIndex) {
 		switch (panelIndex) {
-		case 0:
-			return 0;
-		case 1:
-			return LEDConstants.ledBufferCutoff;
-		default:
-			return 0;
+			case 0:
+				return 0;
+			default:
+				return LEDConstants.bufferCutoffs[panelIndex - 1];
 		}
 	}
 
 	private double getEndVal(int panelIndex) {
 		switch (panelIndex) {
-		case 0:
-			return LEDConstants.ledBufferCutoff;
-		case 1:
-			return LEDConstants.ledBufferLength;
-		default:
-			return 1;
+			case 0:
+				if (LEDConstants.bufferCutoffs.length == 0) {
+					return LEDConstants.ledBufferLength;
+				}
+				return LEDConstants.bufferCutoffs[0];
+			default:
+				if (panelIndex == LEDConstants.bufferCutoffs.length) {
+					return LEDConstants.ledBufferLength;
+				}
+				return LEDConstants.bufferCutoffs[panelIndex]; // since the first panel doesn't have a num
 		}
 	}
 
 	private double getLength(int panelIndex) {
-		switch (panelIndex) {
-		case 0:
-			return LEDConstants.ledBufferCutoff;
-		case 1:
-			return LEDConstants.ledBufferLength - LEDConstants.ledBufferCutoff;
-		default:
-			return 1;
-		}
+		return getEndVal(panelIndex) - getStartVal(panelIndex);
 	}
 
 	/**
@@ -697,7 +832,7 @@ public class LEDs extends SubsystemChecker {
 				(int) (color[panelIndex][0] * brightness[panelIndex]),
 				(int) (color[panelIndex][1] * brightness[panelIndex]),
 				(int) (color[panelIndex][2] * brightness[panelIndex]));
-		//every pixel besides that, OFF.
+		// every pixel besides that, OFF.
 		for (int i = 0; i < LEDConstants.ledBufferLength; i++) {
 			if (i != pixelIndex) {
 				ledBuffer.setRGB(i, 0, 0, 0);
@@ -714,7 +849,7 @@ public class LEDs extends SubsystemChecker {
 		double endVal = getEndVal(panelIndex);
 		double length = getLength(panelIndex);
 		for (int index = (int) startVal; index < endVal; index++) {
-			int pixelIndex = getLedIndex(index);
+			int pixelIndex = getLedIndex(index, LEDConstants.sectionIsPanel[panelIndex]);
 			currentHue = (int) (m_firstHue[panelIndex] + (index * 180 / length))
 					% 180;
 			ledBuffer.setHSV(pixelIndex, currentHue, 255, 128);
@@ -745,7 +880,7 @@ public class LEDs extends SubsystemChecker {
 			if (Double.isNaN(ratio)) {
 				ratio = 0.5;
 			}
-			int pixelIndex = getLedIndex(i);
+			int pixelIndex = getLedIndex(i, LEDConstants.sectionIsPanel[panelIndex]);
 			int red = (int) (color[panelIndex][0] * ratio);
 			int green = (int) (color[panelIndex][1] * ratio);
 			int blue = (int) (color[panelIndex][2] * ratio);
@@ -765,7 +900,8 @@ public class LEDs extends SubsystemChecker {
 		double endVal = getEndVal(panelIndex);
 		double length = getLength(panelIndex);
 		double constantMultiplier = 10.25 * (length / 512);
-		double phaseInc = constantMultiplier / (flashRateMs[panelIndex] / 1000.0); // 10.25 was found to be this functions period FOR 512 PIXELS!
+		double phaseInc = constantMultiplier / (flashRateMs[panelIndex] / 1000.0); // 10.25 was found to be this
+																					// functions period FOR 512 PIXELS!
 		for (int i = (int) startVal; i < endVal; i++) {
 			double x = (wavePhaseOffset[panelIndex] + i) * (2.0 * Math.PI)
 					/ length;
@@ -778,7 +914,7 @@ public class LEDs extends SubsystemChecker {
 			if (Double.isNaN(ratio)) {
 				ratio = 0.5;
 			}
-			int pixelIndex = getLedIndex(i);
+			int pixelIndex = getLedIndex(i, LEDConstants.sectionIsPanel[panelIndex]);
 			int red = (int) (((color[panelIndex][0] * (1 - ratio))
 					+ (altColor[panelIndex][0] * ratio)) * brightness[panelIndex]);
 			int green = (int) (((color[panelIndex][1] * (1 - ratio))
@@ -805,7 +941,7 @@ public class LEDs extends SubsystemChecker {
 		double startVal = getStartVal(panelIndex);
 		double endVal = getEndVal(panelIndex);
 		for (int i = (int) startVal; i < endVal; i++) {
-			int pixelIndex = getLedIndex(i);
+			int pixelIndex = getLedIndex(i, LEDConstants.sectionIsPanel[panelIndex]);
 			int red = (int) (color[panelIndex][0] * intensity);
 			int green = (int) (color[panelIndex][1] * intensity);
 			int blue = (int) (color[panelIndex][2] * intensity);
@@ -826,30 +962,61 @@ public class LEDs extends SubsystemChecker {
 			return;
 		}
 		if (currentTimeMs
-				- lastUpdateTimeMs[panelIndex] >= flashRateMs[panelIndex]) { //20 +99999999 >= 5000
-			byte[][] currentLedStates = LEDConstants.imageLedStates
-					.get(currentImageState[panelIndex].ordinal())
-					.get(currentImageIndex[panelIndex]);
-			double startVal = getStartVal(panelIndex);
-			double endVal = getEndVal(panelIndex);
-			for (int i = (int) startVal; i < endVal; i++) {
-				//Convert i into pixel index, since it's wired up differently
-				int pixelIndex = getLedIndex(i);
-				ledBuffer.setRGB(pixelIndex,
-						(int) (Byte.toUnsignedInt(currentLedStates[i
-								- ((int) LEDConstants.ledBufferCutoff * panelIndex)][0])
-								* brightness[panelIndex]),
-						(int) (Byte.toUnsignedInt(currentLedStates[i
-								- ((int) LEDConstants.ledBufferCutoff * panelIndex)][1])
-								* brightness[panelIndex]),
-						(int) (Byte.toUnsignedInt(currentLedStates[i
-								- ((int) LEDConstants.ledBufferCutoff * panelIndex)][2])
-								* brightness[panelIndex]));
+				- lastUpdateTimeMs[panelIndex] >= flashRateMs[panelIndex]) { // 20 +99999999 >= 5000
+			// Incase race condition occurs and the gif is changed before the last update
+			// time is set
+			try {
+				byte[][] currentLedStates = LEDConstants.imageLedStates
+						.get(currentImageState[panelIndex].ordinal())
+						.get(currentImageIndex[panelIndex]);
+
+				double startVal = getStartVal(panelIndex);
+				double endVal = getEndVal(panelIndex);
+				for (int i = (int) startVal; i < endVal; i++) {
+					// Convert i into pixel index, since it's wired up differently
+					int pixelIndex = getLedIndex(i, LEDConstants.sectionIsPanel[panelIndex]);
+					if (LEDConstants.bufferCutoffs.length == 0) {
+						ledBuffer.setRGB(pixelIndex,
+								(int) (Byte.toUnsignedInt(currentLedStates[i
+										- ((int) LEDConstants.ledBufferLength * panelIndex)][0])
+										* brightness[panelIndex]),
+								(int) (Byte.toUnsignedInt(currentLedStates[i
+										- ((int) LEDConstants.ledBufferLength * panelIndex)][1])
+										* brightness[panelIndex]),
+								(int) (Byte.toUnsignedInt(currentLedStates[i
+										- ((int) LEDConstants.ledBufferLength * panelIndex)][2])
+										* brightness[panelIndex]));
+					} else {
+						if (panelIndex == 0) {
+							ledBuffer.setRGB(pixelIndex,
+									(int) (Byte.toUnsignedInt(currentLedStates[i][0])
+											* brightness[panelIndex]),
+									(int) (Byte.toUnsignedInt(currentLedStates[i][1])
+											* brightness[panelIndex]),
+									(int) (Byte.toUnsignedInt(currentLedStates[i][2])
+											* brightness[panelIndex]));
+						} else {
+							ledBuffer.setRGB(pixelIndex,
+									(int) (Byte.toUnsignedInt(currentLedStates[i
+											- ((int) LEDConstants.bufferCutoffs[panelIndex - 1] * panelIndex)][0])
+											* brightness[panelIndex]),
+									(int) (Byte.toUnsignedInt(currentLedStates[i
+											- ((int) LEDConstants.bufferCutoffs[panelIndex - 1] * panelIndex)][1])
+											* brightness[panelIndex]),
+									(int) (Byte.toUnsignedInt(currentLedStates[i
+											- ((int) LEDConstants.bufferCutoffs[panelIndex - 1] * panelIndex)][2])
+											* brightness[panelIndex]));
+						}
+					}
+				}
+				currentImageIndex[panelIndex] = (currentImageIndex[panelIndex] + 1)
+						% LEDConstants.imageLedStates
+								.get(currentImageState[panelIndex].ordinal()).size();
+				lastUpdateTimeMs[panelIndex] = currentTimeMs;
+			} catch (Exception e) {
+				System.err.println("Error setting next image for the gif. Resetting to frame 0");
+				currentImageIndex[panelIndex] = 0;
 			}
-			currentImageIndex[panelIndex] = (currentImageIndex[panelIndex] + 1)
-					% LEDConstants.imageLedStates
-							.get(currentImageState[panelIndex].ordinal()).size();
-			lastUpdateTimeMs[panelIndex] = currentTimeMs;
 		}
 	}
 
@@ -885,7 +1052,7 @@ public class LEDs extends SubsystemChecker {
 				} else {
 					pixelNumber = j;
 				}
-				pixelNumber = getLedIndex(pixelNumber);
+				pixelNumber = getLedIndex(pixelNumber, LEDConstants.sectionIsPanel[panelIndex]) + (int) startVal;
 				ledBuffer.setRGB(pixelNumber,
 						(int) (color.red * 255 * brightness[panelIndex]),
 						(int) (color.green * 255 * brightness[panelIndex]),
@@ -917,10 +1084,10 @@ public class LEDs extends SubsystemChecker {
 		textLengthInPixels = textToDisplay.length()
 				* (ORIGINAL_CHAR_WIDTH + SPACING) + 1 * SPACING;
 		BufferedImage textImage = renderTextToImage(textToDisplay,
-				(int) LEDConstants.ledCols, (int) LEDConstants.ledRows, panelIndex,
+				(int) LEDConstants.ledColsInFrame, (int) LEDConstants.ledRowsInFrame, panelIndex,
 				offsetX[panelIndex]);
 		double startVal = 0, endVal = LEDConstants.ledBufferLength;
-		if (LEDConstants.ledBufferCutoff != LEDConstants.ledBufferLength) {
+		if (LEDConstants.bufferCutoffs.length > 0) {
 			startVal = getStartVal(panelIndex);
 			endVal = getEndVal(panelIndex);
 		}
@@ -929,29 +1096,39 @@ public class LEDs extends SubsystemChecker {
 		// Increment the offsetX
 		offsetX[panelIndex] += increment;
 		offsetX[panelIndex] %= textLengthInPixels;
-		for (int y = 0; y < (int) LEDConstants.ledRows; y++) {
-			for (int x = 0; x < (int) LEDConstants.ledCols; x++) {
-				int ledIndex = getLedIndex(x, y);
-				if (ledIndex >= startVal && ledIndex < endVal) {
+		// Within the panel start and end values, set the text image to the led buffer
+		for (int i = (int) startVal; i < endVal; i++) {
+			for (int y = 0; y < (int) LEDConstants.ledRowsInFrame; y++) {
+				for (int x = 0; x < (int) LEDConstants.ledColsInFrame; x++) {
+					int ledIndex = getLedIndex(x, y) + (int) startVal;
 					int pixelColor = textImage.getRGB(x, y);
 					int red = (pixelColor >> 16) & 0xFF;
 					int green = (pixelColor >> 8) & 0xFF;
 					int blue = pixelColor & 0xFF;
 					ledBuffer.setRGB(ledIndex, red, green, blue);
+
 				}
 			}
 		}
 	}
 
+	/**
+	 * Within ledCols and ledRows IN FRAME, get the index of the LED, accounting for
+	 * the panel orientation and serpentine
+	 * 
+	 * @param x within frame
+	 * @param y within frame
+	 * @return index of the LED WITHIN FRAME (add panel offset if necessary)
+	 */
 	private int getLedIndex(int x, int y) {
 		if (Constants.currentMode == Mode.SIM) {
-			return y * (int) LEDConstants.ledCols + x;
+			return y * (int) LEDConstants.ledColsInFrame + x;
 		}
 		int index = 0, wrappedX = x;
 		// If top right, X's are reversed
 		if (LEDConstants.panelOrientation == PanelOrientation.TOP_RIGHT
 				|| LEDConstants.panelOrientation == PanelOrientation.BOTTOM_RIGHT) {
-			wrappedX = (int) LEDConstants.ledCols - 1 - x;
+			wrappedX = (int) LEDConstants.ledColsInFrame - 1 - x;
 		}
 		if (x >= LEDConstants.ledColsPerPanel) {
 			index += LEDConstants.ledColsPerPanel
@@ -974,13 +1151,15 @@ public class LEDs extends SubsystemChecker {
 		return index;
 	}
 
-	private int getLedIndex(int index) {
-		if (Constants.currentMode == Mode.SIM
-				|| LEDConstants.ledBufferCutoff <= index) {
-			return index;
+	private int getLedIndex(int index, boolean isLEDPanel) {
+		if (Constants.currentMode == Mode.SIM) {
+			return index; //already not serpentined
 		}
-		int translatedY = index / (int) LEDConstants.ledCols;
-		int translatedX = index % (int) LEDConstants.ledCols;
+		if (!isLEDPanel) {
+			return index; //already not serpentined, just a row of LEDS
+		}
+		int translatedY = index / (int) LEDConstants.ledColsInFrame;
+		int translatedX = index % (int) LEDConstants.ledColsInFrame;
 		return getLedIndex(translatedX, translatedY);
 	}
 
@@ -998,7 +1177,7 @@ public class LEDs extends SubsystemChecker {
 		g.setColor(new java.awt.Color(color[panelIndex][0], color[panelIndex][1],
 				color[panelIndex][2]));
 		// Calculate starting position to center the text
-		//int startX = (width - ((charWidth + spacing) * text.length() - spacing)) / 2;
+		// int startX = (width - ((charWidth + spacing) * text.length() - spacing)) / 2;
 		int startY = (height - ORIGINAL_CHAR_HEIGHT) / 2;
 		// Render each character in the text
 		int x = (int) -offsetX;
@@ -1040,7 +1219,7 @@ public class LEDs extends SubsystemChecker {
 	 */
 	public void updateFlashRate(int flashRateMilliSeconds, int panelIndex) {
 		this.flashRateMs[panelIndex] = flashRateMilliSeconds;
-		//resetTimeSpecificVariables();
+		// resetTimeSpecificVariables();
 	}
 
 	/**
@@ -1078,12 +1257,14 @@ public class LEDs extends SubsystemChecker {
 	public void updateState(LEDState state) {
 		if (state.state == LEDStates.OFF) {
 			timeCheck = 0;
-			/*             ^Set Checked state^
-			 * Example of time checking (Used when debugging if a pattern is completing at the correct flashRate)
+			/*
+			 * ^Set Checked state^
+			 * Example of time checking (Used when debugging if a pattern is completing at
+			 * the correct flashRate)
 			 * IN METHOD OF PATTERN:
-			 * if (timeCheck >= FULL_CYCLE_OF_PATTERN) { 
-			 * 	throw new IllegalArgumentException("Pattern completed after " + timeCheck + 
-			 * 	"ms when the desired flash rate was " + flashRateMs[panelIndex] + " ms."); 
+			 * if (timeCheck >= FULL_CYCLE_OF_PATTERN) {
+			 * throw new IllegalArgumentException("Pattern completed after " + timeCheck +
+			 * "ms when the desired flash rate was " + flashRateMs[panelIndex] + " ms.");
 			 * }
 			 */
 		}
@@ -1111,27 +1292,27 @@ public class LEDs extends SubsystemChecker {
 	 * 
 	 * @param state The new LED state with it's panel index.
 	 * @param args  Additional arguments that can be:
-	 *                 <ul>
-	 *                 <li>An int array representing the color. The array should
-	 *                 contain three elements representing the RGB values. Each
-	 *                 value should be between 0 and 255. Check
-	 *                 {@link LEDConstants} or
-	 *                 {@link edu.wpi.first.wpilibj.util.Color} for default
-	 *                 colors (For WPILib.color, mulitiply by 255 for RGB
-	 *                 vals)</li>
-	 *                 <li>An int array representing the alternate color. The
-	 *                 array should contain three elements representing the RGB
-	 *                 values. Each value should be between 0 and 255. Check
-	 *                 {@link LEDConstants} or
-	 *                 {@link edu.wpi.first.wpilibj.util.Color} for default
-	 *                 colors (For WPILib.color, mulitiply by 255 for RGB
-	 *                 vals)</li>
-	 *                 <li>An integer representing the flash rate in
-	 *                 milliseconds.</li>
-	 *                 <li>An ImageState object representing the image
-	 *                 state.</li>
-	 *                 </ul>
-	 *                 The order of these arguments does not matter.
+	 *              <ul>
+	 *              <li>An int array representing the color. The array should
+	 *              contain three elements representing the RGB values. Each
+	 *              value should be between 0 and 255. Check
+	 *              {@link LEDConstants} or
+	 *              {@link edu.wpi.first.wpilibj.util.Color} for default
+	 *              colors (For WPILib.color, mulitiply by 255 for RGB
+	 *              vals)</li>
+	 *              <li>An int array representing the alternate color. The
+	 *              array should contain three elements representing the RGB
+	 *              values. Each value should be between 0 and 255. Check
+	 *              {@link LEDConstants} or
+	 *              {@link edu.wpi.first.wpilibj.util.Color} for default
+	 *              colors (For WPILib.color, mulitiply by 255 for RGB
+	 *              vals)</li>
+	 *              <li>An integer representing the flash rate in
+	 *              milliseconds.</li>
+	 *              <li>An ImageState object representing the image
+	 *              state.</li>
+	 *              </ul>
+	 *              The order of these arguments does not matter.
 	 */
 	public void updateLEDState(LEDState state, Object... args) {
 		if (state.state != currentLEDState[state.panelIndex])
@@ -1148,13 +1329,17 @@ public class LEDs extends SubsystemChecker {
 			} else if (arg instanceof Double || arg instanceof Integer) {
 				updateFlashRate((int) arg, state.panelIndex);
 			} else if (arg instanceof ImageStates) {
+				// if new image, reset the time
+				if (currentImageState[state.panelIndex] != (ImageStates) arg) {
+					currentImageIndex[state.panelIndex] = 0;
+					resetTimeSpecificVariables(state.panelIndex);
+				}
 				updateImageState((ImageStates) arg, state.panelIndex);
 			} else if (arg instanceof String) {
 				if (!hasText) {
-					System.out.println("Text: " + arg);
 					text[state.panelIndex] = (String) arg;
 					offsetX[state.panelIndex] = 0;
-					//reset 
+					// reset
 					hasText = true;
 				} else {
 					fontString[state.panelIndex] = (String) arg;
@@ -1188,16 +1373,14 @@ public class LEDs extends SubsystemChecker {
 								return FileVisitResult.CONTINUE;
 							}
 						});
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			for (String path : filePaths) {
 				try {
 					BufferedImage image = ImageIO.read(new File(path));
 					gifImages.add(processImageToLedStates(image));
-				}
-				catch (IOException e) {
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
@@ -1211,23 +1394,23 @@ public class LEDs extends SubsystemChecker {
 	}
 
 	private static byte[][] processImageToLedStates(BufferedImage image) {
-		int ledCount = (int) LEDConstants.ledRows * (int) LEDConstants.ledCols;
+		int ledCount = (int) LEDConstants.ledRowsInFrame * (int) LEDConstants.ledColsInFrame;
 		// Resize image to fit the number of LEDs
-		BufferedImage resizedImage = new BufferedImage((int) LEDConstants.ledCols,
-				(int) LEDConstants.ledRows, BufferedImage.TYPE_INT_RGB);
+		BufferedImage resizedImage = new BufferedImage((int) LEDConstants.ledColsInFrame,
+				(int) LEDConstants.ledRowsInFrame, BufferedImage.TYPE_INT_RGB);
 		resizedImage.getGraphics().drawImage(image, 0, 0,
-				(int) LEDConstants.ledCols, (int) LEDConstants.ledRows, null);
+				(int) LEDConstants.ledColsInFrame, (int) LEDConstants.ledRowsInFrame, null);
 		// Initialize ledStates from the image pixels
 		byte[][] ledStates = new byte[ledCount][3];
-		for (int y = 0; y < LEDConstants.ledRows; y++) {
-			for (int x = 0; x < LEDConstants.ledCols; x++) {
+		for (int y = 0; y < LEDConstants.ledRowsInFrame; y++) {
+			for (int x = 0; x < LEDConstants.ledColsInFrame; x++) {
 				int pixel = resizedImage.getRGB(x, y);
 				byte red = (byte) ((pixel >> 16) & 0xFF);
 				byte green = (byte) ((pixel >> 8) & 0xFF);
 				byte blue = (byte) (pixel & 0xFF);
-				ledStates[x + y * (int) LEDConstants.ledCols][0] = red;
-				ledStates[x + y * (int) LEDConstants.ledCols][1] = green;
-				ledStates[x + y * (int) LEDConstants.ledCols][2] = blue;
+				ledStates[x + y * (int) LEDConstants.ledColsInFrame][0] = red;
+				ledStates[x + y * (int) LEDConstants.ledColsInFrame][1] = green;
+				ledStates[x + y * (int) LEDConstants.ledColsInFrame][2] = blue;
 			}
 		}
 		return ledStates;
@@ -1247,7 +1430,9 @@ public class LEDs extends SubsystemChecker {
 	}
 
 	@Override
-	public double getCurrent() { return 0; }
+	public double getCurrent() {
+		return 0;
+	}
 
 	@Override
 	public HashMap<String, Double> getTemps() {
@@ -1255,19 +1440,26 @@ public class LEDs extends SubsystemChecker {
 	}
 
 	@Override
-	public void setCurrentLimit(int amps) { return; }
+	public void setCurrentLimit(int amps) {
+		return;
+	}
 
 	public void runHandler() {
-		//Handle the LED logic here
+		// Handle the LED logic here
 		if (Constants.currentMatchState == FRCMatchState.DISABLED) {
 			updateLEDState(new LEDState(LEDStates.SOLID_COLOR, 0),
-					LEDConstants.disabledRGB);
+					LEDConstants.blueRGB);
 		} else if (Constants.currentMatchState == FRCMatchState.AUTO) {
 			updateLEDState(new LEDState(LEDStates.RAINBOW, 0), 1000);
 		} else if (Constants.currentMatchState == FRCMatchState.TELEOP) {
-			updateLEDState(new LEDState(LEDStates.FIRE, 0), 20);
+			// updateLEDState(new LEDState(LEDStates.WAVE2, 1), 4000, ImageStates.gif1);
+			updateLEDState(new LEDState(LEDStates.TEXT, 0), 1000);
+
+			updateLEDState(new LEDState(LEDStates.TEXT, 1), 1000);
+
 		} else if (Constants.currentMatchState == FRCMatchState.TEST) {
-			updateLEDState(new LEDState(LEDStates.GIF, 0), 40, ImageStates.gif1);
+			updateLEDState(new LEDState(LEDStates.FIRE, 0), 40, ImageStates.gif2);
+			updateLEDState(new LEDState(LEDStates.GIF, 1), 40, ImageStates.gif1);
 		}
 	}
 }
