@@ -900,11 +900,6 @@ public class LEDs extends SubsystemChecker {
 	 * @param panelIndex The index of the panel to set.
 	 */
 	public void setSteps(int panelIndex) {
-		if (steps[panelIndex].isEmpty()) {
-			DriverStation.reportWarning("Setting LED steps with no colors!", false);
-			return;
-		}
-
 		if (steps[panelIndex].size() == 1 && steps[panelIndex].keySet().iterator().next() == 0.0) {
 			DriverStation.reportWarning("Setting LED steps with only one color!", false);
 			// Set a solid color and exit
@@ -922,7 +917,6 @@ public class LEDs extends SubsystemChecker {
 			int ledPosition = (int) Math.floor(progress * bufLen);
 			stopPositions.put(ledPosition, colorD);
 		});
-		System.out.println(stopPositions);
 		// Apply colors to the LED buffer
 		Color currentColor = Color.kBlack; // Default to black before first step
 		for (int led = (int) startVal; led < endVal; led++) {
@@ -1073,8 +1067,8 @@ public class LEDs extends SubsystemChecker {
 	 */
 	private void setGif(int panelIndex) {
 		if (!gifFound(currentImageState[panelIndex])) {
-			System.err.println("No images found for ID "
-					+ currentImageState[panelIndex].ordinal());
+			DriverStation.reportError("No images found for ID "
+					+ currentImageState[panelIndex].ordinal(), false);
 			updateState(new LEDState(LEDStates.OFF, panelIndex));
 			return;
 		}
@@ -1131,7 +1125,7 @@ public class LEDs extends SubsystemChecker {
 								.get(currentImageState[panelIndex].ordinal()).size();
 				lastUpdateTimeMs[panelIndex] = currentTimeMs;
 			} catch (Exception e) {
-				System.err.println("Error setting next image for the gif. Resetting to frame 0");
+				DriverStation.reportWarning("Error setting next image for the gif. Resetting to frame 0", false);
 				currentImageIndex[panelIndex] = 0;
 			}
 		}
@@ -1344,7 +1338,7 @@ public class LEDs extends SubsystemChecker {
 	 * 
 	 * @param brightness (0-1)
 	 */
-	public void updateBrightness(int brightness, int panelIndex) {
+	public void updateBrightness(double brightness, int panelIndex) {
 		this.brightness[panelIndex] = brightness;
 	}
 
@@ -1417,7 +1411,8 @@ public class LEDs extends SubsystemChecker {
 	 *              {@link edu.wpi.first.wpilibj.util.Color} for default
 	 *              colors (For WPILib.color, mulitiply by 255 for RGB
 	 *              vals)</li>
-	 *              <li>An int array representing the alternate color. The
+	 *              <li>ANOTHER (must provide main color before alt color) int array
+	 *              representing the alternate color. The
 	 *              array should contain three elements representing the RGB
 	 *              values. Each value should be between 0 and 255. Check
 	 *              {@link LEDConstants} or
@@ -1426,6 +1421,7 @@ public class LEDs extends SubsystemChecker {
 	 *              vals)</li>
 	 *              <li>An integer representing the flash rate in
 	 *              milliseconds.</li>
+	 *              <li>A double representing the image brightness. (1 = 100%)</li>
 	 *              <li>An ImageState object representing the image
 	 *              state.</li>
 	 *              <li>A string representing the text to display.</li>
@@ -1451,7 +1447,9 @@ public class LEDs extends SubsystemChecker {
 				} else {
 					updateAltColor((int[]) arg, state.panelIndex);
 				}
-			} else if (arg instanceof Double || arg instanceof Integer) {
+			} else if (arg instanceof Double) {
+				updateBrightness((double) arg, state.panelIndex);
+			} else if (arg instanceof Integer) {
 				updateFlashRate((int) arg, state.panelIndex);
 			} else if (arg instanceof ImageStates) {
 				// if new image, reset the time
