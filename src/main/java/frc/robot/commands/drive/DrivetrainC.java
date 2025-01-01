@@ -50,7 +50,6 @@ public class DrivetrainC extends Command {
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			translationalCurve = val -> Math.pow(val, translationalResponseCurve.get());
 			rotationalCurve = val -> Math.pow(val, rotationalResponseCurve.get());
-			System.out.println("Translational Curve: " + translationalCurve);
 		}, translationalResponseCurve, rotationalResponseCurve);
 		// Update the deadzone
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {

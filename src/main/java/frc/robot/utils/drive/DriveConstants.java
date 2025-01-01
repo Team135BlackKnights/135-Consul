@@ -254,19 +254,20 @@ public class DriveConstants {
 		if (Constants.currentMode == Mode.SIM) {
 			overallTurningMotorConstantContainer = new MotorConstantContainer(
 					0.02, 0.001, 0.001, 12, 0.01, 0.001);
-			overallDriveMotorConstantContainer = new MotorConstantContainer(.1, // 5 for CTRE
+			overallDriveMotorConstantContainer = new MotorConstantContainer(.1, 
 					.13, 0.001, .05, 0, 0);
 		} else {
 			if (robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 					|| robotMotorController == MotorVendor.CTRE_ON_RIO) {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						1.65, 125, 0.6, 200, 35, 13.25); // Average the turning motors for these vals.
-				overallDriveMotorConstantContainer = new MotorConstantContainer(.21, // 5 for CTRE
+						.2, 1.59, 0.1, 100, 0, 2); // Average the turning motors for these vals.
+						//Test chassis: 1.65, 125, 0.6, 200, 35, 13.25
+				overallDriveMotorConstantContainer = new MotorConstantContainer(.21, 
 						.1255, 0.001, 35, 0.25, 0.05);
 			} else {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001); // Average the turning motors for these vals.
-				overallDriveMotorConstantContainer = new MotorConstantContainer(2, // 5 for CTRE
+				overallDriveMotorConstantContainer = new MotorConstantContainer(2, 
 						.1, 0.001, 5, 0.25, 0.05);
 			}
 		}

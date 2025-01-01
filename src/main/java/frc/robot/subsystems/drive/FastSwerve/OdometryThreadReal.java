@@ -16,6 +16,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
     private final List<BaseStatusSignal> statusSignals;
     private final Queue<Double> timeStampsQueue;
     private final Lock lock = new ReentrantLock();
+
     public OdometryThreadReal(List<OdometryDoubleInput> odometryDoubleInputs, List<BaseStatusSignal> statusSignals) {
         this.timeStampsQueue = new ArrayBlockingQueue<>(20);
         this.odometryDoubleInputs = odometryDoubleInputs;
@@ -31,10 +32,10 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
             super.start();
     }
 
-
     @Override
     public void run() {
-        while (true) odometryPeriodic();
+        while (true)
+            odometryPeriodic();
     }
 
     private void odometryPeriodic() {
@@ -42,35 +43,34 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
 
         lock.lock();
         timeStampsQueue.offer(estimateAverageTimeStamps());
-        for(OdometryThread.OdometryDoubleInput odometryDoubleInput : odometryDoubleInputs)
+        for (OdometryThread.OdometryDoubleInput odometryDoubleInput : odometryDoubleInputs)
             odometryDoubleInput.cacheInputToQueue();
         lock.unlock();
     }
 
     private void refreshSignalsAndBlockThread() {
         switch (DriveConstants.robotMotorController) {
-				case VORTEX_SPARK_FLEX -> TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
+            case VORTEX_SPARK_FLEX -> TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
             case NEO_SPARK_MAX ->
-                    TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
+                TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
             case CTRE_ON_RIO -> {
                 TimeUtil.delay(1.0 / DriveConstants.TrainConstants.odomHz);
-                //BaseStatusSignal.refreshAll();
+                // BaseStatusSignal.refreshAll();
             }
             case CTRE_ON_CANIVORE ->
-                    BaseStatusSignal.waitForAll(.02, statusSignals.toArray(new BaseStatusSignal[0]));
+                BaseStatusSignal.waitForAll(.02, statusSignals.toArray(new BaseStatusSignal[0]));
         }
     }
 
     private double estimateAverageTimeStamps() {
         double currentTime = TimeUtil.getRealTimeSeconds(), totalLatency = 0;
-        for (BaseStatusSignal signal:statusSignals)
+        for (BaseStatusSignal signal : statusSignals)
             totalLatency += signal.getTimestamp().getLatency();
 
         if (statusSignals.size() == 0)
             return currentTime;
         return currentTime - totalLatency / statusSignals.size();
     }
-
 
     @Override
     public void updateInputs(OdometryThreadInputs inputs) {
