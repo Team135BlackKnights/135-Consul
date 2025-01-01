@@ -26,10 +26,10 @@ public class ModuleIOSim implements ModuleIO {
 
     public ModuleIOSim(SwerveModuleSimulation moduleSimulation) {
         this.moduleSimulation = moduleSimulation;
-        this.driveMotor =
-                moduleSimulation.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(DriveConstants.kMaxDriveCurrent));
-        this.turnMotor =
-                moduleSimulation.useGenericControllerForSteer().withCurrentLimit(Amps.of(DriveConstants.kMaxTurnCurrent));
+        this.driveMotor = moduleSimulation.useGenericMotorControllerForDrive()
+                .withCurrentLimit(Amps.of(DriveConstants.kMaxDriveCurrent));
+        this.turnMotor = moduleSimulation.useGenericControllerForSteer()
+                .withCurrentLimit(Amps.of(DriveConstants.kMaxTurnCurrent));
 
         // Enable wrapping for turn PID
         turnController.enableContinuousInput(-Math.PI, Math.PI);
@@ -59,27 +59,23 @@ public class ModuleIOSim implements ModuleIO {
         // Update drive inputs
         inputs.driveMotorConnected = true;
         inputs.drivePositionRads = moduleSimulation.getDriveWheelFinalPosition().in(Radians);
-        inputs.driveVelocityRadsPerSec =
-                moduleSimulation.getDriveWheelFinalSpeed().in(RadiansPerSecond);
+        inputs.driveVelocityRadsPerSec = moduleSimulation.getDriveWheelFinalSpeed().in(RadiansPerSecond);
         inputs.driveAppliedVolts = driveAppliedVolts;
-        inputs.driveTorqueCurrentAmps =
-                Math.abs(moduleSimulation.getDriveMotorStatorCurrent().in(Amps));
+        inputs.driveTorqueCurrentAmps = Math.abs(moduleSimulation.getDriveMotorStatorCurrent().in(Amps));
 
         // Update turn inputs
         inputs.turnMotorConnected = true;
         inputs.turnPosition = moduleSimulation.getSteerAbsoluteFacing();
-        inputs.turnVelocityRadsPerSec =
-                moduleSimulation.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond);
+        inputs.turnVelocityRadsPerSec = moduleSimulation.getSteerAbsoluteEncoderSpeed().in(RadiansPerSecond);
         inputs.turnAppliedVolts = turnAppliedVolts;
-        inputs.turnTorqueCurrentAmps =
-                Math.abs(moduleSimulation.getSteerMotorStatorCurrent().in(Amps));
+        inputs.turnTorqueCurrentAmps = Math.abs(moduleSimulation.getSteerMotorStatorCurrent().in(Amps));
 
-		inputs.odometryDrivePositionsMeters = Arrays
-		.stream(moduleSimulation.getCachedDriveWheelFinalPositions())
-		.mapToDouble(position -> position.baseUnitMagnitude()
-				* DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
-		.toArray();
-		inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
+        inputs.odometryDrivePositionsMeters = Arrays
+                .stream(moduleSimulation.getCachedDriveWheelFinalPositions())
+                .mapToDouble(position -> position.baseUnitMagnitude()
+                        * DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
+                .toArray();
+        inputs.odometryTurnPositions = new Rotation2d[] { inputs.turnPosition };
     }
 
     @Override
@@ -87,10 +83,12 @@ public class ModuleIOSim implements ModuleIO {
         driveClosedLoop = false;
         driveAppliedVolts = output;
     }
-	@Override
-	public void runCharacterization(double output) {
-		runDriveVolts(output);
-	}
+
+    @Override
+    public void runCharacterization(double output) {
+        runDriveVolts(output);
+    }
+
     @Override
     public void runTurnVolts(double output) {
         turnClosedLoop = false;
@@ -104,34 +102,36 @@ public class ModuleIOSim implements ModuleIO {
         driveController.setSetpoint(velocityRadPerSec);
     }
 
-	@Override
-	public void runTurnPositionSetpoint(double angleRads) {
-		double currentAngle = moduleSimulation.getSteerAbsoluteFacing().getRadians();
-		double difference = angleRads - currentAngle;
-		if (difference > Math.PI) {
-			angleRads -= 2 * Math.PI;
-		} else if (difference < -Math.PI) {
-			angleRads += 2 * Math.PI;
-		}
-		runTurnVolts(turnController.calculate(currentAngle, angleRads));
-	}
-	@Override
-	public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
-		driveController.setPID(kP, kI, kD);
-	}
-	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
-		turnController.setPID(kP, kI, kD);
-	}
+    @Override
+    public void runTurnPositionSetpoint(double angleRads) {
+        double currentAngle = moduleSimulation.getSteerAbsoluteFacing().getRadians();
+        double difference = angleRads - currentAngle;
+        if (difference > Math.PI) {
+            angleRads -= 2 * Math.PI;
+        } else if (difference < -Math.PI) {
+            angleRads += 2 * Math.PI;
+        }
+        runTurnVolts(turnController.calculate(currentAngle, angleRads));
+    }
 
-	@Override
-	public void setDriveBrakeMode(boolean enable) {
-		//do nothing.
-	}
+    @Override
+    public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
+        driveController.setPID(kP, kI, kD);
+    }
 
-	@Override
-	public void stop() {
-		runDriveVolts(0.0);
-		runTurnVolts(0.0);
-	}
+    @Override
+    public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+        turnController.setPID(kP, kI, kD);
+    }
+
+    @Override
+    public void setDriveBrakeMode(boolean enable) {
+        // do nothing.
+    }
+
+    @Override
+    public void stop() {
+        runDriveVolts(0.0);
+        runTurnVolts(0.0);
+    }
 }

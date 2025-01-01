@@ -71,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -135,6 +136,7 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
+		DriverStation.silenceJoystickConnectionWarning(true);
 		Logger.recordOutput("DSHID/DSHIDLedPattern", dsHIDHandler.getCurrentLEDPattern().toString());
 		// We check to see what drivetrain type we have here, and create the correct
 		// drivetrain system based on that.
