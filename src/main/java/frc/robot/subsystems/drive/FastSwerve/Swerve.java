@@ -45,8 +45,6 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 public class Swerve extends SubsystemChecker implements DrivetrainS {
-	// This is used
-	@SuppressWarnings("unused")
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
