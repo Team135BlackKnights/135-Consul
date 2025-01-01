@@ -144,12 +144,9 @@ public class Module {
 									setpointVelocity.baseUnitMagnitude()) // might be wrong
 			);
 		} else {
-			double speedVoltage = (setpoint.speedMetersPerSecond
-					/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
-					/ DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;
-			double torqueResistanceVoltage = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp
-					* DriveConstants.getDriveTrainMotors(1).rOhms;
-			double wheelTorqueVolts = speedVoltage + torqueResistanceVoltage;
+			double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(wheelTorqueNm, (setpoint.speedMetersPerSecond
+			/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2)));
+			Logger.recordOutput("Drive/"+name+"/wheelTorque", wheelTorqueVolts);
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),

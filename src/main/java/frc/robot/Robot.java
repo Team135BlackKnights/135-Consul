@@ -9,6 +9,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -23,9 +24,9 @@ import org.littletonrobotics.urcl.URCL;
 
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.Elastic;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
@@ -265,6 +266,11 @@ public class Robot extends LoggedRobot {
 	/** This function is called once each time the robot enters Disabled mode. */
 	@Override
 	public void disabledInit() {
+		//make sure we are on the correct side
+		isRed = DriverStation.getAlliance().isPresent()
+		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		: false;
+		Elastic.selectTab("Disabled/Prematch");
 		isPracticeDSMode = false;
 		if (Constants.currentMatchState == FRCMatchState.ENDGAME) {
 			Constants.currentMatchState = FRCMatchState.MATCHOVER;
@@ -301,6 +307,11 @@ public class Robot extends LoggedRobot {
 	 */
 	@Override
 	public void autonomousInit() {
+		//make sure we are on the correct side
+		isRed = DriverStation.getAlliance().isPresent()
+		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		: false;
+		Elastic.selectTab("Autonomous");
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
@@ -326,12 +337,12 @@ public class Robot extends LoggedRobot {
 						} else {
 							RobotContainer.fieldSimulation.getMainDriveSimulation()
 									.setSimulationWorldPose(
-											new Pose2d(
+										Robot.isRed ? FlippingUtil.flipFieldPose(new Pose2d(
 													path.getPoint(0).position,
-													path.getIdealStartingState().rotation()));
-							if (RobotContainer.drivetrainS instanceof Swerve) {
-								((Swerve) RobotContainer.drivetrainS).pathplannerIndex = 0;
-							}
+													path.getIdealStartingState().rotation()))
+													: new Pose2d(
+															path.getPoint(0).position,
+															path.getIdealStartingState().rotation()));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -352,6 +363,11 @@ public class Robot extends LoggedRobot {
 
 	@Override
 	public void teleopInit() {
+		//make sure we are on the correct side
+		isRed = DriverStation.getAlliance().isPresent()
+		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		: false;
+		Elastic.selectTab("Teleoperated");
 		Constants.currentMatchState = FRCMatchState.TELEOPINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
