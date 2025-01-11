@@ -2,9 +2,7 @@
 // http://github.com/Mechanical-Advantage
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils;
-import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.utils.selfCheck.SelfChecking;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import java.util.ArrayList;
 import java.util.List;
 

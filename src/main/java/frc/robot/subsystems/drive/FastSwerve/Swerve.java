@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive.FastSwerve;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
+import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -24,6 +25,7 @@ import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator.S
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.drive.EqualsUtil;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.Sensors.GyroIO;
@@ -487,7 +489,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
-	@SuppressWarnings("removal")
 	@Override
 	public void setChassisSpeeds(ChassisSpeeds speeds) {
 		pathplannerIndex = 0;
@@ -592,6 +593,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		super.registerAllHardware(modules[1].getSelfCheckingHardware());
 		super.registerAllHardware(modules[2].getSelfCheckingHardware());
 		super.registerAllHardware(modules[3].getSelfCheckingHardware());
+				if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
+		super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
+		}
 	}
 
 	@Override
