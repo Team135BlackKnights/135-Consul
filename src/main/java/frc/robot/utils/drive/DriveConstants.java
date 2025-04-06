@@ -199,7 +199,7 @@ public class DriveConstants {
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0), kBumperToBumperWidth, MAX_G);
 		}else{
 		 	mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get()/2, kMaxSpeedMetersPerSecond, 1.25, getDriveTrainMotors(1,TrainConstants.kDriveMotorGearRatio), kMaxDriveCurrent, 1);
-			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth,kChassisLength);
+			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kModuleTranslations);
 			mainController = new PPHolonomicDriveController(new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(), TrainConstants.pathplannerTranslationConstantContainer.getI(), TrainConstants.pathplannerTranslationConstantContainer.getD()), new PIDConstants(TrainConstants.pathplannerRotationConstantContainer.getP(), TrainConstants.pathplannerRotationConstantContainer.getI(), TrainConstants.pathplannerRotationConstantContainer.getD()));
 		}
 		if (Constants.currentMode == Mode.SIM) {

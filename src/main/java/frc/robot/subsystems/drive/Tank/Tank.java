@@ -293,8 +293,8 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
 		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
 		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
-		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity, MetersPerSecond.of(leftRadPerSec)).magnitude(),
-			feedforward.calculate(rightVelocity, MetersPerSecond.of(rightRadPerSec)).magnitude()});
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity.baseUnitMagnitude(), MetersPerSecond.of(leftRadPerSec).baseUnitMagnitude()),
+			feedforward.calculate(rightVelocity.baseUnitMagnitude(), MetersPerSecond.of(rightRadPerSec).baseUnitMagnitude())});
 		if (setSpeeds)
 			io.setVelocity(leftRadPerSec, rightRadPerSec,
 					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
