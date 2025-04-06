@@ -357,19 +357,19 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		LinearVelocity setpointFrontRightVelocity = Units.MetersPerSecond.of(frontRightRadPerSec);
 		LinearVelocity setpointBackLeftVelocity = Units.MetersPerSecond.of(backLeftRadPerSec);
 		LinearVelocity setpointBackRightVelocity = Units.MetersPerSecond.of(backRightRadPerSec);
-		LinearVelocity currentFrontLefVelocity = Units.MetersPerSecond.of(getFrontLeftVelocityMetersPerSec());
+		LinearVelocity currentFrontLeftVelocity = Units.MetersPerSecond.of(getFrontLeftVelocityMetersPerSec());
 		LinearVelocity currentFrontRightVelocity = Units.MetersPerSecond.of(getFrontRightVelocityMetersPerSec());
 		LinearVelocity currentBackLeftVelocity = Units.MetersPerSecond.of(getBackLeftVelocityMetersPerSec());
 		LinearVelocity currentBackRightVelocity = Units.MetersPerSecond.of(getBackRightVelocityMetersPerSec());
 		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[] {
-				feedforward.calculate(currentFrontLefVelocity,
-						setpointFrontLeftVelocity).magnitude(),
-				feedforward.calculate(currentFrontRightVelocity,
-						setpointFrontRightVelocity).magnitude(),
-				feedforward.calculate(currentBackLeftVelocity,
-						setpointBackLeftVelocity).magnitude(),
-				feedforward.calculate(currentBackRightVelocity,
-						setpointBackRightVelocity).magnitude()
+				feedforward.calculate(currentFrontLeftVelocity.baseUnitMagnitude(),
+						setpointFrontLeftVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentFrontRightVelocity.baseUnitMagnitude(),
+						setpointFrontRightVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentBackLeftVelocity.baseUnitMagnitude(),
+						setpointBackLeftVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentBackRightVelocity.baseUnitMagnitude(),
+						setpointBackRightVelocity.baseUnitMagnitude())
 		});
 		if (setSpeeds) {
 			io.setVelocity(frontLeftRadPerSec, frontRightRadPerSec, backLeftRadPerSec,

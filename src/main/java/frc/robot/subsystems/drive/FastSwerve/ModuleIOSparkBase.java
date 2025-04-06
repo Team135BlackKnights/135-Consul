@@ -19,6 +19,7 @@ import org.littletonrobotics.junction.Logger;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
@@ -296,14 +297,14 @@ public class ModuleIOSparkBase implements ModuleIO {
 	@Override
 	public void runDriveVelocitySetpoint(double velocityRadsPerSec,
 			double feedForward) {
-		driveSpark.getClosedLoopController().setReference(velocityRadsPerSec, ControlType.kMAXMotionVelocityControl, 0,
+		driveSpark.getClosedLoopController().setReference(velocityRadsPerSec, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0,
 				feedForward);
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		double expectedAngle = angleRads - absoluteEncoderOffset.getRadians();
-		turnSpark.getClosedLoopController().setReference(expectedAngle, ControlType.kMAXMotionPositionControl, 0);
+		turnSpark.getClosedLoopController().setReference(expectedAngle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
 	}
 
 	@Override
