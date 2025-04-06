@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
@@ -186,19 +185,19 @@ public class MecanumIOSparkBase implements MecanumIO {
 			frontLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontLeftRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, frontLeftFFVolts);
 			frontRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontRightRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, frontRightFFVolts);
 			backLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backLeftRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, backLeftFFVolts);
 			backRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backRightRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, 0, backRightFFVolts);
 		}else{
 			setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec), convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec), convertRadPerSecondToVoltage(backRightRadPerSec));
 		}

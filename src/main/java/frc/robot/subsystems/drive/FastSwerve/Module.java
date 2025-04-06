@@ -6,8 +6,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.*;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
@@ -117,7 +116,7 @@ public class Module {
 							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
 					(inputs.negateFF ? 0 : 1) * 
 							(wheelTorqueAmps)
-							+ff.calculate(currentVelocity.baseUnitMagnitude(), setpointVelocity.baseUnitMagnitude()) //might be wrong
+							+ff.calculate(currentVelocity, setpointVelocity).magnitude() //might be wrong
 							);
 		} else {
 			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
@@ -128,7 +127,7 @@ public class Module {
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
 					(inputs.negateFF ? 0 : 1) *
-							ff.calculate(currentVelocity.baseUnitMagnitude(), setpointVelocity.baseUnitMagnitude())
+							ff.calculate(currentVelocity, setpointVelocity).magnitude()
 							+ ((wheelTorqueVolts)));
 		}
 		io.runTurnPositionSetpoint(setpoint.angle.getRadians());

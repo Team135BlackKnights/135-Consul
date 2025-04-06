@@ -1,0 +1,139 @@
+<xml version="1.0">
+<dashboard>
+	<widget field="Deploy Intake Percentage" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="32"/>
+		<height>20</height>
+	</widget>
+	<widget field="Auto Selector" type="String" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="640" y="426"/>
+	</widget>
+	<widget field="Auto Chooser" type="String Chooser" class="edu.wpi.first.smartdashboard.gui.elements.Chooser">
+		<location x="633" y="3"/>
+	</widget>
+	<widget field="limelight y" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="348"/>
+	</widget>
+	<widget field="limelightx" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="364"/>
+	</widget>
+	<widget field="Right Hang" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="240" y="412"/>
+		<height>20</height>
+	</widget>
+	<widget field="Left Hang" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="107" y="412"/>
+	</widget>
+	<widget field="Average Flywheel Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="176"/>
+	</widget>
+	<widget field="Bottom Flywheel Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="156"/>
+	</widget>
+	<widget field="Top Flywheel Speed" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="447" y="136"/>
+	</widget>
+	<widget field="Intake Offset" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="224" y="80"/>
+	</widget>
+	<widget field="Intake Within Bounds" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="228" y="32"/>
+	</widget>
+	<widget field="Intake Angle" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="16"/>
+	</widget>
+	<widget field="Deploy Intake Abs" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="64"/>
+	</widget>
+	<widget field="Deploy Intake" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="48"/>
+	</widget>
+	<widget field="Desired Intake Angle" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="230" y="16"/>
+	</widget>
+	<widget field="Desired Intake Upper Bound" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="227" y="64"/>
+	</widget>
+	<widget field="Desired Intake Lower Bound" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="227" y="48"/>
+	</widget>
+	<widget field="Odometry Distance" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="432"/>
+	</widget>
+	<widget field="April Tag Distance" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="412"/>
+	</widget>
+	<widget field="Robot Heading (getPose)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="176" y="192"/>
+	</widget>
+	<widget field="Position Y (getPose)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="288"/>
+	</widget>
+	<widget field="Position X (getPose)" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="272"/>
+	</widget>
+	<widget field="Auto Lock" type="Boolean" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="396"/>
+	</widget>
+	<widget field="xError" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="448" y="380"/>
+	</widget>
+	<widget field="BackRight Abs Encoder" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="224" y="224"/>
+	</widget>
+	<widget field="BackLeft Abs Encoder" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="224"/>
+	</widget>
+	<widget field="FrontRight Abs Encoder" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="224" y="124"/>
+	</widget>
+	<widget field="FrontLeft Abs Encoder" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="16" y="124"/>
+		<height>20</height>
+	</widget>
+	<widget field="Robot Heading" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="176" y="172"/>
+		<width>141</width>
+		<height>20</height>
+	</widget>
+	<widget field="Allowed Closed Loop Error" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="160"/>
+	</widget>
+	<widget field="Max Acceleration" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="144"/>
+	</widget>
+	<widget field="Min Velocity" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="128"/>
+	</widget>
+	<widget field="Max Velocity" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="112"/>
+	</widget>
+	<widget field="Min Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="96"/>
+	</widget>
+	<widget field="Max Output" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="80"/>
+	</widget>
+	<widget field="Feed Forward" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="64"/>
+	</widget>
+	<widget field="I Zone" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="48"/>
+		<height>20</height>
+	</widget>
+	<widget field="D Gain" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="32"/>
+	</widget>
+	<widget field="I Gain" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="16"/>
+		<height>20</height>
+	</widget>
+	<widget field="P Gain" type="Number" class="edu.wpi.first.smartdashboard.gui.elements.TextBox">
+		<location x="816" y="0"/>
+	</widget>
+</dashboard>
+<live-window>
+</live-window>
+	<hidden field="Field"/>
+	<hidden field="Set Position"/>
+	<hidden field="Set Velocity"/>
+</xml>
