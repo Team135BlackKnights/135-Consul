@@ -593,8 +593,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		super.registerAllHardware(modules[1].getSelfCheckingHardware());
 		super.registerAllHardware(modules[2].getSelfCheckingHardware());
 		super.registerAllHardware(modules[3].getSelfCheckingHardware());
-				if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
-		super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
+		if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
+			super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
 		}
 	}
 

@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
-
+import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
+import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -358,6 +359,9 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(io.getSelfCheckingHardware());
+		if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
+			super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
+		}
 	}
 
 	@Override
