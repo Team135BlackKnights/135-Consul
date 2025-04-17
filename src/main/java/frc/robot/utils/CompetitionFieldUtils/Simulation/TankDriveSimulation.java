@@ -34,7 +34,7 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Consumer<Pose2d> resetOdometryCallBack;
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
-		return radPerSecond * TrainConstants.kDriveMotorGearRatioLow
+		return radPerSecond * TrainConstants.kDriveMotorGearRatio
 				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
@@ -69,8 +69,8 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 		tank.updateSim(subPeriodSeconds);
 		//should do the actual motion calculations
 		
-		final ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
+		ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
+		.toChassisSpeeds(tankIOSim.getWheelSpeeds()), getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				tankTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();

@@ -3,11 +3,14 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.subsystems.drive.Tank;
 
+import static edu.wpi.first.units.Units.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
-
+import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
+import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -30,6 +33,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -287,11 +291,13 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	/** Run closed loop at the specified voltage. */
 	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds, boolean setSpeeds) {
 		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
-		double rightRadsPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
-		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculateWithVelocities(getLeftVelocityMetersPerSec() / WHEEL_RADIUS, leftRadPerSec),
-			feedforward.calculateWithVelocities(getRightVelocityMetersPerSec() / WHEEL_RADIUS, rightRadsPerSec)});
+		double rightRadPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
+		LinearVelocity leftVelocity = MetersPerSecond.of(getLeftVelocityMetersPerSec());
+		LinearVelocity rightVelocity = MetersPerSecond.of(getRightVelocityMetersPerSec());
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(leftVelocity.baseUnitMagnitude(), MetersPerSecond.of(leftRadPerSec).baseUnitMagnitude()),
+			feedforward.calculate(rightVelocity.baseUnitMagnitude(), MetersPerSecond.of(rightRadPerSec).baseUnitMagnitude())});
 		if (setSpeeds)
-			io.setVelocity(leftRadPerSec, rightRadsPerSec,
+			io.setVelocity(leftRadPerSec, rightRadPerSec,
 					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
 	}
 
@@ -353,6 +359,9 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(io.getSelfCheckingHardware());
+		if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
+			super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
+		}
 	}
 
 	@Override
