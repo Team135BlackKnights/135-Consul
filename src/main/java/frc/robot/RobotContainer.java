@@ -11,6 +11,8 @@ import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.commands.servos.ServoC;
+
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
@@ -27,6 +29,7 @@ import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
+import frc.robot.subsystems.servos.ServoS;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
@@ -118,6 +121,7 @@ public class RobotContainer {
 	@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
+	final static ServoS servoS = new ServoS();
 	public static double[] knownInputs = new double[2]; // number of inputs to AI
 	public static double[] knownOutputs = new double[2]; // number of outputs to AI
 	public static List<Double> currentAiOutputs = new ArrayList<Double>(4); // total values for AI
@@ -443,7 +447,6 @@ public class RobotContainer {
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		NamedCommands.registerCommands(autoCommands);
-		PathfindingCommand.warmupCommand().schedule();
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
 		}
@@ -455,7 +458,8 @@ public class RobotContainer {
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
 						.setPose(new Pose2d(-50, -50, new Rotation2d())))
 				.schedule();
-				if (!AutoBuilder.isConfigured()) {
+		servoS.setDefaultCommand(new ServoC(servoS));
+		if (!AutoBuilder.isConfigured()) {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
@@ -588,7 +592,8 @@ public class RobotContainer {
 	 * @return a command with all of them in a sequence.
 	 */
 	public static Command allSystemsCheck() {
-		return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand());
+		return Commands.sequence(drivetrainS.getRunnableSystemCheckCommand(),
+				servoS.getSystemCheckCommand());
 	}
 
 	public static HashMap<String, Double> combineMaps(
@@ -616,7 +621,8 @@ public class RobotContainer {
 	 */
 	public static boolean allSystemsOK() {
 		return drivetrainS
-				.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK;
+				.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK
+				&& servoS.getSystemStatus() == SubsystemChecker.SystemStatus.OK;
 	}
 
 	public static Collection<ParentDevice> getOrchestraDevices() {
@@ -626,8 +632,9 @@ public class RobotContainer {
 	}
 
 	public static Subsystem[] getAllSubsystems() {
-		Subsystem[] subsystems = new Subsystem[1];
+		Subsystem[] subsystems = new Subsystem[2];
 		subsystems[0] = drivetrainS;
+		subsystems[1] = servoS;
 		return subsystems;
 	}
 
