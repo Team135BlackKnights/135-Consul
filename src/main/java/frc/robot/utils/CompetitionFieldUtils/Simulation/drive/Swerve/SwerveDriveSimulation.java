@@ -12,8 +12,6 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 import frc.robot.utils.maths.GeometryConvertor;
 
-import static edu.wpi.first.units.Units.Kilograms;
-
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -128,9 +126,9 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
             Pose2d initialPoseOnField, Consumer<Pose2d> resetOdometryCallBack) {
         super(
                 new DriveTrainSimulationProfile(
-                        moduleSimulations[0].maximumGroundSpeed().baseUnitMagnitude(),
-                        moduleSimulations[0].maxAcceleration(
-                                Kilograms.of(robotMassWithBumpersKg), moduleSimulations.length).baseUnitMagnitude(),
+                        moduleSimulations[0].getModuleTheoreticalSpeedMPS(),
+                        moduleSimulations[0].getModuleMaxAccelerationMPSsq(
+                                robotMassWithBumpersKg, moduleSimulations.length),
                         DriveConstants.kMaxTurningSpeedRadPerSec,
                         DriveConstants.maxRotationalAcceleration.get(),
                         robotMassWithBumpersKg,
@@ -296,8 +294,7 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
         }
 
         /* the centripetal friction force during turning */
-        final ChassisSpeeds moduleSpeedsFieldRelative = ChassisSpeeds.fromRobotRelativeSpeeds(
-                moduleSpeeds, getSimulatedDriveTrainPose().getRotation());
+        ChassisSpeeds moduleSpeedsFieldRelative = ChassisSpeeds.fromRobotRelativeSpeeds(moduleSpeeds, getSimulatedDriveTrainPose().getRotation()) ;
         Logger.recordOutput("Drive/Swerve/Module Speeds (m/s)", moduleSpeeds);
         final Rotation2d dTheta;
         if (GeometryConvertor.getChassisSpeedsTranslationalComponent(moduleSpeedsFieldRelative).getNorm() < 0.01) {
@@ -462,21 +459,21 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
     }
 
     public double getTheoreticalMaxLinearVelocity() {
-        return moduleSimulations[0].maximumGroundSpeed().baseUnitMagnitude();
+        return moduleSimulations[0].getModuleTheoreticalSpeedMPS();
     }
 
     public double getTheoreticalMaxLinearAcceleration() {
-        return moduleSimulations[0].maxAcceleration(
-                Kilograms.of(profile.robotMass), moduleSimulations.length).baseUnitMagnitude();
+        return moduleSimulations[0].getModuleMaxAccelerationMPSsq(
+                profile.robotMass, moduleSimulations.length);
     }
 
     public double getTheoreticalMaxAngularVelocity() {
-        return getTheoreticalMaxLinearVelocity() / moduleTranslations[0].getNorm();
+        return moduleSimulations[0].getModuleTheoreticalSpeedMPS() / moduleTranslations[0].getNorm();
     }
 
     public double getSwerveDriveMaxAngularAcceleration() {
         return moduleSimulations[0].getTheoreticalPropellingForcePerModule(
-                Kilograms.of(profile.robotMass), moduleSimulations.length).baseUnitMagnitude()
+                profile.robotMass, moduleSimulations.length)
                 * moduleTranslations[0].getNorm()
                 * moduleSimulations.length
                 / super.getMass().getInertia();

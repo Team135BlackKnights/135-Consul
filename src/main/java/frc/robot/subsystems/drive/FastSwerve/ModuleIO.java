@@ -13,7 +13,6 @@ public interface ModuleIO {
 	class ModuleIOInputs {
 		public boolean driveMotorConnected = true;
 		public boolean turnMotorConnected = true;
-		public boolean encoderConnected = true;
 		public boolean hasCurrentControl = false;
 		public boolean negateFF = false;
 		public double drivePositionRads = 0.0;
@@ -31,62 +30,44 @@ public interface ModuleIO {
 		public double turnMotorTemp = 0.0;
 		public double[] odometryDrivePositionsMeters = new double[] {};
 		public Rotation2d[] odometryTurnPositions = new Rotation2d[] {};
-		public boolean inLowGear = true;
-		public double driveRotorRPM = 0.0;
 	}
 
 	/** Updates the set of loggable inputs. */
-	default void updateInputs(ModuleIOInputs inputs) {
-	}
+	default void updateInputs(ModuleIOInputs inputs) {}
 
 	/** Run drive motor at volts */
-	default void runDriveVolts(double volts) {
-	}
+	default void runDriveVolts(double volts) {}
 
 	/** Run turn motor at volts */
-	default void runTurnVolts(double volts) {
-	}
+	default void runTurnVolts(double volts) {}
 
 	/** Run characterization input (amps or volts) into drive motor */
-	default void runCharacterization(double input) {
-	}
+	default void runCharacterization(double input) {}
 
 	/** Run to drive velocity setpoint with feedforward */
 	default void runDriveVelocitySetpoint(double velocityRadsPerSec,
-			double feedForward) {
-	}
+			double feedForward) {}
 
 	/** Run to turn position setpoint */
-	default void runTurnPositionSetpoint(double angleRads) {
-	}
+	default void runTurnPositionSetpoint(double angleRads) {}
 
 	/** Configure drive PID */
-	default void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
-	}
+	default void setDrivePID(double kP, double kI, double kD, double kS, double kV) {}
 
 	/** Configure turn PID */
-	default void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
-	}
+	default void setTurnPID(double kP, double kI, double kD, double kS, double kV) {}
 
 	/** Enable or disable brake mode on the drive motor. */
-	default void setDriveBrakeMode(boolean enable) {
-	}
+	default void setDriveBrakeMode(boolean enable) {}
 
 	/** Enable or disable brake mode on the turn motor. */
-	default void setTurnBrakeMode(boolean enable) {
-	}
+	default void setTurnBrakeMode(boolean enable) {}
 
 	/** Update the motor controllers to a specificed max amperage */
-	default void setCurrentLimit(int amps) {
-	}
+	default void setCurrentLimit(int amps) {}
 
 	/** Disable output to all motors */
-	default void stop() {
-	}
-
-	/** Shift the module into high or low gear */
-	default void shift(boolean lowGear) {
-	}
+	default void stop() {}
 
 	/**
 	 * Get a list of the SelfChecking interface for all hardware in that
