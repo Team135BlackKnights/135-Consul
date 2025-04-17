@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import au.grapplerobotics.LaserCan;
-import au.grapplerobotics.LaserCan.Measurement;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import edu.wpi.first.units.Units;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SelfCheckingLaserCAN;

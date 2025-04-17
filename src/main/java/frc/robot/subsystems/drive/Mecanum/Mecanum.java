@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
-
+import frc.robot.utils.drive.DriveConstants.MotorVendor;
+import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore; 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -31,6 +32,8 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelPositions;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -351,15 +354,23 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 				/ WHEEL_RADIUS;
 		double backRightRadPerSec = wheelSpeeds.rearRightMetersPerSecond
 				/ WHEEL_RADIUS;
+		LinearVelocity setpointFrontLeftVelocity = Units.MetersPerSecond.of(frontLeftRadPerSec);
+		LinearVelocity setpointFrontRightVelocity = Units.MetersPerSecond.of(frontRightRadPerSec);
+		LinearVelocity setpointBackLeftVelocity = Units.MetersPerSecond.of(backLeftRadPerSec);
+		LinearVelocity setpointBackRightVelocity = Units.MetersPerSecond.of(backRightRadPerSec);
+		LinearVelocity currentFrontLeftVelocity = Units.MetersPerSecond.of(getFrontLeftVelocityMetersPerSec());
+		LinearVelocity currentFrontRightVelocity = Units.MetersPerSecond.of(getFrontRightVelocityMetersPerSec());
+		LinearVelocity currentBackLeftVelocity = Units.MetersPerSecond.of(getBackLeftVelocityMetersPerSec());
+		LinearVelocity currentBackRightVelocity = Units.MetersPerSecond.of(getBackRightVelocityMetersPerSec());
 		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[] {
-				feedforward.calculateWithVelocities(getFrontLeftVelocityMetersPerSec() /WHEEL_RADIUS,
-						frontLeftRadPerSec),
-				feedforward.calculateWithVelocities(getFrontRightVelocityMetersPerSec() / WHEEL_RADIUS,
-						frontRightRadPerSec),
-				feedforward.calculateWithVelocities(getBackLeftVelocityMetersPerSec() /WHEEL_RADIUS,
-						backLeftRadPerSec),
-				feedforward.calculateWithVelocities(getBackRightVelocityMetersPerSec() /WHEEL_RADIUS,
-						backRightRadPerSec)
+				feedforward.calculate(currentFrontLeftVelocity.baseUnitMagnitude(),
+						setpointFrontLeftVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentFrontRightVelocity.baseUnitMagnitude(),
+						setpointFrontRightVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentBackLeftVelocity.baseUnitMagnitude(),
+						setpointBackLeftVelocity.baseUnitMagnitude()),
+				feedforward.calculate(currentBackRightVelocity.baseUnitMagnitude(),
+						setpointBackRightVelocity.baseUnitMagnitude())
 		});
 		if (setSpeeds) {
 			io.setVelocity(frontLeftRadPerSec, frontRightRadPerSec, backLeftRadPerSec,
@@ -472,6 +483,9 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 
 	private void registerSelfCheckHardware() {
 		super.registerAllHardware(io.getSelfCheckingHardware());
+		if(DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE){
+			super.registerAllHardware(List.of(new SelfCheckingCanivore(DriveConstants.canBusName)));
+		}
 	}
 
 	@Override

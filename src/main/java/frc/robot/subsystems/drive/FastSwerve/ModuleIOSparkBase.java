@@ -19,6 +19,7 @@ import org.littletonrobotics.junction.Logger;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
@@ -186,10 +187,9 @@ public class ModuleIOSparkBase implements ModuleIO {
 		driveConfig = driveConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		driveConfig = turnConfig.smartCurrentLimit(DriveConstants.kMaxTurnCurrent);
 		driveEncoder.setPosition(0.0);
-		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatio;
 		double turnVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kTurningMotorGearRatio;
-		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow
-				* (2 * Math.PI);
+		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatio * (2 * Math.PI);
 		double turnPositionConversionFactor = 1 / DriveConstants.TrainConstants.kTurningMotorGearRatio * (2 * Math.PI);
 		driveEncoderConfig = new EncoderConfig().quadratureAverageDepth(2).quadratureMeasurementPeriod(10)
 				.uvwAverageDepth(2).uvwMeasurementPeriod(10).velocityConversionFactor(driveVelocityConversionFactor)
@@ -203,8 +203,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.busVoltagePeriodMs((int) (1000 / DriveConstants.TrainConstants.odomHz));
 		driveConfig = driveConfig.apply(driveSignalsConfig);
 		driveMaxMotionConfig = new MAXMotionConfig()
-				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond
-						/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
+				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond / DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
 				.maxAcceleration(DriveConstants.maxTranslationalAcceleration.get()
 						/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 		driveClosedLoopConfig = new ClosedLoopConfig().pidf(
@@ -298,14 +297,14 @@ public class ModuleIOSparkBase implements ModuleIO {
 	@Override
 	public void runDriveVelocitySetpoint(double velocityRadsPerSec,
 			double feedForward) {
-		driveSpark.getClosedLoopController().setReference(velocityRadsPerSec, ControlType.kMAXMotionVelocityControl, 0,
+		driveSpark.getClosedLoopController().setReference(velocityRadsPerSec, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0,
 				feedForward);
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		double expectedAngle = angleRads - absoluteEncoderOffset.getRadians();
-		turnSpark.getClosedLoopController().setReference(expectedAngle, ControlType.kMAXMotionPositionControl, 0);
+		turnSpark.getClosedLoopController().setReference(expectedAngle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
 	}
 
 	@Override
