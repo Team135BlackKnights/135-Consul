@@ -12,7 +12,6 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 /**
  * @apiNote Untested, needs to be checked with hardware
- * @deprecated as of right now, there's no "subsystem" this falls under. Therefore, a selfChecker is not needed. -G
  * Code for a self checking CANivore through the Phoenix 6 API.
  * Does not technically ping the CANivore, instead looks at the CAN bus.
  */

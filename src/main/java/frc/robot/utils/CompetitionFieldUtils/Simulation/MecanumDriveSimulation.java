@@ -34,7 +34,7 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	private final Consumer<Pose2d> resetOdometryCallBack;
 
 	public double convertRadPerSecondtoMeterPerSecond(double radPerSecond) {
-		return radPerSecond * TrainConstants.kDriveMotorGearRatioLow
+		return radPerSecond * TrainConstants.kDriveMotorGearRatio
 				* TrainConstants.kWheelDiameter.get() / 2;
 	}
 
@@ -61,8 +61,8 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 		mecanum.updateSim(subPeriodSeconds);
 		// should do the actual motion calculations
-		final ChassisSpeeds mecanumTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(mecanumIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
+		ChassisSpeeds mecanumTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
+		.toChassisSpeeds(mecanumIOSim.getWheelSpeeds()), getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				mecanumTheoreticalSpeeds);
 		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();

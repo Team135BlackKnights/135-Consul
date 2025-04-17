@@ -8,10 +8,8 @@ import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.Robot;
 import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Crescendo2024FieldObjects.NoteOnFieldSimulated;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.GamePieceInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.CompetitionFieldUtils.CompField;
@@ -321,9 +319,6 @@ private boolean hasContact(GamePieceInSimulation gamePiece) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;
 		for (GamePieceInSimulation gamePiece : gamePieces) {
-			if (!(gamePiece instanceof NoteOnFieldSimulated)) {
-				continue;
-			}
 			double distance = gamePiece.getPose3d().getTranslation()
 					.toTranslation2d().getDistance(robotPosition);
 			if (distance < closestDistance) {
@@ -341,9 +336,6 @@ private boolean hasContact(GamePieceInSimulation gamePiece) {
 			//if (!(robot instanceof SimplifiedHolonomicDriveSimulation)) {
 			//	continue;
 			//}
-			if (robot instanceof SwerveDriveSimulation) {
-				continue;
-			}
 			double distance = robot.getPose3d().getTranslation().toTranslation2d()
 					.getDistance(robotPosition);
 			if (distance < closestDistance) {
