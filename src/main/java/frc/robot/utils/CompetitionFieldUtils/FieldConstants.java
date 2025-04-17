@@ -1,10 +1,13 @@
 package frc.robot.utils.CompetitionFieldUtils;
 
+import com.pathplanner.lib.config.RobotConfig;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.utils.drive.DriveConstants;
 
 /**
  * Constants for the field MUST CREATE A NEW CLASS FOR EACH NEW GAME, @see
@@ -44,6 +47,7 @@ public class FieldConstants {
 		}
 		return closestGamePiece;
 	}
+	public static final RobotConfig aiRobotConfig = DriveConstants.mainConfig;
 	/* https://www.andymark.com/products/frc-2024-am-4999 */
 	public static final double NOTE_HEIGHT = Units.inchesToMeters(2),
 			NOTE_DIAMETER = Units.inchesToMeters(14);

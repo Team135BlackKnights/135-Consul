@@ -30,8 +30,6 @@ public class SelfCheckingTalonFX implements SelfChecking {
 
 	@Override
 	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
-		StatusSignal.refreshAll(firmwareVersionSignal, hardwareFaultSignal,
-		bootEnabledSignal, deviceTempSignal, procTempSignal);
 		ConcurrentLinkedQueue<SubsystemFault> faults = new ConcurrentLinkedQueue<>();
 		//    if (firmwareVersionSignal.getStatus() != StatusCode.OK) {
 		//      faults.add(new SubsystemFault(String.format("[%s]: No communication with device",
@@ -55,6 +53,8 @@ public class SelfCheckingTalonFX implements SelfChecking {
 					String.format("[%s]: Processor temperature too high", label),
 					true));
 		}
+		StatusSignal.refreshAll(firmwareVersionSignal, hardwareFaultSignal,
+				bootEnabledSignal, deviceTempSignal, procTempSignal);
 		return faults;
 	}
 

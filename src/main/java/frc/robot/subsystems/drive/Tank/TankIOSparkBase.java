@@ -9,6 +9,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
+
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -32,7 +34,7 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 
 public class TankIOSparkBase implements TankIO {
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -82,20 +84,20 @@ public class TankIOSparkBase implements TankIO {
 		rightLeader.setCANTimeout(250);
 		leftFollower.setCANTimeout(250);
 		rightFollower.setCANTimeout(250);
-		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
+
+		
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		ClosedLoopConfig loopConfig = new ClosedLoopConfig();
 		loopConfig.p(KP);
 		loopConfig.d(KD);
 		sparkConfig.apply(loopConfig);
-		leftLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
-		rightLeader.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		leftLeader.configure(sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		rightLeader.configure(sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		sparkConfig.follow(leftLeader);
-		leftFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		leftFollower.configure(sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		sparkConfig.follow(rightLeader);
-		rightFollower.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		rightFollower.configure(sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 	}
 
 	@Override
@@ -160,11 +162,11 @@ public class TankIOSparkBase implements TankIO {
 			leftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							leftRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, leftFFVolts);
+					ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
 			rightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							rightRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, rightFFVolts);
+					ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
 		} else {
 			setVoltage(convertRadPerSecondToVoltage(leftRadPerSec),
 					convertRadPerSecondToVoltage(rightRadPerSec));
