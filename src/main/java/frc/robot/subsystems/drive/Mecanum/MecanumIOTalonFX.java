@@ -37,7 +37,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 public class MecanumIOTalonFX implements MecanumIO {
 	private final GyroIO gyroIO;
 	private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
