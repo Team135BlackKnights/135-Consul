@@ -2,7 +2,7 @@ package frc.robot.utils.selfCheck;
 
 
 import au.grapplerobotics.LaserCan;
-import au.grapplerobotics.LaserCan.Measurement;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SelfCheckingLaserCAN implements SelfChecking {

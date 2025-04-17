@@ -94,8 +94,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
   public void runChassisSpeeds(ChassisSpeeds speeds, boolean fieldRelative) {
     if (fieldRelative) desiredFieldRelativeSpeeds = speeds;
     else
-    desiredFieldRelativeSpeeds =
-    ChassisSpeeds.fromRobotRelativeSpeeds(speeds, getSimulatedDriveTrainPose().getRotation());
+      desiredFieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(speeds,getSimulatedDriveTrainPose().getRotation());
   }
  /**
    *
@@ -115,7 +114,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * @param speeds the desired robot-relative speeds, represented as {@link ChassisSpeeds}
    */
   public void runChassisSpeeds(ChassisSpeeds speeds, Rotation2d fieldRelative) {
-    desiredFieldRelativeSpeeds =  ChassisSpeeds.fromRobotRelativeSpeeds(speeds, fieldRelative);
+    desiredFieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(speeds,fieldRelative);
   }
   /**
    *
@@ -250,9 +249,8 @@ public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();
 }
 public ChassisSpeeds getMeasuredChassisSpeedsRobotRelative() {
-   return ChassisSpeeds.fromFieldRelativeSpeeds(
-    getMeasuredChassisSpeedsFieldRelative(),
-    getObjectOnFieldPose2d().getRotation());
+  ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(getMeasuredChassisSpeedsFieldRelative(),getObjectOnFieldPose2d().getRotation());
+  return speeds;
 }
 
 public ChassisSpeeds getMeasuredChassisSpeedsFieldRelative() {
