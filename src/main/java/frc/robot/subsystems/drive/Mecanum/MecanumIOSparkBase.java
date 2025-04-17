@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
@@ -36,7 +37,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 
 public class MecanumIOSparkBase implements MecanumIO {
 
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -87,7 +88,6 @@ public class MecanumIOSparkBase implements MecanumIO {
 		frontRight.setCANTimeout(250);
 		backLeft.setCANTimeout(250);
 		backRight.setCANTimeout(250);
-		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		sparkConfig.idleMode(IdleMode.kBrake);
@@ -105,13 +105,10 @@ public class MecanumIOSparkBase implements MecanumIO {
 		MAXMotionConfig MaxMotionConfig = new MAXMotionConfig();
 		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
 		sparkConfig.apply(loopConfig);
-		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
-		frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed);
-		backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		sparkConfig.inverted(DriveConstants.kBackRightDriveReversed);
-		backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		frontLeft.configure(sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		frontRight.configure(sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		backLeft.configure(sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		backRight.configure(sparkConfig.inverted(DriveConstants.kBackRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		
 
 	}
@@ -185,19 +182,19 @@ public class MecanumIOSparkBase implements MecanumIO {
 			frontLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontLeftRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, 0, frontLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontLeftFFVolts);
 			frontRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontRightRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, 0, frontRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontRightFFVolts);
 			backLeftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backLeftRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, 0, backLeftFFVolts);
+					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backLeftFFVolts);
 			backRightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backRightRadPerSec * GEAR_RATIO),
-					ControlType.kMAXMotionVelocityControl, 0, backRightFFVolts);
+					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backRightFFVolts);
 		}else{
 			setVoltage(convertRadPerSecondToVoltage(frontLeftRadPerSec), convertRadPerSecondToVoltage(frontRightRadPerSec), convertRadPerSecondToVoltage(backLeftRadPerSec), convertRadPerSecondToVoltage(backRightRadPerSec));
 		}
