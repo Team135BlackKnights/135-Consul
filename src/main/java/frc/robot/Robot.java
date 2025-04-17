@@ -4,12 +4,10 @@
 package frc.robot;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.CANBus.CANBusStatus;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -25,7 +23,6 @@ import org.littletonrobotics.urcl.URCL;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
-import frc.robot.utils.Elastic;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
@@ -106,6 +103,7 @@ public class Robot extends LoggedRobot {
 				e.printStackTrace();
 			}
 		}).start();
+		DriverStation.silenceJoystickConnectionWarning(true);
 		// Instantiate our RobotContainer. This will perform all our button bindings,
 		// and put our
 		// autonomous chooser on the dashboard
@@ -157,7 +155,7 @@ public class Robot extends LoggedRobot {
 		DataHandler.startHandler();
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(true);
+				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
 		pdh = LoggedPowerDistribution.getInstance();
@@ -195,7 +193,7 @@ public class Robot extends LoggedRobot {
 			accumulatedCharge += chargeUsed;
 
 			// Calculate the remaining charge percentage
-			double batteryPercentage = 100 * (1 - (accumulatedCharge / (64800-4800))); // 64800 is the total charge of the
+			double batteryPercentage = 100 * (1 - (accumulatedCharge / 64800)); // 64800 is the total charge of the
 																				// battery in Coloumbs (18 * 3600s/hr)
 			batteryPercentage = Math.max(0, batteryPercentage); // Ensure it doesn't go below 0%
 			Logger.recordOutput("SystemStatus/BatteryPercentage", batteryPercentage);
@@ -209,7 +207,7 @@ public class Robot extends LoggedRobot {
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.pathConstraints.maxAngularVelocityRadPerSec(),
 					DriveConstants.maxRotationalAcceleration.get());
-			DriveConstants.moduleLimitsLow = new ModuleLimits(
+			DriveConstants.moduleLimitsFree = new ModuleLimits(
 					DriveConstants.kMaxSpeedMetersPerSecond,
 					DriveConstants.maxTranslationalAcceleration.get(),
 					DriveConstants.maxRotationalAcceleration.get());
@@ -238,22 +236,18 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("MatchTime", DriverStation.getMatchTime());
 		Logger.recordOutput("SystemStatus/BatteryVoltage",
 				RobotController.getBatteryVoltage());
-
-		long statusCalls = System.currentTimeMillis();
-		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
-		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
-		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
-				System.currentTimeMillis()));
-		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *
-				100.0);
-		Logger.recordOutput("SystemStatus/DriveCANUtil",
-				driveCanBusStatus.BusUtilization * 100.0);
-		for (Map.Entry<String, Double> set : RobotContainer.getAllTemps()
-				.entrySet()) {
-			Logger.recordOutput("Temps/" + set.getKey(), set.getValue());
-		}
-		double runtimeMS = (System.currentTimeMillis() - currentTime);
-		// long to double for the recordOutput
+		/*
+		 * long statusCalls = System.currentTimeMillis();
+		 * CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
+		 * CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		 * Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
+		 * System.currentTimeMillis()));
+		 * Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *
+		 * 100.0);
+		 * Logger.recordOutput("SystemStatus/DriveCANUtil",
+		 * driveCanBusStatus.BusUtilization * 100.0);
+		 */
+		long runtimeMS = (System.currentTimeMillis() - currentTime);
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
 														// speed again!)
@@ -262,11 +256,6 @@ public class Robot extends LoggedRobot {
 	/** This function is called once each time the robot enters Disabled mode. */
 	@Override
 	public void disabledInit() {
-		//make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-		: false;
-		Elastic.selectTab("Disabled/Prematch");
 		isPracticeDSMode = false;
 		if (Constants.currentMatchState == FRCMatchState.ENDGAME) {
 			Constants.currentMatchState = FRCMatchState.MATCHOVER;
@@ -275,7 +264,7 @@ public class Robot extends LoggedRobot {
 		}
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(true);
+				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
 	}
@@ -302,15 +291,10 @@ public class Robot extends LoggedRobot {
 	 */
 	@Override
 	public void autonomousInit() {
-		//make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-		: false;
-		Elastic.selectTab("Autonomous");
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(true);
+				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
 		RobotContainer.drivetrainS.zeroHeading();
@@ -332,12 +316,9 @@ public class Robot extends LoggedRobot {
 						} else {
 							RobotContainer.fieldSimulation.getMainDriveSimulation()
 									.setSimulationWorldPose(
-										Robot.isRed ? FlippingUtil.flipFieldPose(new Pose2d(
+											new Pose2d(
 													path.getPoint(0).position,
-													path.getIdealStartingState().rotation()))
-													: new Pose2d(
-															path.getPoint(0).position,
-															path.getIdealStartingState().rotation()));
+													path.getIdealStartingState().rotation()));
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -358,15 +339,10 @@ public class Robot extends LoggedRobot {
 
 	@Override
 	public void teleopInit() {
-		//make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-		? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-		: false;
-		Elastic.selectTab("Teleoperated");
 		Constants.currentMatchState = FRCMatchState.TELEOPINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
 			if (subsys instanceof SubsystemChecker) {
-				((SubsystemChecker) subsys).allowFaultPolling(true);
+				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
 		RobotContainer.field.getObject("path").setTrajectory(new Trajectory());
@@ -446,6 +422,10 @@ public class Robot extends LoggedRobot {
 	/** This function is called periodically during test mode. */
 	@Override
 	public void testPeriodic() {
+		for (Map.Entry<String, Double> set : RobotContainer.getAllTemps()
+				.entrySet()) {
+			Logger.recordOutput("Temps/" + set.getKey(), set.getValue());
+		}
 		Constants.currentMatchState = FRCMatchState.TEST;
 	}
 
