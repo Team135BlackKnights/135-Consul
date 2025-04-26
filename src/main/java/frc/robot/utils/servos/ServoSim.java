@@ -28,13 +28,7 @@ public class ServoSim {
 			double initialPositionDegrees, double dtSeconds) {
 		simMode = runMode;
 		positionDegrees = initialPositionDegrees;
-		switch (type) {
-		case REVSmartServo:
-			maxDegreesPerSecond = 428.571429;
-			break;
-		default:
-			break;
-		}
+		maxDegreesPerSecond = type.maxDegreesPerSec;
 		simDtSeconds = dtSeconds;
 		deadband = maxDegreesPerSecond * simDtSeconds;
 		//Momentum is obnoxiously low, shaft doesnt have that much inertia
@@ -153,5 +147,8 @@ public class ServoSim {
 			positionDegrees %= 360;
 			break;
 		}
+	}
+	public double getMaxDegreesPerSec(){
+		return maxDegreesPerSecond;
 	}
 }

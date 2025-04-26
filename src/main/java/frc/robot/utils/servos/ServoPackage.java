@@ -9,7 +9,8 @@ public class ServoPackage {
 	private Servo servo;
 	private ServoSim servoSim;
 	private double lowerBound, upperBound;
-
+	private final SimServoMode servoMode;
+	private final double maxDegreesPerSec;
 	/**
 	 * Constructs a Servo Package (pairing of servo and servoSim)
 	 * 
@@ -30,6 +31,7 @@ public class ServoPackage {
 	public ServoPackage(int servoPWMPort, SimServoMode servoMode,
 			ServoType servoType, double initialPositionDegrees, double dtSeconds,
 			double lowerBound, double upperBound) {
+		this.servoMode = servoMode;
 		switch (Constants.currentMode) {
 		case REAL:
 			servo = new Servo(servoPWMPort);
@@ -42,22 +44,29 @@ public class ServoPackage {
 			servoSim.setSimBounds(lowerBound, upperBound);
 			break;
 		}
+		this.maxDegreesPerSec = servoType.maxDegreesPerSec;
 	}
 
 	/**
-	 * Set the servo to a specified angle
+	 * Set the servo to a specified angle. Only works in INRANGE mode. 
 	 * 
 	 * @param degrees the desired angle (in degrees)
 	 */
 	public void setServoDegrees(double degrees) {
-		switch (Constants.currentMode) {
-		case REAL:
-			servo.setAngle(degrees);
-			break;
-		default:
-			servoSim.setAngle(degrees);
-			break;
+		if (this.servoMode == SimServoMode.INRANGE) {
+			switch (Constants.currentMode) {
+			case REAL:
+				double percent = degrees / (upperBound - lowerBound);
+				servo.setPosition(percent);
+				break;
+			default:
+				servoSim.set(degrees);
+				break;
+			}
+		} else {
+			throw new IllegalArgumentException("Cannot set angle in CONTINUOUS mode");
 		}
+
 	}
 
 	/**
@@ -93,6 +102,62 @@ public class ServoPackage {
 	}
 
 	/**
+	 * @return the angular velocity in Degrees per second
+	 */
+	public double getServoVelocityDegreesPerSec(){
+		switch (Constants.currentMode) {
+		case REAL:
+			return lowerBound + servo.getSpeed() * servoSim.getMaxDegreesPerSec();
+		default:
+			return servoSim.getAngularVelocityDegreesPerSec();
+		}
+	}
+	
+	/**
+	 * Sets the servo to a certain velocity in degrees per second. If it's in continuous mode
+	 * @param degreesPerSec
+	 */
+	public void setServoDegreesPerSec(double degreesPerSec) {
+		if (this.servoMode == SimServoMode.CONTINUOUS) {
+			switch (Constants.currentMode) {
+				case REAL:
+					servo.setSpeed(degreesPerSec / servoSim.getMaxDegreesPerSec());
+					break;
+				default:
+					servoSim.set(degreesPerSec);
+					break;
+			}
+
+
+		} else {
+			throw new IllegalArgumentException("Cannot set velocity in INRANGE mode");
+		}
+	}
+	/**
+	 * @return the angular velocity in Degrees per second
+	 */
+	public double getServoPercent(){
+		switch (Constants.currentMode) {
+		case REAL:
+			return servo.get();
+		default:
+			return servoSim.getAngularPositionDegrees() / (upperBound - lowerBound);
+		}
+	}
+
+	/**
+	 * @return the angular velocity in Degrees per second
+	 */
+	public double getServoSpeedPercent(){
+		switch (Constants.currentMode) {
+		case REAL:
+			return servo.getSpeed();
+		default:
+			return servoSim.getAngularVelocityDegreesPerSec() / servoSim.getMaxDegreesPerSec();
+		}
+	}
+
+	/**
 	 * Updates the servoSim in simulation. If the servo is real, do NOTHING.
 	 */
 	public void updateServoSim() {
@@ -105,4 +170,41 @@ public class ServoPackage {
 			return;
 		}
 	}
+	/**
+	 * Returns the lower bound of the servo in degrees. 
+	 * If the servo is in continuous mode, this returns -1 for both values
+	 * @return
+	 */
+	public double getLowerServoBound() {
+		if (this.servoMode == SimServoMode.CONTINUOUS) {
+			return -1;
+		}
+		return lowerBound;
+	}
+		/**
+	 * Returns the upper bound of the servo in degrees. 
+	 * If the servo is in continuous mode, this returns -1 for both values
+	 * @return
+	 */
+	public double getUppertServoBound() {
+		if (this.servoMode == SimServoMode.CONTINUOUS) {
+			return -1;
+		}
+		return upperBound;
+	}
+	/**
+	 * Gets the servo mode of the servo
+	 * @return the servo mode
+	 */
+	public SimServoMode getSimServoMode(){
+		return servoMode;
+	}
+	/**
+	 * Gets the theoretical max speed in degrees per second of the servo
+	 * @return the max speed in degrees per second
+	 */
+    public double getServoMaxVelocityDegreesPerSec() {
+       return maxDegreesPerSec;
+        }
+	
 }

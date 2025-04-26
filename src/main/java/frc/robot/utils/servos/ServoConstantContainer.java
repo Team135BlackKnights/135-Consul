@@ -26,7 +26,16 @@ public class ServoConstantContainer {
 		INRANGE, CONTINUOUS
 	}
 
-	public enum ServoType { REVSmartServo; }
+	public enum ServoType {
+		REVSmartServo(428.571429);
+	
+		public final double maxDegreesPerSec;
+	
+		private ServoType(double maxDegreesPerSec) {
+			this.maxDegreesPerSec = maxDegreesPerSec;
+		}
+	}
+	
 
 	public enum ServoNames {leftServo, rightServo}
 }
