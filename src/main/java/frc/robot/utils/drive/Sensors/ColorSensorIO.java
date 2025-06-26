@@ -12,8 +12,9 @@ public interface ColorSensorIO {
 		@AutoLog
 	
 	public static class ColorSensorIOInputs{
-		public String colorOutput;
-		public double proximityCentimeters;
+		public boolean connected = false;
+		public String colorOutput = "#000000";
+		public double proximityCentimeters = 0.0;
 	}
 
 	public default void updateInputs(ColorSensorIOInputs inputs) {}

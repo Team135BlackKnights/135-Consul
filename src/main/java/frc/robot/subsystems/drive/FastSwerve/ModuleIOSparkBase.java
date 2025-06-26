@@ -187,9 +187,10 @@ public class ModuleIOSparkBase implements ModuleIO {
 		driveConfig = driveConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		driveConfig = turnConfig.smartCurrentLimit(DriveConstants.kMaxTurnCurrent);
 		driveEncoder.setPosition(0.0);
-		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatio;
+		double driveVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 		double turnVelocityConversionFactor = Math.PI / 30 / DriveConstants.TrainConstants.kTurningMotorGearRatio;
-		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatio * (2 * Math.PI);
+		double drivePositionConversionFactor = 1 / DriveConstants.TrainConstants.kDriveMotorGearRatioLow
+				* (2 * Math.PI);
 		double turnPositionConversionFactor = 1 / DriveConstants.TrainConstants.kTurningMotorGearRatio * (2 * Math.PI);
 		driveEncoderConfig = new EncoderConfig().quadratureAverageDepth(2).quadratureMeasurementPeriod(10)
 				.uvwAverageDepth(2).uvwMeasurementPeriod(10).velocityConversionFactor(driveVelocityConversionFactor)
@@ -203,7 +204,8 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.busVoltagePeriodMs((int) (1000 / DriveConstants.TrainConstants.odomHz));
 		driveConfig = driveConfig.apply(driveSignalsConfig);
 		driveMaxMotionConfig = new MAXMotionConfig()
-				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond / DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
+				.maxVelocity(DriveConstants.kMaxSpeedMetersPerSecond
+						/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2)
 				.maxAcceleration(DriveConstants.maxTranslationalAcceleration.get()
 						/ DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
 		driveClosedLoopConfig = new ClosedLoopConfig().pidf(
@@ -219,6 +221,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 				.velocityConversionFactor(turnVelocityConversionFactor)
 				.positionConversionFactor(turnPositionConversionFactor);
 		turnConfig = turnConfig.apply(turnEncoderConfig);
+		//3.3 is the voltage here
 		turnAbsoluteEncoderConfig = new AnalogSensorConfig().inverted(isTurnAbsInverted)
 				.positionConversionFactor(1 / RobotController.getVoltage3V3() * 2 * Math.PI)
 				.velocityConversionFactor(1 / RobotController.getVoltage3V3() * 2 * Math.PI);
@@ -315,7 +318,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 		turnClosedLoopConfig = turnClosedLoopConfig.pidf(kP, kI, kD, kV);
 		turnConfig = turnConfig.apply(turnClosedLoopConfig);
 		updateExecutor(true);

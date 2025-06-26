@@ -23,25 +23,35 @@ public abstract class GamePieceInSimulation extends Body
 	public final GamePieceTag tag;
 	public double momentumAngle = 0;
 	public double momentumMagnitude = 0;
-	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag) {
-		this(initialPosition, shape, FieldConstants.DEFAULT_MASS, tag,0,0);
+	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag, boolean isAlgaeBall) {
+		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG, tag,0,0);
 	}
-	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag, double momentumAngle, double momentumMagnitude) {
-		this(initialPosition, shape, FieldConstants.DEFAULT_MASS,tag, momentumAngle, momentumMagnitude);
+	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag, double momentumAngle, double momentumMagnitude,boolean isAlgaeBall) {
+		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG,tag, momentumAngle, momentumMagnitude);
 	}
 
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape,
 			double mass, GamePieceTag tag, double momentumAngle, double momentumMagnitude) {
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
-		bodyFixture.setFriction(FieldConstants.EDGE_COEFFICIENT_OF_FRICTION);
-		bodyFixture.setRestitution(FieldConstants.EDGE_COEFFICIENT_OF_RESTITUTION);
-		bodyFixture.setDensity(mass / shape.getArea());
+		if (mass == FieldConstants.AlgaeBall.DEFAULT_MASS_KG){
+			bodyFixture.setFriction(FieldConstants.AlgaeBall.EDGE_COEFFICIENT_OF_FRICTION);
+			bodyFixture.setRestitution(FieldConstants.AlgaeBall.EDGE_COEFFICIENT_OF_RESTITUTION);
+			bodyFixture.setDensity(mass / shape.getArea());
+			super.setLinearDamping(FieldConstants.AlgaeBall.LINEAR_DAMPING);
+			super.setAngularDamping(FieldConstants.AlgaeBall.ANGULAR_DAMPING);
+		}else{
+			bodyFixture.setFriction(FieldConstants.ReefscapeCoral.EDGE_COEFFICIENT_OF_FRICTION);
+			bodyFixture.setRestitution(FieldConstants.ReefscapeCoral.EDGE_COEFFICIENT_OF_RESTITUTION);
+			bodyFixture.setDensity(mass / shape.getArea());
+			super.setLinearDamping(FieldConstants.ReefscapeCoral.LINEAR_DAMPING);
+			super.setAngularDamping(FieldConstants.ReefscapeCoral.ANGULAR_DAMPING);
+		}
+		
 		this.tag = tag;
 		super.setMass(MassType.NORMAL);
 		super.translate(GeometryConvertor.toDyn4jVector2(initialPosition));
-		super.setLinearDamping(FieldConstants.LINEAR_DAMPING);
-		super.setAngularDamping(FieldConstants.ANGULAR_DAMPING);
+		super.rotateAboutCenter(momentumAngle);
 		super.setBullet(true);
 		super.setLinearVelocity(Vector2.create(momentumMagnitude, momentumAngle));
 	}

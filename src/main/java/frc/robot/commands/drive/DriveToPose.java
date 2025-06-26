@@ -10,6 +10,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.LoggableTunedNumber;
@@ -61,18 +62,18 @@ public class DriveToPose extends Command {
 			"DriveToPose/FFMaxRadius");
 	//Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(3.0);
-		driveKd.initDefault(0.0);
-		thetaKp.initDefault(6);
-		thetaKd.initDefault(0.1);
-		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0));
-		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(90.0));
-		driveTolerance.initDefault(0.02);
-		driveToleranceSlow.initDefault(0.03);
-		thetaTolerance.initDefault(Units.degreesToRadians(3.0));
-		thetaToleranceSlow.initDefault(Units.degreesToRadians(1.0));
-		ffMinRadius.initDefault(0.2);
-		ffMaxRadius.initDefault(1);
+		driveKp.initDefault(3.0, Constants.TuningConstants.isTuningMacros);
+		driveKd.initDefault(0.0, Constants.TuningConstants.isTuningMacros);
+		thetaKp.initDefault(6, Constants.TuningConstants.isTuningMacros);
+		thetaKd.initDefault(0.1, Constants.TuningConstants.isTuningMacros);
+		driveMaxVelocitySlow.initDefault(Units.inchesToMeters(50.0), Constants.TuningConstants.isTuningMacros);
+		thetaMaxVelocitySlow.initDefault(Units.degreesToRadians(90.0), Constants.TuningConstants.isTuningMacros);
+		driveTolerance.initDefault(0.02, Constants.TuningConstants.isTuningMacros);
+		driveToleranceSlow.initDefault(0.03, Constants.TuningConstants.isTuningMacros);
+		thetaTolerance.initDefault(Units.degreesToRadians(3.0), Constants.TuningConstants.isTuningMacros);
+		thetaToleranceSlow.initDefault(Units.degreesToRadians(1.0), Constants.TuningConstants.isTuningMacros);
+		ffMinRadius.initDefault(0.2, Constants.TuningConstants.isTuningMacros);
+		ffMaxRadius.initDefault(1, Constants.TuningConstants.isTuningMacros);
 	}
 
 	/** Drives to the specified pose under full software control. */

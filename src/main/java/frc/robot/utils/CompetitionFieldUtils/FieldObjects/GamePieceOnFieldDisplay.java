@@ -15,7 +15,7 @@ public interface GamePieceOnFieldDisplay
 		final Pose2d pose2d = getObjectOnFieldPose2d();
 		final Translation3d translation3d = new Translation3d(pose2d.getX(),
 				pose2d.getY(), getGamePieceHeight() / 2);
-		return new Pose3d(translation3d, new Rotation3d());
+		return new Pose3d(translation3d, new Rotation3d(pose2d.getRotation()));
 	}
 
 	/**

@@ -11,14 +11,19 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+
 /**
- * This class is used to interface with a CANCoder. 
+ * This class is used to interface with a CANCoder.
  * Almost for any encoder, the conversion factor is 1.0.
  * BE SURE TO PROVIDE OFFSET IN ROTATIONS! NOT RADIANS!
  */
@@ -26,12 +31,22 @@ public class EncoderIOCANCoder implements EncoderIO {
     private final CANcoder encoder;
     private double conversionFactor = 1.0;
     private String name = "";
+    private StatusSignal<Angle> absolutePosition;
+    private StatusSignal<AngularVelocity> velocity;
+    private StatusSignal<Angle> position;
 
     public EncoderIOCANCoder(int canID, CANBus canBus, String name, double conversionFactor,
             double encoderOffsetRotations, boolean isInverted) {
         this.encoder = new CANcoder(canID, canBus);
-        MagnetSensorConfigs sensorConfig = new MagnetSensorConfigs().withMagnetOffset(encoderOffsetRotations).withSensorDirection(isInverted ? SensorDirectionValue.Clockwise_Positive: SensorDirectionValue.CounterClockwise_Positive);
+        MagnetSensorConfigs sensorConfig = new MagnetSensorConfigs().withMagnetOffset(encoderOffsetRotations)
+                .withSensorDirection(isInverted ? SensorDirectionValue.Clockwise_Positive
+                        : SensorDirectionValue.CounterClockwise_Positive);
         encoder.getConfigurator().apply(sensorConfig);
+        absolutePosition = encoder.getAbsolutePosition();
+        velocity = encoder.getVelocity();
+        position = encoder.getPosition();
+        BaseStatusSignal.setUpdateFrequencyForAll(50, absolutePosition, velocity, position);
+        encoder.optimizeBusUtilization();
         this.conversionFactor = conversionFactor;
         this.name = name;
     }
@@ -52,9 +67,15 @@ public class EncoderIOCANCoder implements EncoderIO {
     public EncoderIOCANCoder(int canID, String name, double conversionFactor, double encoderOffsetRotations,
             boolean isInverted) {
         this.encoder = new CANcoder(canID);
-        MagnetSensorConfigs sensorConfig = new MagnetSensorConfigs().withMagnetOffset(encoderOffsetRotations).withSensorDirection(isInverted ? SensorDirectionValue.Clockwise_Positive: SensorDirectionValue.CounterClockwise_Positive);
+        MagnetSensorConfigs sensorConfig = new MagnetSensorConfigs().withMagnetOffset(encoderOffsetRotations)
+                .withSensorDirection(isInverted ? SensorDirectionValue.Clockwise_Positive
+                        : SensorDirectionValue.CounterClockwise_Positive);
         encoder.getConfigurator().apply(sensorConfig);
-    
+        absolutePosition = encoder.getAbsolutePosition();
+        velocity = encoder.getVelocity();
+        position = encoder.getPosition();
+        BaseStatusSignal.setUpdateFrequencyForAll(50, absolutePosition, velocity, position);
+        encoder.optimizeBusUtilization();
         this.name = name;
         this.conversionFactor = conversionFactor;
     }
@@ -73,19 +94,20 @@ public class EncoderIOCANCoder implements EncoderIO {
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        inputs.absolutePositionRadians = Units.rotationsToRadians(encoder.getAbsolutePosition().getValueAsDouble())
+        BaseStatusSignal.refreshAll(absolutePosition, velocity, position);
+        inputs.absolutePositionRadians = Units.rotationsToRadians(absolutePosition.getValueAsDouble())
                 / conversionFactor;
-        inputs.angularVelocityRadPerSec = Units.rotationsToRadians(encoder.getVelocity().getValueAsDouble())
+        inputs.angularVelocityRadPerSec = Units.rotationsToRadians(velocity.getValueAsDouble())
                 / conversionFactor;
-        inputs.relativePositionRadians = (Units
-                .rotationsToRadians(encoder.getPosition().getValueAsDouble())
-                / conversionFactor);
+        inputs.relativePositionRadians = Units
+                .rotationsToRadians(position.getValueAsDouble())
+                / conversionFactor;
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
         inputs.encoderType = EncoderType.CTRE;
     }
 
     /**
-     * This function only resets relative, absolute offset stays the same.
+     * This function only resets relative, absolute stays the same.
      */
     @Override
     public void reset() {
