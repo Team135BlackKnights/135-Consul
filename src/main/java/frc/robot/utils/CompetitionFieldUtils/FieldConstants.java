@@ -20,8 +20,8 @@ import frc.robot.utils.GeomUtil;
  */
 public class FieldConstants {
 	// TOOD: update these
-	public static final double FIELD_WIDTH = 16.54;
-	public static final double FIELD_HEIGHT = 8.21;
+	public static final double FIELD_WIDTH = 17.548;
+	public static final double FIELD_HEIGHT = 8.042;
 	public static final double// Hexagon points around (130, 140)
 	// Hexagon centered at (144 + 32.4, 140 + 37) with a radius of 40 inches
 	blueCenterX = Units.inchesToMeters(144 + 32.4),
