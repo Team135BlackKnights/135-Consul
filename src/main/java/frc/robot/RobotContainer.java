@@ -93,6 +93,9 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
+import frc.robot.utils.operatorDashboard.OperatorControls;
+import frc.robot.utils.operatorDashboard.OperatorDashboardIO;
+import frc.robot.utils.operatorDashboard.OperatorDashboardIOServer;
 
 
 /**
@@ -104,6 +107,7 @@ import frc.robot.utils.drive.Sensors.GyroIOSim;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static OperatorControls operatorControls;
 	private final LoggedDashboardChooser<Command> autoChooser;
 	// private final Notifier superStructureNotifier;
 	public static final LoggedDashboardChooser<Pose2d> startingPose = new LoggedDashboardChooser<Pose2d>(
@@ -628,6 +632,7 @@ public class RobotContainer {
 		
 		drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
+		operatorControls = new OperatorControls(Constants.currentMode == Mode.REPLAY ? new OperatorDashboardIO(){}: new OperatorDashboardIOServer());
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		// algaeScorer.setDefaultCommand(new AlgaeScorerC(algaeScorer));
 		// superStructureNotifier = new Notifier(superStructure::periodic);
