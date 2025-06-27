@@ -333,7 +333,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				driveTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				driveTalon.getConfigurator().apply(driveTalonConfig, 0.25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, 0.01);
 			}
 		});
 	}
@@ -345,7 +345,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				turnTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				turnTalon.getConfigurator().apply(turnTalonConfig, 0.25);
+				turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 			}
 		});
 	}
@@ -356,7 +356,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			synchronized (driveTalonConfig) {
 				driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = amps;
 				driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -amps;
-				driveTalon.getConfigurator().apply(driveTalonConfig, .25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, .01);
 			}
 		});
 	}

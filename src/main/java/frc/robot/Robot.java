@@ -52,6 +52,7 @@ import frc.robot.utils.Elastic;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LogTimingReceiver;
 import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.VirtualSubsystem;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBattery;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
@@ -315,6 +316,7 @@ public class Robot extends LoggedRobot {
 		// robot's periodic
 		// block in order for anything in the Command-based framework to work.
 		CommandScheduler.getInstance().run();
+		VirtualSubsystem.periodicAll();
 		for (PeriodicFunction f : periodicFunctions) {
 			f.runIfReady();
 		}
