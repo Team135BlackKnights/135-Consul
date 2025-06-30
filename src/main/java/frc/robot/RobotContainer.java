@@ -77,6 +77,8 @@ import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.subsystems.drive.Tank.Tank;
+import frc.robot.subsystems.solenoid.SolenoidS;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
@@ -108,6 +110,7 @@ public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
 	public static OperatorControls operatorControls;
+	public static SolenoidS solenoidS = new SolenoidS();
 	private final LoggedDashboardChooser<Command> autoChooser;
 	// private final Notifier superStructureNotifier;
 	public static final LoggedDashboardChooser<Pose2d> startingPose = new LoggedDashboardChooser<Pose2d>(
