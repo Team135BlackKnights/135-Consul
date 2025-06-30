@@ -3,7 +3,6 @@ package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.maths.GeometryConvertor;
 import org.dyn4j.dynamics.Body;
 import org.dyn4j.dynamics.BodyFixture;
@@ -19,19 +18,17 @@ import org.dyn4j.geometry.Vector2;
  */
 public abstract class GamePieceInSimulation extends Body
 		implements GamePieceOnFieldDisplay {
-
-	public final GamePieceTag tag;
 	public double momentumAngle = 0;
 	public double momentumMagnitude = 0;
-	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag, boolean isAlgaeBall) {
-		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG, tag,0,0);
+	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, boolean isAlgaeBall) {
+		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG,0,0);
 	}
-	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, GamePieceTag tag, double momentumAngle, double momentumMagnitude,boolean isAlgaeBall) {
-		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG,tag, momentumAngle, momentumMagnitude);
+	public GamePieceInSimulation(Translation2d initialPosition, Convex shape, double momentumAngle, double momentumMagnitude,boolean isAlgaeBall) {
+		this(initialPosition, shape, isAlgaeBall ? FieldConstants.AlgaeBall.DEFAULT_MASS_KG : FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG, momentumAngle, momentumMagnitude);
 	}
 
 	public GamePieceInSimulation(Translation2d initialPosition, Convex shape,
-			double mass, GamePieceTag tag, double momentumAngle, double momentumMagnitude) {
+			double mass , double momentumAngle, double momentumMagnitude) {
 		super();
 		BodyFixture bodyFixture = super.addFixture(shape);
 		if (mass == FieldConstants.AlgaeBall.DEFAULT_MASS_KG){
@@ -48,15 +45,11 @@ public abstract class GamePieceInSimulation extends Body
 			super.setAngularDamping(FieldConstants.ReefscapeCoral.ANGULAR_DAMPING);
 		}
 		
-		this.tag = tag;
 		super.setMass(MassType.NORMAL);
 		super.translate(GeometryConvertor.toDyn4jVector2(initialPosition));
 		super.rotateAboutCenter(momentumAngle);
 		super.setBullet(true);
 		super.setLinearVelocity(Vector2.create(momentumMagnitude, momentumAngle));
-	}
-	public GamePieceTag getTag() {
-		return tag;
 	}
 	@Override
 	public Pose2d getObjectOnFieldPose2d() {

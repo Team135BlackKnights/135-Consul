@@ -1,16 +1,21 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
-import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.Constants;
+import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.GeometryConstants;
-import frc.robot.utils.GeomUtil;
+import frc.robot.Robot;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.AlgaeBall;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.ReefHeight;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.maths.TimeUtil;
+
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.dyn4j.geometry.Geometry;
 import org.littletonrobotics.junction.Logger;
@@ -29,10 +34,11 @@ public final class Reefscape2025FieldObjects {
 	 */
 	public static class AlgaeBallOnFieldStatic extends GamePieceInSimulation {
 		private Pose3d staticPose;
+
 		public AlgaeBallOnFieldStatic(Pose3d staticPose) {
 			super(staticPose.getTranslation().toTranslation2d(),
 					Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_ALGAE_BALL, true);
+					true);
 			super.setEnabled(false);
 			this.staticPose = staticPose;
 		}
@@ -40,8 +46,8 @@ public final class Reefscape2025FieldObjects {
 		public AlgaeBallOnFieldStatic(Pose3d staticPose, double momentumAngle,
 				double momentumMagnitude) {
 			super(staticPose.getTranslation().toTranslation2d(),
-					Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_ALGAE_BALL, momentumAngle, momentumMagnitude, true);
+					Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2), momentumAngle, momentumMagnitude,
+					true);
 			super.setEnabled(false);
 			this.staticPose = staticPose;
 		}
@@ -59,6 +65,26 @@ public final class Reefscape2025FieldObjects {
 		@Override
 		public String getTypeName() {
 			return "AlgaeBall";
+		}
+
+		@Override
+		public Pair<Boolean,String> isInScoreZone() {
+			return new Pair<>(false, "NotInScoreZone"); // Static/End scored. Cannot score again.
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return FieldConstants.ALGAE_BALL_SCORE; // doesn't change throughout game
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude, double momentumAngle) {
+			return null; // unused since deleted.
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			return true;
 		}
 	}
 
@@ -70,10 +96,10 @@ public final class Reefscape2025FieldObjects {
 	 */
 	public static class ReefscapeCoralOnFieldStatic extends GamePieceInSimulation {
 		private Pose3d staticPose;
+
 		public ReefscapeCoralOnFieldStatic(Pose3d staticPose) {
 			super(staticPose.getTranslation().toTranslation2d(),
-					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_REEFSCAPE_CORAL, false);
+					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), false);
 			super.setEnabled(false);
 			this.staticPose = staticPose;
 		}
@@ -81,8 +107,8 @@ public final class Reefscape2025FieldObjects {
 		public ReefscapeCoralOnFieldStatic(Pose3d staticPose, double momentumAngle,
 				double momentumMagnitude) {
 			super(staticPose.getTranslation().toTranslation2d(),
-					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_REEFSCAPE_CORAL, momentumAngle, momentumMagnitude, false);
+					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), momentumAngle,
+					momentumMagnitude, false);
 			super.setEnabled(false);
 			this.staticPose = staticPose;
 		}
@@ -101,6 +127,26 @@ public final class Reefscape2025FieldObjects {
 		public String getTypeName() {
 			return "ReefscapeCoral";
 		}
+
+		@Override
+		public Pair<Boolean,String> isInScoreZone() {
+			return new Pair<>(false, "NotInScoreZone"); // Static/End scored. Cannot score again.
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return 0; // doesn't GET scored.
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			return true; // doesn't GET scored.
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude, double momentumAngle) {
+			return null;
+		}
 	}
 
 	/**
@@ -110,14 +156,13 @@ public final class Reefscape2025FieldObjects {
 	 */
 	public static class AlgaeBallOnFieldSimulated extends GamePieceInSimulation {
 		public AlgaeBallOnFieldSimulated(Translation2d initialPosition) {
-			super(initialPosition, Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_ALGAE_BALL, true);
+			super(initialPosition, Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2), true);
 		}
 
 		public AlgaeBallOnFieldSimulated(Translation2d initialPosition, double momentumAngle,
 				double momentumMagnitude) {
-			super(initialPosition, Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_ALGAE_BALL, momentumAngle, momentumMagnitude, true);
+			super(initialPosition, Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2), momentumAngle,
+					momentumMagnitude, true);
 		}
 
 		@Override
@@ -129,6 +174,31 @@ public final class Reefscape2025FieldObjects {
 		public String getTypeName() {
 			return "AlgaeBall";
 		}
+
+		@Override
+		public Pair<Boolean,String> isInScoreZone() {
+			Translation3d position = getPose3d().getTranslation();
+			if (position.getY() >= FieldConstants.FIELD_HEIGHT + .05
+					|| position.getY() <= -.05) {
+				return new Pair<>(false, "Processor");
+			}
+			return new Pair<>(false, "NotInScoreZone");
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return FieldConstants.ALGAE_BALL_SCORE; // doesn't change throughout game
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			return true;
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldScore, double magnitude, double momentumAngle) {
+			return null;
+		}
 	}
 
 	/**
@@ -138,14 +208,13 @@ public final class Reefscape2025FieldObjects {
 	 */
 	public static class ReefscapeCoralOnFieldSimulated extends GamePieceInSimulation {
 		public ReefscapeCoralOnFieldSimulated(Translation2d initialPosition) {
-			super(initialPosition, Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_REEFSCAPE_CORAL, false);
+			super(initialPosition, Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), false);
 		}
 
 		public ReefscapeCoralOnFieldSimulated(Translation2d initialPosition, double momentumAngle,
 				double momentumMagnitude) {
-			super(initialPosition, Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.ON_GROUND_REEFSCAPE_CORAL, momentumAngle, momentumMagnitude, false);
+			super(initialPosition, Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), momentumAngle,
+					momentumMagnitude, false);
 		}
 
 		@Override
@@ -156,6 +225,23 @@ public final class Reefscape2025FieldObjects {
 		@Override
 		public String getTypeName() {
 			return "ReefscapeCoral";
+		}
+
+		@Override
+		public Pair<Boolean,String> isInScoreZone() {
+			return new Pair<>(false, "NotInScoreZone");
+		}
+		@Override
+		public int getScoreValue(String scoreType) {
+			return 0; // doesn't GET scored.
+		}
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			return true; // doesn't GET scored.
+		}
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldScore, double magnitude, double momentumAngle) {
+			return null; // unused since deleted.
 		}
 	}
 
@@ -170,9 +256,7 @@ public final class Reefscape2025FieldObjects {
 
 		public AlgaeBallOnManipulator(double launchingTimeStampSec,
 				double launchingSpeedMetersPerSec, Pose3d currentPose) {
-			super(Robot.elevatorPose.getTranslation()
-					.toTranslation2d(), Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.IN_ROBOT_ALGAE_BALL, false);
+			super(new Translation2d(), Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2), false);
 			super.setEnabled(false);
 			this.currentPose = currentPose;
 			this.startingPose = currentPose;
@@ -181,7 +265,6 @@ public final class Reefscape2025FieldObjects {
 			this.totalTimeSec = startingPose.getTranslation()
 					.getDistance(RobotContainer.fieldSimulation
 							.getMainDriveSimulation().getPose3d()
-							.plus(GeomUtil.poseToTransform(Robot.elevatorPose))
 							.transformBy(GeometryConstants.coralScorerTransform).getTranslation())
 					/ launchingSpeedMetersPerSec * 1e6;
 		}
@@ -200,9 +283,10 @@ public final class Reefscape2025FieldObjects {
 		public Pose3d getPose3d() {
 			double currentTime = Logger.getTimestamp();
 			// set the pose's rotation
-			Pose3d manipulatorPose3d =  RobotContainer.fieldSimulation
-			.getMainDriveSimulation().getPose3d().plus(GeomUtil.poseToTransform(Robot.armPose)).plus(new Transform3d(
-				Units.inchesToMeters(2), Units.inchesToMeters(0), Units.inchesToMeters(6), Robot.armPose.getRotation()));
+			Pose3d manipulatorPose3d = RobotContainer.fieldSimulation
+					.getMainDriveSimulation().getPose3d().plus(new Transform3d(
+							Units.inchesToMeters(2), Units.inchesToMeters(0), Units.inchesToMeters(6),
+							new Rotation3d()));
 			// manipulatorPose3d = new Pose3d(manipulatorPose3d.getTranslation(),
 			// new
 			// Rotation3d(0,-RobotContainer.armS.getDistance(),RobotContainer.drivetrainS.getPose().getRotation().getRadians()));
@@ -216,6 +300,29 @@ public final class Reefscape2025FieldObjects {
 					timeProportion);
 			return currentPose;
 		}
+
+		@Override
+		public Pair<Boolean, String> isInScoreZone() {
+			//This went unimplemented. It SHOULD have logic. Nah. -G
+			return new Pair<>(false, "NotInScoreZone"); 
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return 0; // doesn't change throughout game
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			// This went unimplemented. It SHOULD have logic. Nah. -G
+			return false; // never delete, it is always on the manipulator
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude,
+				double momentumAngle) {
+			return null;
+		}
 	}
 
 	/**
@@ -225,18 +332,20 @@ public final class Reefscape2025FieldObjects {
 	public static class ReefscapeCoralOnManipulator extends GamePieceInSimulation {
 		private final double launchingTimeStampSec;
 		private Pose3d currentPose = new Pose3d();
-		private double totalTimeSec =1;
- 		/**
+		private double totalTimeSec = 1;
+
+		/**
 		 * Runs an animation to get to the manipulator pose.
 		 */
-		public ReefscapeCoralOnManipulator(){
-			super(Robot.elevatorPose.getTranslation()
-					.toTranslation2d(), Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.IN_ROBOT_REEFSCAPE_CORAL, false);
+		public ReefscapeCoralOnManipulator() {
+			super(new Translation2d(), Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), false);
 			super.setEnabled(false);
 			this.launchingTimeStampSec = TimeUtil.getLogTimeSeconds();
 			currentPose = RobotContainer.fieldSimulation
-			.getMainDriveSimulation().getPose3d().plus(GeometryConstants.hopperStartTransform);//an exact offset point from robot center
+					.getMainDriveSimulation().getPose3d().plus(GeometryConstants.hopperStartTransform);// an exact
+																										// offset point
+																										// from robot
+																										// center
 		}
 
 		@Override
@@ -255,41 +364,60 @@ public final class Reefscape2025FieldObjects {
 			// set the pose's rotation
 			Pose3d manipulatorPose3d = RobotContainer.fieldSimulation
 					.getMainDriveSimulation().getPose3d()
-					.plus(GeomUtil.poseToTransform(Robot.elevatorPose))
 					.plus(GeometryConstants.coralScorerTransform.plus(new Transform3d(Units.inchesToMeters(-1),
-							Units.inchesToMeters(-6)+.05, Units.inchesToMeters(23.45)-.5, new Rotation3d())));
+							Units.inchesToMeters(-6) + .05, Units.inchesToMeters(23.45) - .5, new Rotation3d())));
 			Pose3d angledHopper = RobotContainer.fieldSimulation
-			.getMainDriveSimulation().getPose3d()
-			.plus(GeometryConstants.hopperTransform);
+					.getMainDriveSimulation().getPose3d()
+					.plus(GeometryConstants.hopperTransform);
 			Pose3d angledMiddleHopper = RobotContainer.fieldSimulation
-			.getMainDriveSimulation().getPose3d()
-			.plus(GeometryConstants.hopperMiddleTransform);
-			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec //28.5 - 27.5 > 27.5+1
+					.getMainDriveSimulation().getPose3d()
+					.plus(GeometryConstants.hopperMiddleTransform);
+			if ((currentTime - launchingTimeStampSec) > (launchingTimeStampSec // 28.5 - 27.5 > 27.5+1
 					+ totalTimeSec)) {
-				//leaving this here for the bit -N
-				//if (!lockedIn){
-				//	lockedIn = true;
-				//}
+				// if (!lockedIn){
+				// lockedIn = true;
+				// }
 				return manipulatorPose3d;
 			}
-			//go to angle pose
-			if (currentTime - launchingTimeStampSec < 0.25){
+			// go to angle pose
+			if (currentTime - launchingTimeStampSec < 0.25) {
 				double timeProportion = (currentTime - launchingTimeStampSec)
-				/ .25;
+						/ .25;
 				currentPose = currentPose.interpolate(angledMiddleHopper, timeProportion);
-			}else if (currentTime-launchingTimeStampSec < .5){
+			} else if (currentTime - launchingTimeStampSec < .5) {
 				double timeProportion = (currentTime - (launchingTimeStampSec + .25))
-				/ .25;
+						/ .25;
 				currentPose = currentPose.interpolate(angledHopper, timeProportion);
 			}
-			
-			else{
+
+			else {
 				double timeProportion = (currentTime - (launchingTimeStampSec + 0.5)) / .5;
 				currentPose = currentPose.interpolate(manipulatorPose3d, timeProportion);
 
 			}
 
 			return currentPose;
+		}
+
+		@Override
+		public Pair<Boolean, String> isInScoreZone() {
+			return new Pair<>(false, "NotInScoreZone");
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return 0;
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			return false; // never delete
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude,
+				double momentumAngle) {
+			return null;
 		}
 	}
 
@@ -305,8 +433,7 @@ public final class Reefscape2025FieldObjects {
 		public AlgaeBallInFly(double launchingTimeStampSec,
 				double launchingSpeedMetersPerSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
-					Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2),
-					GamePieceTag.IN_AIR_ALGAE_BALL, true);
+					Geometry.createCircle(FieldConstants.ALGAE_BALL_DIAMETER / 2), true);
 			super.setEnabled(true);
 			this.currentPose = startingPose;
 			this.startingPose = startingPose;
@@ -354,6 +481,28 @@ public final class Reefscape2025FieldObjects {
 		public double getGamePieceHeight() {
 			return FieldConstants.ALGAE_BALL_HEIGHT;
 		}
+
+		@Override
+		public Pair<Boolean, String> isInScoreZone() {
+			return new Pair<>(false, "NotInScoreZone"); // flying, not scored yet
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			return 0; // not scored
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			// if the game piece is not in the air anymore, delete it
+			return false; // not deleted yet
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude,
+				double momentumAngle) {
+			return null;
+		}
 	}
 
 	/**
@@ -370,8 +519,7 @@ public final class Reefscape2025FieldObjects {
 
 		public ReefscapeCoralInFly(double launchingTimeStampSec, Pose3d startingPose) {
 			super(startingPose.toPose2d().getTranslation(),
-					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2),
-					GamePieceTag.IN_AIR_REEFSCAPE_CORAL, false);
+					Geometry.createCircle(FieldConstants.REEFSCAPE_CORAL_DIAMETER / 2), false);
 			super.setEnabled(false);
 			this.currentPose = startingPose;
 			this.startingPose = startingPose;
@@ -429,6 +577,219 @@ public final class Reefscape2025FieldObjects {
 		@Override
 		public double getGamePieceHeight() {
 			return FieldConstants.REEFSCAPE_CORAL_HEIGHT;
+		}
+
+		private Pair<Pose3d, ReefHeight> getNearestScoringLocationCoral(Pose3d position) {
+			AtomicReference<Pose3d> closestScoringPose = new AtomicReference<>(new Pose3d());
+			if (Robot.isRed == false) {
+				FieldConstants.Reef.blueBranchPositions.forEach((entry) -> {
+					for (Entry<ReefHeight, Pose3d> entries : entry.entrySet()) {
+						if (entries.getValue()
+								.relativeTo(
+										position.plus(
+											new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+											new Rotation3d())))
+								.getTranslation()
+								.getNorm() < closestScoringPose.get()
+										.relativeTo(position
+												.plus(new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+												new Rotation3d())))
+										.getTranslation()
+										.getNorm()) {
+							closestScoringPose.set(entries.getValue());
+						}
+					}
+				});
+			} else {
+				FieldConstants.Reef.redBranchPositions.forEach((entry) -> {
+					for (Entry<ReefHeight, Pose3d> entries : entry.entrySet()) {
+						if (entries.getValue()
+								.relativeTo(
+										position.plus(
+											new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+											new Rotation3d())))
+								.getTranslation()
+								.getNorm() < closestScoringPose.get()
+										.relativeTo(position
+												.plus(new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+												new Rotation3d())))
+										.getTranslation()
+										.getNorm()) {
+							closestScoringPose.set(entries.getValue());
+						}
+					}
+				});
+			}
+			if (closestScoringPose.get() != null) {
+				// Logger.recordOutput("ClosestScoreingSpot", closestScoringPose.get());
+				if (closestScoringPose.get().getZ() > 1.6) {
+					// System.out.println("L4");
+					// Logger.recordOutput("ClosestScoringSpot", closestScoringPose.get().plus(new
+					// Transform3d(.06,0,0,new Rotation3d())));
+					// Logger.recordOutput("HitPoint",
+					// position.plus(GeometryConstants.ReefscapeGeometryScoring.CoralDistanceFromCenter));
+					if (closestScoringPose.get().plus(new Transform3d(.06, 0, 0, new Rotation3d()))
+							.relativeTo(
+									position.plus(new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+									new Rotation3d())))
+							.getTranslation()
+							.getNorm() < FieldConstants.SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL) {
+						if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L3.height) {
+							Pose3d pose = closestScoringPose.get();
+							return new Pair<>(
+									new Pose3d(pose.getTranslation(),
+											new Rotation3d(pose.getRotation().getX(),
+													FieldConstants.ReefHeight.L2.pitch,
+													pose.getRotation().getZ())),
+									FieldConstants.ReefHeight.L2);
+						} else if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L4.height) {
+							Pose3d pose = closestScoringPose.get();
+							return new Pair<>(
+									new Pose3d(pose.getTranslation(),
+											new Rotation3d(pose.getRotation().getX(),
+													FieldConstants.ReefHeight.L3.pitch,
+													pose.getRotation().getZ())),
+									FieldConstants.ReefHeight.L3);
+						} else {
+							Pose3d pose = closestScoringPose.get();
+							return new Pair<>(
+									new Pose3d(pose.getTranslation(),
+											new Rotation3d(pose.getRotation().getX(),
+													FieldConstants.ReefHeight.L4.pitch,
+													pose.getRotation().getZ())),
+									FieldConstants.ReefHeight.L4);
+						}
+					}
+				}
+				if (closestScoringPose.get()
+						.relativeTo(position.plus(new Transform3d(Units.inchesToMeters(6.2), 0, 0,
+						new Rotation3d())))
+						.getTranslation()
+						.getNorm() < FieldConstants.SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL) {
+					if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L3.height) {
+						Pose3d pose = closestScoringPose.get();
+						return new Pair<>(
+								new Pose3d(pose.getTranslation(),
+										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L2.pitch,
+												pose.getRotation().getZ())),
+								FieldConstants.ReefHeight.L2);
+					} else if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L4.height) {
+						Pose3d pose = closestScoringPose.get();
+						return new Pair<>(
+								new Pose3d(pose.getTranslation(),
+										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L3.pitch,
+												pose.getRotation().getZ())),
+								FieldConstants.ReefHeight.L3);
+					} else {
+						Pose3d pose = closestScoringPose.get();
+						return new Pair<>(
+								new Pose3d(pose.getTranslation(),
+										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L4.pitch,
+												pose.getRotation().getZ())),
+								FieldConstants.ReefHeight.L4);
+					}
+				} else {
+					return null;
+				}
+
+			}
+			return null;
+
+		}
+
+		@Override
+		public Pair<Boolean, String> isInScoreZone() {
+			Pair<Pose3d, ReefHeight> scoringLocation = getNearestScoringLocationCoral(getPose3d());
+			if (scoringLocation != null) {
+				return new Pair<>(true, "ReefScore");
+			}
+			if (getPose3d().getTranslation()
+					.getZ() <= Units.inchesToMeters(18)) { // collision with ground
+				// make the gamepiece a ground note
+				// check if the note is close enough to a speaker
+				// otherwise, make it a ground note
+				Pose3d pose = getPose3d();
+				if (pose.getTranslation().toTranslation2d().getDistance(new Translation2d(
+						FieldConstants.blueCenterX, FieldConstants.blueCenterY)) < FieldConstants.radius) {
+					return new Pair<>(true, "L1Score");
+				}
+				if (pose.getTranslation().getZ() <= 0.03) {
+					return new Pair<>(true, "GroundScore");
+				}
+			}
+			return new Pair<>(false, "NotInScoreZone");
+		}
+
+		@Override
+		public int getScoreValue(String scoreType) {
+			if (scoreType.equals("ReefScore")) {
+				Pair<Pose3d, ReefHeight> scoringLocation = getNearestScoringLocationCoral(getPose3d());
+				if (scoringLocation != null) {
+					// if it is, make it a speaker note
+					switch (scoringLocation.getSecond()) {
+						case L1:
+							if (Constants.currentMatchState == FRCMatchState.AUTO) {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L1_AUTO;
+							} else {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L1_TELE;
+							}
+
+						case L2:
+							if (Constants.currentMatchState == FRCMatchState.AUTO) {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L2_AUTO;
+							} else {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L2_TELE;
+							}
+
+						case L3:
+							if (Constants.currentMatchState == FRCMatchState.AUTO) {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L3_AUTO;
+							} else {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L3_TELE;
+							}
+						case L4:
+							if (Constants.currentMatchState == FRCMatchState.AUTO) {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L4_AUTO;
+							} else {
+								return FieldConstants.REEFSCAPE_CORAL_SCORE_L4_TELE;
+							}
+
+					}
+				}
+			}
+			if (scoreType.equals("L1Score")) {
+				if (Constants.currentMatchState == FRCMatchState.AUTO) {
+					return FieldConstants.REEFSCAPE_CORAL_SCORE_L1_AUTO;
+				} else {
+					return FieldConstants.REEFSCAPE_CORAL_SCORE_L1_TELE;
+				}
+			}
+			if (scoreType.equals("GroundScore")) {
+				return 0;
+			}
+			return -1; // you deserve to lose points for messing up the scoring system.
+		}
+
+		@Override
+		public boolean shouldDeleteAndRemoveFromSimulation(String scoreType) {
+			if (scoreType.equals("ReefScore") || scoreType.equals("GroundScore")){
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public GamePieceInSimulation scoredGamePieceType(String scoreType, Pose3d oldPose, double magnitude, double momentumAngle) {
+			if (scoreType.equals("ReefScore")){
+				Pair<Pose3d, ReefHeight> scoringLocation = getNearestScoringLocationCoral(getPose3d());
+				return new ReefscapeCoralOnFieldStatic(scoringLocation.getFirst(), momentumAngle, magnitude);
+			}
+			//we are ground scoring.
+			if (scoreType.equals("GroundScore")) {
+				// return a static game piece on field
+				return new ReefscapeCoralOnFieldSimulated(oldPose.getTranslation().toTranslation2d(), momentumAngle, magnitude);
+			}
+			return null; //should never get here.
 		}
 	}
 }

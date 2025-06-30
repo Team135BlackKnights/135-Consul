@@ -39,8 +39,8 @@ public class FieldConstants {
 			5.55, 2.1);
 	public static final Translation3d RED_SCORING_LOCATION_REEFSCAPE_CORAL = new Translation3d(16.317,
 			5.55, 2.1); // in meters!
-	public static final double SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL = Units.inchesToMeters(2.25),
-			ALGAE_BALL_SCORE = 6,
+	public static final double SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL = Units.inchesToMeters(2.25);
+	public static final int ALGAE_BALL_SCORE = 6,
 			REEFSCAPE_CORAL_SCORE_L1_AUTO = 3,
 			REEFSCAPE_CORAL_SCORE_L2_AUTO = 4,
 			REEFSCAPE_CORAL_SCORE_L3_AUTO = 6,

@@ -22,7 +22,6 @@ import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObje
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBattery;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants.GamePieceTag;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.ReefHeight;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.ReefscapeCoral;
 import frc.robot.utils.drive.DriveConstants;
@@ -100,85 +99,36 @@ public abstract class CompetitionFieldSimulation {
 																					// set
 			for (GamePieceInSimulation gamePiece : gamePiecesCopy) { // Iterate over the copy
 				// if gamepiece is an air note, check if we've hit the ground
-				if (gamePiece.getTag() == GamePieceTag.ON_GROUND_ALGAE_BALL) {
-					Translation3d position = gamePiece.getPose3d().getTranslation();
-					// check if the note is close enough to a speaker
-					if (isCloseToScoringLocationGameAlgaeBall(position)) {
-						// if it is, make it a speaker note
-						score += FieldConstants.ALGAE_BALL_SCORE;
-						scoredAlgae++;
-						Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
-						Logger.recordOutput("Scoring/SimScore", score);
+				Pair<Boolean, String> inScoreZone = gamePiece.isInScoreZone();
+				if (inScoreZone.getFirst()) {
+					score += gamePiece.getScoreValue(inScoreZone.getSecond());
+					Logger.recordOutput("Scoring/SimScore", score);
+					if (gamePiece.shouldDeleteAndRemoveFromSimulation(inScoreZone.getSecond())) {
 						this.physicsWorld.removeBody(gamePiece);
 						this.competitionField.deleteObject(gamePiece);
 						gamePieces.remove(gamePiece);
-					} else if (gamePiece.getPose3d().getTranslation()
-							.getZ() > 2) { // check for collision with Net
-						// make the gamepiece a ground note
-						// check if the note is close enough to a speaker
-						// otherwise, make it a ground note
-						// TODO net detection
-						/*
-						 * if (hasContact(gamePiece) && gamePiece.isEnabled()) { //bounce off obstacles
-						 * // Flip the note velocity by Math.PI to simulate a bounce.
-						 * // Relaunch the note from it's current position, just math.pi radians away
-						 * double momentumMagnitude = gamePiece.momentumMagnitude
-						 * FieldConstants.AlgaeBall.EDGE_COEFFICIENT_OF_RESTITUTION;
-						 * this.physicsWorld.removeBody(gamePiece);
-						 * this.competitionField.deleteObject(gamePiece);
-						 * gamePieces.remove(gamePiece);
-						 * gamePiece = new Reefscape2025FieldObjects.AlgaeBallInFly(
-						 * TimeUtil.getLogTimeSeconds(),
-						 * momentumMagnitude, gamePiece.getPose3d().transformBy(
-						 * new Transform3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, Math.PI))));
-						 * this.addGamePiece(gamePiece);
-						 * this.competitionField.addObject(gamePiece);
-						 * final GamePieceInSimulation finalGamePiece = gamePiece;
-						 * // disable the game piece collision for a short time
-						 * new Thread(() -> {
-						 * finalGamePiece.setEnabled(false);
-						 * try {
-						 * Thread.sleep(250);
-						 * } catch (InterruptedException e) {
-						 * e.printStackTrace();
-						 * }
-						 * finalGamePiece.setEnabled(true);
-						 * }).start();
-						 * }
-						 * double momentumAngle = gamePiece.momentumAngle;
-						 * double momentumMagnitude = gamePiece.momentumMagnitude;
-						 * this.physicsWorld.removeBody(gamePiece);
-						 * this.competitionField.deleteObject(gamePiece);
-						 * gamePieces.remove(gamePiece);
-						 * gamePiece = new Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated(
-						 * getClosestPointOnFieldForGamePieceOne(position).toTranslation2d(),
-						 * momentumAngle,
-						 * momentumMagnitude);
-						 * this.addGamePiece(gamePiece);
-						 * this.competitionField.addObject(gamePiece);
-						 * 
-						 * 
-						 */
+
+					} else {
+						// we should NOT delete it, instead change the game piece type.
+						double magnitude = gamePiece.momentumMagnitude;
+						double angle = gamePiece.momentumAngle;
+						Pose3d oldPose = gamePiece.getPose3d();
+						this.physicsWorld.removeBody(gamePiece);
+						this.competitionField.deleteObject(gamePiece);
+						gamePieces.remove(gamePiece);
+						gamePiece = gamePiece.scoredGamePieceType(inScoreZone.getSecond(), oldPose, magnitude, angle);
+						this.addGamePiece(gamePiece);
+						this.competitionField.addObject(gamePiece);
 					}
 				}
-				if (gamePiece.getTag() == GamePieceTag.IN_AIR_ALGAE_BALL) {
+
+				if (gamePiece instanceof Reefscape2025FieldObjects.AlgaeBallInFly) {
 					Translation3d position = gamePiece.getPose3d().getTranslation();
-					// check if the note is close enough to a speaker
-					if (isCloseToScoringLocationGameAlgaeBall(position)) {
-						// if it is, make it a speaker note
-						score += FieldConstants.ALGAE_BALL_SCORE;
-						scoredAlgae++;
-						Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
-						Logger.recordOutput("Scoring/SimScore", score);
-						this.physicsWorld.removeBody(gamePiece);
-						this.competitionField.deleteObject(gamePiece);
-						gamePieces.remove(gamePiece);
-					} else if (gamePiece.getPose3d().getTranslation()
+					if (gamePiece.getPose3d().getTranslation()
 							.getZ() < 2) { // check for collision with Net
 						// make the gamepiece a ground note
 						// check if the note is close enough to a speaker
 						// otherwise, make it a ground note
-						// TODO net detection
 
 						if (hasContact(gamePiece) && gamePiece.isEnabled()) { // bounce off obstacles
 							// Flip the note velocity by Math.PI to simulate a bounce.
@@ -219,10 +169,10 @@ public abstract class CompetitionFieldSimulation {
 						this.addGamePiece(gamePiece);
 						this.competitionField.addObject(gamePiece);
 					} else if (gamePiece.getPose3d().getTranslation()
-					.getZ() > 2){
+							.getZ() > 2) {
 						Pose3d pose = gamePiece.getPose3d();
-						if (pose.getX() > 8.1 && pose.getX() < 9.35){
-							//in the net
+						if (pose.getX() > 8.1 && pose.getX() < 9.35) {
+							// in the net
 							score += 4;
 							scoredAlgae++;
 							Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
@@ -230,7 +180,7 @@ public abstract class CompetitionFieldSimulation {
 							this.physicsWorld.removeBody(gamePiece);
 							this.competitionField.deleteObject(gamePiece);
 							gamePieces.remove(gamePiece);
-							//put a static algae where it was
+							// put a static algae where it was
 							gamePiece = new AlgaeBallOnFieldStatic(pose);
 							this.addGamePiece(gamePiece);
 							this.competitionField.addObject(gamePiece);
@@ -238,113 +188,7 @@ public abstract class CompetitionFieldSimulation {
 						}
 					}
 				}
-				if (gamePiece.getTag() == GamePieceTag.IN_AIR_REEFSCAPE_CORAL) {
-					// check if the note is close enough to a speaker
-					Pair<Pose3d, ReefHeight> scoringLocation = getNearestScoringLocationCoral(gamePiece.getPose3d());
-					if (scoringLocation != null) {
-						// if it is, make it a speaker note
-						switch (scoringLocation.getSecond()) {
-							case L1:
-								if (Constants.currentMatchState == FRCMatchState.AUTO) {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L1_AUTO;
-								} else {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L1_TELE;
-								}
-								break;
 
-							case L2:
-								if (Constants.currentMatchState == FRCMatchState.AUTO) {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L2_AUTO;
-								} else {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L2_TELE;
-								}
-								break;
-
-							case L3:
-								if (Constants.currentMatchState == FRCMatchState.AUTO) {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L3_AUTO;
-								} else {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L3_TELE;
-								}
-								break;
-							case L4:
-								if (Constants.currentMatchState == FRCMatchState.AUTO) {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L4_AUTO;
-								} else {
-									score += FieldConstants.REEFSCAPE_CORAL_SCORE_L4_TELE;
-								}
-								break;
-						}
-						scoredCoral++;
-						Logger.recordOutput("Scoring/SimCoralScoredCount", scoredCoral);
-						this.physicsWorld.removeBody(gamePiece);
-						this.competitionField.deleteObject(gamePiece);
-						gamePieces.remove(gamePiece);
-						gamePiece = new Reefscape2025FieldObjects.ReefscapeCoralOnFieldStatic(
-								scoringLocation.getFirst());
-						this.addGamePiece(gamePiece);
-						this.competitionField.addObject(gamePiece);
-					} else if (gamePiece.getPose3d().getTranslation()
-							.getZ() <= Units.inchesToMeters(18)) { // collision with ground
-						// make the gamepiece a ground note
-						// check if the note is close enough to a speaker
-						// otherwise, make it a ground note
-						Pose3d pose = gamePiece.getPose3d();
-						if (pose.getTranslation().toTranslation2d().getDistance(new Translation2d(
-								FieldConstants.blueCenterX, FieldConstants.blueCenterY)) < FieldConstants.radius) {
-
-							if (Constants.currentMatchState == FRCMatchState.AUTO) {
-								score += FieldConstants.REEFSCAPE_CORAL_SCORE_L1_AUTO;
-							} else {
-								score += FieldConstants.REEFSCAPE_CORAL_SCORE_L1_TELE;
-							}
-							physicsWorld.removeBody(gamePiece);
-							competitionField.deleteObject(gamePiece);
-							gamePieces.remove(gamePiece);
-						}
-						if (pose.getTranslation().getZ() <= 0.03) {
-							double momentumAngle = gamePiece.momentumAngle;
-							double momentumMagnitude = gamePiece.momentumMagnitude;
-							this.physicsWorld.removeBody(gamePiece);
-							this.competitionField.deleteObject(gamePiece);
-							gamePieces.remove(gamePiece);
-							gamePiece = new Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated(
-									getClosestPointOnFieldForCoral(gamePiece.getPose3d().getTranslation())
-											.toTranslation2d(),
-									momentumAngle,
-									momentumMagnitude);
-							this.addGamePiece(gamePiece);
-							this.competitionField.addObject(gamePiece);
-						}
-
-					} /*
-						 * else if (hasContact(gamePiece) && gamePiece.isEnabled()) {
-						 * // Flip the note velocity by Math.PI to simulate a bounce.
-						 * // Relaunch the note from it's current position, just math.pi radians away
-						 * double momentumMagnitude = gamePiece.momentumMagnitude
-						 * FieldConstants.ReefscapeCoral.EDGE_COEFFICIENT_OF_RESTITUTION;
-						 * this.physicsWorld.removeBody(gamePiece);
-						 * this.competitionField.deleteObject(gamePiece);
-						 * gamePieces.remove(gamePiece);
-						 * gamePiece = new Reefscape2025FieldObjects.ReefscapeCoralInFly(
-						 * TimeUtil.getLogTimeSeconds(), gamePiece.getPose3d().transformBy(
-						 * new Transform3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, Math.PI))));
-						 * this.addGamePiece(gamePiece);
-						 * this.competitionField.addObject(gamePiece);
-						 * final GamePieceInSimulation finalGamePiece = gamePiece;
-						 * // disable the game piece collision for a short time
-						 * new Thread(() -> {
-						 * finalGamePiece.setEnabled(false);
-						 * try {
-						 * Thread.sleep(250);
-						 * } catch (InterruptedException e) {
-						 * e.printStackTrace();
-						 * }
-						 * finalGamePiece.setEnabled(true);
-						 * }).start();
-						 * }
-						 */
-				}
 			}
 			// memory management
 			gamePiecesCopy = null;
@@ -373,122 +217,7 @@ public abstract class CompetitionFieldSimulation {
 				}
 			}
 		}
-		return false; // No contacts found
-	}
-
-	private boolean isCloseToScoringLocationGameAlgaeBall(Translation3d position) {
-		if (position.getY() >= FieldConstants.FIELD_HEIGHT + .05
-				|| position.getY() <= -.05) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private Pair<Pose3d, ReefHeight> getNearestScoringLocationCoral(Pose3d position) {
-		AtomicReference<Pose3d> closestScoringPose = new AtomicReference<>(new Pose3d());
-		if (Robot.isRed == false) {
-			FieldConstants.Reef.blueBranchPositions.forEach((entry) -> {
-				for (Entry<ReefHeight, Pose3d> entries : entry.entrySet()) {
-					if (entries.getValue()
-							.relativeTo(
-									position.plus(GeometryConstants.CoralDistanceFromCenter))
-							.getTranslation()
-							.getNorm() < closestScoringPose.get()
-									.relativeTo(position
-											.plus(GeometryConstants.CoralDistanceFromCenter))
-									.getTranslation()
-									.getNorm()) {
-						closestScoringPose.set(entries.getValue());
-					}
-				}
-			});
-		} else {
-			FieldConstants.Reef.redBranchPositions.forEach((entry) -> {
-				for (Entry<ReefHeight, Pose3d> entries : entry.entrySet()) {
-					if (entries.getValue()
-							.relativeTo(
-									position.plus(GeometryConstants.CoralDistanceFromCenter))
-							.getTranslation()
-							.getNorm() < closestScoringPose.get()
-									.relativeTo(position
-											.plus(GeometryConstants.CoralDistanceFromCenter))
-									.getTranslation()
-									.getNorm()) {
-						closestScoringPose.set(entries.getValue());
-					}
-				}
-			});
-		}
-		if (closestScoringPose.get() != null) {
-			// Logger.recordOutput("ClosestScoreingSpot", closestScoringPose.get());
-			if (closestScoringPose.get().getZ() > 1.6) {
-				// System.out.println("L4");
-				// Logger.recordOutput("ClosestScoringSpot", closestScoringPose.get().plus(new
-				// Transform3d(.06,0,0,new Rotation3d())));
-				// Logger.recordOutput("HitPoint",
-				// position.plus(GeometryConstants.ReefscapeGeometryScoring.CoralDistanceFromCenter));
-				if (closestScoringPose.get().plus(new Transform3d(.06, 0, 0, new Rotation3d()))
-						.relativeTo(position.plus(GeometryConstants.CoralDistanceFromCenter))
-						.getTranslation()
-						.getNorm() < FieldConstants.SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL) {
-					if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L3.height) {
-						Pose3d pose = closestScoringPose.get();
-						return new Pair<>(
-								new Pose3d(pose.getTranslation(),
-										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L2.pitch,
-												pose.getRotation().getZ())),
-								FieldConstants.ReefHeight.L2);
-					} else if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L4.height) {
-						Pose3d pose = closestScoringPose.get();
-						return new Pair<>(
-								new Pose3d(pose.getTranslation(),
-										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L3.pitch,
-												pose.getRotation().getZ())),
-								FieldConstants.ReefHeight.L3);
-					} else {
-						Pose3d pose = closestScoringPose.get();
-						return new Pair<>(
-								new Pose3d(pose.getTranslation(),
-										new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L4.pitch,
-												pose.getRotation().getZ())),
-								FieldConstants.ReefHeight.L4);
-					}
-				}
-			}
-			if (closestScoringPose.get()
-					.relativeTo(position.plus(GeometryConstants.CoralDistanceFromCenter))
-					.getTranslation()
-					.getNorm() < FieldConstants.SCORING_COLLISION_RADIUS_REEFSCAPE_CORAL) {
-				if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L3.height) {
-					Pose3d pose = closestScoringPose.get();
-					return new Pair<>(
-							new Pose3d(pose.getTranslation(),
-									new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L2.pitch,
-											pose.getRotation().getZ())),
-							FieldConstants.ReefHeight.L2);
-				} else if (closestScoringPose.get().getZ() < FieldConstants.ReefHeight.L4.height) {
-					Pose3d pose = closestScoringPose.get();
-					return new Pair<>(
-							new Pose3d(pose.getTranslation(),
-									new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L3.pitch,
-											pose.getRotation().getZ())),
-							FieldConstants.ReefHeight.L3);
-				} else {
-					Pose3d pose = closestScoringPose.get();
-					return new Pair<>(
-							new Pose3d(pose.getTranslation(),
-									new Rotation3d(pose.getRotation().getX(), FieldConstants.ReefHeight.L4.pitch,
-											pose.getRotation().getZ())),
-							FieldConstants.ReefHeight.L4);
-				}
-			} else {
-				return null;
-			}
-
-		}
-		return null;
-
+		return false; // No contacts found (except with ground)
 	}
 
 	private Translation3d getClosestPointOnFieldForAlgae(Translation3d position) {
@@ -613,19 +342,20 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
+
 	public void shootAlgae(Pose3d startPose) {
 
-			double speed = 1;
-			// double speed = calculateObjectSpeed(mainRobot.getLinearVelocity().x,
-			// (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
-			// Logger.recordOutput("ShotRPM",
-			// (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
-			GamePieceInSimulation gamePiece = new Reefscape2025FieldObjects.AlgaeBallInFly(
-					TimeUtil.getLogTimeSeconds(),
-					speed, startPose);
-			this.addGamePiece(gamePiece);
-			this.competitionField.addObject(gamePiece);
-		
+		double speed = 1;
+		// double speed = calculateObjectSpeed(mainRobot.getLinearVelocity().x,
+		// (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
+		// Logger.recordOutput("ShotRPM",
+		// (RobotContainer.flywheelS.getTopRPM()+RobotContainer.flywheelS.getBottomRPM())/2);
+		GamePieceInSimulation gamePiece = new Reefscape2025FieldObjects.AlgaeBallInFly(
+				TimeUtil.getLogTimeSeconds(),
+				speed, startPose);
+		this.addGamePiece(gamePiece);
+		this.competitionField.addObject(gamePiece);
+
 	}
 
 	public void intakeCoral() {
@@ -696,25 +426,29 @@ public abstract class CompetitionFieldSimulation {
 				/ (Units.lbsToKilograms(1) + FieldConstants.ReefscapeCoral.DEFAULT_MASS_KG) + speedMagnitude;
 	}
 
-	private GamePieceInSimulation getClosestGamePiece(List<GamePieceTag> tag) {
+	private GamePieceInSimulation getClosestGamePiece(List<Class<?>> wantedType) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;
+		Set<Class<?>> allowedClasses = new HashSet<>();
+		for (Class<?> gamePiece : wantedType) {
+			allowedClasses.add(gamePiece.getClass());
+		}
+
 		for (GamePieceInSimulation gamePiece : gamePieces) {
-			if (!tag.contains(gamePiece.getTag()))
+			if (!allowedClasses.contains(gamePiece.getClass())) {
 				continue;
-			double distance;
-			if (tag.contains(GamePieceTag.ON_GROUND_ALGAE_BALL)){
-				 distance = gamePiece.getPose3d().getTranslation()
-					.getDistance(mainRobot.getPose3d().getTranslation().plus(Robot.armPose.getTranslation()));
-			}else{
-				 distance = gamePiece.getPose3d().getTranslation()
-				.getDistance(mainRobot.getPose3d().getTranslation());
 			}
+
+			double distance = gamePiece.getPose3d()
+					.getTranslation()
+					.getDistance(mainRobot.getPose3d().getTranslation());
+
 			if (distance < closestDistance) {
 				closestGamePiece = gamePiece;
 				closestDistance = distance;
 			}
 		}
+
 		return closestGamePiece;
 	}
 
@@ -723,7 +457,7 @@ public abstract class CompetitionFieldSimulation {
 	 */
 	public GamePieceInSimulation getClosestGamePieceOneOnGround() {
 		GamePieceInSimulation closestGamePiece = getClosestGamePiece(
-				List.of(GamePieceTag.ON_GROUND_ALGAE_BALL));
+				List.of(Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated.class));
 		if (closestGamePiece == null) {
 			resetField(false); // if there are no game pieces on the ground, reset the field
 			return getClosestGamePieceOneOnGround(); // try again (I am aware this could be an infinite loop - G)
@@ -736,7 +470,7 @@ public abstract class CompetitionFieldSimulation {
 	 */
 	public GamePieceInSimulation getClosestCoralOnGround() {
 		GamePieceInSimulation closestGamePiece = getClosestGamePiece(
-				List.of(GamePieceTag.ON_GROUND_REEFSCAPE_CORAL));
+				List.of(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class));
 		if (closestGamePiece == null) {
 			resetField(false); // if there are no game pieces on the ground, reset the field
 			return getClosestCoralOnGround(); // try again (I am aware this could be an infinite loop - G)
@@ -745,28 +479,34 @@ public abstract class CompetitionFieldSimulation {
 	}
 
 	public GamePieceInSimulation getClosestGamePieceOnGround() {
-		return getClosestGamePiece(List.of(GamePieceTag.ON_GROUND_ALGAE_BALL, GamePieceTag.ON_GROUND_REEFSCAPE_CORAL));
+		return getClosestGamePiece(List.of(
+				Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated.class,
+				Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class));
 	}
 
 	/**
 	 * @return the game piece one that is closest to the robot and is on the robot
 	 */
 	public GamePieceInSimulation getClosestAlgaeOnRobot() {
-		return getClosestGamePiece(List.of(GamePieceTag.IN_ROBOT_ALGAE_BALL));
+		return getClosestGamePiece(
+				List.of(Reefscape2025FieldObjects.AlgaeBallOnManipulator.class));
 	}
 
 	/**
 	 * @return the game piece two that is closest to the robot and is on the robot
 	 */
 	public GamePieceInSimulation getClosestCoralOnRobot() {
-		return getClosestGamePiece(List.of(GamePieceTag.IN_ROBOT_REEFSCAPE_CORAL));
+		return getClosestGamePiece(
+				List.of(Reefscape2025FieldObjects.ReefscapeCoralOnManipulator.class));
 	}
 
 	/**
 	 * @return the game piece that is closest to the robot and is on the robot
 	 */
 	public GamePieceInSimulation getClosestGamePieceOnRobot() {
-		return getClosestGamePiece(List.of(GamePieceTag.IN_ROBOT_ALGAE_BALL, GamePieceTag.IN_ROBOT_REEFSCAPE_CORAL));
+		return getClosestGamePiece(List.of(
+				Reefscape2025FieldObjects.AlgaeBallOnManipulator.class,
+				Reefscape2025FieldObjects.ReefscapeCoralOnManipulator.class));
 	}
 
 	public void addGamePiece(GamePieceInSimulation gamePieceInSimulation) {
@@ -788,7 +528,6 @@ public abstract class CompetitionFieldSimulation {
 		gamePieces.clear();
 	}
 
-	@SuppressWarnings("null")
 	public static Translation2d getClosestGamePiece(
 			Translation2d robotPosition) {
 		GamePieceInSimulation closestGamePiece = null;
@@ -811,7 +550,6 @@ public abstract class CompetitionFieldSimulation {
 		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
 	}
 
-	@SuppressWarnings("null")
 	public static Pose2d getClosestRobotPose(Translation2d robotPosition) {
 		AbstractDriveTrainSimulation closestRobot = null;
 		double closestDistance = Double.MAX_VALUE;
@@ -840,6 +578,7 @@ public abstract class CompetitionFieldSimulation {
 		scoredCoral = 0;
 		scoredAlgae = 0;
 		Logger.recordOutput("Scoring/SimScore", score);
+		// TODO implement variability
 		Logger.recordOutput("Scoring/SimCoralScoredCount", scoredCoral);
 		Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
 	}
