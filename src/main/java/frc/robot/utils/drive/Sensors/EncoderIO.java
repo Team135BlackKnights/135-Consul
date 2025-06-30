@@ -16,6 +16,7 @@ public interface EncoderIO {
 	@AutoLog
 	public static class EncoderIOInputs {
         public double timestampSeconds = 0.0;
+		public double rawOutput = 0.0;
 		public double relativePositionRadians = 0.0;
 		public double absolutePositionRadians = 0.0;
 		public double angularVelocityRadPerSec = 0.0;
@@ -24,6 +25,9 @@ public interface EncoderIO {
 
 	public default void updateInputs(EncoderIOInputs inputs) {}
 
+	/**
+     * This function only resets relative, absolute stays the same.
+     */
 	public default void reset() {}
     /*
      * Higher gear ratio (>1) means a reduction

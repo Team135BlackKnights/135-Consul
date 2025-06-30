@@ -1,6 +1,18 @@
 package frc.robot.utils.drive;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
@@ -9,28 +21,22 @@ import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.commands.drive.DriveToPose;
-import frc.robot.subsystems.drive.DrivetrainS;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotContainer;
-import java.util.List;
-import java.util.function.Supplier;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import frc.robot.commands.drive.DriveAndAimToRotation;
+import frc.robot.commands.drive.DriveToLine;
+import frc.robot.subsystems.drive.DrivetrainS;
 
 public class PathFinder {
+
 	/**
 	 * Goes to a given pose with the speed constraints, and will ALWAYS end
 	 * facing the given degree.
 	 * 
-	 * @param pose        desired end position
+	 * @param pose        desired end position, already on the correct side.
 	 * @param constraints PathConstraints containing max speeds and velocities
 	 * @param drive       drivetrain type.
 	 * @return pre-made command
@@ -39,15 +45,94 @@ public class PathFinder {
 			Supplier<PathConstraints> constraints, DrivetrainS drive,
 			boolean isAuto, double endVelocity) {
 		if (isAuto) { // skip accuracy for speed
-			return AutoBuilder
-					.pathfindToPose((pose), constraints.get(), endVelocity)
-					.finallyDo(() -> RobotContainer.field.getObject("target pose")
-							.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
+
+			return
+			AutoBuilder.pathfindToPose(pose, constraints.get(), endVelocity)
+					/*Commands.defer(() -> {
+						return  AutoBuilder.pathfindToPose(pose, constraints.get(), endVelocity);
+					}, Set.of(drive))
+					*/
+					.finallyDo(() -> {
+						RobotContainer.field.getObject("target pose")
+								.setPose(new Pose2d(-50, -50, new Rotation2d()));
+						RobotContainer.closestChoreoPath = "";
+						//CommandScheduler.getInstance().cancel(currentlyRunningCommand);
+						//CommandScheduler.getInstance().removeComposedCommand(currentlyRunningCommand);
+					}); // the void
+
 		}
-		return AutoBuilder.pathfindToPose((pose), constraints.get(), endVelocity)
-				.andThen(new DriveToPose(drive, pose, constraints.get()))
-				.finallyDo(() -> RobotContainer.field.getObject("target pose")
-						.setPose(new Pose2d(-50, -50, new Rotation2d()))); // the void ));
+		return 
+				Commands.defer(() -> {
+					return  AutoBuilder.pathfindToPose(pose, constraints.get(), endVelocity);
+				}, Set.of(drive))
+				.andThen(
+						new DriveAndAimToRotation(drive, pose, constraints))
+				.finallyDo(() -> {
+					RobotContainer.field.getObject("target pose")
+							.setPose(new Pose2d(-50, -50, new Rotation2d()));
+					RobotContainer.closestChoreoPath = "";
+					//CommandScheduler.getInstance().cancel(currentlyRunningCommand);
+					//CommandScheduler.getInstance().removeComposedCommand(currentlyRunningCommand);
+				}); // the void
+	}
+/**
+	 * Goes to a given line with the speed constraints, and will ALWAYS end
+	 * facing the given degree.
+	 * 
+	 * @param pose        desired end line
+	 * @param constraints PathConstraints containing max speeds and velocities
+	 * @param drive       drivetrain type.
+	 * @return pre-made command
+	 */
+	public static Command goToLine(DrivetrainS drive, Supplier<Translation2d> pointA, Supplier<Translation2d> pointB,
+			double outerTolerance,
+			double innerTolerance, double humanPlayerWaitTime, Supplier<Rotation2d> rotationGoal, Supplier<PathConstraints> constraints, Supplier<String> corner) {
+		Supplier<Translation2d> goalPoint = () -> DriveToLine.getClosestPoint(drive.getPose().getTranslation(),
+				pointA.get(), pointB.get());
+		return 
+				Commands.defer(() -> {
+					return AutoBuilder
+					.pathfindToPose(new Pose2d(goalPoint.get(), rotationGoal.get()), constraints.get(), 0);
+				}, Set.of(drive))
+				.until(() -> RobotContainer.drivetrainS.getPose().getTranslation()
+						.getDistance(goalPoint.get()) < outerTolerance)
+				.andThen(new DriveToLine(drive, pointA, pointB, innerTolerance, humanPlayerWaitTime, rotationGoal,() ->""))
+				.finallyDo(() -> {
+					RobotContainer.field.getObject("target pose")
+							.setPose(new Pose2d(-50, -50, new Rotation2d()));
+					RobotContainer.closestChoreoPath = "";
+					// force drive to be un required
+					////CommandScheduler.getInstance().cancel(currentlyRunningCommand);
+					//CommandScheduler.getInstance().removeComposedCommand(currentlyLineFollowingCommand);
+				}); // the void
+
+	}
+	/**
+	 * Goes to a given line with the speed constraints, and will ALWAYS end
+	 * facing the given degree.
+	 * 
+	 * @param pose        desired end line
+	 * @param constraints PathConstraints containing max speeds and velocities
+	 * @param drive       drivetrain type.
+	 * @return pre-made command
+	 */
+	public static Command goToLine(DrivetrainS drive, Supplier<Translation2d> pointA, Supplier<Translation2d> pointB,
+			double outerTolerance,Supplier<Rotation2d> rotationGoal, Supplier<PathConstraints> constraints) {
+		Supplier<Translation2d> goalPoint = () -> DriveToLine.getClosestPoint(drive.getPose().getTranslation(),
+				pointA.get(), pointB.get());
+		return
+				Commands.defer(() -> {
+					return AutoBuilder
+					.pathfindToPose(new Pose2d(goalPoint.get(), rotationGoal.get()), constraints.get(), 0);
+				}, Set.of(drive))
+				.finallyDo(() -> {
+					RobotContainer.field.getObject("target pose")
+							.setPose(new Pose2d(-50, -50, new Rotation2d()));
+					RobotContainer.closestChoreoPath = "";
+					// force drive to be un required
+					//CommandScheduler.getInstance().cancel(currentlyRunningCommand);
+					//CommandScheduler.getInstance().removeComposedCommand(currentlyLineFollowingCommand);
+				}); // the void
 
 	}
 

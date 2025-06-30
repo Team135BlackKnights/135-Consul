@@ -51,6 +51,7 @@ public class PolynomialRegression implements Comparable<PolynomialRegression> {
    * @param variableName the name of the predictor variable
    * @throws IllegalArgumentException if the lengths of the two arrays are not equal
    */
+  @SuppressWarnings("null")
   public PolynomialRegression(double[] x, double[] y, int degree, String variableName) {
     this.degree = degree;
     this.variableName = variableName;

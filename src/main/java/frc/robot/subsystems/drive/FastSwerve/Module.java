@@ -6,10 +6,12 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.Units;
+import edu.wpi.first.units.*;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.Constants;
+import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
@@ -21,43 +23,45 @@ public class Module {
 	private static final LoggableTunedNumber drivekP = new LoggableTunedNumber(
 			"Drive/Module/DrivekP",
 			DriveConstants.overallDriveMotorConstantContainer
-					.getP());
+					.getP(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber drivekI = new LoggableTunedNumber(
 			"Drive/Module/DrivekI",
 			DriveConstants.overallDriveMotorConstantContainer
-					.getI());
+					.getI(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber drivekD = new LoggableTunedNumber(
 			"Drive/Module/DrivekD",
 			DriveConstants.overallDriveMotorConstantContainer
-					.getD());
+					.getD(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber drivekS = new LoggableTunedNumber(
 			"Drive/Module/DrivekS",
 			DriveConstants.overallDriveMotorConstantContainer
-					.getKs());
+					.getKs(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber drivekV = new LoggableTunedNumber(
 			"Drive/Module/DrivekV",
 			DriveConstants.overallDriveMotorConstantContainer
-					.getKv());
+					.getKv(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnkP = new LoggableTunedNumber(
 			"Drive/Module/TurnkP",
 			DriveConstants.overallTurningMotorConstantContainer
-					.getP());
+					.getP(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnkI = new LoggableTunedNumber(
 			"Drive/Module/TurnkI",
 			DriveConstants.overallTurningMotorConstantContainer
-					.getI());
+					.getI(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnkD = new LoggableTunedNumber(
 			"Drive/Module/TurnkD",
 			DriveConstants.overallTurningMotorConstantContainer
-					.getD());
+					.getD(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnkS = new LoggableTunedNumber(
 			"Drive/Module/TurnkS",
 			DriveConstants.overallTurningMotorConstantContainer
-					.getKs());
+					.getKs(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnkV = new LoggableTunedNumber(
 			"Drive/Module/TurnkV",
 			DriveConstants.overallTurningMotorConstantContainer
-					.getKv());
+					.getKv(), TuningConstants.isTuningDrivetrain);
+	private static final LoggableTunedNumber turnDeadband = new LoggableTunedNumber("Drive/Module/TurnDeadband",
+			DriveConstants.TURN_DEADBAND_AMPS, TuningConstants.isTuningDrivetrain);
 	private SwerveModuleState setpointState = new SwerveModuleState();
 	private final int index;
 	private final ModuleIO io;
@@ -68,10 +72,28 @@ public class Module {
 			DriveConstants.overallDriveMotorConstantContainer
 					.getKv(),
 			0.0);
+	public final String name;
 
 	public Module(ModuleIO io, int index) {
 		this.io = io;
 		this.index = index;
+		switch (index) {
+			case 0:
+				name = "FrontLeftModule";
+				break;
+			case 1:
+				name = "FrontRightModule";
+				break;
+			case 2:
+				name = "BackLeftModule";
+				break;
+			case 3:
+				name = "BackRightModule";
+				break;
+			default:
+				name = "Unknown";
+				break;
+		}
 	}
 
 	/** Called while blocking odometry thread */
@@ -93,8 +115,12 @@ public class Module {
 				() -> io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get(), drivekS.get(), drivekV.get()),
 				drivekP, drivekI, drivekD, drivekS, drivekV);
 		LoggableTunedNumber.ifChanged(hashCode(),
-				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get(), turnkV.get()),
-				turnkP, turnkI, turnkD, turnkS, turnkV);
+				() -> io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get(), turnkS.get(), turnkV.get(), turnDeadband.get()),
+				turnkP, turnkI, turnkD, turnkS, turnkV,turnDeadband);
+	}
+
+	public void shift(boolean lowGear) {
+		io.shift(lowGear);
 	}
 
 	/** Runs to {@link SwerveModuleState} */
@@ -105,29 +131,42 @@ public class Module {
 				setpointState.speedMetersPerSecond);
 		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
 		// get current setpoint as Measure<? extends PerUnit<U, TimeUnit>>
-		LinearVelocity setpointVelocity = Units.MetersPerSecond.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2));
+		LinearVelocity setpointVelocity = Units.MetersPerSecond
+				.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2));
 		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
 		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
-				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO) && Constants.currentMode != Mode.SIM) {
-			double wheelTorqueAmps = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
+				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO)
+				&& Constants.currentMode != Mode.SIM) {
+			double wheelTorqueAmps = wheelTorqueNm * DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
+			if (Constants.currentMatchState == FRCMatchState.AUTO
+					|| Constants.currentMatchState == FRCMatchState.AUTOINIT) {
+				io.runDriveVelocitySetpoint(
+						setpoint.speedMetersPerSecond
+								/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
+						(inputs.negateFF ? 0 : 1) *
+								(wheelTorqueAmps)
+								+ ff.calculate(currentVelocity.baseUnitMagnitude()));
+			} else {
+				io.runDriveVelocitySetpoint(
+						setpoint.speedMetersPerSecond
+								/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
+						(inputs.negateFF ? 0 : 1) *
+								(wheelTorqueAmps) +
+								ff.calculateWithVelocities(currentVelocity.baseUnitMagnitude(),
+										setpointVelocity.baseUnitMagnitude())); // might be wrong
+			}
 
-			io.runDriveVelocitySetpoint(
-					setpoint.speedMetersPerSecond
-							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
-					(inputs.negateFF ? 0 : 1) * 
-							(wheelTorqueAmps)
-							+ff.calculate(currentVelocity.baseUnitMagnitude(), setpointVelocity.baseUnitMagnitude()) //might be wrong
-							);
 		} else {
-			double speedVoltage = (setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2))
-        / DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt;
-			double torqueResistanceVoltage = wheelTorqueNm / DriveConstants.getDriveTrainMotors(1).KtNMPerAmp * DriveConstants.getDriveTrainMotors(1).rOhms;
-			double wheelTorqueVolts = speedVoltage + torqueResistanceVoltage;
+			double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(wheelTorqueNm,
+					(setpoint.speedMetersPerSecond
+							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2)));
+			Logger.recordOutput("Drive/" + name + "/wheelTorque", wheelTorqueVolts);
 			io.runDriveVelocitySetpoint(
 					setpoint.speedMetersPerSecond
 							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
 					(inputs.negateFF ? 0 : 1) *
-							ff.calculate(currentVelocity.baseUnitMagnitude(), setpointVelocity.baseUnitMagnitude())
+							ff.calculateWithVelocities(currentVelocity.baseUnitMagnitude(),
+									setpointVelocity.baseUnitMagnitude())
 							+ ((wheelTorqueVolts)));
 		}
 		io.runTurnPositionSetpoint(setpoint.angle.getRadians());
@@ -144,8 +183,16 @@ public class Module {
 
 	/** Sets brake mode to {@code enabled}. */
 	public void setBrakeMode(boolean enabled) {
-		io.setDriveBrakeMode(enabled);
-		io.setTurnBrakeMode(enabled);
+		if (inputs.driveMotorConnected) {
+			io.setDriveBrakeMode(enabled);
+		} else {
+			io.setDriveBrakeMode(false);
+		}
+		if (inputs.turnMotorConnected) {
+			io.setTurnBrakeMode(enabled);
+		} else {
+			io.setTurnBrakeMode(false);
+		}
 	}
 
 	public void setCurrentLimit(int amps) {
@@ -169,6 +216,16 @@ public class Module {
 					inputs.odometryTurnPositions[i]);
 		}
 		return positions;
+	}
+
+	/** Get the current shift state as boolean */
+	public boolean inLowGear() {
+		return inputs.inLowGear;
+	}
+
+	/** Get the current RPS of the motor ROTOR */
+	public double getDriveMotorRPM() {
+		return inputs.driveRotorRPM;
 	}
 
 	/** Get turn angle of module as {@link Rotation2d}. */
@@ -226,7 +283,18 @@ public class Module {
 		return setpointState;
 	}
 
+	public boolean isDriveConnected() {
+		return inputs.driveMotorConnected;
+	}
+
+	public boolean isTurnConnected() {
+		return inputs.turnMotorConnected;
+	}
+
 	public List<SelfChecking> getSelfCheckingHardware() {
 		return io.getSelfCheckingHardware();
+	}
+	public void changeDeadband(double amps){
+		io.changeDeadband(amps);
 	}
 }

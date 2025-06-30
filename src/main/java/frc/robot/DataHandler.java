@@ -41,7 +41,7 @@ public class DataHandler {
 	private static ServerSocket serverSocket;
 	private static final boolean usingLaptop = true;
 	private static int oldTime = 0;
-
+	private static long oldTimestamp = 0; 
 	/**
 	 * Call this in Robot.java. Starts the handler and has contingencies to use
 	 * the NetworkTables, write to usb, or write to a sim disk drive
@@ -304,18 +304,16 @@ public class DataHandler {
 				String rawData = receivedData.get("outputs").getAsString();
 				List<Double> list = makeDoubleList(rawData); //index 0 = velocity of topShooter, index 1 = velocity of bottomShooter, index 2 = angle of shooter
 				list.add(0, TimeUtil.getLogTimeSeconds()); //those above shifted 1
-				RobotContainer.currentAiOutputs = list;
+				///RobotContainer.currentAiOutputs = list;
 				//Remove brackets
 			}
-			/* Interaction with Double Jointed Arm
+			// Interaction with Double Jointed Arm
 			if (receivedData.has("voltages")) {
 				String rawData = receivedData.get("voltages").getAsString();
+				@SuppressWarnings("unused")
 				List<Double> voltages = makeDoubleList(rawData);
-				RobotContainer.doubleJointedArmS.setVoltages(voltages.subList(0, 2));
-				RobotContainer.doubleJointedArmS.setExpectedPositions(voltages.subList(2, 4));
 				long currentTime = Logger.getTimestamp();
 				double latency = (currentTime - oldTimestamp)/1e6;
-				RobotContainer.doubleJointedArmS.latency = latency;
 				Logger.recordOutput("DoubleJointedArmS/Latency", latency);
 				oldTimestamp = currentTime;
 			
@@ -325,7 +323,12 @@ public class DataHandler {
 				if (responseData.containsKey("DoubleJointedEncoders")){
 					responseData.remove("DoubleJointedEncoders");
 				}
-			}*/
+			}
+			if (receivedData.has("gotConstants")){
+				if (responseData.containsKey("DoubleJointedArmConstants")){
+					responseData.remove("DoubleJointedArmConstants");
+				}
+			}
 			responseData.put("status", "running");
 			// Prepare response JSON
 			if (receivedData.has("currentStatus")) {

@@ -1,6 +1,7 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -9,6 +10,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -50,7 +53,22 @@ public class AIRobotInSimulation {
         private static final AbstractDriveTrainSimulation.DriveTrainSimulationProfile AI_ROBOT_PROFILE = new AbstractDriveTrainSimulation.DriveTrainSimulationProfile(
                         3.8, 12, Math.toRadians(540), Math.toRadians(720),
                         55, 0.8, 0.8);
-        private static final RobotConfig robotConfig = FieldConstants.aiRobotConfig;
+        private static final RobotConfig robotConfig = new RobotConfig(
+                        55,
+                        8,
+                        new ModuleConfig(
+                                        Units.inchesToMeters(2),
+                                        3.5,
+                                        1.2,
+                                        DCMotor.getFalcon500(1).withReduction(8.14),
+                                        60,
+                                        1),
+                        new Translation2d[]{
+                                new Translation2d(.6 / 2, .6 / 2),
+                                new Translation2d(.6 / 2, -.6 / 2),
+                                new Translation2d(-.6 / 2, .6 / 2),
+                                new Translation2d(-.6 / 2, -.6 / 2)
+                        });
         private static final PPHolonomicDriveController driveController = new PPHolonomicDriveController(
                         new PIDConstants(5.0, 0.02),
                         new PIDConstants(7.0, 0.05));

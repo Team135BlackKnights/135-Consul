@@ -62,10 +62,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	// Control
 	private final VoltageOut voltageControl = new VoltageOut(0);
 	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
-	private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(
-			0);
-	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(
-			0);
+	private final VelocityTorqueCurrentFOC  velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC (
+			0).withUpdateFreqHz(0);
+	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
 	private final boolean isDriveMotorInverted;
@@ -83,12 +82,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontLeftAbsEncoderPort);
+							DriveConstants.kFrontLeftAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.canBusName);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontLeftAbsEncoderPort,DriveConstants.canBusName);
+							DriveConstants.kFrontLeftAbsEncoderPort, DriveConstants.canBusName);
 				}
 				driveName = "FrontLeftDrive";
 				turnName = "FrontLeftTurn";
@@ -102,14 +101,14 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontRightAbsEncoderPort);
-					} else {
+							DriveConstants.kFrontRightAbsEncoderPort);
+				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.canBusName);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kFrontRightAbsEncoderPort,DriveConstants.canBusName);
+							DriveConstants.kFrontRightAbsEncoderPort, DriveConstants.canBusName);
 				}
-				
+
 				driveName = "FrontRightDrive";
 				turnName = "FrontRightTurn";
 				absoluteEncoderOffset = new Rotation2d(
@@ -122,12 +121,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackLeftAbsEncoderPort);
+							DriveConstants.kBackLeftAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.canBusName);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.canBusName);
+							DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.canBusName);
 				}
 
 				driveName = "BackLeftDrive";
@@ -142,12 +141,12 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackRightAbsEncoderPort);
+							DriveConstants.kBackRightAbsEncoderPort);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.canBusName);
 					turnAbsoluteEncoder = new CANcoder(
-						DriveConstants.kBackRightAbsEncoderPort,DriveConstants.canBusName);
+							DriveConstants.kBackRightAbsEncoderPort, DriveConstants.canBusName);
 				}
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";
@@ -163,11 +162,15 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		// Config Motors
 		driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxDriveCurrent;
+		driveTalonConfig.CurrentLimits.StatorCurrentLimit = DriveConstants.kMaxDriveCurrent;
+		driveTalonConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+		driveTalonConfig.CurrentLimits.SupplyCurrentLimitEnable = false;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
 		driveTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+		
 		turnTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.MotorOutput.Inverted = isTurnMotorInverted
@@ -175,13 +178,19 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				: InvertedValue.CounterClockwise_Positive;
 		turnTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
-		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
 				.getDeviceID();
 		turnTalonConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
 		turnTalonConfig.Feedback.SensorToMechanismRatio = 1;
 		turnTalonConfig.Feedback.RotorToSensorRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.ClosedLoopGeneral.ContinuousWrap = true;
+		turnTalonConfig.MotionMagic.MotionMagicCruiseVelocity = 100.0
+				/ DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		turnTalonConfig.MotionMagic.MotionMagicAcceleration = turnTalonConfig.MotionMagic.MotionMagicCruiseVelocity
+				/ DriveConstants.overallTurningMotorConstantContainer.getKa();
+		turnTalonConfig.MotionMagic.MotionMagicExpo_kV = .12 * DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		turnTalonConfig.MotionMagic.MotionMagicExpo_kA = DriveConstants.overallTurningMotorConstantContainer.getKa();
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
 			boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,
@@ -194,7 +203,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		// 250hz signals
 		drivePosition = driveTalon.getPosition();
 		turnPosition = turnTalon.getPosition();
-		BaseStatusSignal.setUpdateFrequencyForAll(250, drivePosition,
+		BaseStatusSignal.setUpdateFrequencyForAll(DriveConstants.TrainConstants.odomHz, drivePosition,
 				turnPosition);
 		drivePositionQueue = OdometryThread
 				.registerSignalInput(driveTalon.getPosition());
@@ -213,7 +222,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnSupplyCurrent = turnTalon.getSupplyCurrent();
 		turnTorqueCurrent = turnTalon.getTorqueCurrent();
 		turnTemp = turnTalon.getDeviceTemp();
-		BaseStatusSignal.setUpdateFrequencyForAll(100.0, driveVelocity,
+		BaseStatusSignal.setUpdateFrequencyForAll(50.0, driveVelocity,
 				driveAppliedVolts, driveSupplyCurrent, driveTorqueCurrent,
 				turnVelocity, turnAppliedVolts, turnSupplyCurrent,
 				turnTorqueCurrent);
@@ -286,13 +295,13 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			double feedForward) {
 		driveTalon.setControl(velocityTorqueCurrentFOC
 				.withVelocity(Units.radiansToRotations(velocityRadsPerSec))
-				.withFeedForward(feedForward).withOverrideCoastDurNeutral(false));
+				.withFeedForward(feedForward));
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		turnTalon.setControl(
-				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideCoastDurNeutral(false));
+				positionControl.withPosition(Units.radiansToRotations(angleRads)));
 	}
 
 	@Override
@@ -306,13 +315,14 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
 		turnTalonConfig.Slot0.kV = kV;
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 
@@ -323,7 +333,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				driveTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				driveTalon.getConfigurator().apply(driveTalonConfig, 0.25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, 0.01);
 			}
 		});
 	}
@@ -335,7 +345,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				turnTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				turnTalon.getConfigurator().apply(turnTalonConfig, 0.25);
+				turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 			}
 		});
 	}
@@ -346,7 +356,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			synchronized (driveTalonConfig) {
 				driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = amps;
 				driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -amps;
-				driveTalon.getConfigurator().apply(driveTalonConfig, .25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, .01);
 			}
 		});
 	}
@@ -363,5 +373,10 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		hardware.add(new SelfCheckingTalonFX(driveName, driveTalon));
 		hardware.add(new SelfCheckingTalonFX(turnName, turnTalon));
 		return hardware;
+	}
+	@Override
+	public void changeDeadband(double deadbandAmps){
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
+		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 }

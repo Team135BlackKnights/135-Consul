@@ -10,7 +10,7 @@ public class CommonMath {
 	 * GIT_SHA this way when you do log-replay even the generated random numbers
 	 * are the same
 	 */
-	private static final Random random = new Random(
+	public static final Random random = new Random(
 			BuildConstants.GIT_SHA.hashCode());
 
 	public static double linearInterpretationWithBounding(double x1, double y1,
