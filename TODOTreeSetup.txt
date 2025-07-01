@@ -65,6 +65,12 @@
     "background": "#008000",       // green
     "iconColour": "#008000"        // green
   },
+  "YEARLYUPDATE" : {
+    "icon": "tools",
+    "foreground" : "#000000",      // black
+    "background" : "#FFAD00",      // orange
+    "iconColour" : "#FFAD00"       // orange
+  },
   "[ ]": {
     "icon": "check",
     "foreground": "#000000",       // black
@@ -91,6 +97,7 @@
       "USEFUL",
       "LEARN",
       "COMMENT",
+      "YEARLYUPDATE",
       "[ ]",
       "[x]"
     ],
