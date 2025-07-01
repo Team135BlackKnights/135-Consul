@@ -57,6 +57,14 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBatte
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import frc.robot.utils.maths.TimeUtil;
+/*
+TODO: Setup TODOTree to go through the year-by-year updating checklist. 
+Install TODOTree from extensions menu (icon with 3 squares). 
+Once installed, open settings (gear icon at the very bottom),
+click settings on the bottom menu, then click the sheet of paper icon
+by the WPILIB logo. Copy and paste the "TODOTreeFile.txt" file into the settings.json
+file, and save. If the setup worked, the first line of this paragraph should be yellow.
+*/
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
