@@ -578,7 +578,6 @@ public abstract class CompetitionFieldSimulation {
 		scoredCoral = 0;
 		scoredAlgae = 0;
 		Logger.recordOutput("Scoring/SimScore", score);
-		// TODO implement variability
 		Logger.recordOutput("Scoring/SimCoralScoredCount", scoredCoral);
 		Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
 	}

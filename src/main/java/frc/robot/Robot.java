@@ -65,6 +65,8 @@ Once installed, open settings (gear icon at the very bottom),
 click settings on the menu that appears, then click the sheet of paper icon
 by the WPILIB logo. Copy and paste the "TODOTreeSetup.txt" file into the settings.json
 file, and save. If the setup worked, the first line of this paragraph should be yellow.
+Once that is done, click on the TODOTree extension icon (the one with the tree) and finish 
+everything labeled "YEARLYUPDATE" in the tree.
 */
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -351,7 +353,7 @@ public class Robot extends LoggedRobot {
 
 
 	}
-	//TODO: Update this from year to year
+	//YEARLYUPDATE: Grant explain what this does 
 	private void updateAdvantageScopePiecesLive() {
 
 	}

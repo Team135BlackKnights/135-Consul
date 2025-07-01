@@ -871,7 +871,9 @@ public class RobotContainer {
 	}
 
 	public static Command buildDynamicAuto() {
-		//TODO: These need to be configured on a year-to-year basis
+		/*YEARLYUPDATE: Change these to work with the specific game cycle 
+		(rough outline being go to gamepiece location (driveandAimAtPose) -> intake gamepiece
+		-> travel to scoring location (driveandAimAtPose) -> score gamepiece)*/
 		int loopCt = 0;
 		System.out.println("Building Dynamic Auto");
 		Command builtCommand = null;
