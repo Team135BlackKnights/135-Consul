@@ -7,8 +7,11 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.*;
@@ -39,6 +42,8 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
+import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.FieldConstants;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -57,7 +62,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5, TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
-			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain); 
+			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain);
+	private static final LoggableTunedNumber txTyObservationStaleSecs = new LoggableTunedNumber(
+			"Odometry/TxTyObservationStaleSeconds", 0.125, TuningConstants.isTuningDrivetrain);
+
+
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
 		TELEOP,
@@ -140,16 +149,18 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private final OdometryThread odometryThread;
 	private double[] pathPlannerNM = new double[4];
 	private double characterizationVelocity = 0.0;
-	// static {
-	// 	for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-	// 	  tagPoses2d.put(
-	// 		  i,
-	// 		  VisionConstants.kTagLayout
-	// 			  .getTagPose(i)
-	// 			  .map(Pose3d::toPose2d)
-	// 			  .orElse(new Pose2d()));
-	// 	}
-	//   }
+	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
+	private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
+	static {
+		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
+		  tagPoses2d.put(
+			  i,
+			  VisionConstants.kTagLayout
+				  .getTagPose(i)
+				  .map(Pose3d::toPose2d)
+				  .orElse(new Pose2d()));
+		}
+	  }
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
 		this.gyroIO = gyroIO;
@@ -287,11 +298,74 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				.plus(sampleToOdometryTransform);
 	}
 
+	public void addTxTyObservation(TxTyObservation observation) {
+		// Skip if current data for tag is newer
+		if (txTyPoses.containsKey(observation.tagId())
+				&& txTyPoses.get(observation.tagId()).timestamp() >= observation.timestamp()) {
+			return;
+		}
+
+		// Get rotation at timestamp
+		var sample = poseBuffer.getSample(observation.timestamp());
+		if (sample.isEmpty()) {
+			// exit if not there
+			return;
+		}
+		Rotation2d robotRotation = estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
+
+		// Use 3D distance and tag angles to find robot pose
+		Translation2d camToTagTranslation = new Pose3d(Translation3d.kZero, new Rotation3d(0, -observation.ty, -observation.tx))
+				.transformBy(
+						new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
+				.getTranslation()
+				.rotateBy(new Rotation3d(0, observation.robotToCam.getRotation().getY(), 0))
+				.toTranslation2d();
+		Rotation2d camToTagRotation = robotRotation.plus(
+			observation.robotToCam.toPose2d().getRotation().plus(camToTagTranslation.getAngle()));
+		var tagPose2d = tagPoses2d.get(observation.tagId());
+		if (tagPose2d == null)
+			return;
+		Translation2d fieldToCameraTranslation = new Pose2d(tagPose2d.getTranslation(),
+				camToTagRotation.plus(Rotation2d.kPi))
+				.transformBy(GeomUtil.toTransform2d(camToTagTranslation.getNorm(), 0.0))
+				.getTranslation();
+		Pose2d robotPose = new Pose2d(
+				fieldToCameraTranslation, robotRotation.plus(observation.robotToCam.toPose2d().getRotation()))
+				.transformBy(new Transform2d(observation.robotToCam.toPose2d(), Pose2d.kZero));
+		// Use gyro angle at time for robot rotation
+		robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
+
+		// Add transform to current odometry based pose for latency correction
+		txTyPoses.put(
+				observation.tagId(),
+				new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), observation.timestamp()));
+	}
+
 
 	public void addVelocityData(Twist2d robotVelocity) {
 		this.robotVelocity = robotVelocity;
 	}
 
+	/** Get 2d pose estimate of robot if not stale. */
+	public Optional<Pose2d> getTxTyPose(int tagId) {
+		if (!txTyPoses.containsKey(tagId)) {
+			DriverStation.reportError("No tag with id: " + tagId, true);
+			return Optional.empty();
+		}
+		var data = txTyPoses.get(tagId);
+		// Check if stale
+		if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs.get()) {
+			return Optional.empty();
+		}
+		// Get odometry based pose at timestamp
+		var sample = poseBuffer.getSample(data.timestamp());
+		// Latency compensate
+		Optional<Pose2d> tagPose = sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
+		if (tagPose.isPresent()) {
+			Logger.recordOutput("Odometry/TxTyPoseTag"+tagId, tagPose.get());
+		}
+		return tagPose;
+	}
 	@Override
 	public SwerveDriveKinematics getKinematics() {
 		return kinematics;
@@ -1008,11 +1082,5 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	public void setCurrentLimit(int amps) {
 		setDriveCurrentLimit(amps);
-	}
-	@Override
-	public void changeDeadband(double deadbandAmps){
-		for (Module module : modules){
-			module.changeDeadband(deadbandAmps);
-		}
 	}
 }

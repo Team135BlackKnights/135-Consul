@@ -125,14 +125,14 @@ public final class Constants {
 	}
 
 	/**
-	 * @apiNote arm and algae scorer are different
+	 * @apiNote arm and algae scorer are differentD
 	 */
 	public static class TuningConstants {
 		public static final boolean isTuningPID = false,
 				isTuningMacros = true,
-
 				isTuningModules = true,
 				isTuningDrivetrain = true,
-				isTuningCharacterization = true;
+				isTuningCharacterization = true,
+				isTuningVision = true;
 	}
 }
