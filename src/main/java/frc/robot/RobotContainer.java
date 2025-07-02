@@ -206,8 +206,8 @@ public class RobotContainer {
 	@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	public static Translation2d[] gamePieceOneLocations = FieldConstants.ALGAE_BALL_INITIAL_POSITIONS;
-	public static Translation2d[] gamePieceTwoLocations = FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS;
+	public static Translation2d[] algaeStartingLocations = FieldConstants.ALGAE_BALL_INITIAL_POSITIONS;
+	public static Translation2d[] coralStartingLocations = FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS;
 	public static boolean userDrive = true;
 	public static boolean withinLineTolerance = false;
 	@AutoLogOutput(key = "RobotState/miloMad")
