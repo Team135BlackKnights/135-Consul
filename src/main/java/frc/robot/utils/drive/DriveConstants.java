@@ -27,6 +27,7 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrain
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
 
 public class DriveConstants {
+	// YEARLYUPDATE:  Change these to the drivetrain being used. Duh -N
 	// If true, tank/mecanum use their native PIDs. If false, tank/mech output their
 	// voltages directly
 	public static final boolean enablePID = true;
