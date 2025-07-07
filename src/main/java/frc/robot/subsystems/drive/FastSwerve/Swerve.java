@@ -42,8 +42,6 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
-import frc.robot.utils.vision.VisionConstants;
-import frc.robot.utils.vision.VisionConstants.FieldConstants;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -151,16 +149,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private double characterizationVelocity = 0.0;
 	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
 	private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
-	static {
-		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-		  tagPoses2d.put(
-			  i,
-			  VisionConstants.kTagLayout
-				  .getTagPose(i)
-				  .map(Pose3d::toPose2d)
-				  .orElse(new Pose2d()));
-		}
-	  }
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
 		this.gyroIO = gyroIO;
