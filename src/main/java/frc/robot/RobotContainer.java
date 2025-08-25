@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -51,7 +52,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.DriveToPose;
+import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -105,6 +106,7 @@ import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	private final LoggedDashboardChooser<Command> autoChooser;;
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
@@ -549,7 +551,7 @@ public class RobotContainer {
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
-		Pathfinding.setPathfinder(new LocalADStarAK());
+		Pathfinding.setPathfinder(pathFinder);
 		// algaeScorer.setDefaultCommand(new AlgaeScorerC(algaeScorer));
 		// superStructureNotifier = new Notifier(superStructure::periodic);
 		// superStructureNotifier.startPeriodic(.01);
@@ -558,7 +560,7 @@ public class RobotContainer {
 		// Make sure to watch your flipped poses. Our custom DriveToPose and all of those do NOT auto flip for red. 
 		autoCommands.addAll(Arrays.asList( 
 			new Pair<String, CommandPair>("RT",  //Example Drive to the right top face of the coral station
-					new CommandPair(() -> new DriveToPose(drivetrainS, () -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace,false)),Set.of()))
+					new CommandPair((Supplier<Command>)() -> PathFinder.goToPose(FieldConstants.CoralStation.blueRightTopFace, ()->DriveConstants.pathConstraints, drivetrainS, false, 0,.5),Set.of(drivetrainS)))
 		));
 
 		for (Pair<String, CommandPair> autoCommand : autoCommands) {
@@ -598,7 +600,7 @@ public class RobotContainer {
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
 		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
-		autoChooser.addDefaultOption("DynamicPathing", PosePlotterUtil.getAuto());
+		autoChooser.addDefaultOption("DynamicPathing", Commands.defer(() ->PosePlotterUtil.getAuto(),Set.of(drivetrainS)));
 		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
@@ -689,7 +691,8 @@ public class RobotContainer {
 		startButtonDrive
 				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
-
+		aButtonDrive.whileTrue(
+				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS, (Supplier<Pose2d>)() -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace,false)),Set.of(drivetrainS) ));
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
@@ -701,6 +704,7 @@ public class RobotContainer {
 		 * Set.of(drivetrainS) )));
 		 */
 		// These are examples of the go to line command
+
 		leftBumperDrive.whileTrue(PathFinder.goToLine(drivetrainS,
 				() -> Robot.isRed ? FieldConstants.CoralStation.redLeftTopFace.getTranslation()
 						: FieldConstants.CoralStation.blueLeftTopFace.getTranslation(),

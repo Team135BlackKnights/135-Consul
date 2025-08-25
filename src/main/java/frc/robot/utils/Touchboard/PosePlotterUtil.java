@@ -29,18 +29,15 @@ public class PosePlotterUtil {
         }
     }
 
-    private static StringSubscriber string_Sub;
     private static NetworkTableInstance inst = NetworkTableInstance.getDefault(); // may cause issues (hasnt so far)
     private static NetworkTable datatable = inst.getTable("touchboard");
     private static HashMap<String, CommandPair> commandPairs = new HashMap<String, CommandPair>();
     private static String defaultAuto = "NA";
+    private static StringSubscriber string_Sub = datatable.getStringTopic("posePlotterFinalString").subscribe(defaultAuto);
     private static Command storedAuto = Commands.none();
 
     public static String getAutoString() {
-        string_Sub = datatable.getStringTopic("posePlotterFinalString").subscribe(defaultAuto);
-
         String currentString = string_Sub.get();
-
         return currentString;
 
     }
@@ -50,7 +47,6 @@ public class PosePlotterUtil {
     }
 
     public static int stringStatus() {
-        string_Sub = datatable.getStringTopic("posePlotterFinalString").subscribe("NA");
         String currentString = string_Sub.get();
         if (currentString == "NA") {
             return 404;
@@ -94,13 +90,14 @@ public class PosePlotterUtil {
      * This is a trade-off for the flexibility gained by deferring command creation.
      */
     public static void calculateAuto() {
+        System.err.println("Calculating Auto..");
         String startString = PosePlotterUtil.getAutoString();
 
         System.out.println(startString);
         String[] autoParts = startString.split("_");
         String actions = autoParts[autoParts.length - 1];
         String[] stringArr = actions.split("-");
-        Command newAuto = Commands.none();
+        Command newAuto = Commands.print("Starting Auto..");
         Command parallelCmd = Commands.none();
         Command nextCommand = Commands.none();
         Boolean currentParallel = false;
@@ -149,6 +146,7 @@ public class PosePlotterUtil {
     }
 
     public static Command getAuto() {
+
         return storedAuto;
     }
 }

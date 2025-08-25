@@ -54,6 +54,7 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LogTimingReceiver;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.VirtualSubsystem;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBattery;
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.drive.DriveConstants;
@@ -390,8 +391,8 @@ public class Robot extends LoggedRobot {
 			if (auto.length < 2) {
 				auto = new String[] { "-120", "5.542", "NA" };
 			}
-			double x = Double.parseDouble(auto[1]);
-			double y = 7.02;
+			double x = 7.02;
+			double y = DriveConstants.kBumperToBumperLength/2+(1-Double.parseDouble(auto[1])) * (FieldConstants.FIELD_HEIGHT-DriveConstants.kBumperToBumperLength);
 			double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
 			Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
 			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
