@@ -107,7 +107,7 @@ public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
 	public static LocalADStarAK pathFinder = new LocalADStarAK();
-	private final LoggedDashboardChooser<Command> autoChooser;;
+	private final LoggedDashboardChooser<Command> autoChooser;
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
 	// [Map<String,>,]
@@ -562,6 +562,7 @@ public class RobotContainer {
 			new Pair<String, CommandPair>("RT",  //Example Drive to the right top face of the coral station
 					new CommandPair((Supplier<Command>)() -> PathFinder.goToPose(FieldConstants.CoralStation.blueRightTopFace, ()->DriveConstants.pathConstraints, drivetrainS, false, 0,.5),Set.of(drivetrainS)))
 		));
+		precalculateAllStartAndEndChoreos();
 
 		for (Pair<String, CommandPair> autoCommand : autoCommands) {
 			PosePlotterUtil.addCommandPair(autoCommand.getFirst(), autoCommand.getSecond());
@@ -571,7 +572,6 @@ public class RobotContainer {
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
 		}
-		precalculateAllStartAndEndChoreos();
 
 		new PathfindingCommand(
 				new Pose2d(15.0, 4.0, Rotation2d.k180deg),
