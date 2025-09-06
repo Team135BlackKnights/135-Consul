@@ -20,6 +20,9 @@ public interface GyroIO {
 		public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
 		public double yawVelocityRadPerSec = 0.0;
 		public boolean collisionDetected;
+		public double gForceX = 0.0;
+		public double gForceY = 0.0;
+
 	}
 
 	public default void updateInputs(GyroIOInputs inputs) {}
