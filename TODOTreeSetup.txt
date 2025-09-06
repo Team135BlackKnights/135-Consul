@@ -1,0 +1,104 @@
+"todo-tree.highlights.customHighlight": {
+  "TODO": {
+    "icon": "checkbox",
+    "foreground": "#000000",       // black
+    "background": "#FFFF00",       // yellow
+    "iconColour": "#FFFF00"        // yellow
+  },
+  "NOTE": {
+    "icon": "note",
+    "foreground": "#FFFFFF",       // white
+    "background": "#6495ED",       // cornflowerblue
+    "iconColour": "#6495ED"        // cornflowerblue
+  },
+  "USEFUL": {
+    "icon": "verified",
+    "foreground": "#000000",       // black
+    "background": "#66CDAA",       // mediumaquamarine
+    "iconColour": "#66CDAA"        // mediumaquamarine
+  },
+  "COMMENT": {
+    "icon": "comment",
+    "foreground": "#FFFFFF",       // white
+    "background": "#808080",       // gray
+    "iconColour": "#FFFFFF"        // white
+  },
+  "LEARN": {
+    "icon": "bookmark",
+    "foreground": "#FFFFFF",       // white
+    "background": "#FF69B4",       // hotpink
+    "iconColour": "#FF69B4"        // hotpink
+  },
+  "FIXME": {
+    "icon": "tools",
+    "foreground": "#DC143C",       // crimson
+    "background": "#DEB887",       // burlywood
+    "iconColour": "#DEB887"        // burlywood
+  },
+  "RECHECK": {
+    "icon": "codescan",
+    "foreground": "#FFFFFF",       // white
+    "background": "#D2691E",       // chocolate
+    "iconColour": "#D2691E"        // chocolate
+  },
+  "INCOMPLETE": {
+    "icon": "alert",
+    "foreground": "#FFFFFF",       // white
+    "background": "#C71585",       // mediumvioletred
+    "iconColour": "#C71585"        // mediumvioletred
+  },
+  "BUG": {
+    "icon": "bug",
+    "foreground": "#FFFFFF",       // white
+    "background": "#DC143C",       // crimson
+    "iconColour": "#DC143C"        // crimson
+  },
+  "SEE NOTES": {
+    "icon": "note",
+    "foreground": "#FFFFFF",       // white
+    "background": "#008080",       // teal
+    "iconColour": "#008080"        // teal
+  },
+  "POST": {
+    "icon": "share",
+    "foreground": "#FFFFFF",       // white
+    "background": "#008000",       // green
+    "iconColour": "#008000"        // green
+  },
+  "YEARLYUPDATE" : {
+    "icon": "tools",
+    "foreground" : "#000000",      // black
+    "background" : "#FFAD00",      // orange
+    "iconColour" : "#FFAD00"       // orange
+  },
+  "[ ]": {
+    "icon": "check",
+    "foreground": "#000000",       // black
+    "background": "#FFFFFF",       // white
+    "iconColour": "#FFFF00"        // yellow
+  },
+  "[x]": {
+    "icon": "check",
+    "foreground": "#FFFFFF",       // white
+    "background": "#008000",       // green
+    "iconColour": "#008000"        // green
+  }
+    },
+    "todo-tree.general.tags": [
+      "BUG",
+      "SEE NOTES",
+      "HACK",
+      "FIXME",
+      "RECHECK",
+      "INCOMPLETE",
+      "TODO",
+      "NOTE",
+      "POST",
+      "USEFUL",
+      "LEARN",
+      "COMMENT",
+      "YEARLYUPDATE",
+      "[ ]",
+      "[x]"
+    ],
+    "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS).*(\\n\\s*//\\s{2,}.*)*"

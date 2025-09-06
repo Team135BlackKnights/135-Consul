@@ -47,8 +47,16 @@ public class EncoderIODutyCycle implements EncoderIO {
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        double currentPosition = Units.rotationsToRadians(encoder.get() - encoderOffsetRotations)
+        double encoderValue = encoder.get();
+        //if (encoderValue < .88){
+        //    encoderValue++;
+       // }
+        inputs.rawOutput = encoderValue;
+        double currentPosition = Units.rotationsToRadians(encoderValue - encoderOffsetRotations)
                 / conversionFactor;
+       // if (currentPosition > 2.4){
+        //    currentPosition -= 2*Math.PI;
+       // }
         // we set velocity before position because the position is used to calculate the
         // velocity
         inputs.angularVelocityRadPerSec = (currentPosition - inputs.absolutePositionRadians)

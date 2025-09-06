@@ -16,6 +16,7 @@ public interface EncoderIO {
 	@AutoLog
 	public static class EncoderIOInputs {
         public double timestampSeconds = 0.0;
+		public double rawOutput = 0.0;
 		public double relativePositionRadians = 0.0;
 		public double absolutePositionRadians = 0.0;
 		public double angularVelocityRadPerSec = 0.0;

@@ -17,18 +17,20 @@ public class MotorConstantContainer {
 	 * Create our SysID constant holder, and alert to any possible SysID
 	 * mistakes.
 	 * 
-	 * @param Ks The Ks value from @see StaticCharacterization, used in state-space
-	 * @param Kv The Kv value from @see FeedForwardCharacterization, used in state-space.
+	 * @param Ks The Ks value from StaticCharacterization, used in state-space
+	 * @param Kv The Kv value from FeedForwardCharacterization, used in state-space.
 	 * @param Ka The Ka value from SysID, used in state-space. ALMOST ALWAYS
 	 *           UNUSED (0.001)
 	 * @param P  The P value, used in PID loops
 	 * @param I  The I value from a given constant, used in PID loops
 	 * @param D  the D Value, used in PID loops
+	 * @see StaticCharacterization
+	 * @see FeedForwardCharacterization
 	 */
 	public MotorConstantContainer(double Ks, double Kv, double Ka, double P,
 			double I, double D) {
 		if ((Ka <= 0) || (Kv <= 0)) {
-			throw new ArithmeticException("Ka and Kv must be greater than 0");
+			throw new ArithmeticException("Ka and Kv must be greater than 0. kA is " + Ka + " and kV is " + Kv );
 		} else if ((P < 0) || (D < 0) || (I < 0)) {
 			throw new ArithmeticException(
 					"P, I, and D must be greater than or equal to 0");

@@ -61,10 +61,9 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	// Control
 	private final VoltageOut voltageControl = new VoltageOut(0);
 	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
-	private final VelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC(
+	private final MotionMagicVelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(
 			0);
-	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(
-			0);
+	private final MotionMagicTorqueCurrentFOC positionControl = new MotionMagicTorqueCurrentFOC(0.0);
 	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
 	private final boolean isDriveMotorInverted;
@@ -156,6 +155,8 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		// Config Motors
 		driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxDriveCurrent;
+		driveTalonConfig.CurrentLimits.StatorCurrentLimit = DriveConstants.kMaxDriveCurrent;
+		driveTalonConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
@@ -170,6 +171,13 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		// Conversions affect getPosition()/setPosition() and getVelocity()
 		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.ClosedLoopGeneral.ContinuousWrap = true;
+		turnTalonConfig.MotionMagic.MotionMagicCruiseVelocity = 100.0
+				/ DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		turnTalonConfig.MotionMagic.MotionMagicAcceleration = turnTalonConfig.MotionMagic.MotionMagicCruiseVelocity
+				/ DriveConstants.overallTurningMotorConstantContainer.getKa();
+		turnTalonConfig.MotionMagic.MotionMagicExpo_kV = DriveConstants.overallTurningMotorConstantContainer.getKv()
+				* DriveConstants.TrainConstants.kTurningMotorGearRatio;
+		turnTalonConfig.MotionMagic.MotionMagicExpo_kA = DriveConstants.overallTurningMotorConstantContainer.getKa();
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
 			boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,
@@ -310,13 +318,14 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
 		turnTalonConfig.Slot0.kV = kV;
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 
@@ -359,6 +368,11 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	public void stop() {
 		driveTalon.setControl(neutralControl);
 		turnTalon.setControl(neutralControl);
+	}
+	@Override
+	public void changeDeadband(double deadbandAmps){
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
+		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 
 	@Override

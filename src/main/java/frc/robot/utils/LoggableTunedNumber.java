@@ -5,18 +5,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import frc.robot.Constants;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
+import frc.robot.Constants.TuningConstants;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns
  * default if not or value not in dashboard.
  */
+@SuppressWarnings("deprecation")
 public class LoggableTunedNumber {
+	private static final String tableKey = "TunableNumbers";
 	private final String key;
 	private boolean hasDefault = false;
 	private double defaultValue;
-	private LoggedNetworkNumber dashboardNumber;
+	private boolean canLogSpecific = false;
+	private LoggedDashboardNumber dashboardNumber;
 	private Map<Integer, Double> lastHasChangedValues = new HashMap<>();
 
 	/**
@@ -25,8 +30,7 @@ public class LoggableTunedNumber {
 	 * @param dashboardKey Key on dashboard
 	 */
 	public LoggableTunedNumber(String dashboardKey) {
-		key = dashboardKey;
-		dashboardNumber = new LoggedNetworkNumber(dashboardKey);
+		this.key = tableKey + "/" + dashboardKey;
 	}
 
 	/**
@@ -35,24 +39,27 @@ public class LoggableTunedNumber {
 	 * @param dashboardKey Key on dashboard
 	 * @param defaultValue Default value
 	 */
-	public LoggableTunedNumber(String dashboardKey, double defaultValue) {
-		key = dashboardKey;
-		hasDefault = true;
-		dashboardNumber = new LoggedNetworkNumber(dashboardKey, defaultValue);
+	public LoggableTunedNumber(String dashboardKey, double defaultValue, boolean enableValue) {
+		this(dashboardKey);
+		this.canLogSpecific = enableValue;
+		initDefault(defaultValue, enableValue);
 	}
 
 	/**
-	 * Set the default value of the number. The default value can only be set
-	 * once.
+	 * Set the default value of the number.
 	 *
 	 * @param defaultValue The default value
 	 */
-	public void initDefault(double defaultValue) {
+	@SuppressWarnings("unused")
+	public void initDefault(double defaultValue, boolean enableValue) {
+		this.defaultValue = defaultValue;
+		this.canLogSpecific = enableValue;
 		if (!hasDefault) {
 			hasDefault = true;
-			dashboardNumber.setDefault(defaultValue);
-			if (Constants.isTuningPID) {
-				dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
+			if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
+				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
+			}else if (dashboardNumber != null) {
+				dashboardNumber.setDefault(defaultValue);
 			}
 		}
 	}
@@ -62,27 +69,32 @@ public class LoggableTunedNumber {
 	 *
 	 * @return The current value
 	 */
+	@SuppressWarnings("unused")
 	public double get() {
-		return Constants.isTuningPID ? dashboardNumber.get() : defaultValue;
+		if (!hasDefault) {
+			return 0.0;
+		} else {
+			if (TuningConstants.isTuningPID && canLogSpecific) {
+				return dashboardNumber.get();
+			} else {
+				return defaultValue;
+			}
+		}
 	}
 
 	public static void ifChanged(int id, Consumer<double[]> action,
 			LoggableTunedNumber... tunableNumbers) {
-		if (Constants.isTuningPID) {
-			if (Arrays.stream(tunableNumbers)
-					.anyMatch(tunableNumber -> tunableNumber.hasChanged(id))) {
-				action.accept(Arrays.stream(tunableNumbers)
-						.mapToDouble(LoggableTunedNumber::get).toArray());
-			}
+		if (Arrays.stream(tunableNumbers)
+				.anyMatch(tunableNumber -> tunableNumber.hasChanged(id))) {
+			action.accept(Arrays.stream(tunableNumbers)
+					.mapToDouble(LoggableTunedNumber::get).toArray());
 		}
 	}
 
 	/** Runs action if any of the tunableNumbers have changed */
 	public static void ifChanged(int id, Runnable action,
 			LoggableTunedNumber... tunableNumbers) {
-		if (Constants.isTuningPID) {
-			ifChanged(id, values -> action.run(), tunableNumbers);
-		}
+		ifChanged(id, values -> action.run(), tunableNumbers);
 	}
 
 	/**
@@ -102,5 +114,15 @@ public class LoggableTunedNumber {
 			return true;
 		}
 		return false;
+	}
+
+	@SuppressWarnings("unused")
+	public void changeDefault(double value){
+		defaultValue = value;
+		if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
+				dashboardNumber = new LoggedDashboardNumber(key, value);
+			}else if (dashboardNumber != null) {
+				dashboardNumber.setDefault(value);
+			}
 	}
 }

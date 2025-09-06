@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.LoggableTunedNumber;
@@ -14,7 +15,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class WheelRadiusCharacterization extends Command {
   private static LoggableTunedNumber characterizationSpeed =
-      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.25);
+      new LoggableTunedNumber("WheelRadiusCharacterization/SpeedRadsPerSec", 0.25, TuningConstants.isTuningCharacterization);
   private static final DoubleSupplier gyroYawRadsSupplier =
       () -> RobotContainer.drivetrainS.getPose().getRotation().getRadians();
 

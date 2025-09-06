@@ -9,19 +9,19 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.revrobotics.spark.SparkAbsoluteEncoder;
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 
 import edu.wpi.first.math.util.Units;
 
 /**
  * This class is used to interface with a REV Absolute Encoder. This would be
- * used with a REV Through Bore Encoder PLUGGED INTO A SPARK MAX / FLEX.
+ * used with a REV Through Bore Encoder PLUGGED INTO A SPARK MAX / FLEX USING THE ABSOLUTE ENCODER ADAPTER {https://www.revrobotics.com/rev-11-3326/}.
  * Almost for any encoder, the conversion factor is 1.0.
  * BE SURE TO PROVIDE OFFSET IN ROTATIONS! NOT RADIANS!
  */
 public class EncoderIOREVAbsolute implements EncoderIO {
-    private final SparkAbsoluteEncoder encoder;
+    private final AbsoluteEncoder encoder;
     private double conversionFactor = 1.0;
     private double encoderOffsetRotations = 0.0;
     private boolean isInverted = false;
