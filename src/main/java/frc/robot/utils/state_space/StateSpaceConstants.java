@@ -5,11 +5,14 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import frc.robot.Constants.EncoderType;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
+
+
 import com.ctre.phoenix6.CANBus;
 
 public class StateSpaceConstants {
@@ -78,10 +81,10 @@ public class StateSpaceConstants {
 				simSizeLength = (armLength + elbowLength) * 2,
 				physicalX = simSizeWidth / 2, physicalY = simSizeLength / 2;
 		//qelms and relms
-		public static LoggableTunedNumber qPos = new LoggableTunedNumber("DoubleJointedArmS/qPos",0.01745),
-		qVel = new LoggableTunedNumber("DoubleJointedArmS/qVel",0.1745329),
-		qError = new LoggableTunedNumber("DoubleJointedArmS/qError",10),
-		rPos = new LoggableTunedNumber("DoubleJointedArmS/rPos",.01745/4);
+		public static LoggableTunedNumber qPos = new LoggableTunedNumber("DoubleJointedArmS/qPos",0.01745,Constants.TuningConstants.isTuningDoubleJointedArm),
+		qVel = new LoggableTunedNumber("DoubleJointedArmS/qVel",0.1745329,Constants.TuningConstants.isTuningDoubleJointedArm),
+		qError = new LoggableTunedNumber("DoubleJointedArmS/qError",10,Constants.TuningConstants.isTuningDoubleJointedArm),
+		rPos = new LoggableTunedNumber("DoubleJointedArmS/rPos",.01745/4,Constants.TuningConstants.isTuningDoubleJointedArm);
 	}
 
 	public class SingleJointedArm {

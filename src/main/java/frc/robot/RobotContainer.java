@@ -6,7 +6,6 @@ package frc.robot;
 import frc.robot.Constants.Mode;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.auto.BranchAuto;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.state_space.DoubleJointedArmC;
 import frc.robot.commands.state_space.ElevatorC;
@@ -74,13 +73,11 @@ import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedAr
 import frc.robot.subsystems.state_space.SingleJointedArm.Encoder.SingleJointedArmEncoderIOThriftyAbsolute;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.Crescendo2024FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.DRIVE_WHEEL_TYPE;
 import frc.robot.utils.drive.DriveConstants;
 
 import frc.robot.utils.drive.LocalADStarAK;
@@ -92,8 +89,6 @@ import frc.robot.utils.drive.Sensors.GyroIOSim;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
@@ -117,16 +112,9 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-import com.ctre.phoenix6.hardware.ParentDevice;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.PPLibTelemetry;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -202,6 +190,7 @@ import frc.robot.utils.state_space.StateSpaceConstants;
  * and PathplannerLib 2025.
  * IT WILL NOT WORK WITHOUT ANY OF THESE!
  */
+@SuppressWarnings("unused")
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
@@ -1191,8 +1180,6 @@ public class RobotContainer {
 			elevatorS.getCurrent(),
 			doubleJointedArmS.getCurrent()
 		};
-
-		return new double[] { Math.min(drivetrainS.getCurrent(), 200) };
 		// superStructure.getCurrent() };
 	}
 
