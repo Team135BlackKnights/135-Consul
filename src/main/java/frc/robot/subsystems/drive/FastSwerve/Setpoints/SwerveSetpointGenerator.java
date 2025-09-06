@@ -35,7 +35,7 @@ public class SwerveSetpointGenerator {
 	private final Translation2d[] moduleLocations;
 
 	public record SwerveSetpoint(ChassisSpeeds chassisSpeeds,
-			SwerveModuleState[] moduleStates) {}
+			SwerveModuleState[] moduleStates, boolean[] flipped) {}
 
 	public SwerveSetpointGenerator(SwerveDriveKinematics kinematics,
 			Translation2d[] moduleLocations) {
@@ -183,6 +183,7 @@ public class SwerveSetpointGenerator {
 		final Translation2d[] modules = moduleLocations;
 		SwerveModuleState[] desiredModuleState = advancedKinematics
 				.toSwerveModuleStates(SecondOrderKinematics.correctForDynamics(desiredState));
+		final boolean[] flipped = new boolean[modules.length];
 		// Make sure desiredState respects velocity limits.
 		if (limits.maxDriveVelocity() > 0.0) {
 			SwerveDriveKinematics.desaturateWheelSpeeds(desiredModuleState,
@@ -358,6 +359,7 @@ public class SwerveSetpointGenerator {
 				if (flipHeading(
 						retStates[i].angle.unaryMinus().rotateBy(override))) {
 					retStates[i].speedMetersPerSecond *= -1.0;
+					flipped[i] = true;
 				}
 				retStates[i].angle = override;
 			}
@@ -367,8 +369,9 @@ public class SwerveSetpointGenerator {
 				retStates[i].angle = retStates[i].angle
 						.rotateBy(Rotation2d.fromRadians(Math.PI));
 				retStates[i].speedMetersPerSecond *= -1.0;
+				flipped[i] = true;
 			}
 		}
-		return new SwerveSetpoint(retSpeeds, retStates);
+		return new SwerveSetpoint(retSpeeds, retStates, flipped);
 	}
 }

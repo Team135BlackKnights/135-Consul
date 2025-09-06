@@ -12,7 +12,6 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 /**
  * @apiNote Untested, needs to be checked with hardware
- * Code for a self checking CANivore through the Phoenix 6 API.
  * Does not technically ping the CANivore, instead looks at the CAN bus.
  */
 public class SelfCheckingCanivore implements SelfChecking {
@@ -28,8 +27,8 @@ public class SelfCheckingCanivore implements SelfChecking {
 	public SelfCheckingCanivore(String label) {
 		this.label = label;
 		
-		this.busStatus = Robot.rioCanBus.getStatus();
-		this.isNetworkCANFD = Robot.rioCanBus.isNetworkFD(); 
+		this.busStatus = Robot.driveCanBus.getStatus();
+		this.isNetworkCANFD = Robot.driveCanBus.isNetworkFD(); 
 	}
 	@Override
 	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
@@ -40,7 +39,7 @@ public class SelfCheckingCanivore implements SelfChecking {
 		if (busStatus.Status == StatusCode.InvalidNetwork){
 			hardwareFaultList.add(new SubsystemFault(String.format("Invalid network ", label)));
 		}
-		if (busStatus.BusUtilization >= .9) {
+		if (busStatus.BusUtilization >= .95) {
 			hardwareFaultList.add(new SubsystemFault(String.format("High CAN Utilization ", label)));
 		}
 		if (busStatus.REC > 0){

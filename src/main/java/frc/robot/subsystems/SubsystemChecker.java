@@ -8,11 +8,13 @@ import com.revrobotics.spark.SparkBase;
 import com.studica.frc.AHRS;
 
 import au.grapplerobotics.LaserCan;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -25,8 +27,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.littletonrobotics.junction.Logger;
 
-public abstract class SubsystemChecker extends SubsystemBase
-		implements Runnable {
+public abstract class SubsystemChecker extends SubsystemBase {
 	public enum SystemStatus {
 		OK, WARNING, ERROR
 	}
@@ -35,30 +36,30 @@ public abstract class SubsystemChecker extends SubsystemBase
 	private final ConcurrentLinkedQueue<SelfChecking> hardware = new ConcurrentLinkedQueue<>();
 	private final String statusTable;
 	private boolean checkErrors;
-	private Thread checkerThread;
-	private volatile boolean running = false; // volatile to ensure visibility between main and checker threads
 
 	public SubsystemChecker() {
+		System.out.println(this.getName());
 		this.statusTable = "SystemStatus/" + this.getName();
-		Command systemCheck = getSystemCheckCommand();
-		systemCheck.setName(getName() + "Check");
-		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
-		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = false;
+		checkErrors = true;
 		setupCallbacks();
 	}
 
 	public SubsystemChecker(String name) {
 		this.setName(name);
 		this.statusTable = "SystemStatus/" + name;
+		checkErrors = true;
+		setupCallbacks();
+	}
+	public void setupSystemCheck(){
 		Command systemCheck = getSystemCheckCommand();
 		systemCheck.setName(getName() + "Check");
 		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
 		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = false;
-		setupCallbacks();
 	}
-
+	/**
+	 * Do not call before all systems are set up, as they make sure they aren't in bad states.
+	 * @return
+	 */
 	public Command getSystemCheckCommand() {
 		return Commands.sequence(Commands.runOnce(() -> {
 			Logger.recordOutput(statusTable + "/CheckRan", false);
@@ -79,45 +80,12 @@ public abstract class SubsystemChecker extends SubsystemBase
 	public abstract void setCurrentLimit(int amps);
 
 	private void setupCallbacks() {
-		checkerThread = new Thread(this);
-		checkerThread.setDaemon(true);
-		checkerThread.setPriority(Thread.MIN_PRIORITY);
-		checkerThread.setName(statusTable + "Checker");
-		checkerThread.start();
-		/* 
-		Robot.addPeriodic(this::checkForFaults, 0.5);
-		Robot.addPeriodic(this::publishStatus, 1.5);*/
+		Robot.addPeriodic(() -> checkForFaults(false), 0.5);
+		Robot.addPeriodic(() -> publishStatus(false), 1.5);
 	}
 
-	@Override
-	public void run() {
-		while (running) {
-			try {
-				if (checkErrors){
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				checkForFaults(true);
-				Thread.sleep(250);
-				publishStatus(true);
-				}
-			}
-			catch (InterruptedException e) {
-				Thread.currentThread().interrupt(); // Restore interrupted status
-				break;
-			}
-		}
-	}
-
-	public void stopCheckerThread() {
-		running = false;
-		if (checkerThread != null) {
-			checkerThread.interrupt();
-		}
-	}
+	//Elastic.Notification currentNotif;
+	Timer lastSentFaultTimer = new Timer();
 
 	private void publishStatus(boolean override) {
 		if (checkErrors || override) {
@@ -130,12 +98,35 @@ public abstract class SubsystemChecker extends SubsystemBase
 			for (SubsystemFault fault : this.faults) {
 				faultStrings[i] = String.format("[%.2f] %s", fault.timestamp,
 						fault.description);
-				i++; //doing seperate from for loop to avoid concurrent modification exception
+				i++; // doing seperate from for loop to avoid concurrent modification exception
 			}
 			Logger.recordOutput(statusTable + "/Faults", faultStrings);
 			if (faultStrings.length > 0) {
 				Logger.recordOutput(statusTable + "/LastFault",
 						faultStrings[faultStrings.length - 1]);
+				/*if (currentNotif == null) {
+					currentNotif = new Elastic.Notification(
+							this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR,
+							statusTable + ": " + status.name(), faultStrings[faultStrings.length - 1],
+							this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
+					Elastic.sendNotification(currentNotif);
+					lastSentFaultTimer.restart();
+				} else {
+					// get after the first ] to the end of the string
+					String faultString = faultStrings[faultStrings.length - 1].split("]")[1];
+					if (!faultString.equals(currentNotif.getDescription().split("]")[1])
+							|| lastSentFaultTimer.hasElapsed(currentNotif.getDisplayTimeMillis() / 1000 + 1)) { // new
+																												// fault
+						currentNotif = new Elastic.Notification(
+								this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR,
+								statusTable + ": " + status.name(), faultStrings[faultStrings.length - 1],
+								this.faults.element().sticky ? 10000 : 3000).withAutomaticHeight();
+						Elastic.sendNotification(currentNotif);
+						lastSentFaultTimer.restart();
+					}
+
+					// currentNotif.setMessage(String.join("\n", faultStrings));
+				}*/
 			} else {
 				Logger.recordOutput(statusTable + "/LastFault", "");
 			}
@@ -168,7 +159,9 @@ public abstract class SubsystemChecker extends SubsystemBase
 		return this.faults;
 	}
 
-	public void clearFaults() { this.faults.clear(); }
+	public void clearFaults() {
+		this.faults.clear();
+	}
 
 	public SystemStatus getSystemStatus() {
 		SystemStatus worstStatus = SystemStatus.OK;

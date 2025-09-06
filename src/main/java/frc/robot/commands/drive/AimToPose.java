@@ -8,6 +8,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
@@ -27,13 +28,13 @@ public class AimToPose extends Command {
 			0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), .02);
 	// Allow live updating via LoggableTunedNumbers
 	private static final LoggableTunedNumber thetaKp = new LoggableTunedNumber(
-			"AimToPose/ThetaKp", 2.5);
+			"AimToPose/ThetaKp", 2.5, TuningConstants.isTuningMacros);
 	private static final LoggableTunedNumber thetaKd = new LoggableTunedNumber(
-			"AimToPose/ThetaKd", 0);
+			"AimToPose/ThetaKd", 0, TuningConstants.isTuningMacros);
 	private static final LoggableTunedNumber thetaMaxVelocitySlow = new LoggableTunedNumber(
-			"AimToPose/ThetaMaxVelocitySlow", Units.degreesToRadians(180.0));
+			"AimToPose/ThetaMaxVelocitySlow", Units.degreesToRadians(180.0), TuningConstants.isTuningMacros);
 	private static final LoggableTunedNumber thetaTolerance = new LoggableTunedNumber(
-			"AimToPose/ThetaTolerance", Units.degreesToRadians(1.0));
+			"AimToPose/ThetaTolerance", Units.degreesToRadians(1.0), TuningConstants.isTuningMacros);
 
 	/** Aims to the specified pose under full software control. */
 	public AimToPose(DrivetrainS drive, Pose2d pose) {
@@ -72,8 +73,7 @@ public class AimToPose extends Command {
 		double targetAngle = GeomUtil.closerAngleToZero(GeomUtil
 				.rotationFromCurrentToTarget(drive.getPose().getTranslation(),
 						poseSupplier.get().getTranslation(),
-						GeomUtil.ApproachDirection.BACK)
-				.getRadians());
+						GeomUtil.ApproachDirection.BACK));
 		Logger.recordOutput("CurretP", thetaController.getP());
 		Rotation2d currentRotation = drive.getPose().getRotation();
 		Logger.recordOutput("TargetAngle", targetAngle);
@@ -95,7 +95,7 @@ public class AimToPose extends Command {
 		RobotContainer.angleOverrider = Optional.empty();
 		PPHolonomicDriveController.clearRotationFeedbackOverride();
 		RobotContainer.angularSpeed = 0;
-		drive.changeDeadband(DriveConstants.TrainConstants.kDeadband); // Go back to normal deadband
+		drive.changeDeadband(DriveConstants.DriverConstants.kDeadband); // Go back to normal deadband
 		//drive.stopModules();
 	}
 

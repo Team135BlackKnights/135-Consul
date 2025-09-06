@@ -12,8 +12,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
@@ -28,28 +30,20 @@ public class DriveAndAimAtPose extends Command {
 	private final ProfiledPIDController driveController;
 	private final ProfiledPIDController thetaController;
 	private boolean isFinished = false;
-	private static final LoggableTunedNumber driveKp = new LoggableTunedNumber(
-			"DriveAndRotate/DriveKp", 0.075);
-	private static final LoggableTunedNumber driveKd = new LoggableTunedNumber(
-			"DriveAndRotate/DriveKd", 0);
-	private static final LoggableTunedNumber thetaKp = new LoggableTunedNumber(
-			"DriveAndRotate/ThetaKp", 1.5);
-	private static final LoggableTunedNumber thetaKd = new LoggableTunedNumber(
-			"DriveAndRotate/ThetaKd", 0.02);
-	private static final LoggableTunedNumber maxThetaSpeed = new LoggableTunedNumber(
-			"DriveAndRotate/MaxThetaSpeed", 1.5);
-	private static final LoggableTunedNumber driveTolerance = new LoggableTunedNumber(
-			"DriveAndRotate/DriveTolerance", 0.06);
-	private static final LoggableTunedNumber thetaTolerance = new LoggableTunedNumber(
-			"DriveAndRotate/ThetaTolerance", .03);
-	private static final LoggableTunedNumber ffMinRadius = new LoggableTunedNumber(
-			"DriveAndRotate/FFMinRadius", .2);
-	private static final LoggableTunedNumber ffMaxRadius = new LoggableTunedNumber(
-			"DriveAndRotate/FFMaxRadius", .8);
 	private Translation2d lastSetpointTranslation;
 	private double driveErrorAbs;
 	private final boolean overrideUserControl;
-
+	private final LoggableTunedNumber 
+	driveKp = new LoggableTunedNumber("AimToPose/driveKp", 5, TuningConstants.isTuningMacros), 
+	driveKd = new LoggableTunedNumber("AimToPose/driveKd", 3, TuningConstants.isTuningMacros), 
+	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", 1, TuningConstants.isTuningMacros), 
+	maxThetaSpeed = new LoggableTunedNumber("AimToPose/maxThetaSpeed", Math.PI*2, TuningConstants.isTuningMacros), 
+	thetaKp = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
+	thetaKd = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
+	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(3), TuningConstants.isTuningMacros), 
+	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 5, TuningConstants.isTuningMacros), 
+	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", 2, TuningConstants.isTuningMacros); 
+	
 	public DriveAndAimAtPose(DrivetrainS drive,
 			Supplier<Translation2d> poseSupplier, double givenMaxVelocity,
 			boolean overrideUserControl) {
@@ -124,8 +118,7 @@ public class DriveAndAimAtPose extends Command {
 						.getTranslation();
 		double targetAngle = GeomUtil.closerAngleToZero(GeomUtil
 				.rotationFromCurrentToTarget(currentPose.getTranslation(),
-						poseSupplier.get(), GeomUtil.ApproachDirection.FRONT)
-				.getRadians());
+						poseSupplier.get(), GeomUtil.ApproachDirection.FRONT));
 		//targetAngle += Units.degreesToRadians(VisionConstants.DriveToAITargetKError.get()); //Add/subtract from this for any tweaking from where camera placed for actual robot error
 		Rotation2d currentRotation = currentPose.getRotation();
 		Logger.recordOutput("RotateAndDriveToPose/TargetAngle", targetAngle);

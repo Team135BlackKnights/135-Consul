@@ -46,10 +46,10 @@ public class TankIOSim implements TankIO {
 
 	public TankIOSim(GyroIO gyroSim) {
 		gyro = gyroSim;
-		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatio), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
 		
 	}
 
