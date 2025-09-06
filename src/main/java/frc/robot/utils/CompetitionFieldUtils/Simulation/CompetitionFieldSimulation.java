@@ -48,7 +48,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicReference;
-
+//YEARLYUPDATE: change this to match the year
 /**
  * this class simulates the physical behavior of all the objects on field should
  * only be created during a robot simulation (not in real or replay mode)
@@ -98,7 +98,7 @@ public abstract class CompetitionFieldSimulation {
 			Set<GamePieceInSimulation> gamePiecesCopy = new HashSet<>(gamePieces); // Create a copy of the gamePieces
 																					// set
 			for (GamePieceInSimulation gamePiece : gamePiecesCopy) { // Iterate over the copy
-				// if gamepiece is an air note, check if we've hit the ground
+				//Score it if in score zone
 				Pair<Boolean, String> inScoreZone = gamePiece.isInScoreZone();
 				if (inScoreZone.getFirst()) {
 					score += gamePiece.getScoreValue(inScoreZone.getSecond());
@@ -121,14 +121,13 @@ public abstract class CompetitionFieldSimulation {
 						this.competitionField.addObject(gamePiece);
 					}
 				}
-
+				//YEARLYUPDATE: change the "reefscape2025fieldobjects.algaeballinfly" to the year's gamepieceinfly class, 
+				// & add score handling to match the score zones for this year's gamepiece 
 				if (gamePiece instanceof Reefscape2025FieldObjects.AlgaeBallInFly) {
 					Translation3d position = gamePiece.getPose3d().getTranslation();
 					if (gamePiece.getPose3d().getTranslation()
 							.getZ() < 2) { // check for collision with Net
-						// make the gamepiece a ground note
-						// check if the note is close enough to a speaker
-						// otherwise, make it a ground note
+
 
 						if (hasContact(gamePiece) && gamePiece.isEnabled()) { // bounce off obstacles
 							// Flip the note velocity by Math.PI to simulate a bounce.
@@ -220,6 +219,12 @@ public abstract class CompetitionFieldSimulation {
 		return false; // No contacts found (except with ground)
 	}
 
+	//YEARLYUPDATE: change these to match the year's gamepiece
+	/**Used to simulate vision detection for algae (not implemented in 2025)
+	 * 
+	 * @param position current position from where we're looking
+	 * @return
+	 */
 	private Translation3d getClosestPointOnFieldForAlgae(Translation3d position) {
 		double closestX = position.getX();
 		double closestY = position.getY();
@@ -234,15 +239,15 @@ public abstract class CompetitionFieldSimulation {
 		for (Body obstacle : physicsWorld.getBodies()) {
 			if (obstacle.getFixture(0).getShape().contains(
 					GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)))) {
-				// if it is, move the note to the closest point on the obstacle
+				// if it is, move the game piece to the closest point on the obstacle
 				boolean collisionDetected = obstacle.getFixture(0).getShape()
 						.contains(GeometryConvertor.toDyn4jVector2(new Translation2d(closestX, closestY)));
 				if (collisionDetected) {
 					double obstacleRadius = obstacle.getFixture(0).getShape().getRadius();
 					Translation2d obstacleCenter = GeometryConvertor
 							.toWpilibTranslation2d(obstacle.getTransform().getTranslation());
-					// move the note that far away radially from the obstacle center, in the
-					// direction of the note
+					// move the game piece that far away radially from the obstacle center, in the
+					// direction of the game piece
 					double angle = Math.atan2(position.getY() - obstacleCenter.getY(),
 							position.getX() - obstacleCenter.getX());
 					closestX = obstacleCenter.getX() + Math.cos(angle)
@@ -255,7 +260,8 @@ public abstract class CompetitionFieldSimulation {
 		}
 		return new Translation3d(closestX, closestY, position.getZ());
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
+	//** Used to simulate vision detection for coral (not implemented in 2025)*/
 	private Translation3d getClosestPointOnFieldForCoral(Translation3d position) {
 		double closestX = position.getX();
 		double closestY = position.getY();
@@ -308,9 +314,9 @@ public abstract class CompetitionFieldSimulation {
 		robotSimulations.add(chassisSimulation);
 		this.competitionField.addObject(chassisSimulation);
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece 
 	public void intakeAlgae() {
-		GamePieceInSimulation gamePiece = getClosestGamePieceOneOnGround();
+		GamePieceInSimulation gamePiece = getClosestAlgaeOnGround();
 		if (gamePiece != null) {
 			this.physicsWorld.removeBody(gamePiece);
 			this.competitionField.deleteObject(gamePiece);
@@ -322,7 +328,7 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void shootAlgae() {
 		GamePieceInSimulation gamePiece = getClosestAlgaeOnRobot();
 		if (gamePiece != null) {
@@ -342,7 +348,7 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void shootAlgae(Pose3d startPose) {
 
 		double speed = 1;
@@ -357,7 +363,7 @@ public abstract class CompetitionFieldSimulation {
 		this.competitionField.addObject(gamePiece);
 
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void intakeCoral() {
 		GamePieceInSimulation gamePiece = getClosestCoralOnGround();
 		if (gamePiece != null) {
@@ -369,7 +375,7 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void shootCoral() {
 		GamePieceInSimulation gamePiece = getClosestCoralOnRobot();
 		if (gamePiece != null) {
@@ -382,7 +388,7 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void intakeNearestGamePiece() {
 		GamePieceInSimulation gamePiece = getClosestGamePieceOnGround();
 		if (gamePiece != null) {
@@ -394,7 +400,7 @@ public abstract class CompetitionFieldSimulation {
 			this.competitionField.addObject(gamePiece);
 		}
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public void shootNearestGamePiece() {
 		GamePieceInSimulation gamePiece = getClosestGamePieceOnRobot();
 		if (gamePiece != null) {
@@ -451,20 +457,20 @@ public abstract class CompetitionFieldSimulation {
 
 		return closestGamePiece;
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	/**
 	 * @return the game piece that is closest to the robot and is on the ground
 	 */
-	public GamePieceInSimulation getClosestGamePieceOneOnGround() {
+	public GamePieceInSimulation getClosestAlgaeOnGround() {
 		GamePieceInSimulation closestGamePiece = getClosestGamePiece(
 				List.of(Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated.class));
 		if (closestGamePiece == null) {
 			resetField(false); // if there are no game pieces on the ground, reset the field
-			return getClosestGamePieceOneOnGround(); // try again (I am aware this could be an infinite loop - G)
+			return getClosestAlgaeOnGround(); // try again (I am aware this could be an infinite loop - G)
 		}
 		return closestGamePiece;
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	/**
 	 * @return the game piece that is closest to the robot and is on the ground
 	 */
@@ -483,7 +489,7 @@ public abstract class CompetitionFieldSimulation {
 				Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated.class,
 				Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class));
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	/**
 	 * @return the game piece one that is closest to the robot and is on the robot
 	 */
@@ -491,7 +497,7 @@ public abstract class CompetitionFieldSimulation {
 		return getClosestGamePiece(
 				List.of(Reefscape2025FieldObjects.AlgaeBallOnManipulator.class));
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	/**
 	 * @return the game piece two that is closest to the robot and is on the robot
 	 */
@@ -527,7 +533,7 @@ public abstract class CompetitionFieldSimulation {
 		}
 		gamePieces.clear();
 	}
-
+	//YEARLYUPDATE: change these to match the year's gamepiece
 	public static Translation2d getClosestGamePiece(
 			Translation2d robotPosition) {
 		GamePieceInSimulation closestGamePiece = null;
@@ -549,7 +555,11 @@ public abstract class CompetitionFieldSimulation {
 		}
 		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
 	}
-
+	/**
+	 * Used to simulate vision detection of other robots
+	 * @param robotPosition the current robot's pose
+	 * @return
+	 */
 	public static Pose2d getClosestRobotPose(Translation2d robotPosition) {
 		AbstractDriveTrainSimulation closestRobot = null;
 		double closestDistance = Double.MAX_VALUE;
@@ -578,7 +588,6 @@ public abstract class CompetitionFieldSimulation {
 		scoredCoral = 0;
 		scoredAlgae = 0;
 		Logger.recordOutput("Scoring/SimScore", score);
-		// TODO implement variability
 		Logger.recordOutput("Scoring/SimCoralScoredCount", scoredCoral);
 		Logger.recordOutput("Scoring/SimAlgaeScoredCount", scoredAlgae);
 	}

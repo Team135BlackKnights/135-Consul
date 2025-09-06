@@ -20,7 +20,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.dyn4j.geometry.Geometry;
 import org.littletonrobotics.junction.Logger;
 
+/*YEARLYUPDATE: Create an alternate version of this year on year. Leave this file yearly as an example. (algae is a shootable piece, coral is a pick-and-place game piece)*/
 /**
+ * 
  * a set of game pieces of the 2025 game "Reefscape"
  * 
  * @apiNote Game Piece 1 is the shootable one!

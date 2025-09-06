@@ -43,7 +43,7 @@ public class PathFinder {
 	 */
 	public static Command goToPose(Pose2d pose,
 			Supplier<PathConstraints> constraints, DrivetrainS drive,
-			boolean isAuto, double endVelocity) {
+			boolean isAuto, double endVelocity, double tolerance) {
 		if (isAuto) { // skip accuracy for speed
 
 			return
@@ -65,6 +65,10 @@ public class PathFinder {
 				Commands.defer(() -> {
 					return  AutoBuilder.pathfindToPose(pose, constraints.get(), endVelocity);
 				}, Set.of(drive))
+				.until(
+						() -> drive.getPose().getTranslation()
+								.getDistance(pose.getTranslation()) < tolerance
+				) 
 				.andThen(
 						new DriveAndAimToRotation(drive, pose, constraints))
 				.finallyDo(() -> {

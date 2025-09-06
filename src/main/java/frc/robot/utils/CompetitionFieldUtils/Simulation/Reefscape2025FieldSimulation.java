@@ -19,8 +19,10 @@ import frc.robot.utils.CompetitionFieldUtils.FieldConstants.ReefHeight;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 
+//YEARLYUPDATE: change this field (field bounds/obstacles and scoring locations) to match the year's competition
 /**
  * field simulation for 2025 competition
+ * 
  */
 public class Reefscape2025FieldSimulation extends CompetitionFieldSimulation {
 	public Reefscape2025FieldSimulation(AbstractDriveTrainSimulation robot) {
@@ -140,15 +142,15 @@ public class Reefscape2025FieldSimulation extends CompetitionFieldSimulation {
 
 	@Override
 	public void placeGamePiecesOnField(boolean preload) {
-		for (Translation2d gamePieceOnePosition : FieldConstants.ALGAE_BALL_INITIAL_POSITIONS)
+		for (Translation2d algaePosition : FieldConstants.ALGAE_BALL_INITIAL_POSITIONS)
 			super.addGamePiece(new Reefscape2025FieldObjects.AlgaeBallOnFieldSimulated(
-					gamePieceOnePosition));
+					algaePosition));
 		for (Pose3d algaeReefPos : FieldConstants.ALGAE_BALL_REEF_POSITIONS)
 			super.addGamePiece(new Reefscape2025FieldObjects.AlgaeBallOnFieldStatic(
 				algaeReefPos));
-		for (Translation2d gamePieceTwoPosition : FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS)
+		for (Translation2d coralPosition : FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS)
 			super.addGamePiece(new Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated(
-					gamePieceTwoPosition));
+					coralPosition));
 		if (preload) {
 			super.addGamePiece(new Reefscape2025FieldObjects.ReefscapeCoralOnManipulator()
 			);

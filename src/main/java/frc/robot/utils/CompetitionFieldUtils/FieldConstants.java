@@ -56,31 +56,6 @@ public class FieldConstants {
 			new Translation2d(FIELD_WIDTH - Units.inchesToMeters(48), Units.inchesToMeters(86.5 + 10)),
 			new Translation2d(FIELD_WIDTH - Units.inchesToMeters(48), Units.inchesToMeters(158.5 + 10)),
 			new Translation2d(FIELD_WIDTH - Units.inchesToMeters(48), Units.inchesToMeters(230.5 + 10)),
-			// Blue reef (around it)
-			// TODO Add these back, stuck ON the reef until grabbed.
-			/*
-			 * new Translation2d(blueCenterX + radius, blueCenterY), // Point 1
-			 * new Translation2d(blueCenterX + radius * Math.cos(Math.toRadians(60)),
-			 * blueCenterY + radius * Math.sin(Math.toRadians(60))), // Point 2
-			 * new Translation2d(blueCenterX + radius * Math.cos(Math.toRadians(120)),
-			 * blueCenterY + radius * Math.sin(Math.toRadians(120))), // Point 3
-			 * new Translation2d(blueCenterX - radius, blueCenterY), // Point 4
-			 * new Translation2d(blueCenterX + radius * Math.cos(Math.toRadians(240)),
-			 * blueCenterY + radius * Math.sin(Math.toRadians(240))), // Point 5
-			 * new Translation2d(blueCenterX + radius * Math.cos(Math.toRadians(300)),
-			 * blueCenterY + radius * Math.sin(Math.toRadians(300))) // Point 6
-			 * // Red reef (around it)
-			 * , new Translation2d(redCenterX + radius, redCenterY), // Point 1
-			 * new Translation2d(redCenterX + radius * Math.cos(Math.toRadians(60)),
-			 * redCenterY + radius * Math.sin(Math.toRadians(60))), // Point 2
-			 * new Translation2d(redCenterX + radius * Math.cos(Math.toRadians(120)),
-			 * redCenterY + radius * Math.sin(Math.toRadians(120))), // Point 3
-			 * new Translation2d(redCenterX - radius, redCenterY), // Point 4
-			 * new Translation2d(redCenterX + radius * Math.cos(Math.toRadians(240)),
-			 * redCenterY + radius * Math.sin(Math.toRadians(240))), // Point 5
-			 * new Translation2d(redCenterX + radius * Math.cos(Math.toRadians(300)),
-			 * redCenterY + radius * Math.sin(Math.toRadians(300))) // Point 6
-			 */
 
 	};
 	public static final Translation2d[] REEFSCAPE_CORAL_INITIAL_POSITIONS = new Translation2d[] {

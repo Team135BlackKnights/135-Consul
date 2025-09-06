@@ -34,6 +34,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobotBase;
@@ -53,10 +54,24 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LogTimingReceiver;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.VirtualSubsystem;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBattery;
+import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import frc.robot.utils.maths.TimeUtil;
+
+/*
+TODO: Setup TODOTree to go through the year-by-year updating checklist. 
+
+Install TODOTree from here https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree
+Once installed, open settings (gear icon at the very bottom),
+click settings on the menu that appears, then click the sheet of paper icon
+by the WPILIB logo. Copy and paste the "TODOTreeSetup.txt" file into the settings.json
+file, and save. If the setup worked, the first line of this paragraph should be yellow.
+Once that is done, click on the TODOTree extension icon (the one with the tree) and finish 
+everything labeled "YEARLYUPDATE" in the tree.
+*/
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -70,7 +85,7 @@ public class Robot extends LoggedRobot {
 	private RobotContainer m_robotContainer;
 	public static boolean isRed;
 	private boolean isPracticeDSMode = false, loggerStarted = false, matchHasEnded = false;
-	public static  double matchTime = 0;
+	public static double matchTime = 0;
 	private double lastMatchTime = 0, previousTime = Logger.getTimestamp(), accumulatedCharge = 0;
 	@SuppressWarnings("unused")
 	private LoggedPowerDistribution pdh;
@@ -81,7 +96,7 @@ public class Robot extends LoggedRobot {
 	public static Pose3d armPose = new Pose3d();
 	public static Pose3d algaePose = new Pose3d();
 	private boolean autoHasStarted = false, hasCalculatedAuto = false;
-	private String[] autoList = new String[18];
+	private String oldAutoString = "";
 
 	public Robot() {
 		CanBridge.runTCP();
@@ -212,7 +227,7 @@ public class Robot extends LoggedRobot {
 						return mathShared.getTimestamp();
 					}
 				});
-	Map<String, Integer> commandCounts = new HashMap<>();
+		Map<String, Integer> commandCounts = new HashMap<>();
 		BiConsumer<Command, Boolean> logCommandFunction = (Command command, Boolean active) -> {
 			String name = command.getName();
 			int count = commandCounts.getOrDefault(name, 0) + (active ? 1 : -1);
@@ -244,7 +259,7 @@ public class Robot extends LoggedRobot {
 		// Publish the current mode of the robot (to check in pit display)
 		Logger.recordOutput("SystemStatus/robotMode", Constants.currentMode);
 		Elastic.selectTab("Disabled/Prematch");
-		//Threads.setCurrentThreadPriority(true, 10); // Java magic to speed up loops.
+		// Threads.setCurrentThreadPriority(true, 10); // Java magic to speed up loops.
 
 	}
 
@@ -325,13 +340,11 @@ public class Robot extends LoggedRobot {
 		matchTime = DriverStation.getMatchTime();
 		Logger.recordOutput("MatchTime", matchTime);
 
-
 		double batteryVoltage = (Constants.currentMode == Constants.Mode.SIM)
 				? SimulatedBattery.getBatteryVoltage().baseUnitMagnitude()
 				: RobotController.getBatteryVoltage();
 
 		Logger.recordOutput("SystemStatus/BatteryVoltage", batteryVoltage);
-
 
 		updateAdvantageScopePiecesLive();
 
@@ -340,9 +353,9 @@ public class Robot extends LoggedRobot {
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
 		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
 
-
 	}
-	//TODO: Update this from year to year
+
+	// YEARLYUPDATE: Grant explain what this does (Ur Mom -G)
 	private void updateAdvantageScopePiecesLive() {
 
 	}
@@ -374,26 +387,22 @@ public class Robot extends LoggedRobot {
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
 		if (!autoHasStarted) {
-			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(RobotContainer.startingPose.get(), false));
+			String[] auto = PosePlotterUtil.getAutoString().split("_");
+			if (auto.length < 2) {
+				auto = new String[] { "-120", "5.542", "NA" };
+			}
+			double x = 7.02;
+			double y = DriveConstants.kBumperToBumperLength/2+(1-Double.parseDouble(auto[1])) * (FieldConstants.FIELD_HEIGHT-DriveConstants.kBumperToBumperLength);
+			double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
+			Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
+			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				RobotContainer.fieldSimulation.getMainDriveSimulation()
-						.setSimulationWorldPose(GeomUtil.apply(RobotContainer.startingPose.get(), false));
+						.setSimulationWorldPose(GeomUtil.apply(startingPose, false));
 			}
-			// go thorugh all autoConstructors
-			boolean triggerUpdate = false;
-			for (int i = 0; i < autoList.length; i++) {
-				if (RobotContainer.autoConstructors[i].get() != null) {
-					if (autoList[i] == null) {
-						triggerUpdate = true;
-						autoList[i] = RobotContainer.autoConstructors[i].get();
-					} else if (!autoList[i].equals(RobotContainer.autoConstructors[i].get())) {
-						triggerUpdate = true;
-						autoList[i] = RobotContainer.autoConstructors[i].get();
-					}
-				}
-			}
-			if (triggerUpdate) {
-				m_autonomousCommand = RobotContainer.buildDynamicAuto();
+			if (PosePlotterUtil.getAutoString() != null && !PosePlotterUtil.getAutoString().equals(oldAutoString)){
+				oldAutoString = PosePlotterUtil.getAutoString();
+				PosePlotterUtil.calculateAuto();
 				hasCalculatedAuto = true;
 			}
 		}
@@ -429,15 +438,15 @@ public class Robot extends LoggedRobot {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
-		if (m_autonomousCommand == null) {
-			m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-		}
+		
+		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+		
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
 			System.out.println(m_robotContainer.getAutoName());
 			if (m_robotContainer.getAutoName().equals("DynamicPathing") && !hasCalculatedAuto) {
 				System.out.println("Building Dynamic Auto");
-				m_autonomousCommand = RobotContainer.buildDynamicAuto();
+				PosePlotterUtil.calculateAuto();
 				hasCalculatedAuto = true;
 			}
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {

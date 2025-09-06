@@ -21,7 +21,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -38,6 +37,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
@@ -52,6 +52,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -94,10 +95,8 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
-import frc.robot.utils.operatorDashboard.OperatorControls;
-import frc.robot.utils.operatorDashboard.OperatorDashboardIO;
-import frc.robot.utils.operatorDashboard.OperatorDashboardIOServer;
-
+import frc.robot.utils.Touchboard.PosePlotterUtil;
+import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -109,14 +108,8 @@ public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
 	public static SolenoidS solenoidS = new SolenoidS();
-	public static OperatorControls operatorControls;
+	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	private final LoggedDashboardChooser<Command> autoChooser;
-	// private final Notifier superStructureNotifier;
-	public static final LoggedDashboardChooser<Pose2d> startingPose = new LoggedDashboardChooser<Pose2d>(
-			"AutoToggles/StartingPose");
-	@SuppressWarnings({ "unchecked" })
-	public static final LoggedDashboardChooser<String>[] autoConstructors = new LoggedDashboardChooser[(DriveConstants.maximumAutoCycles
-			- 1) * 3 + 3];
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
 	// [Map<String,>,]
@@ -191,10 +184,10 @@ public class RobotContainer {
 	public static Trigger RunCoralTrigger = new Trigger(() -> dsHIDHandler.getRunButton());
 	public static Trigger IntakeAlgaeTrigger = new Trigger(() -> dsHIDHandler.getIntakeAlgaeButton());
 	public static Trigger ScoreAlgaeReef = new Trigger(() -> dsHIDHandler.getScoreProcessorButton());
-	public static Trigger manualElevatorUp = new Trigger(() -> dsHIDHandler.getManualElevatorUp()); //ded
-	public static Trigger manualElevatorDown = new Trigger(() -> dsHIDHandler.getManualElevatorDown()); //ded
-	public static Trigger manualArmUp = new Trigger(() -> dsHIDHandler.getManualArmUp()); //ded
-	public static Trigger manualArmDown = new Trigger(() -> dsHIDHandler.getManualArmDown()); //ded
+	public static Trigger manualElevatorUp = new Trigger(() -> dsHIDHandler.getManualElevatorUp()); // ded
+	public static Trigger manualElevatorDown = new Trigger(() -> dsHIDHandler.getManualElevatorDown()); // ded
+	public static Trigger manualArmUp = new Trigger(() -> dsHIDHandler.getManualArmUp()); // ded
+	public static Trigger manualArmDown = new Trigger(() -> dsHIDHandler.getManualArmDown()); // ded
 	static Trigger holdReefAlgae = new Trigger(() -> dsHIDHandler.getActivateManualArmSwitch());
 	static Trigger reefAlgaePressed = new Trigger(() -> dsHIDHandler.getReefAlgaeSwitchPressed());
 	static Trigger rezeroButton = new Trigger(() -> dsHIDHandler.getGoToProcessorButton());
@@ -208,8 +201,8 @@ public class RobotContainer {
 	@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	public static Translation2d[] gamePieceOneLocations = FieldConstants.ALGAE_BALL_INITIAL_POSITIONS;
-	public static Translation2d[] gamePieceTwoLocations = FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS;
+	public static Translation2d[] algaeStartingLocations = FieldConstants.ALGAE_BALL_INITIAL_POSITIONS;
+	public static Translation2d[] coralStartingLocations = FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS;
 	public static boolean userDrive = true;
 	public static boolean withinLineTolerance = false;
 	@AutoLogOutput(key = "RobotState/miloMad")
@@ -278,84 +271,25 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
-		/*These example states were originally used in 2025, retrofit to be an example (placeholder levels used)
-		essentially each one of these choosers corresponds to a macro segment which then returns a series of commands*/
-
-		startingPose.addDefaultOption("Left (4)", FieldConstants.START_POSE_LEFT);
-		startingPose.addOption("Right (1)", FieldConstants.START_POSE_RIGHT);
-
-		autoConstructors[0] = new LoggedDashboardChooser<String>("AutoToggles/Cycle1BranchTarget");
-		autoConstructors[0].addDefaultOption("None (Auto Ends Here)", null);
-		autoConstructors[0].addOption("B1", "Branch1");
-		autoConstructors[0].addOption("B2", "Branch2");
-		autoConstructors[0].addOption("B3", "Branch3");
-		autoConstructors[0].addOption("B4", "Branch4");
-		autoConstructors[0].addOption("B5", "Branch5");
-		autoConstructors[0].addOption("B6", "Branch6");
-		autoConstructors[0].addOption("B7", "Branch7");
-		autoConstructors[0].addOption("B8", "Branch8");
-		autoConstructors[0].addOption("B9", "Branch9");
-		autoConstructors[0].addOption("B10", "Branch10");
-		autoConstructors[0].addOption("B11", "Branch11");
-		autoConstructors[0].addOption("B12", "Branch12");
-		autoConstructors[1] = new LoggedDashboardChooser<String>("AutoToggles/Cycle1LevelTarget");
-		autoConstructors[1].addDefaultOption("None (Auto Ends Here)", null);
-		autoConstructors[1].addOption("L4", "Level4"); 
-		autoConstructors[1].addOption("L3", "Level3");
-		autoConstructors[1].addOption("L2OrL1","Level2");
-		autoConstructors[2] = new LoggedDashboardChooser<String>("AutoToggles/Cycle1PickupTarget");
-		autoConstructors[2].addDefaultOption("NoAlgae", null);
-		autoConstructors[2].addOption("AlgaeUpper", "AlgaeUpper");
-		autoConstructors[2].addOption("AlgaeLower", "AlgaeLower");
-		for (int i = 0; i < DriveConstants.maximumAutoCycles - 1; i++) {
-			autoConstructors[i * 3 + 3] = new LoggedDashboardChooser<String>(
-					"AutoToggles/Cycle" + Integer.toString(i + 2) + "PickupTarget");
-			autoConstructors[i * 3 + 3].addDefaultOption("None (Auto Ends Here)", null);
-			autoConstructors[i * 3 + 3].addOption("LeftSideTop", "LeftSideTop");
-			autoConstructors[i * 3 + 3].addOption("RightSideTop", "RightSideTop");
-			autoConstructors[i * 3 + 3].addOption("LeftSideTopAlgaeUpper", "LeftSideTopAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("RightSideTopAlgaeUpper", "RightSideTopAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("LeftSideTopAlgaeLower", "LeftSideTopAlgaeLower");
-			autoConstructors[i * 3 + 3].addOption("RightSideTopAlgaeLower", "RightSideTopAlgaeLower");
-			autoConstructors[i * 3 + 3].addOption("LeftSideMid", "LeftSideMid");
-			autoConstructors[i * 3 + 3].addOption("RightSideMid", "RightSideMid");
-			autoConstructors[i * 3 + 3].addOption("LeftSideMidAlgaeUpper", "LeftSideMidAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("RightSideMidAlgaeUpper", "RightSideMidAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("LeftSideMidAlgaeLower", "LeftSideMidAlgaeLower");
-			autoConstructors[i * 3 + 3].addOption("RightSideMidAlgaeLower", "RightSideMidAlgaeLower");
-			autoConstructors[i * 3 + 3].addOption("LeftSideBot", "LeftSideBot");
-			autoConstructors[i * 3 + 3].addOption("RightSideBot", "RightSideBot");
-			autoConstructors[i * 3 + 3].addOption("LeftSideBotAlgaeUpper", "LeftSideBotAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("RightSideBotAlgaeUpper", "RightSideBotAlgaeUpper");
-			autoConstructors[i * 3 + 3].addOption("LeftSideBotAlgaeLower", "LeftSideBotAlgaeLower");
-			autoConstructors[i * 3 + 3].addOption("RightSideBotAlgaeLower", "RightSideBotAlgaeLower");
-			autoConstructors[i * 3 + 4] = new LoggedDashboardChooser<String>(
-					"AutoToggles/Cycle" + Integer.toString(i + 2) + "BranchTarget");
-			autoConstructors[i * 3 + 4].addDefaultOption("None (Auto Ends Here)", null);
-			autoConstructors[i * 3 + 4].addOption("B1", "Branch1");
-			autoConstructors[i * 3 + 4].addOption("B2", "Branch2");
-			autoConstructors[i * 3 + 4].addOption("B3", "Branch3");
-			autoConstructors[i * 3 + 4].addOption("B4", "Branch4");
-			autoConstructors[i * 3 + 4].addOption("B5", "Branch5");
-			autoConstructors[i * 3 + 4].addOption("B6", "Branch6");
-			autoConstructors[i * 3 + 4].addOption("B7", "Branch7");
-			autoConstructors[i * 3 + 4].addOption("B8", "Branch8");
-			autoConstructors[i * 3 + 4].addOption("B9", "Branch9");
-			autoConstructors[i * 3 + 4].addOption("B10", "Branch10");
-			autoConstructors[i * 3 + 4].addOption("B11", "Branch11");
-			autoConstructors[i * 3 + 4].addOption("B12", "Branch12");
-			autoConstructors[i * 3 + 5] = new LoggedDashboardChooser<String>(
-					"AutoToggles/Cycle" + Integer.toString(i + 2) + "LevelTarget");
-			autoConstructors[i * 3 + 5].addDefaultOption("None (Auto Ends Here)", null);
-			autoConstructors[i * 3 + 5].addOption("L4", "Level4");
-			autoConstructors[i * 3 + 5].addOption("L3", "Level3");
-			autoConstructors[i * 3 + 5].addOption("L2OrL1", "Level2");
-		}
+		/*
+		 * These example states were originally used in 2025, retrofit to be an example
+		 * (placeholder levels used)
+		 * essentially each one of these choosers corresponds to a macro segment which
+		 * then returns a series of commands
+		 */
 		DriverStation.silenceJoystickConnectionWarning(true);
 		// We check to see what drivetrain type we have here, and create the correct
 		// drivetrain system based on that.
 		// If we get something wacky, throw an error
-		List<Pair<String, Command>> autoCommands = new ArrayList<>();
+		List<Pair<String, CommandPair>> autoCommands = new ArrayList<>();
+		String[] auto = PosePlotterUtil.getAutoString().split("_");
+		if (auto.length < 2) {
+			auto = new String[] { "-120", "5.542", "NA" };
+		}
+		double x = Double.parseDouble(auto[1]);
+		double y = 7.02;
+		double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
+		Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
 		switch (Constants.currentMode) {
 			case REAL:
 				switch (DriveConstants.driveType) {
@@ -385,9 +319,9 @@ public class RobotContainer {
 															new ModuleIOKrakenFOCWithThrifty(3));
 												} else {
 													drivetrainS = new Swerve(new GyroIONavX(),
-															new ModuleIOKrakenFOC(0), 
+															new ModuleIOKrakenFOC(0),
 															new ModuleIOKrakenFOC(1),
-															new ModuleIOKrakenFOC(2), 
+															new ModuleIOKrakenFOC(2),
 															new ModuleIOKrakenFOC(3));
 												}
 												break;
@@ -405,7 +339,7 @@ public class RobotContainer {
 											case THRIFTYSWERVE:
 											case SDSMK4I:
 												drivetrainS = new Swerve(new GyroIOPigeon2(),
-														new ModuleIOKrakenFOC(0), 
+														new ModuleIOKrakenFOC(0),
 														new ModuleIOKrakenFOC(1),
 														new ModuleIOKrakenFOC(2),
 														new ModuleIOKrakenFOC(3));
@@ -501,10 +435,6 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
-
-				
-				autoCommands.addAll(Arrays.asList(
-				));
 				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
@@ -553,7 +483,7 @@ public class RobotContainer {
 								new SwerveModuleSimulation[] { moduleSimulations[0], moduleSimulations[1],
 										moduleSimulations[2], moduleSimulations[3]
 								}, DriveConstants.kModuleTranslations, gyroSimulation,
-								GeomUtil.apply(startingPose.get(), false), drivetrainS::resetPose);
+								GeomUtil.apply(startingPose, false), drivetrainS::resetPose);
 						fieldSimulation = new Reefscape2025FieldSimulation(driveSim);
 						fieldSimulation.placeGamePiecesOnField(true);
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
@@ -567,7 +497,7 @@ public class RobotContainer {
 						TankDriveSimulation tankSim = new TankDriveSimulation(DriveConstants.mainRobotProfile,
 								gyroSimulation,
 								diffKinematics,
-								GeomUtil.apply(startingPose.get(), false),
+								GeomUtil.apply(startingPose, false),
 								(Tank) drivetrainS,
 								tankIOSim,
 								drivetrainS::resetPose);
@@ -588,7 +518,7 @@ public class RobotContainer {
 						MecanumDriveSimulation mecanumSim = new MecanumDriveSimulation(DriveConstants.mainRobotProfile,
 								gyroSimulation,
 								mechKinematics,
-								GeomUtil.apply(startingPose.get(), false),
+								GeomUtil.apply(startingPose, false),
 								(Mecanum) drivetrainS,
 								mecanumIOSim,
 								drivetrainS::resetPose);
@@ -597,7 +527,6 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-
 
 				System.out.println("SIM SETUP DONE!");
 				break;
@@ -620,30 +549,31 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
-				autoCommands.addAll(Arrays.asList(
-				// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-				// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
-				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
-				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
-				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
-				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-
-				));
 		}
-		
-		drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
+
+		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
 		drivetrainS.setDefaultCommand(new DrivetrainC(drivetrainS));
-		operatorControls = new OperatorControls(Constants.currentMode == Mode.REPLAY ? new OperatorDashboardIO(){}: new OperatorDashboardIOServer());
-		Pathfinding.setPathfinder(new LocalADStarAK());
+		Pathfinding.setPathfinder(pathFinder);
 		// algaeScorer.setDefaultCommand(new AlgaeScorerC(algaeScorer));
 		// superStructureNotifier = new Notifier(superStructure::periodic);
 		// superStructureNotifier.startPeriodic(.01);
-		NamedCommands.registerCommands(autoCommands);
+		// Add all the auto commands to the auto builder
+
+		// Make sure to watch your flipped poses. Our custom DriveToPose and all of those do NOT auto flip for red. 
+		autoCommands.addAll(Arrays.asList( 
+			new Pair<String, CommandPair>("RT",  //Example Drive to the right top face of the coral station
+					new CommandPair((Supplier<Command>)() -> PathFinder.goToPose(FieldConstants.CoralStation.blueRightTopFace, ()->DriveConstants.pathConstraints, drivetrainS, false, 0,.5),Set.of(drivetrainS)))
+		));
+		precalculateAllStartAndEndChoreos();
+
+		for (Pair<String, CommandPair> autoCommand : autoCommands) {
+			PosePlotterUtil.addCommandPair(autoCommand.getFirst(), autoCommand.getSecond());
+		}
+
+
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
 		}
-		precalculateAllStartAndEndChoreos();
 
 		new PathfindingCommand(
 				new Pose2d(15.0, 4.0, Rotation2d.k180deg),
@@ -672,7 +602,7 @@ public class RobotContainer {
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
 		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
-		autoChooser.addDefaultOption("DynamicPathing", Commands.none());
+		autoChooser.addDefaultOption("DynamicPathing", Commands.defer(() ->PosePlotterUtil.getAuto(),Set.of(drivetrainS)));
 		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
@@ -757,17 +687,14 @@ public class RobotContainer {
 				.onTrue(new InstantCommand(() -> {
 					System.out.println("Zeroing Gyro");
 					drivetrainS.zeroHeading();
-					//drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
+					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
-		
-		
+
 		startButtonDrive
 				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
-	
-		
-				
-
+		aButtonDrive.whileTrue(
+				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS, (Supplier<Pose2d>)() -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace,false)),Set.of(drivetrainS) ));
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
@@ -778,7 +705,8 @@ public class RobotContainer {
 		 * pathFollowingToleranceDuringExactLineUp.get(),scoreMinimumSpeed.get()),
 		 * Set.of(drivetrainS) )));
 		 */
-		//These are examples of the go to line command
+		// These are examples of the go to line command
+
 		leftBumperDrive.whileTrue(PathFinder.goToLine(drivetrainS,
 				() -> Robot.isRed ? FieldConstants.CoralStation.redLeftTopFace.getTranslation()
 						: FieldConstants.CoralStation.blueLeftTopFace.getTranslation(),
@@ -821,14 +749,13 @@ public class RobotContainer {
 						}), () -> !miloMad));
 
 		leftStickDrive.onTrue(drivetrainS.orientModules(Swerve.getXOrientations()));
-		//rightStickDrive.whileTrue(new OrchestraC("rocky"));
+		// rightStickDrive.whileTrue(new OrchestraC("rocky"));
 		// VisionConstants.Controls.autoIntake
 		// .whileTrue(new AimToAprilTag(drivetrainS, visionS, 18,
 		// ApproachDirection.FRONT, true));
 
 		// Button Board Controls
-	
-	
+
 		if (Constants.currentMode == Mode.SIM) {
 			testDPadUp.onTrue(new InstantCommand(() -> {
 				try {
@@ -852,7 +779,6 @@ public class RobotContainer {
 		}
 	}
 
-
 	// Interface for command factories
 	public interface CommandFactory {
 		Command generate();
@@ -870,76 +796,6 @@ public class RobotContainer {
 
 	public String getAutoName() {
 		return autoChooser.getSendableChooser().getSelected();
-	}
-
-	public static Command buildDynamicAuto() {
-		//TODO: These need to be configured on a year-to-year basis
-		int loopCt = 0;
-		System.out.println("Building Dynamic Auto");
-		Command builtCommand = null;
-		for (int i = 0; i < DriveConstants.maximumAutoCycles; i++) {
-			if (i == 0) {
-				LoggedDashboardChooser<String> branchChooser = autoConstructors[0];
-				LoggedDashboardChooser<String> levelChooser = autoConstructors[1];
-				LoggedDashboardChooser<String> intakeChooser = autoConstructors[2];
-				if (branchChooser.get() != null && levelChooser.get() != null) {
-					System.out.println(
-							"ADDING a starter. Branch: " + branchChooser.get() + " Level: " + levelChooser.get()
-									+ " Intake: " + intakeChooser.get());
-
-					grabbingAlgae = false;
-					builtCommand = Commands.print("THESE ARE DEBUG STATEMENTS. EXPECT SIM TO NOT MOVE").andThen(Commands.waitSeconds(2)).andThen(Commands.print("Going to" + branchChooser.get()+levelChooser.get()+intakeChooser.get()));
-
-				} else {
-					break;
-				}
-			} else {
-				LoggedDashboardChooser<String> intakeChooser = autoConstructors[(i - 1) * 3 + 3];
-				LoggedDashboardChooser<String> branchChooser = autoConstructors[(i - 1) * 3 + 4];
-				LoggedDashboardChooser<String> levelChooser = autoConstructors[(i - 1) * 3 + 5];
-
-				if (branchChooser.get() != null && levelChooser.get() != null && intakeChooser.get() != null) {
-					System.out.println("ADDING a non starter. Branch: " + branchChooser.get() + " Level: "
-							+ levelChooser.get() + " Intake: " + intakeChooser.get());
-					String wantedIntake = intakeChooser.get(); // Options "LeftSide", "RightSide","LeftSideReefAlgae",
-																// "RightSideReefAlgae"
-			
-
-
-					if (builtCommand == null) {
-						DriverStation.reportError("COULD NOT IDENTIFY SOMETHING FOR AN EXTRA CYCLE!", false);
-						Logger.recordOutput("Odometry/FailureState",
-								"COULD NOT IDENTIFY SOMETHING FOR AN EXTRA CYCLE!");
-						return Commands.none();
-					} else {
-						// make it so that the score command is built ONLY when the intake command is
-						// finished
-						builtCommand = builtCommand.andThen(Commands.defer(buildDynamicIntake(wantedIntake), Set.of(drivetrainS)))
-						.andThen(Commands.waitSeconds(2)).andThen(Commands.print("Going to" + branchChooser.get()+levelChooser.get()+intakeChooser.get()));
-									
-										
-					}
-
-				} else {
-					System.out.println("Returning a command with more than one cycle.");
-					return builtCommand;
-				}
-			}
-			loopCt += 1;
-		}
-		if (loopCt >= DriveConstants.maximumAutoCycles) {
-			System.out.println(
-					"Returning a command with the specified max cycle count of " + DriveConstants.maximumAutoCycles);
-			return builtCommand;
-		}
-		System.out.println("Something was null too early.");
-		return Commands.none();
-	}
-
-	private static Supplier<Command> buildDynamicIntake(String wantedIntake) {
-		return () -> {
-		return Commands.print("THIS IS A PLACEHOLDER FOR AN ACTUAL INTAKE COMMAND, CODE WANTED:" + wantedIntake);
-		};
 	}
 
 	/**
@@ -997,7 +853,8 @@ public class RobotContainer {
 	 * @return true if ALL systems were good.
 	 */
 	public static boolean allSystemsOK() {
-		return drivetrainS.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK;}
+		return drivetrainS.getTrueSystemStatus() == SubsystemChecker.SystemStatus.OK;
+	}
 
 	public static Collection<ParentDevice> getOrchestraDevices() {
 
