@@ -37,7 +37,7 @@ import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
 
 public class MecanumIOSparkBase implements MecanumIO {
 
-	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatio;
+	private static final double GEAR_RATIO = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
 	private static final double KP = DriveConstants.overallDriveMotorConstantContainer
 			.getP();
 	private static final double KD = DriveConstants.overallDriveMotorConstantContainer
@@ -88,6 +88,7 @@ public class MecanumIOSparkBase implements MecanumIO {
 		frontRight.setCANTimeout(250);
 		backLeft.setCANTimeout(250);
 		backRight.setCANTimeout(250);
+		sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed);
 		sparkConfig.voltageCompensation(12);
 		sparkConfig.smartCurrentLimit(DriveConstants.kMaxDriveCurrent);
 		sparkConfig.idleMode(IdleMode.kBrake);
@@ -105,10 +106,13 @@ public class MecanumIOSparkBase implements MecanumIO {
 		MAXMotionConfig MaxMotionConfig = new MAXMotionConfig();
 		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
 		sparkConfig.apply(loopConfig);
-		frontLeft.configure(sparkConfig.inverted(DriveConstants.kFrontLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		frontRight.configure(sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		backLeft.configure(sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-		backRight.configure(sparkConfig.inverted(DriveConstants.kBackRightDriveReversed), ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
+		frontRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackLeftDriveReversed);
+		backLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+		sparkConfig.inverted(DriveConstants.kBackRightDriveReversed);
+		backRight.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		
 
 	}
