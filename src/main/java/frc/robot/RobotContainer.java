@@ -56,7 +56,6 @@ import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.commands.servos.ServoC;
 
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
