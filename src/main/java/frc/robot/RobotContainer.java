@@ -470,16 +470,15 @@ public class RobotContainer {
 				autoCommands.addAll(Arrays.asList(
 						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
 						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
-						new Pair<String, Command>("BranchGrabbingGamePiece",
-								new BranchAuto("Shoot",
-										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
+						//new Pair<String, Command>("BranchGrabbingGamePiece",
+						//		new BranchAuto("Shoot",
+						//				new Pose2d(7.4, 5.8, new Rotation2d()), 4))
 				// new Pair<String, Command>("BotAborter", new BotAborter(drivetrainS)), //NEEDS
 				// A WAY TO KNOW WHEN TO ABORT FOR THE EXAMPLE AUTO!!!
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				));
-				autoCommands.addAll(createBranches());
 				break;
 			case SIM:
 				GyroSimulation gyroSimulation = null;
@@ -573,11 +572,11 @@ public class RobotContainer {
 				}
 				climber = new Climber(new ClimberIOSim());
 				intake = new Intake(new IntakeIOSim());
-				autoCommands.addAll(Arrays.asList(
-						// new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
-						// Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
+				/*autoCommands.addAll(Arrays.asList(
+						 new Pair<String, Command>("AimAtAmp",new AimToPose(drivetrainS, new
+						 Pose2d(1.9,7.7, new Rotation2d(Units.degreesToRadians(0))))),
 						new Pair<String, Command>("SmartShoot", Commands.none()),
-						new Pair<String, Command>("SmartIntake", Commands.none()),
+						new Pair<String, Command>("SmartIntake", Commands.none())
 						new Pair<String, Command>("BranchGrabbingGamePiece",
 								new BranchAuto("Shoot",
 										new Pose2d(7.4, 5.8, new Rotation2d()), 4))
@@ -586,8 +585,7 @@ public class RobotContainer {
 				// new Pair<String, Command>("DriveToAmp",new DriveToPose(drivetrainS, false,new
 				// Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
-				));
-				autoCommands.addAll(createBranches());
+				));*/
 				break;
 			default:
 				switch (DriveConstants.driveType) {

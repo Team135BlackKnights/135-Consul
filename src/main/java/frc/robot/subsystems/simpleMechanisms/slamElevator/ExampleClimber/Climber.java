@@ -4,20 +4,21 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.subsystems.simpleMechanisms.slamElevator.GenericSlamElevator;
 import frc.robot.utils.LoggableTunedNumber;
 
 public class Climber extends GenericSlamElevator<Climber.Goal> {
 
     public enum Goal implements GenericSlamElevator.SlamElevatorGoal {
-        STOP(new LoggableTunedNumber("Climber/StopCurrent", 0.0), false, SlamElevatorState.IDLING),
-        IDLE(new LoggableTunedNumber("Climber/IdleCurrent", -12.0), true, SlamElevatorState.RETRACTING),
+        STOP(new LoggableTunedNumber("Climber/StopCurrent", 0.0,Constants.TuningConstants.isTuningClimber), false, SlamElevatorState.IDLING),
+        IDLE(new LoggableTunedNumber("Climber/IdleCurrent", -12.0,Constants.TuningConstants.isTuningClimber), true, SlamElevatorState.RETRACTING),
         RETRACT(
-                new LoggableTunedNumber("Climber/RetractingCurrent", -40.0),
+                new LoggableTunedNumber("Climber/RetractingCurrent", -40.0,Constants.TuningConstants.isTuningClimber),
                 false,
                 SlamElevatorState.RETRACTING),
         EXTEND(
-                new LoggableTunedNumber("Climber/ExtendingCurrent", 12.0),
+                new LoggableTunedNumber("Climber/ExtendingCurrent", 12.0,Constants.TuningConstants.isTuningClimber),
                 true,
                 SlamElevatorState.EXTENDING);
 
