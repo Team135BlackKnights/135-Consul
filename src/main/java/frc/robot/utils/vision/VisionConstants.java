@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.GeomUtil.ApproachDirection;
 
@@ -40,11 +41,11 @@ public class VisionConstants {
 	//Drive To AI Target
 	public static final ApproachDirection driveToAITargetApproachDirection = ApproachDirection.FRONT;
 	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingDistance = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingDistance", Units.feetToMeters(4));
+			"Vision/IntakeCloseEnoughToConsiderMissingDistance", Units.feetToMeters(4),TuningConstants.isTuningVision);
 	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingAngle = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingAngle", Units.degreesToRadians(3));
+			"Vision/IntakeCloseEnoughToConsiderMissingAngle", Units.degreesToRadians(3),TuningConstants.isTuningVision);
 	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingTimeout = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingTimeout", 1);
+			"Vision/IntakeCloseEnoughToConsiderMissingTimeout", 1,TuningConstants.isTuningVision);
 	// If the change in odometry is below this distance, do not adjust april tag
 	// trusts.
 	public final static double maxStaleReadingXMeters = Units.inchesToMeters(4),
@@ -68,33 +69,33 @@ public class VisionConstants {
 	// Translations should be in inches, Rotations should be in degrees
 	public static LoggableTunedNumber
 
-	FRCamTranslationX = new LoggableTunedNumber("Vision/FRCamX", 12.626),
-			FRCamTranslationY = new LoggableTunedNumber("Vision/FRCamY", -11.001),
-			FRCamTranslationZ = new LoggableTunedNumber("Vision/FRCamZ", 8.364),
-			FRCamRoll = new LoggableTunedNumber("Vision/FRCamRoll", 0),
-			FRCamYaw = new LoggableTunedNumber("Vision/FRCamYaw", -56.8),
-			FRCamPitch = new LoggableTunedNumber("Vision/FRCamPitch", -28.125),
+	FRCamTranslationX = new LoggableTunedNumber("Vision/FRCamX", 12.626,TuningConstants.isTuningVision),
+			FRCamTranslationY = new LoggableTunedNumber("Vision/FRCamY", -11.001, TuningConstants.isTuningVision),
+			FRCamTranslationZ = new LoggableTunedNumber("Vision/FRCamZ", 8.364, TuningConstants.isTuningVision),
+			FRCamRoll = new LoggableTunedNumber("Vision/FRCamRoll", 0, TuningConstants.isTuningVision),
+			FRCamYaw = new LoggableTunedNumber("Vision/FRCamYaw", -56.8,TuningConstants.isTuningVision),
+			FRCamPitch = new LoggableTunedNumber("Vision/FRCamPitch", -28.125,TuningConstants.isTuningVision),
 
-			FLCamTranslationX = new LoggableTunedNumber("Vision/FLCamX", 12.626),
-			FLCamTranslationY = new LoggableTunedNumber("Vision/FLCamY", 11.001),
-			FLCamTranslationZ = new LoggableTunedNumber("Vision/FLCamZ", 8.364),
-			FLCamRoll = new LoggableTunedNumber("Vision/FLCamRoll", 0),
-			FLCamYaw = new LoggableTunedNumber("Vision/FLCamYaw", 33.2),
-			FLCamPitch = new LoggableTunedNumber("Vision/FLCamPitch", -28.125),
+			FLCamTranslationX = new LoggableTunedNumber("Vision/FLCamX", 12.626,TuningConstants.isTuningVision),
+			FLCamTranslationY = new LoggableTunedNumber("Vision/FLCamY", 11.001,TuningConstants.isTuningVision),
+			FLCamTranslationZ = new LoggableTunedNumber("Vision/FLCamZ", 8.364,TuningConstants.isTuningVision),
+			FLCamRoll = new LoggableTunedNumber("Vision/FLCamRoll", 0,TuningConstants.isTuningVision),
+			FLCamYaw = new LoggableTunedNumber("Vision/FLCamYaw", 33.2,TuningConstants.isTuningVision),
+			FLCamPitch = new LoggableTunedNumber("Vision/FLCamPitch", -28.125,TuningConstants.isTuningVision),
 
-			BRCamTranslationX = new LoggableTunedNumber("Vision/BRCamX", -12.626),
-			BRCamTranslationY = new LoggableTunedNumber("Vision/BRCamY", -11.001),
-			BRCamTranslationZ = new LoggableTunedNumber("Vision/BRCamZ", 8.364),
-			BRCamRoll = new LoggableTunedNumber("Vision/BRCamRoll", 0),
-			BRCamYaw = new LoggableTunedNumber("Vision/BRCamYaw", -146.8),
-			BRCamPitch = new LoggableTunedNumber("Vision/BRCamPitch", -28.125),
+			BRCamTranslationX = new LoggableTunedNumber("Vision/BRCamX", -12.626,TuningConstants.isTuningVision),
+			BRCamTranslationY = new LoggableTunedNumber("Vision/BRCamY", -11.001,TuningConstants.isTuningVision),
+			BRCamTranslationZ = new LoggableTunedNumber("Vision/BRCamZ", 8.364,TuningConstants.isTuningVision),
+			BRCamRoll = new LoggableTunedNumber("Vision/BRCamRoll", 0,TuningConstants.isTuningVision),
+			BRCamYaw = new LoggableTunedNumber("Vision/BRCamYaw", -146.8,TuningConstants.isTuningVision),
+			BRCamPitch = new LoggableTunedNumber("Vision/BRCamPitch", -28.125,TuningConstants.isTuningVision),
 
-			BLCamTranslationX = new LoggableTunedNumber("Vision/BLCamX", -12.626),
-			BLCamTranslationY = new LoggableTunedNumber("Vision/BLCamY", 11.001),
-			BLCamTranslationZ = new LoggableTunedNumber("Vision/BLCamZ", 8.364),
-			BLCamRoll = new LoggableTunedNumber("Vision/BLCamRoll", 0),
-			BLCamYaw = new LoggableTunedNumber("Vision/BLCamYaw", 123.2),
-			BLCamPitch = new LoggableTunedNumber("Vision/BLCamPitch", -28.125);
+			BLCamTranslationX = new LoggableTunedNumber("Vision/BLCamX", -12.626,TuningConstants.isTuningVision),
+			BLCamTranslationY = new LoggableTunedNumber("Vision/BLCamY", 11.001,TuningConstants.isTuningVision),
+			BLCamTranslationZ = new LoggableTunedNumber("Vision/BLCamZ", 8.364,TuningConstants.isTuningVision),
+			BLCamRoll = new LoggableTunedNumber("Vision/BLCamRoll", 0,TuningConstants.isTuningVision),
+			BLCamYaw = new LoggableTunedNumber("Vision/BLCamYaw", 123.2,TuningConstants.isTuningVision),
+			BLCamPitch = new LoggableTunedNumber("Vision/BLCamPitch", -28.125,TuningConstants.isTuningVision);
 
 
 	// To figure out what these should be, look at the WPILIB Coordinate System

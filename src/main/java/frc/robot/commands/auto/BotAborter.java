@@ -166,7 +166,6 @@ public class BotAborter extends Command {
 				Logger.recordOutput("OpposingRobot/VelocityUs", ourSpeedTowardsgamePiece);
 				Logger.recordOutput("OpposingRobot/VelocityThem", opposingRobotSpeedTowardsgamePiece);
 				if (opposingRobotTimeTogamePiece < ourTimeTogamePiece + .25) {
-					RobotContainer.currentGamePieceStatus = RobotContainer.GamePieceState.ABORT;
 					isFinished = true;
 				}
 			}
