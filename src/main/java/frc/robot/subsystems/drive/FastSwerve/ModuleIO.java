@@ -65,7 +65,7 @@ public interface ModuleIO {
 	}
 
 	/** Configure turn PID */
-	default void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	default void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 	}
 
 	/** Enable or disable brake mode on the drive motor. */
@@ -94,5 +94,8 @@ public interface ModuleIO {
 	 */
 	public default List<SelfChecking> getSelfCheckingHardware() {
 		return new ArrayList<SelfChecking>();
+	}
+	default void changeDeadband(double deadbandAmps){
+	
 	}
 }

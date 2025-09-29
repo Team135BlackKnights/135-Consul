@@ -6,9 +6,12 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import edu.wpi.first.math.geometry.Translation3d;
 
 public class GeomUtil {
@@ -23,6 +26,18 @@ public class GeomUtil {
 		return new Transform2d(new Translation2d(x, y), new Rotation2d());
 	}
 
+	/**
+	 * Creates a pure translating transform
+	 */
+	public static Transform3d poseToTransform(Pose3d pose){
+		return new Transform3d(pose.getX(),pose.getY(),pose.getZ(),pose.getRotation());
+	}
+	/**
+	 * Creates a pure translating pose3d
+	 */
+	public static Pose3d transformToPose(Transform3d transform){
+		return new Pose3d(transform.getX(),transform.getY(),transform.getZ(),transform.getRotation());
+	}
 	public enum ApproachDirection {
 		FRONT(0),
 		FRONT_RIGHT(Math.PI / 4),
@@ -235,4 +250,46 @@ public class GeomUtil {
 			Translation2d currentTranslation, Translation2d objectTranslation) {
 		return currentTranslation.getDistance(objectTranslation);
 	}
+	public static double applyX(double x) {
+		return shouldFlip() ? FieldConstants.FIELD_WIDTH - x : x;
+	  }
+	  public static double applyX(double x, boolean forceFlip) {
+		return shouldFlip() || forceFlip ? FieldConstants.FIELD_WIDTH - x : x;
+	  }
+	  public static Transform2d toTransform2d(Translation2d translation) {
+		return new Transform2d(translation, new Rotation2d());
+	  }
+	  public static Transform2d toTransform2d(double x, double y) {
+		return new Transform2d(x, y, new Rotation2d());
+	  }
+	
+	  public static double applyY(double y) {
+		return shouldFlip() ? FieldConstants.FIELD_HEIGHT - y : y;
+	  }
+	  public static double applyY(double y, boolean forceFlip) {
+		return shouldFlip() || forceFlip ? FieldConstants.FIELD_HEIGHT - y : y;
+	  }
+	  public static Translation2d apply(Translation2d translation) {
+		return new Translation2d(applyX(translation.getX()), applyY(translation.getY()));
+	  }
+	
+	  public static Rotation2d apply(Rotation2d rotation) {
+		return shouldFlip() ? rotation.rotateBy(Rotation2d.kPi) : rotation;
+	  }
+	
+	  public static Pose2d apply(Pose2d pose, boolean forceFlip) {
+		if (pose == null) {
+		  return FieldConstants.START_POSE_LEFT; //default to left
+		}
+		return shouldFlip() || forceFlip
+			? new Pose2d(apply(pose.getTranslation()), apply(pose.getRotation()))
+			: pose;
+	  }
+	  public static Translation2d apply(Translation2d translation, boolean forceFlip) {
+		return new Translation2d(applyX(translation.getX(),forceFlip), applyY(translation.getY(), forceFlip));
+	  }
+	  public static boolean shouldFlip() {
+    return DriverStation.getAlliance().isPresent()
+        && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+  }
 }

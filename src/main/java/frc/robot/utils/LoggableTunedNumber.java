@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import frc.robot.Constants;
+
+import frc.robot.Constants.TuningConstants;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
@@ -19,6 +20,7 @@ public class LoggableTunedNumber {
 	private final String key;
 	private boolean hasDefault = false;
 	private double defaultValue;
+	private boolean canLogSpecific = false;
 	private LoggedDashboardNumber dashboardNumber;
 	private Map<Integer, Double> lastHasChangedValues = new HashMap<>();
 
@@ -37,9 +39,10 @@ public class LoggableTunedNumber {
 	 * @param dashboardKey Key on dashboard
 	 * @param defaultValue Default value
 	 */
-	public LoggableTunedNumber(String dashboardKey, double defaultValue) {
+	public LoggableTunedNumber(String dashboardKey, double defaultValue, boolean enableValue) {
 		this(dashboardKey);
-		initDefault(defaultValue);
+		this.canLogSpecific = enableValue;
+		initDefault(defaultValue, enableValue);
 	}
 
 	/**
@@ -47,11 +50,13 @@ public class LoggableTunedNumber {
 	 *
 	 * @param defaultValue The default value
 	 */
-	public void initDefault(double defaultValue) {
+	@SuppressWarnings("unused")
+	public void initDefault(double defaultValue, boolean enableValue) {
 		this.defaultValue = defaultValue;
+		this.canLogSpecific = enableValue;
 		if (!hasDefault) {
 			hasDefault = true;
-			if (Constants.isTuningPID && dashboardNumber == null) {
+			if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
 				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
 			}else if (dashboardNumber != null) {
 				dashboardNumber.setDefault(defaultValue);
@@ -64,11 +69,16 @@ public class LoggableTunedNumber {
 	 *
 	 * @return The current value
 	 */
+	@SuppressWarnings("unused")
 	public double get() {
 		if (!hasDefault) {
 			return 0.0;
 		} else {
-			return Constants.isTuningPID ? dashboardNumber.get() : defaultValue;
+			if (TuningConstants.isTuningPID && canLogSpecific) {
+				return dashboardNumber.get();
+			} else {
+				return defaultValue;
+			}
 		}
 	}
 
@@ -104,5 +114,15 @@ public class LoggableTunedNumber {
 			return true;
 		}
 		return false;
+	}
+
+	@SuppressWarnings("unused")
+	public void changeDefault(double value){
+		defaultValue = value;
+		if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
+				dashboardNumber = new LoggedDashboardNumber(key, value);
+			}else if (dashboardNumber != null) {
+				dashboardNumber.setDefault(value);
+			}
 	}
 }

@@ -2,6 +2,7 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.TimeUtil;
 
@@ -34,6 +35,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
 
     @Override
     public void run() {
+        //Threads.setCurrentThreadPriority(true, 99);
         while (true)
             odometryPeriodic();
     }
@@ -58,7 +60,7 @@ public class OdometryThreadReal extends Thread implements OdometryThread {
                 // BaseStatusSignal.refreshAll();
             }
             case CTRE_ON_CANIVORE ->
-                BaseStatusSignal.waitForAll(.02, statusSignals.toArray(new BaseStatusSignal[0]));
+                BaseStatusSignal.waitForAll(2.0/DriveConstants.TrainConstants.odomHz, statusSignals.toArray(new BaseStatusSignal[0]));
         }
     }
 

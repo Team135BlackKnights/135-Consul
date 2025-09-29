@@ -353,13 +353,14 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
 		turnTalonConfig.Slot0.kV = kV;
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 
@@ -410,5 +411,10 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 		hardware.add(new SelfCheckingTalonFX(driveName, driveTalon));
 		hardware.add(new SelfCheckingTalonFX(turnName, turnTalon));
 		return hardware;
+	}
+	@Override
+	public void changeDeadband(double deadbandAmps){
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
+		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 }

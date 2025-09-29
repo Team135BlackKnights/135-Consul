@@ -120,7 +120,7 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     @Override
-    public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+    public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
         turnController.setPID(kP, kI, kD);
     }
 

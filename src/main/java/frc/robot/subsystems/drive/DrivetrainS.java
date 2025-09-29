@@ -32,7 +32,12 @@ public interface DrivetrainS extends Subsystem {
 	public static Field2d robotField = new Field2d();
 
 	void setChassisSpeeds(ChassisSpeeds speeds);
-
+	/**
+	 * Swerve Only. Set the angles of the modules
+	 */
+	default Command orientModules(Rotation2d[] facings){
+		throw new UnsupportedOperationException("Unimplemented method 'orientModules'");
+	}
 	/**
 	 * @return the ChassisSpeeds of the drivetrain
 	 */
@@ -165,4 +170,6 @@ public interface DrivetrainS extends Subsystem {
 
 		SmartDashboard.putData(robotField);
 	}
+	default void changeDeadband(double amps){}
+
 }

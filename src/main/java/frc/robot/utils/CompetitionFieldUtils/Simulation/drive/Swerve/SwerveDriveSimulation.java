@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.drive.DriveConstants;
@@ -134,8 +135,8 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
                         DriveConstants.kMaxTurningSpeedRadPerSec,
                         DriveConstants.maxRotationalAcceleration.get(),
                         robotMassWithBumpersKg,
-                        bumperWidthMeters,
-                        bumperLengthMeters),
+                        bumperWidthMeters-Units.inchesToMeters(2),
+                        bumperLengthMeters-Units.inchesToMeters(2)),
                 // .withAngularVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_ANGULAR_SPEED_DAMPING)
                 // .withLinearVelocityDamping(DriveConstants.RobotPhysicsSimulationConfigs.SIM_LINEAR_SPEED_DAMPING),
                 initialPoseOnField, resetOdometryCallBack);
@@ -188,8 +189,8 @@ public class SwerveDriveSimulation extends AbstractDriveTrainSimulation {
         // Use this() to call the main constructor with calculated parameters
         this(
                 robotMassWidthBumpersKg,
-                bumperWidthMeters,
-                bumperLengthMeters,
+                bumperWidthMeters-Units.inchesToMeters(2),
+                bumperLengthMeters-Units.inchesToMeters(2),
                 new SwerveModuleSimulation[] {
                         swerveModuleFactory.get(), swerveModuleFactory.get(),
                         swerveModuleFactory.get(), swerveModuleFactory.get()

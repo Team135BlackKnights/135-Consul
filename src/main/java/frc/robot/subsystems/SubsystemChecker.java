@@ -15,8 +15,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
-import frc.robot.utils.Elastic;
-import frc.robot.utils.Elastic.Notification.NotificationLevel;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
 import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
@@ -40,26 +38,28 @@ public abstract class SubsystemChecker extends SubsystemBase {
 	private boolean checkErrors;
 
 	public SubsystemChecker() {
+		System.out.println(this.getName());
 		this.statusTable = "SystemStatus/" + this.getName();
-		Command systemCheck = getSystemCheckCommand();
-		systemCheck.setName(getName() + "Check");
-		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
-		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = false;
+		checkErrors = true;
 		setupCallbacks();
 	}
 
 	public SubsystemChecker(String name) {
 		this.setName(name);
 		this.statusTable = "SystemStatus/" + name;
+		checkErrors = true;
+		setupCallbacks();
+	}
+	public void setupSystemCheck(){
 		Command systemCheck = getSystemCheckCommand();
 		systemCheck.setName(getName() + "Check");
 		SmartDashboard.putData(statusTable + "/SystemCheck", systemCheck);
 		Logger.recordOutput(statusTable + "/CheckRan", false);
-		checkErrors = false;
-		setupCallbacks();
 	}
-
+	/**
+	 * Do not call before all systems are set up, as they make sure they aren't in bad states.
+	 * @return
+	 */
 	public Command getSystemCheckCommand() {
 		return Commands.sequence(Commands.runOnce(() -> {
 			Logger.recordOutput(statusTable + "/CheckRan", false);
@@ -84,7 +84,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		Robot.addPeriodic(() -> publishStatus(false), 1.5);
 	}
 
-	Elastic.Notification currentNotif;
+	//Elastic.Notification currentNotif;
 	Timer lastSentFaultTimer = new Timer();
 
 	private void publishStatus(boolean override) {
@@ -104,7 +104,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 			if (faultStrings.length > 0) {
 				Logger.recordOutput(statusTable + "/LastFault",
 						faultStrings[faultStrings.length - 1]);
-				if (currentNotif == null) {
+				/*if (currentNotif == null) {
 					currentNotif = new Elastic.Notification(
 							this.faults.element().isWarning ? NotificationLevel.WARNING : NotificationLevel.ERROR,
 							statusTable + ": " + status.name(), faultStrings[faultStrings.length - 1],
@@ -126,7 +126,7 @@ public abstract class SubsystemChecker extends SubsystemBase {
 					}
 
 					// currentNotif.setMessage(String.join("\n", faultStrings));
-				}
+				}*/
 			} else {
 				Logger.recordOutput(statusTable + "/LastFault", "");
 			}

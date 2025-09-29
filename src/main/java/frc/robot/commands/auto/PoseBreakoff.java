@@ -35,6 +35,7 @@ public class PoseBreakoff extends Command{
     private final PathConstraints constraints;
     private final double endVelocity;
     private final boolean usePathfinder;
+    private final double tolerance;
     /**
      * Go to a desisred Breakoff.
      * @param drive subsystem
@@ -42,13 +43,15 @@ public class PoseBreakoff extends Command{
      * @param constraints PathConstraints to use for path.
      * @param endVelocity end velocity of the path
      * @param usePathfinder use Pathfinder as default
+     * @param tolerance if using pathfinder
      */
-    public PoseBreakoff(DrivetrainS drive, BreakoffType type, PathConstraints constraints, double endVelocity, boolean usePathfinder){
+    public PoseBreakoff(DrivetrainS drive, BreakoffType type, PathConstraints constraints, double endVelocity, boolean usePathfinder, double tolerance){
         this.drive = drive;
         this.type = type;
         this.constraints = constraints;
         this.endVelocity = endVelocity;
         this.usePathfinder = usePathfinder;
+        this.tolerance = tolerance;
 
     }
     private Command pathCommand;
@@ -137,7 +140,7 @@ public class PoseBreakoff extends Command{
             System.out.println("No valid breakoff type provided, defaulting to 0,0,0");
             desiredPose = new Pose2d(0, 0, Rotation2d.fromDegrees(0));
         }
-        return PathFinder.goToPose(desiredPose, () -> constraints, drive, true, endVelocity);
+        return PathFinder.goToPose(desiredPose, () -> constraints, drive, true, endVelocity,tolerance);
     }
     @Override
     public void execute(){

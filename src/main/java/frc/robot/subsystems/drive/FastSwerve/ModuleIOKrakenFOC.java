@@ -62,9 +62,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	// Control
 	private final VoltageOut voltageControl = new VoltageOut(0);
 	private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
-	private final MotionMagicVelocityTorqueCurrentFOC velocityTorqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(
-			0);
-	private final MotionMagicTorqueCurrentFOC positionControl = new MotionMagicTorqueCurrentFOC(0.0);
+	private final VelocityTorqueCurrentFOC  velocityTorqueCurrentFOC = new VelocityTorqueCurrentFOC (
+			0).withUpdateFreqHz(0);
+	private final PositionTorqueCurrentFOC positionControl = new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(0);
 	private final NeutralOut neutralControl = new NeutralOut();
 	private final boolean isTurnMotorInverted;
 	private final boolean isDriveMotorInverted;
@@ -164,11 +164,13 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.CurrentLimits.StatorCurrentLimit = DriveConstants.kMaxDriveCurrent;
 		driveTalonConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+		driveTalonConfig.CurrentLimits.SupplyCurrentLimitEnable = false;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
 		driveTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+		
 		turnTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.MotorOutput.Inverted = isTurnMotorInverted
@@ -220,7 +222,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		turnSupplyCurrent = turnTalon.getSupplyCurrent();
 		turnTorqueCurrent = turnTalon.getTorqueCurrent();
 		turnTemp = turnTalon.getDeviceTemp();
-		BaseStatusSignal.setUpdateFrequencyForAll(100.0, driveVelocity,
+		BaseStatusSignal.setUpdateFrequencyForAll(50.0, driveVelocity,
 				driveAppliedVolts, driveSupplyCurrent, driveTorqueCurrent,
 				turnVelocity, turnAppliedVolts, turnSupplyCurrent,
 				turnTorqueCurrent);
@@ -293,13 +295,13 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			double feedForward) {
 		driveTalon.setControl(velocityTorqueCurrentFOC
 				.withVelocity(Units.radiansToRotations(velocityRadsPerSec))
-				.withFeedForward(feedForward).withOverrideCoastDurNeutral(false));
+				.withFeedForward(feedForward));
 	}
 
 	@Override
 	public void runTurnPositionSetpoint(double angleRads) {
 		turnTalon.setControl(
-				positionControl.withPosition(Units.radiansToRotations(angleRads)).withOverrideCoastDurNeutral(false));
+				positionControl.withPosition(Units.radiansToRotations(angleRads)));
 	}
 
 	@Override
@@ -313,13 +315,14 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 	}
 
 	@Override
-	public void setTurnPID(double kP, double kI, double kD, double kS, double kV) {
+	public void setTurnPID(double kP, double kI, double kD, double kS, double kV, double deadbandAmps) {
 		turnTalonConfig.Slot0.kP = kP;
 		turnTalonConfig.Slot0.kI = kI;
 		turnTalonConfig.Slot0.kD = kD;
 		turnTalonConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 		turnTalonConfig.Slot0.kS = kS;
 		turnTalonConfig.Slot0.kV = kV;
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
 		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 
@@ -330,7 +333,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				driveTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				driveTalon.getConfigurator().apply(driveTalonConfig, 0.25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, 0.01);
 			}
 		});
 	}
@@ -342,7 +345,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				turnTalonConfig.MotorOutput.NeutralMode = enable
 						? NeutralModeValue.Brake
 						: NeutralModeValue.Coast;
-				turnTalon.getConfigurator().apply(turnTalonConfig, 0.25);
+				turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 			}
 		});
 	}
@@ -353,7 +356,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 			synchronized (driveTalonConfig) {
 				driveTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = amps;
 				driveTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -amps;
-				driveTalon.getConfigurator().apply(driveTalonConfig, .25);
+				driveTalon.getConfigurator().apply(driveTalonConfig, .01);
 			}
 		});
 	}
@@ -370,5 +373,10 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		hardware.add(new SelfCheckingTalonFX(driveName, driveTalon));
 		hardware.add(new SelfCheckingTalonFX(turnName, turnTalon));
 		return hardware;
+	}
+	@Override
+	public void changeDeadband(double deadbandAmps){
+		turnTalonConfig.TorqueCurrent.TorqueNeutralDeadband = deadbandAmps;
+		turnTalon.getConfigurator().apply(turnTalonConfig, 0.01);
 	}
 }

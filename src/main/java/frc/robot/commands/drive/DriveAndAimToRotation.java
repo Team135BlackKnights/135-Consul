@@ -8,6 +8,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -52,12 +53,13 @@ public class DriveAndAimToRotation extends Command {
 	private final DrivetrainS drive;
 	private final Supplier<Translation2d> positionSupplier;
 	private final Supplier<Rotation2d> rotationSupplier;
+	private final Supplier<Double> toleranceSupplier;
 	private AimToRotation thetaControllerCommand;
 	private DriveToTranslation driveControllerCommand;
 	private boolean isFinished = false;
-	private final boolean slowMode;
+	private final boolean isAuto;
 	private PathConstraints constraints;
-
+	private double lastTolerance = 0;
 	/**
 	 * Initializes the command with flexible arguments.
 	 *
@@ -101,8 +103,8 @@ public class DriveAndAimToRotation extends Command {
 		Supplier<Translation2d> position = () -> new Translation2d();
 		Supplier<Rotation2d> rotation = () -> new Rotation2d();
 		PathConstraints pathConstraints = DriveConstants.pathConstraints;
-		boolean isSlowMode = false;
-
+		Supplier<Double> toleranceSupplier = () -> Units.inchesToMeters(.75);
+		boolean isAuto = false;
 		// Parse arguments
 		for (Object arg : args) {
 			if (arg instanceof Pose2d pose) {
@@ -116,6 +118,14 @@ public class DriveAndAimToRotation extends Command {
 					position = () -> (Translation2d) supplier.get();
 				} else if (supplier.get() instanceof Rotation2d) {
 					rotation = () -> (Rotation2d) supplier.get();
+				} else if (supplier.get() instanceof Double){
+					toleranceSupplier = () -> (Double) supplier.get();
+				} else if (supplier.get() instanceof PathConstraints){
+					pathConstraints =(PathConstraints) supplier.get();
+				}
+				
+				else {
+					throw new IllegalArgumentException("Unexpected supplier type: " + supplier.get().getClass().getSimpleName());
 				}
 			} else if (arg instanceof Translation2d translation) {
 				position = () -> translation;
@@ -124,32 +134,43 @@ public class DriveAndAimToRotation extends Command {
 			} else if (arg instanceof PathConstraints constraints) {
 				pathConstraints = constraints;
 			} else if (arg instanceof Boolean slowMode) {
-				isSlowMode = slowMode;
-			} else {
+				isAuto = slowMode;
+			} else if (arg instanceof Double translationalTolerance) {
+				toleranceSupplier = () -> translationalTolerance;
+			}
+			 else {
 				throw new IllegalArgumentException("Unexpected argument type: " + arg.getClass().getSimpleName());
 			}
 		}
 
 		// Assign parsed values
+
+		this.constraints = pathConstraints;
+		this.isAuto = isAuto;
+		this.toleranceSupplier = toleranceSupplier;
 		this.positionSupplier = position;
 		this.rotationSupplier = rotation;
-		this.constraints = pathConstraints;
-		this.slowMode = isSlowMode;
-
 		// Don't require the drive system as the translation controller will handle it
 	}
 
 	public void updateConstraints(PathConstraints constraints) {
 		this.constraints = constraints;
-		driveControllerCommand.updateConstraints(constraints);
+		driveControllerCommand.updateConstraints(constraints, toleranceSupplier.get());
 		thetaControllerCommand.updateConstraints(constraints);
 	}
-
+	public void updateConstraints(PathConstraints constraints, double tolerance) {
+		this.constraints = constraints;
+		driveControllerCommand.updateConstraints(constraints, tolerance);
+		thetaControllerCommand.updateConstraints(constraints);
+	}
 	@Override
 	public void initialize() {
 		isFinished = false;
+		RobotContainer.userDrive = false;
 		thetaControllerCommand = new AimToRotation(rotationSupplier, drive, constraints);
-		driveControllerCommand = new DriveToTranslation(drive, slowMode, positionSupplier, constraints);
+
+		System.out.println("Branch score location not provided");
+		driveControllerCommand = new DriveToTranslation(drive, isAuto, positionSupplier, constraints);
 		thetaControllerCommand.initialize();
 		driveControllerCommand.initialize();
 		System.out.println("DriveAndAimToRotation initialized");
@@ -160,9 +181,12 @@ public class DriveAndAimToRotation extends Command {
 	public void execute() {
 		if ((driveControllerCommand.atGoal())
 				&& (thetaControllerCommand.atGoal())) {
-			System.out.println("DriveAndAimToRotation finished");
 			isFinished = true;
 		} else {
+			if (toleranceSupplier.get() != lastTolerance){
+				updateConstraints(constraints);
+				lastTolerance = toleranceSupplier.get();
+			}
 			thetaControllerCommand.execute();
 			driveControllerCommand.execute();
 		}
@@ -180,6 +204,9 @@ public class DriveAndAimToRotation extends Command {
 		RobotContainer.angleOverrider = Optional.empty();
 		RobotContainer.angularSpeed = 0;
 		RobotContainer.userDrive = true;
+		if (!interrupted) {
+			System.out.println("DriveAndAimToRotation finished");
+		}
 		drive.stopModules();
 	}
 

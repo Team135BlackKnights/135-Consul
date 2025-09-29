@@ -9,6 +9,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.littletonrobotics.junction.Logger;
+
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -160,11 +162,11 @@ public class TankIOSparkBase implements TankIO {
 			leftPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							leftRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, leftFFVolts);
+					ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
 			rightPID.setReference(
 					Units.radiansPerSecondToRotationsPerMinute(
 							rightRadPerSec * GEAR_RATIO),
-					ControlType.kVelocity, 0, rightFFVolts);
+					ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);
 		} else {
 			setVoltage(convertRadPerSecondToVoltage(leftRadPerSec),
 					convertRadPerSecondToVoltage(rightRadPerSec));

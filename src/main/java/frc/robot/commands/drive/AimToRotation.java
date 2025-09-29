@@ -1,11 +1,13 @@
 package frc.robot.commands.drive;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.LoggableTunedNumber;
@@ -22,15 +24,16 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 
 public class AimToRotation extends Command {
-	private static final LoggableTunedNumber kP = new LoggableTunedNumber("HeadingController/kP", 10);
-	private static final LoggableTunedNumber kD = new LoggableTunedNumber("HeadingController/kD", 0);
+	private static final LoggableTunedNumber kP = new LoggableTunedNumber("HeadingController/kP", 6, TuningConstants.isTuningMacros);
+	private static final LoggableTunedNumber kD = new LoggableTunedNumber("HeadingController/kD", .2, TuningConstants.isTuningMacros);
 	private static final LoggableTunedNumber toleranceDegrees = new LoggableTunedNumber(
-			"HeadingController/ToleranceDegrees", 1.0);
-
+			"HeadingController/ToleranceDegrees",2.0, TuningConstants.isTuningMacros);
+	private static final LoggableTunedNumber toleranceMinSpeed = new LoggableTunedNumber("HeadingController/MinRadPerSec",0.25, TuningConstants.isTuningMacros);
 	private final ProfiledPIDController controller;
 	private final Supplier<Rotation2d> goalHeadingSupplier;
-
+	private final MedianFilter filter;
 	private final DrivetrainS drive;
+	private double output = 0;
 	/**
 	 * Aim the robot at a specific pose2d
 	 * @param goalPose
@@ -81,6 +84,7 @@ public class AimToRotation extends Command {
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
 		this.goalHeadingSupplier = goalHeadingSupplier;
 		this.drive = drive;
+		this.filter = new MedianFilter(5);
 		controller.reset(
 				drive.getPose().getRotation().getRadians(),
 				drive.getFieldVelocity().dtheta);
@@ -88,18 +92,27 @@ public class AimToRotation extends Command {
 	public void updateConstraints(PathConstraints constraints) {
 		controller.setConstraints(new TrapezoidProfile.Constraints(constraints.maxAngularVelocityRadPerSec(), constraints.maxAngularAccelerationRadPerSecSq()));
 	}
+	private double getOutput(){
+		return output;
+	}
 	@Override
 	public void execute() {
 		// Update controller
 		controller.setPID(kP.get(), 0, kD.get());
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
-
-		var output = controller.calculate(
+		double targetRads = filter.calculate(goalHeadingSupplier.get().getRadians());
+		output = controller.calculate(
 				drive.getPose().getRotation().getRadians(),
-				goalHeadingSupplier.get().getRadians());
-
+				targetRads);
+		Logger.recordOutput("Drive/HeadingController/HeadingGoal", targetRads);
+		Logger.recordOutput("Drive/HeadingController/Output Rad/s Before Deadband", output);
 		Logger.recordOutput("Drive/HeadingController/HeadingError", controller.getPositionError());
-		PPHolonomicDriveController.overrideRotationFeedback(() -> output);
+		if (Math.abs(output) < toleranceMinSpeed.get()){
+			output = 0;
+		} 
+		Logger.recordOutput("Drive/HeadingController/Output Rad/s After Deadband", output);
+
+		PPHolonomicDriveController.overrideRotationFeedback(this::getOutput);
 		RobotContainer.angularSpeed = output;
 	}
 
