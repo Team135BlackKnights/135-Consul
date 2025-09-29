@@ -28,16 +28,16 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
    * @param name The name of the camera.
    * @param poseSupplier Supplier for the robot pose to use in simulation.
    */
-  public VisionIOPhotonVisionSim(
+  public VisionIOPhotonVisionSim(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,
       String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier) {
-    super(name, robotToCamera);
+    super(aprilTagLayoutSupplier,name, robotToCamera);
     this.cameraName = name;
     this.poseSupplier = poseSupplier;
 
     // Initialize vision sim
     if (visionSim == null) {
       visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(VisionConstants.kTagLayout);
+      visionSim.addAprilTags(aprilTagLayoutSupplier.get().getLayout());
     }
     // Add sim camera
     var cameraProperties = new SimCameraProperties();

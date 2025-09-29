@@ -8,6 +8,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
 import frc.robot.commands.drive.AimToRotation;
@@ -41,13 +42,13 @@ public class AimToAprilTag extends Command {
      *                                       the current heading (do nothing) if the
      *                                       tag is not found.
      */
-    public AimToAprilTag(DrivetrainS drive, Vision vision, int tagId, boolean shouldUseDefaultPoseIfNotFound) {
+    public AimToAprilTag(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,DrivetrainS drive, Vision vision, int tagId, boolean shouldUseDefaultPoseIfNotFound) {
         this.drive = drive;
         this.vision = vision;
         this.tagId = tagId;
         this.shouldUseDefaultPoseIfNotFound = shouldUseDefaultPoseIfNotFound;
         // Fetch the known tag pose from the layout
-        this.knownTagPose = VisionConstants.kTagLayout.getTagPose(tagId).orElseThrow(
+        this.knownTagPose = aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).orElseThrow(
                 () -> new IllegalArgumentException("Invalid tag ID: " + tagId));
     }
 
@@ -78,8 +79,13 @@ public class AimToAprilTag extends Command {
         TargetObservation[] observations = vision.getLatestTargetObservations();
         hasTarget = false;
         for (int i = 0; i < observations.length; i++) {
-            if (observations[i].id() == tagId && Math.abs(TimeUtil.getLogTimeSeconds() - observations[i].timestamp()) < 1) {
-                Pose3d fieldToCameraPose = new Pose3d(drive.getPose()).transformBy(VisionConstants.robotToCameraTransforms[i]);
+            if (observations[i].id() == tagId
+                    && Math.abs(TimeUtil.getLogTimeSeconds() - observations[i].timestamp()) < 1) {
+                Pose3d cameraPose = VisionConstants.cameras[i].getPose().get();
+                Pose3d fieldToCameraPose = new Pose3d(RobotContainer.drivetrainS.getPose())
+                        .transformBy(
+                                new Transform3d(cameraPose.getTranslation().getX(), cameraPose.getTranslation().getY(),
+                                        cameraPose.getTranslation().getZ(), cameraPose.getRotation()));
                 Pose3d fieldToTagPose = fieldToCameraPose.transformBy(observations[i].cameraToTarget());
                 targetPose = fieldToTagPose.toPose2d();
                 hasTarget = true;

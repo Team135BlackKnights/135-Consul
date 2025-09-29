@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
@@ -26,9 +27,9 @@ public class VisionIOPhotonVision implements VisionIO {
    * @param name The configured name of the camera.
    * @param rotationSupplier The 3D position of the camera relative to the robot.
    */
-  public VisionIOPhotonVision(String name, Transform3d robotToCamera) {
+  public VisionIOPhotonVision(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
-    photonEstimator = new PhotonPoseEstimator(VisionConstants.kTagLayout,PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,robotToCamera);
+    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(),PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,robotToCamera);
     photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_CAMERA_HEIGHT);
   }
 

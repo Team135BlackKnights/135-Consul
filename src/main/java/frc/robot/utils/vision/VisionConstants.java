@@ -1,27 +1,34 @@
 package frc.robot.utils.vision;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import frc.robot.RobotContainer;
-import frc.robot.Constants.TuningConstants;
-import frc.robot.utils.LoggableTunedNumber;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Filesystem;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.function.Supplier;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import frc.robot.utils.GeomUtil.ApproachDirection;
+import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.TuningConstants;
 
 public class VisionConstants {
-	// Field layout, fed to the PV cameras in order to work properly
-	public static boolean debug = true;
-	public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+	public static final FieldType fieldType = FieldType.ANDYMARK;
 
-	// This needs to be changed year after year
 	public enum AITargets {
-		kGamePiece(0.0),
-		kRobot(1.0);
+		kGamePiece(0.0), kRobot(1.0);
 
 		private final double value;
 
@@ -33,145 +40,188 @@ public class VisionConstants {
 			return value;
 		}
 	}
-	//Command specific constants
-	//Aim To Pose
-	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.FRONT;
-	//Drive And Aim At Pose
-	public static final ApproachDirection driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT;
-	//Drive To AI Target
+
+	// Command specific constants // Aim To Pose
+	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.FRONT, // Drive And Aim At Pose public static final ApproachDirection
+			driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT; // Drive To AI
 	public static final ApproachDirection driveToAITargetApproachDirection = ApproachDirection.FRONT;
-	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingDistance = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingDistance", Units.feetToMeters(4),TuningConstants.isTuningVision);
-	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingAngle = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingAngle", Units.degreesToRadians(3),TuningConstants.isTuningVision);
-	public static LoggableTunedNumber limelightCloseEnoughToConsiderMissingTimeout = new LoggableTunedNumber(
-			"Vision/IntakeCloseEnoughToConsiderMissingTimeout", 1,TuningConstants.isTuningVision);
-	// If the change in odometry is below this distance, do not adjust april tag
-	// trusts.
-	public final static double maxStaleReadingXMeters = Units.inchesToMeters(4),
-			maxStaleReadingYMeters = Units.inchesToMeters(4),
-			maxStaleReadingRotation = Units.degreesToRadians(2);
 
-	public static class Controls {
-		public static JoystickButton autoIntake = new JoystickButton(
-				RobotContainer.driveController, 1); // a
-	}
-	// We used 2 cameras for our 2024 year, adjust these accordingly by removing
-	// camera names (there are two extra cameras here)
-	// Camera names, from photonVision web interface
-
-	// This is a goofy declaration but we use case statements later on and this is
-	// the only form of input they accept
-	public final static String FLCamName = "FL_Camera",
-			BRCamName = "BR_Camera", BLCamName = "BL_Camera",
-			FRCamName = "FR_Camera";
-	// Check WPILIB Coordinate System
-	// Translations should be in inches, Rotations should be in degrees
-	public static LoggableTunedNumber
-
-	FRCamTranslationX = new LoggableTunedNumber("Vision/FRCamX", 12.626,TuningConstants.isTuningVision),
-			FRCamTranslationY = new LoggableTunedNumber("Vision/FRCamY", -11.001, TuningConstants.isTuningVision),
-			FRCamTranslationZ = new LoggableTunedNumber("Vision/FRCamZ", 8.364, TuningConstants.isTuningVision),
-			FRCamRoll = new LoggableTunedNumber("Vision/FRCamRoll", 0, TuningConstants.isTuningVision),
-			FRCamYaw = new LoggableTunedNumber("Vision/FRCamYaw", -56.8,TuningConstants.isTuningVision),
-			FRCamPitch = new LoggableTunedNumber("Vision/FRCamPitch", -28.125,TuningConstants.isTuningVision),
-
-			FLCamTranslationX = new LoggableTunedNumber("Vision/FLCamX", 12.626,TuningConstants.isTuningVision),
-			FLCamTranslationY = new LoggableTunedNumber("Vision/FLCamY", 11.001,TuningConstants.isTuningVision),
-			FLCamTranslationZ = new LoggableTunedNumber("Vision/FLCamZ", 8.364,TuningConstants.isTuningVision),
-			FLCamRoll = new LoggableTunedNumber("Vision/FLCamRoll", 0,TuningConstants.isTuningVision),
-			FLCamYaw = new LoggableTunedNumber("Vision/FLCamYaw", 33.2,TuningConstants.isTuningVision),
-			FLCamPitch = new LoggableTunedNumber("Vision/FLCamPitch", -28.125,TuningConstants.isTuningVision),
-
-			BRCamTranslationX = new LoggableTunedNumber("Vision/BRCamX", -12.626,TuningConstants.isTuningVision),
-			BRCamTranslationY = new LoggableTunedNumber("Vision/BRCamY", -11.001,TuningConstants.isTuningVision),
-			BRCamTranslationZ = new LoggableTunedNumber("Vision/BRCamZ", 8.364,TuningConstants.isTuningVision),
-			BRCamRoll = new LoggableTunedNumber("Vision/BRCamRoll", 0,TuningConstants.isTuningVision),
-			BRCamYaw = new LoggableTunedNumber("Vision/BRCamYaw", -146.8,TuningConstants.isTuningVision),
-			BRCamPitch = new LoggableTunedNumber("Vision/BRCamPitch", -28.125,TuningConstants.isTuningVision),
-
-			BLCamTranslationX = new LoggableTunedNumber("Vision/BLCamX", -12.626,TuningConstants.isTuningVision),
-			BLCamTranslationY = new LoggableTunedNumber("Vision/BLCamY", 11.001,TuningConstants.isTuningVision),
-			BLCamTranslationZ = new LoggableTunedNumber("Vision/BLCamZ", 8.364,TuningConstants.isTuningVision),
-			BLCamRoll = new LoggableTunedNumber("Vision/BLCamRoll", 0,TuningConstants.isTuningVision),
-			BLCamYaw = new LoggableTunedNumber("Vision/BLCamYaw", 123.2,TuningConstants.isTuningVision),
-			BLCamPitch = new LoggableTunedNumber("Vision/BLCamPitch", -28.125,TuningConstants.isTuningVision);
-
-
-	// To figure out what these should be, look at the WPILIB Coordinate System
-	public static Translation3d FLCamTranslation3d = new Translation3d(
-			Units.inchesToMeters(FLCamTranslationX.get()),
-			Units.inchesToMeters(FLCamTranslationY.get()),
-			Units.inchesToMeters(FLCamTranslationZ.get())),
-			FRCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(FRCamTranslationX.get()),
-					Units.inchesToMeters(FRCamTranslationY.get()),
-					Units.inchesToMeters(FRCamTranslationZ.get())),
-			BLCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(BLCamTranslationX.get()),
-					Units.inchesToMeters(BLCamTranslationY.get()),
-					Units.inchesToMeters(BLCamTranslationZ.get())),
-			BRCamTranslation3d = new Translation3d(
-					Units.inchesToMeters(BRCamTranslationX.get()),
-					Units.inchesToMeters(BRCamTranslationY.get()),
-					Units.inchesToMeters(BRCamTranslationZ.get()));
-	public static Rotation3d FLRot = new Rotation3d(
-			Math.toRadians(FLCamRoll.get()),
-			Math.toRadians(FLCamPitch.get()),
-			Math.toRadians(FLCamYaw.get())),
-			FRRot = new Rotation3d(
-					Math.toRadians(FRCamRoll.get()),
-					Math.toRadians(FRCamPitch.get()),
-					Math.toRadians(FRCamYaw.get())),
-			BLRot = new Rotation3d(
-					Math.toRadians(BLCamRoll.get()),
-					Math.toRadians(BLCamPitch.get()),
-					Math.toRadians(BLCamYaw.get())),
-			BRRot = new Rotation3d(
-					Math.toRadians(BRCamRoll.get()),
-					Math.toRadians(BRCamPitch.get()),
-					Math.toRadians(BRCamYaw.get()));
-	// Transforms, used in the camera declarations
-	public static Transform3d robotToFL = new Transform3d(FLCamTranslation3d, FLRot),
-			robotToFR = new Transform3d(FRCamTranslation3d, FRRot),
-			robotToBL = new Transform3d(BLCamTranslation3d, BLRot),
-			robotToBR = new Transform3d(BRCamTranslation3d, BRRot);
-	//Transforms in a list, for easy iteration
-	public static Transform3d[] robotToCameraTransforms = new Transform3d[] {
-			robotToFL, robotToFR, robotToBL, robotToBR};
-	 // Basic filtering thresholds
-	 public static double maxAmbiguity = 0.3;
-	 public static double maxZError = 0.75;
-	 public static double maxYawError = 5;
-	 // Standard deviation baselines, for 1 meter distance and 1 tag
-	 // (Adjusted automatically based on distance and # of tags)
-	 public static double linearStdDevBaseline = 0.005; // Meters
-	 public static double angularStdDevBaseline = 0.04; // Radians
-   
-	 // Standard deviation multipliers for each camera
-	 // (Adjust to trust some cameras more than others)
-	 public static double[] cameraStdDevFactors =
-		 new double[] {
-		   1.0, // Camera 0
-		   1.0, // Camera 1
-		   1.0,
-		   1.0
-		 };   
-	// Used for distance calculations for AI stuff
-	// Offset of your limelight (0 being perpendicular, negative meaning camera lens
-	// down)
-	public static double limeLightAngleOffsetDegrees = -40,
-			// Height from floor to limelight
-			limelightLensHeightoffFloorInches = 22.5;
-	// For limelightHelpers
-	public static String limelightName = "limelight-swerve";
-	// For use in drivetoAITarget (PLACEHOLDER VALUE)
-	public static double DriveToAITargetKp = .3, DriveToAIMaxAutoTime = 2;
 	public static class FieldConstants {
 		public static final double kFieldBorderMargin = 0.5;
 		public static final double kFieldTagMinTrust = .8;
-		public static double[] aprilTagOffsets = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-				1, 1, 1, 1, 1, 1, 1
-		};
+		public static double[] aprilTagOffsets = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+	}
+
+	public static final boolean debug = true;
+
+	public static final double ambiguityThreshold = 0.3;
+	public static final double objDetectConfidenceThreshold = .3;
+	public static final double maxZError = 0.75;
+	public static final double maxYawError = 5.0;
+	public static final double linearStdDevBaseline = 0.005;
+	public static final double angularStdDevBaseline = 0.04;
+
+	public static final double limeLightAngleOffsetDegrees = -40.0;
+	public static final double limelightLensHeightoffFloorInches = 22.5;
+	public static final String limelightName = "limelight-swerve";
+
+	public static final LoggableTunedNumber limelightCloseEnoughToConsiderMissingDistance = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingDistance",
+			Units.feetToMeters(4),
+			TuningConstants.isTuningVision);
+
+	public static final LoggableTunedNumber limelightCloseEnoughToConsiderMissingAngle = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingAngle",
+			Units.degreesToRadians(3),
+			TuningConstants.isTuningVision);
+
+	public static final LoggableTunedNumber limelightCloseEnoughToConsiderMissingTimeout = new LoggableTunedNumber(
+			"Vision/IntakeCloseEnoughToConsiderMissingTimeout", 1, TuningConstants.isTuningVision);
+
+	public static final double maxStaleReadingXMeters = Units.inchesToMeters(4);
+	public static final double maxStaleReadingYMeters = Units.inchesToMeters(4);
+	public static final double maxStaleReadingRotation = Units.degreesToRadians(2);
+
+	public static final CameraConfig[] cameras = new CameraConfig[] {
+			CameraConfig.builder()
+					.pose(
+							() -> new Pose3d(
+									Units.inchesToMeters(12.626),
+									Units.inchesToMeters(11.001),
+									Units.inchesToMeters(8.364),
+									new Rotation3d(
+											Math.toRadians(0.0),
+											Math.toRadians(-28.125),
+											Math.toRadians(33.2))))
+					.id("0x122000005c80a00")
+					.width(1600)
+					.height(1304)
+					.exposure(3000)
+					.gain(10.0)
+					.build(),
+			CameraConfig.builder()
+					.pose(
+							() -> new Pose3d(
+									Units.inchesToMeters(12.626),
+									Units.inchesToMeters(-11.001),
+									Units.inchesToMeters(8.364),
+									new Rotation3d(
+											Math.toRadians(0.0),
+											Math.toRadians(-28.125),
+											Math.toRadians(-56.8))))
+					.id("0x123000005c80a00")
+					.width(1600)
+					.height(1304)
+					.exposure(3000)
+					.gain(10.0)
+					.build(),
+			CameraConfig.builder()
+					.pose(
+							() -> new Pose3d(
+									Units.inchesToMeters(-12.626),
+									Units.inchesToMeters(11.001),
+									Units.inchesToMeters(8.364),
+									new Rotation3d(
+											Math.toRadians(0.0),
+											Math.toRadians(-28.125),
+											Math.toRadians(123.2))))
+					.id("BL_Camera")
+					.width(1280)
+					.height(960)
+					.exposure(3000)
+					.gain(10.0)
+					.build(),
+			CameraConfig.builder()
+					.pose(
+							() -> new Pose3d(
+									Units.inchesToMeters(-12.626),
+									Units.inchesToMeters(-11.001),
+									Units.inchesToMeters(8.364),
+									new Rotation3d(
+											Math.toRadians(0.0),
+											Math.toRadians(-28.125),
+											Math.toRadians(-146.8))))
+					.id("BR_Camera")
+					.width(1280)
+					.height(960)
+					.exposure(3000)
+					.gain(10.0)
+					.build()
+	};
+
+	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Getter
+	public static class CameraConfig {
+		private Supplier<Pose3d> pose;
+		private String id;
+		private int width;
+		private int height;
+		private int autoExposure;
+		private int exposure;
+		private double gain;
+		private double denoise;
+	}
+	//Transforms for alternative functions (like aiming)
+
+public static final double aprilTagWidth = Units.inchesToMeters(6.50);
+
+  @Getter
+  public enum AprilTagLayoutType {
+    OFFICIAL("2025-official"),
+    NO_BARGE("2025-no-barge"),
+    BLUE_REEF("2025-blue-reef"),
+    RED_REEF("2025-red-reef"),
+    NONE("2025-none");
+
+    AprilTagLayoutType(String name) {
+      if (Constants.currentMode == Mode.SIM) {
+        try {
+          layout =
+              new AprilTagFieldLayout(
+                  Path.of(
+                      "src",
+                      "main",
+                      "deploy",
+                      "apriltags",
+                      fieldType.getJsonFolder(),
+                      "2025-official.json"));
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      } else {
+        try {
+          layout =
+              new AprilTagFieldLayout(
+                  Path.of(
+                      Filesystem.getDeployDirectory().getPath(),
+                      "apriltags",
+                      fieldType.getJsonFolder(),
+                      name + ".json"));
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      try {
+        layoutString = new ObjectMapper().writeValueAsString(layout);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException(
+            "Failed to serialize AprilTag layout JSON " + toString() + "for Northstar");
+      }
+    }
+
+    private final AprilTagFieldLayout layout;
+    private final String layoutString;
+  }
+  @RequiredArgsConstructor
+  public enum FieldType {
+    ANDYMARK("andymark"),
+    WELDED("welded");
+
+    @Getter private final String jsonFolder;
+  }
+	private VisionConstants() {
 	}
 }

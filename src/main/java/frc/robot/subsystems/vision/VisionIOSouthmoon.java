@@ -1,0 +1,154 @@
+package frc.robot.subsystems.vision;
+
+import edu.wpi.first.networktables.*;
+import edu.wpi.first.util.WPIUtilJNI;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import java.util.function.Supplier;
+import frc.robot.utils.vision.VisionConstants;
+
+/**
+ * Southmoon implementation of VisionIO.
+ * Uses the Southmoon AprilTag and object detection system.
+ */
+public class VisionIOSouthmoon implements VisionIO {
+  private final Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier;
+  private VisionConstants.AprilTagLayoutType lastAprilTagLayout = null;
+
+  private final String deviceId;
+  private final DoubleArraySubscriber observationSubscriber;
+  private final DoubleArraySubscriber objDetectObservationSubscriber;
+  private final IntegerSubscriber fpsAprilTagsSubscriber;
+  private final IntegerSubscriber fpsObjDetectSubscriber;
+  private final StringPublisher eventNamePublisher;
+  private final IntegerPublisher matchTypePublisher;
+  private final IntegerPublisher matchNumberPublisher;
+  private final IntegerPublisher timestampPublisher;
+  private final BooleanPublisher isRecordingPublisher;
+  private final StringPublisher tagLayoutPublisher;
+
+  private final Timer slowPeriodicTimer = new Timer();
+
+  /**
+   * Creates a new VisionIOSouthmoon.
+   * 
+   * @param aprilTagLayoutSupplier Supplier for the current AprilTag layout
+   * @param index Camera index for this Northstar instance
+   * @param cameraConfig Camera configuration (from your VisionConstants)
+   */
+  public VisionIOSouthmoon(
+      Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier, 
+      String id,
+      VisionConstants.CameraConfig cameraConfig) {
+    this.aprilTagLayoutSupplier = aprilTagLayoutSupplier;
+    this.deviceId = id;
+    
+    var northstarTable = NetworkTableInstance.getDefault().getTable(this.deviceId);
+    var configTable = northstarTable.getSubTable("config");
+
+    // Publish camera configuration
+    configTable.getStringTopic("camera_id").publish().set(cameraConfig.getId());
+    configTable.getIntegerTopic("camera_resolution_width").publish().set(cameraConfig.getWidth());
+    configTable.getIntegerTopic("camera_resolution_height").publish().set(cameraConfig.getHeight());
+    configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraConfig.getAutoExposure());
+    configTable.getIntegerTopic("camera_exposure").publish().set(cameraConfig.getExposure());
+    configTable.getDoubleTopic("camera_gain").publish().set(cameraConfig.getGain());
+    configTable.getDoubleTopic("camera_denoise").publish().set(cameraConfig.getDenoise());
+    configTable.getDoubleTopic("fiducial_size_m").publish().set(VisionConstants.aprilTagWidth);
+    
+    isRecordingPublisher = configTable.getBooleanTopic("is_recording").publish();
+    isRecordingPublisher.set(false);
+    timestampPublisher = configTable.getIntegerTopic("timestamp").publish();
+    tagLayoutPublisher = configTable.getStringTopic("tag_layout").publish();
+    eventNamePublisher = configTable.getStringTopic("event_name").publish();
+    matchTypePublisher = configTable.getIntegerTopic("match_type").publish();
+    matchNumberPublisher = configTable.getIntegerTopic("match_number").publish();
+
+    var outputTable = northstarTable.getSubTable("output");
+    observationSubscriber =
+        outputTable
+            .getDoubleArrayTopic("observations")
+            .subscribe(
+                new double[] {},
+                PubSubOption.keepDuplicates(true),
+                PubSubOption.sendAll(true),
+                PubSubOption.pollStorage(5),
+                PubSubOption.periodic(0.01));
+    objDetectObservationSubscriber =
+        outputTable
+            .getDoubleArrayTopic("objdetect_observations")
+            .subscribe(
+                new double[] {},
+                PubSubOption.keepDuplicates(true),
+                PubSubOption.sendAll(true),
+                PubSubOption.pollStorage(5),
+                PubSubOption.periodic(0.01));
+    fpsAprilTagsSubscriber = outputTable.getIntegerTopic("fps_apriltags").subscribe(0);
+    fpsObjDetectSubscriber = outputTable.getIntegerTopic("fps_objdetect").subscribe(0);
+
+    slowPeriodicTimer.start();
+  }
+
+  @Override
+  public void updateInputs(
+      VisionIOInputs inputs,
+      AprilTagVisionIOInputs aprilTagInputs,
+      ObjDetectVisionIOInputs objDetectInputs) {
+    boolean slowPeriodic = slowPeriodicTimer.advanceIfElapsed(1.0);
+
+    // Update NT connection status
+    inputs.ntConnected = false;
+    for (var client : NetworkTableInstance.getDefault().getConnections()) {
+      if (client.remote_id.startsWith(this.deviceId)) {
+        inputs.ntConnected = true;
+        break;
+      }
+    }
+    inputs.connected = inputs.ntConnected;
+    inputs.name = deviceId;
+
+    // Publish timestamp
+    if (slowPeriodic) {
+      timestampPublisher.set(WPIUtilJNI.getSystemTime() / 1000000);
+      eventNamePublisher.set(DriverStation.getEventName());
+      matchTypePublisher.set(DriverStation.getMatchType().ordinal());
+      matchNumberPublisher.set(DriverStation.getMatchNumber());
+    }
+
+    // Publish tag layout
+    var aprilTagType = aprilTagLayoutSupplier.get();
+    if (aprilTagType != lastAprilTagLayout) {
+      lastAprilTagLayout = aprilTagType;
+      tagLayoutPublisher.set(aprilTagType.getLayoutString());
+    }
+
+    // Get AprilTag data
+    var aprilTagQueue = observationSubscriber.readQueue();
+    aprilTagInputs.timestamps = new double[aprilTagQueue.length];
+    aprilTagInputs.frames = new double[aprilTagQueue.length][];
+    for (int i = 0; i < aprilTagQueue.length; i++) {
+      aprilTagInputs.timestamps[i] = aprilTagQueue[i].timestamp / 1000000.0;
+      aprilTagInputs.frames[i] = aprilTagQueue[i].value;
+    }
+    if (slowPeriodic) {
+      aprilTagInputs.fps = fpsAprilTagsSubscriber.get();
+    }
+
+    // Get object detection data
+    var objDetectQueue = objDetectObservationSubscriber.readQueue();
+    objDetectInputs.timestamps = new double[objDetectQueue.length];
+    objDetectInputs.frames = new double[objDetectQueue.length][];
+    for (int i = 0; i < objDetectQueue.length; i++) {
+      objDetectInputs.timestamps[i] = objDetectQueue[i].timestamp / 1000000.0;
+      objDetectInputs.frames[i] = objDetectQueue[i].value;
+    }
+    if (slowPeriodic) {
+      objDetectInputs.fps = fpsObjDetectSubscriber.get();
+    }
+  }
+
+  @Override
+  public void setRecording(boolean active) {
+    isRecordingPublisher.set(active);
+  }
+}

@@ -25,6 +25,12 @@ public class GeomUtil {
 	public static Transform2d translationToTransform(double x, double y) {
 		return new Transform2d(new Translation2d(x, y), new Rotation2d());
 	}
+	public static Transform2d poseToTransform(Pose2d pose){
+		return new Transform2d(pose.getX(),pose.getY(),pose.getRotation());
+	}
+	public static Transform3d poseToTransform3d(Pose3d pose){
+		return new Transform3d(pose.getX(),pose.getY(),pose.getZ(),pose.getRotation());
+	}
 
 	/**
 	 * Creates a pure translating transform
