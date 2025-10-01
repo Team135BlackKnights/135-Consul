@@ -93,7 +93,7 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-28.125),
 											Math.toRadians(33.2))))
-					.id("0x122000005c80a00")
+					.id("0x20305c80a00")
 					.width(1600)
 					.height(1304)
 					.exposure(3000)
