@@ -93,11 +93,16 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-28.125),
 											Math.toRadians(33.2))))
-					.id("0x20305c80a00")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_001")
 					.width(1600)
 					.height(1304)
-					.exposure(3000)
-					.gain(10.0)
+					.exposure(180)
+					.saturation(50)
+					.hue(0)
+					.whiteBalance(2800)
+					.autoWhiteBalance(0)
+					.autoExposure(0)
+					.gain(0)
 					.build(),
 			CameraConfig.builder()
 					.pose(
@@ -109,11 +114,16 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-28.125),
 											Math.toRadians(-56.8))))
-					.id("0x123000005c80a00")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_002")
 					.width(1600)
 					.height(1304)
-					.exposure(3000)
-					.gain(10.0)
+					.exposure(180)
+					.saturation(50)
+					.hue(0)
+					.whiteBalance(2800)
+					.autoWhiteBalance(0)
+					.autoExposure(0)
+					.gain(0)
 					.build(),
 			CameraConfig.builder()
 					.pose(
@@ -159,7 +169,11 @@ public class VisionConstants {
 		private int width;
 		private int height;
 		private int autoExposure;
-		private int exposure;
+		private int autoWhiteBalance;
+		private double exposure;
+		private int saturation;
+		private int hue;
+		private int whiteBalance;
 		private double gain;
 		private double denoise;
 	}

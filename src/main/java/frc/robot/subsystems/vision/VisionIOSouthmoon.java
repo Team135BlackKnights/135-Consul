@@ -51,7 +51,11 @@ public class VisionIOSouthmoon implements VisionIO {
     configTable.getIntegerTopic("camera_resolution_width").publish().set(cameraConfig.getWidth());
     configTable.getIntegerTopic("camera_resolution_height").publish().set(cameraConfig.getHeight());
     configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraConfig.getAutoExposure());
-    configTable.getIntegerTopic("camera_exposure").publish().set(cameraConfig.getExposure());
+    configTable.getDoubleTopic("camera_exposure").publish().set(cameraConfig.getExposure());
+    configTable.getIntegerTopic("camera_saturation").publish().set(cameraConfig.getSaturation());
+    configTable.getIntegerTopic("camera_hue").publish().set(cameraConfig.getHue());
+    configTable.getIntegerTopic("camera_auto_white_balance").publish().set(cameraConfig.getAutoWhiteBalance());
+    configTable.getIntegerTopic("camera_white_balance").publish().set(cameraConfig.getWhiteBalance()); 
     configTable.getDoubleTopic("camera_gain").publish().set(cameraConfig.getGain());
     configTable.getDoubleTopic("camera_denoise").publish().set(cameraConfig.getDenoise());
     configTable.getDoubleTopic("fiducial_size_m").publish().set(VisionConstants.aprilTagWidth);
