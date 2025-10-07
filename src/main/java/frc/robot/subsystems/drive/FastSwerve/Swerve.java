@@ -234,8 +234,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		try {
 			if (poseBuffer.getInternalBuffer().lastKey()
 					- poseBufferSizeSeconds > observation.timestamp()) {
-				System.out.println("OUTSIDE BUFFER");
-				return;
+				
+						System.out.println("OUTSIDE BUFFER");
+						System.out.println("CURRENT TIME DELTA:" + String.valueOf(poseBuffer.getInternalBuffer().lastKey() - observation.timestamp()));
+						return;
 			}
 		} catch (NoSuchElementException ex) {
 			System.err.println("NO ELEMENT!");
@@ -243,6 +245,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
+		Logger.recordOutput("Vision/Southmoon0/timeDelta", poseBuffer.getInternalBuffer().lastKey() - observation.timestamp());
 		if (sample.isEmpty()) {
 			// exit if not there
 			return;

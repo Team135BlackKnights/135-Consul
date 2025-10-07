@@ -357,11 +357,15 @@ public class Vision extends SubsystemChecker {
 
 			// Add measurement
 			allRobotPoses.add(new Pose3d(robotPose));
+
 			addVisionMeasurement(robotPose, timestamp, VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev));
 			allRobotPosesAccepted.add(new Pose3d(robotPose));
 			allTagPoses.addAll(tagPoses);
 
 			// Logging
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/stdDev", xyStdDev);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/thetaStdDev", thetaStdDev);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/time", timestamp);
 			Logger.recordOutput("Vision/"+inputs[cameraIndex].name+"/avgDistance", avgDistance);
 			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/RobotPose", robotPose);
 			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
