@@ -17,24 +17,14 @@ public interface VisionIO {
     public TargetObservation[] targetObservations = new TargetObservation[0];
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
+    //Northstar-style inputs
+    public double[] timestamps_april = new double[] {};
+    public double[][] frames_april = new double[][] {};
+    public long fps_april = 0;
+    public double[] timestamps_obj = new double[] {};
+    public double[][] frames_obj = new double[][] {};
+    public long fps_obj = 0;
   }
-  
-  @AutoLog
-  public static class AprilTagVisionIOInputs {
-    // Northstar-style AprilTag inputs
-    public double[] timestamps = new double[] {};
-    public double[][] frames = new double[][] {};
-    public long fps = 0;
-  }
-  
-  @AutoLog
-  public static class ObjDetectVisionIOInputs {
-    // Northstar-style object detection inputs
-    public double[] timestamps = new double[] {};
-    public double[][] frames = new double[][] {};
-    public long fps = 0;
-  }
-
   /** Represents the position of a simple target, not used for pose estimation. */
   public static record TargetObservation(
       Rotation2d tx, 
@@ -69,15 +59,6 @@ public interface VisionIO {
    * Default implementation does nothing.
    */
   public default void updateInputs(VisionIOInputs inputs) {}
-  
-  /**
-   * Update inputs for Northstar-style cameras.
-   * Default implementation does nothing.
-   */
-  public default void updateInputs(
-      VisionIOInputs inputs,
-      AprilTagVisionIOInputs aprilTagInputs,
-      ObjDetectVisionIOInputs objDetectInputs) {}
   
   /** 
    * Set recording state for Northstar cameras.

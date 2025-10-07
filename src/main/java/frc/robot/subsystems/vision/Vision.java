@@ -49,10 +49,8 @@ public class Vision extends SubsystemChecker {
 	private final Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier;
 	private final VisionIO[] io;
 	private final VisionIOInputsAutoLogged[] inputs;
-	private final AprilTagVisionIOInputsAutoLogged[] aprilTagInputs;
-	private final ObjDetectVisionIOInputsAutoLogged[] objDetectInputs;
-  private final LoggedNetworkBoolean recordingRequest =
-      new LoggedNetworkBoolean("/SmartDashboard/Enable Recording", false);
+	private final LoggedNetworkBoolean recordingRequest = new LoggedNetworkBoolean("/SmartDashboard/Enable Recording",
+			false);
 	// Camera type tracking
 	private final CameraType[] cameraTypes;
 
@@ -77,15 +75,11 @@ public class Vision extends SubsystemChecker {
 		this.cameraTypes = new CameraType[io.length];
 
 		inputs = new VisionIOInputsAutoLogged[io.length];
-		aprilTagInputs = new AprilTagVisionIOInputsAutoLogged[io.length];
-		objDetectInputs = new ObjDetectVisionIOInputsAutoLogged[io.length];
 		disconnectedTimers = new Timer[io.length];
 		disconnectedAlerts = new Alert[io.length];
 
 		for (int i = 0; i < io.length; i++) {
 			inputs[i] = new VisionIOInputsAutoLogged();
-			aprilTagInputs[i] = new AprilTagVisionIOInputsAutoLogged();
-			objDetectInputs[i] = new ObjDetectVisionIOInputsAutoLogged();
 			disconnectedAlerts[i] = new Alert("", Alert.AlertType.kError);
 			lastFrameTimes.put(i, 0.0);
 			disconnectedTimers[i] = new Timer();
@@ -104,15 +98,10 @@ public class Vision extends SubsystemChecker {
 
 		// Update all cameras
 		for (int i = 0; i < io.length; i++) {
-			if (cameraTypes[i] == CameraType.Southmoon) {
-				io[i].updateInputs(inputs[i], aprilTagInputs[i], objDetectInputs[i]);
-				Logger.processInputs("Vision/Southmoon" + i, inputs[i]);
-				Logger.processInputs("Vision/Southmoon" + i + "/AprilTag", aprilTagInputs[i]);
-				Logger.processInputs("Vision/Southmoon" + i + "/ObjDetect", objDetectInputs[i]);
-			} else {
-				io[i].updateInputs(inputs[i]);
-				Logger.processInputs("Vision/Camera" + i, inputs[i]);
-			}
+
+			io[i].updateInputs(inputs[i]);
+			Logger.processInputs("Vision/Camera" + inputs[i].name, inputs[i]);
+
 		}
 
 		Logger.recordOutput("SystemStatus/Periodic/VisionInputsMS", System.currentTimeMillis() - timestamp);
@@ -143,8 +132,8 @@ public class Vision extends SubsystemChecker {
 		// Update disconnected alerts
 		boolean anyNTDisconnected = false;
 		for (int i = 0; i < io.length; i++) {
-			boolean hasData = aprilTagInputs[i].timestamps.length > 0
-					|| objDetectInputs[i].timestamps.length > 0
+			boolean hasData = inputs[i].timestamps_april.length > 0
+					|| inputs[i].timestamps_obj.length > 0
 					|| inputs[i].poseObservations.length > 0;
 
 			if (hasData) {
@@ -264,136 +253,146 @@ public class Vision extends SubsystemChecker {
 	}
 
 	private void processSouthmoonCamera(
-        int cameraIndex,
-        List<Pose3d> allTagPoses,
-        List<Pose3d> allRobotPoses,
-        List<Pose3d> allRobotPosesAccepted,
-        List<Pose3d> allRobotPosesRejected) {
+			int cameraIndex,
+			List<Pose3d> allTagPoses,
+			List<Pose3d> allRobotPoses,
+			List<Pose3d> allRobotPosesAccepted,
+			List<Pose3d> allRobotPosesRejected) {
 
-    // === APRILTAG POSE DETECTION ===
-    for (int frameIndex = 0; frameIndex < aprilTagInputs[cameraIndex].timestamps.length; frameIndex++) {
-        lastFrameTimes.put(cameraIndex, Timer.getFPGATimestamp());
-        double timestamp = aprilTagInputs[cameraIndex].timestamps[frameIndex];
-        double[] values = aprilTagInputs[cameraIndex].frames[frameIndex];
+		// === APRILTAG POSE DETECTION ===
+		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_april.length; frameIndex++) {
+			lastFrameTimes.put(cameraIndex, Timer.getFPGATimestamp());
+			double timestamp = inputs[cameraIndex].timestamps_april[frameIndex];
+			double[] values = inputs[cameraIndex].frames_april[frameIndex];
 
-        // Skip blank frame
-        if (values.length == 0 || values[0] == 0) continue;
+			// Skip blank frame
+			if (values.length == 0 || values[0] == 0)
+				continue;
 
-        Pose3d cameraPose = null;
-        Pose2d robotPose = null;
-        boolean useVisionRotation = false;
+			Pose3d cameraPose = null;
+			Pose2d robotPose = null;
+			boolean useVisionRotation = false;
 
-        switch ((int) values[0]) {
-            case 1 -> {
-                // One pose (multi-tag)
-                cameraPose = new Pose3d(
-                        values[2], values[3], values[4],
-                        new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7], values[8])));
-                robotPose = cameraPose.toPose2d()
-                        .transformBy(GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d()).inverse());
-                useVisionRotation = true;
-            }
-            case 2 -> {
-                // Two poses (single tag, ambiguous)
-                double error0 = values[1];
-                double error1 = values[9];
-                Pose3d cameraPose0 = new Pose3d(
-                        values[2], values[3], values[4],
-                        new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7], values[8])));
-                Pose3d cameraPose1 = new Pose3d(
-                        values[10], values[11], values[12],
-                        new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[13], values[14], values[15], values[16])));
-                Transform2d cameraToRobot = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d()).inverse();
-                Pose2d robotPose0 = cameraPose0.toPose2d().transformBy(cameraToRobot);
-                Pose2d robotPose1 = cameraPose1.toPose2d().transformBy(cameraToRobot);
+			switch ((int) values[0]) {
+				case 1 -> {
+					// One pose (multi-tag)
+					cameraPose = new Pose3d(
+							values[2], values[3], values[4],
+							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7],
+									values[8])));
+					robotPose = cameraPose.toPose2d()
+							.transformBy(GeomUtil
+									.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d())
+									.inverse());
+					useVisionRotation = true;
+				}
+				case 2 -> {
+					// Two poses (single tag, ambiguous)
+					double error0 = values[1];
+					double error1 = values[9];
+					Pose3d cameraPose0 = new Pose3d(
+							values[2], values[3], values[4],
+							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7],
+									values[8])));
+					Pose3d cameraPose1 = new Pose3d(
+							values[10], values[11], values[12],
+							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[13], values[14],
+									values[15], values[16])));
+					Transform2d cameraToRobot = GeomUtil
+							.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d()).inverse();
+					Pose2d robotPose0 = cameraPose0.toPose2d().transformBy(cameraToRobot);
+					Pose2d robotPose1 = cameraPose1.toPose2d().transformBy(cameraToRobot);
 
-                // Select disambiguated pose
-                if (error0 < error1 * VisionConstants.ambiguityThreshold ||
-                    error1 < error0 * VisionConstants.ambiguityThreshold) {
-                    Rotation2d currentRotation = RobotContainer.drivetrainS.getPose().getRotation();
-                    if (Math.abs(currentRotation.minus(robotPose0.getRotation()).getRadians())
-                        < Math.abs(currentRotation.minus(robotPose1.getRotation()).getRadians())) {
-                        cameraPose = cameraPose0;
-                        robotPose = robotPose0;
-                    } else {
-                        cameraPose = cameraPose1;
-                        robotPose = robotPose1;
-                    }
-                }
-            }
-        }
+					// Select disambiguated pose
+					if (error0 < error1 * VisionConstants.ambiguityThreshold ||
+							error1 < error0 * VisionConstants.ambiguityThreshold) {
+						Rotation2d currentRotation = RobotContainer.drivetrainS.getPose().getRotation();
+						if (Math.abs(currentRotation.minus(robotPose0.getRotation()).getRadians()) < Math
+								.abs(currentRotation.minus(robotPose1.getRotation()).getRadians())) {
+							cameraPose = cameraPose0;
+							robotPose = robotPose0;
+						} else {
+							cameraPose = cameraPose1;
+							robotPose = robotPose1;
+						}
+					}
+				}
+			}
 
-        if (cameraPose == null || robotPose == null) continue;
+			if (cameraPose == null || robotPose == null)
+				continue;
 
-        // Reject off-field
-		if (robotPose.getX() < 0
-            || robotPose.getX() > aprilTagLayoutSupplier.get().getLayout().getFieldLength()
-            || robotPose.getY() < 0
-            || robotPose.getY() > aprilTagLayoutSupplier.get().getLayout().getFieldWidth()) {
-            continue;
-        }
+			// Reject off-field
+			if (robotPose.getX() < 0
+					|| robotPose.getX() > aprilTagLayoutSupplier.get().getLayout().getFieldLength()
+					|| robotPose.getY() < 0
+					|| robotPose.getY() > aprilTagLayoutSupplier.get().getLayout().getFieldWidth()) {
+				continue;
+			}
 
-        // Collect tag poses
-        List<Pose3d> tagPoses = new ArrayList<>();
-        for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
-            int tagId = (int) values[i];
-            lastTagDetectionTimes.put(tagId, Timer.getFPGATimestamp());
-            aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
-        }
-        if (tagPoses.isEmpty()) continue;
+			// Collect tag poses
+			List<Pose3d> tagPoses = new ArrayList<>();
+			for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
+				int tagId = (int) values[i];
+				lastTagDetectionTimes.put(tagId, Timer.getFPGATimestamp());
+				aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
+			}
+			if (tagPoses.isEmpty())
+				continue;
 
-        // Average distance to tags
-        double totalDist = 0.0;
-        for (Pose3d tagPose : tagPoses) {
-            totalDist += tagPose.getTranslation().getDistance(cameraPose.getTranslation());
-        }
-        double avgDistance = totalDist / tagPoses.size();
+			// Average distance to tags
+			double totalDist = 0.0;
+			for (Pose3d tagPose : tagPoses) {
+				totalDist += tagPose.getTranslation().getDistance(cameraPose.getTranslation());
+			}
+			double avgDistance = totalDist / tagPoses.size();
 
-        // Standard deviations
-        double xyStdDev = VisionConstants.linearStdDevBaseline
-                * Math.pow(avgDistance, 1.2) / Math.pow(tagPoses.size(), 2.0);
-        double thetaStdDev = useVisionRotation
-                ? VisionConstants.angularStdDevBaseline
-                    * Math.pow(avgDistance, 1.2) / Math.pow(tagPoses.size(), 2.0)
-                : Double.POSITIVE_INFINITY;
+			// Standard deviations
+			double xyStdDev = VisionConstants.linearStdDevBaseline
+					* Math.pow(avgDistance, 1.2) / Math.pow(tagPoses.size(), 2.0);
+			double thetaStdDev = useVisionRotation
+					? VisionConstants.angularStdDevBaseline
+							* Math.pow(avgDistance, 1.2) / Math.pow(tagPoses.size(), 2.0)
+					: Double.POSITIVE_INFINITY;
 
-        // Add measurement
-        allRobotPoses.add(new Pose3d(robotPose));
-        addVisionMeasurement(robotPose, timestamp, VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev));
-        allRobotPosesAccepted.add(new Pose3d(robotPose));
-        allTagPoses.addAll(tagPoses);
+			// Add measurement
+			allRobotPoses.add(new Pose3d(robotPose));
+			addVisionMeasurement(robotPose, timestamp, VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev));
+			allRobotPosesAccepted.add(new Pose3d(robotPose));
+			allTagPoses.addAll(tagPoses);
 
-        // Logging
-        Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/RobotPose", robotPose);
-        Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
-    }
+			// Logging
+			Logger.recordOutput("Vision/"+inputs[cameraIndex].name+"/avgDistance", avgDistance);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/RobotPose", robotPose);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
+		}
 
-    // === OBJECT DETECTION ===
-    for (int frameIndex = 0; frameIndex < objDetectInputs[cameraIndex].timestamps.length; frameIndex++) {
-        double timestamp = objDetectInputs[cameraIndex].timestamps[frameIndex];
-        double[] frame = objDetectInputs[cameraIndex].frames[frameIndex];
+		// === OBJECT DETECTION ===
+		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_obj.length; frameIndex++) {
+			double timestamp = inputs[cameraIndex].timestamps_obj[frameIndex];
+			double[] frame = inputs[cameraIndex].frames_obj[frameIndex];
 
-        for (int i = 0; i < frame.length; i += 10) {
-            int classId = (int) frame[i];
-            double confidence = frame[i + 1];
+			for (int i = 0; i < frame.length; i += 10) {
+				int classId = (int) frame[i];
+				double confidence = frame[i + 1];
 
-            if (confidence < VisionConstants.objDetectConfidenceThreshold) continue;
+				if (confidence < VisionConstants.objDetectConfidenceThreshold)
+					continue;
 
-            double[] tx = new double[4];
-            double[] ty = new double[4];
-            for (int z = 0; z < 4; z++) {
-                tx[z] = frame[i + 2 + (2 * z)];
-                ty[z] = frame[i + 2 + (2 * z) + 1];
-            }
-			//TODO use usz
+				double[] tx = new double[4];
+				double[] ty = new double[4];
+				for (int z = 0; z < 4; z++) {
+					tx[z] = frame[i + 2 + (2 * z)];
+					ty[z] = frame[i + 2 + (2 * z) + 1];
+				}
+				// TODO use usz
 
-            Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/tx", tx);
-            Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/ty", ty);
-            Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/conf", confidence);
-        }
-    }
-}
-
+				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/tx", tx);
+				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/ty", ty);
+				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/conf", confidence);
+			}
+		}
+	}
 
 	/**
 	 * Check if a pose observation should be rejected

@@ -95,9 +95,7 @@ public class VisionIOSouthmoon implements VisionIO {
 
   @Override
   public void updateInputs(
-      VisionIOInputs inputs,
-      AprilTagVisionIOInputs aprilTagInputs,
-      ObjDetectVisionIOInputs objDetectInputs) {
+      VisionIOInputs inputs) {
     boolean slowPeriodic = slowPeriodicTimer.advanceIfElapsed(1.0);
 
     // Update NT connection status
@@ -128,26 +126,26 @@ public class VisionIOSouthmoon implements VisionIO {
 
     // Get AprilTag data
     var aprilTagQueue = observationSubscriber.readQueue();
-    aprilTagInputs.timestamps = new double[aprilTagQueue.length];
-    aprilTagInputs.frames = new double[aprilTagQueue.length][];
+    inputs.timestamps_april = new double[aprilTagQueue.length];
+    inputs.frames_april = new double[aprilTagQueue.length][];
     for (int i = 0; i < aprilTagQueue.length; i++) {
-      aprilTagInputs.timestamps[i] = aprilTagQueue[i].timestamp / 1000000.0;
-      aprilTagInputs.frames[i] = aprilTagQueue[i].value;
+      inputs.timestamps_april[i] = aprilTagQueue[i].timestamp / 1000000.0;
+      inputs.frames_april[i] = aprilTagQueue[i].value;
     }
     if (slowPeriodic) {
-      aprilTagInputs.fps = fpsAprilTagsSubscriber.get();
+      inputs.fps_april = fpsAprilTagsSubscriber.get();
     }
 
     // Get object detection data
     var objDetectQueue = objDetectObservationSubscriber.readQueue();
-    objDetectInputs.timestamps = new double[objDetectQueue.length];
-    objDetectInputs.frames = new double[objDetectQueue.length][];
+    inputs.timestamps_obj = new double[objDetectQueue.length];
+    inputs.frames_obj  = new double[objDetectQueue.length][];
     for (int i = 0; i < objDetectQueue.length; i++) {
-      objDetectInputs.timestamps[i] = objDetectQueue[i].timestamp / 1000000.0;
-      objDetectInputs.frames[i] = objDetectQueue[i].value;
+      inputs.timestamps_obj[i] = objDetectQueue[i].timestamp / 1000000.0;
+      inputs.frames_obj[i] = objDetectQueue[i].value;
     }
     if (slowPeriodic) {
-      objDetectInputs.fps = fpsObjDetectSubscriber.get();
+      inputs.fps_obj  = fpsObjDetectSubscriber.get();
     }
   }
 
