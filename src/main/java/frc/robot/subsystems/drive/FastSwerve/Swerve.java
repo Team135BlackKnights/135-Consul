@@ -7,14 +7,18 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,12 +27,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator.SwerveSetpoint;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
@@ -39,6 +45,9 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
+import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.AITargets;
+import frc.robot.utils.vision.VisionConstants.FieldConstants;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -57,7 +66,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5, TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
-			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain); 
+			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain);
+
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
 		TELEOP,
@@ -93,6 +103,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private boolean lastEnabled = false;
 	private ChassisSpeeds desiredSpeeds = new ChassisSpeeds();
 	private static final double poseBufferSizeSeconds = 2.0;
+	private static final double txTyObservationStaleSecs = .3;
 	private Pose2d odometryPose = new Pose2d();
 	private Pose2d estimatedPose = new Pose2d();
 	private SwerveSetpoint currentSetpoint = new SwerveSetpoint(
@@ -121,11 +132,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public record TxTyObservation(
-			int tagId, double tx, double ty, Pose3d robotToCam, double distance, double timestamp) {
+			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp, Optional<Pose2d> objectPose) {
 	}
 
 	public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {
 	}
+
+	private final Map<String, TxTyPoseRecord> txTyPoses = new HashMap<>();
 
 	private SwerveModulePosition[] lastWheelPositions = new SwerveModulePosition[] { new SwerveModulePosition(),
 			new SwerveModulePosition(), new SwerveModulePosition(),
@@ -140,16 +153,19 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private final OdometryThread odometryThread;
 	private double[] pathPlannerNM = new double[4];
 	private double characterizationVelocity = 0.0;
-	// static {
-	// 	for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-	// 	  tagPoses2d.put(
-	// 		  i,
-	// 		  VisionConstants.kTagLayout
-	// 			  .getTagPose(i)
-	// 			  .map(Pose3d::toPose2d)
-	// 			  .orElse(new Pose2d()));
-	// 	}
-	//   }
+	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
+
+	static {
+		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
+			tagPoses2d.put(
+					i,
+					RobotContainer.getSelectedAprilTagLayout().getLayout()
+							.getTagPose(i)
+							.map(Pose3d::toPose2d)
+							.orElse(new Pose2d()));
+		}
+	}
+
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
 		this.gyroIO = gyroIO;
@@ -164,6 +180,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					DriveConstants.TrainConstants.odometryStateStdDevs.get(i, 0),
 					2));
 		}
+		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
+			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose2d.kZero, Double.POSITIVE_INFINITY, -1.0));
+		}
+		for (AITargets target : AITargets.values()) {
+			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose2d.kZero, Double.POSITIVE_INFINITY, -1.0));
+		}
+
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
 		AutoBuilder.configure(this::getPose, this::resetPose,
@@ -234,10 +257,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		try {
 			if (poseBuffer.getInternalBuffer().lastKey()
 					- poseBufferSizeSeconds > observation.timestamp()) {
-				
-						System.out.println("OUTSIDE BUFFER");
-						System.out.println("CURRENT TIME DELTA:" + String.valueOf(poseBuffer.getInternalBuffer().lastKey() - observation.timestamp()));
-						return;
+
+				System.out.println("OUTSIDE BUFFER");
+				System.out.println("CURRENT TIME DELTA:"
+						+ String.valueOf(poseBuffer.getInternalBuffer().lastKey() - observation.timestamp()));
+				return;
 			}
 		} catch (NoSuchElementException ex) {
 			System.err.println("NO ELEMENT!");
@@ -245,7 +269,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
-		Logger.recordOutput("Vision/Southmoon0/timeDelta", poseBuffer.getInternalBuffer().lastKey() - observation.timestamp());
+		Logger.recordOutput("Vision/Southmoon0/timeDelta",
+				poseBuffer.getInternalBuffer().lastKey() - observation.timestamp());
 		if (sample.isEmpty()) {
 			// exit if not there
 			return;
@@ -289,7 +314,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		estimatedPose = estimateAtTime.plus(scaledTransform)
 				.plus(sampleToOdometryTransform);
 	}
-
 
 	public void addVelocityData(Twist2d robotVelocity) {
 		this.robotVelocity = robotVelocity;
@@ -361,6 +385,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	ModuleLimits currentModuleLimits = DriveConstants.moduleLimitsLow; // implement limiting based off what you
 	// need
+
 	@Override
 	public Twist2d getFieldVelocity() {
 		Translation2d linearFieldVelocity = new Translation2d(robotVelocity.dx,
@@ -368,6 +393,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		return new Twist2d(linearFieldVelocity.getX(), linearFieldVelocity.getY(),
 				robotVelocity.dtheta);
 	}
+
 	/**
 	 * Get the current pose of the robot with front being whatever front has been
 	 * set to
@@ -524,10 +550,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		if (DriveConstants.swerveModuleType == SwerveModuleType.SHIFTING_THIFTYSWERVE) {
 			if (modules[0].inLowGear()) {
 				// set max speed / acceleration for low gear
-				//currentModuleLimits = currentModuleLimits;
+				// currentModuleLimits = currentModuleLimits;
 				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
 				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
-				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration, TuningConstants.isTuningDrivetrain);
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration,
+						TuningConstants.isTuningDrivetrain);
 				// don't change our rotational accel
 				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.maxTranslationalAcceleration.get(),
@@ -537,7 +564,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				currentModuleLimits = DriveConstants.moduleLimitsHigh;
 				DriveConstants.kMaxTurningSpeedRadPerSec = currentModuleLimits.maxSteeringVelocity;
 				DriveConstants.kMaxSpeedMetersPerSecond = currentModuleLimits.maxDriveVelocity;
-				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration, TuningConstants.isTuningDrivetrain);
+				DriveConstants.maxTranslationalAcceleration.initDefault(currentModuleLimits.maxDriveAcceleration,
+						TuningConstants.isTuningDrivetrain);
 				// don't change our rotational accel
 				DriveConstants.pathConstraints = new PathConstraints(DriveConstants.kMaxSpeedMetersPerSecond,
 						DriveConstants.maxTranslationalAcceleration.get(),
@@ -575,14 +603,29 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		SwerveModuleState[] measuredStates = getModuleStates();
 		Logger.recordOutput("Drive/SwerveStates/Measured",
-		measuredStates);
+				measuredStates);
 
-		/*Logger.recordOutput("Drive/DesiredSpeeds", desiredSpeeds);
-		Logger.recordOutput("Drive/SetpointSpeeds",
-				currentSetpoint.chassisSpeeds());
-		Logger.recordOutput("Drive/DriveMode", currentDriveMode);
-		collisionDetected = collisionDetected();*/
+		/*
+		 * Logger.recordOutput("Drive/DesiredSpeeds", desiredSpeeds);
+		 * Logger.recordOutput("Drive/SetpointSpeeds",
+		 * currentSetpoint.chassisSpeeds());
+		 * Logger.recordOutput("Drive/DriveMode", currentDriveMode);
+		 * collisionDetected = collisionDetected();
+		 */
 		DrivetrainS.super.periodic();
+		// DEBUG log vision stuff
+		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
+			String name = entry.getKey();
+			TxTyPoseRecord record = entry.getValue();
+			double age = Timer.getFPGATimestamp() - record.timestamp;
+			boolean isStale = age > txTyObservationStaleSecs;
+			Logger.recordOutput("Vision/" + name + "/Age", age);
+			Logger.recordOutput("Vision/" + name + "/IsStale", isStale);
+			if (!isStale) {
+				Logger.recordOutput("Vision/" + name + "/Pose", record.pose);
+				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
+			}
+		}
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
@@ -745,9 +788,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		return modules[0].getCurrent() + modules[1].getCurrent()
 				+ modules[2].getCurrent() + modules[3].getCurrent();
 	}
+
 	public double getAvgCurrent() {
 		return Math.abs(getCurrent() / 4.0);
 	}
+
 	@Override
 	public SystemStatus getTrueSystemStatus() {
 		return getSystemStatus();
@@ -978,6 +1023,96 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		addVisionObservation(new VisionObservation(pose, timestamp, estStdDevs));
 	}
 
+	@Override
+	public void addTxTyObservation(TxTyObservation observation) {
+		// Skip if current data for tag is newer
+		if (txTyPoses.containsKey(observation.observationName())
+				&& txTyPoses.get(observation.observationName()).timestamp() >= observation.timestamp()) {
+			return;
+		}
+
+		// Get rotation at timestamp
+		var sample = poseBuffer.getSample(observation.timestamp());
+		if (sample.isEmpty()) {
+			// exit if not there
+			return;
+		}
+		Rotation2d robotRotation = estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
+
+		// Average tx's and ty's
+		double tx = 0.0;
+		double ty = 0.0;
+		for (int i = 0; i < 4; i++) {
+			tx += observation.tx()[i];
+			ty += observation.ty()[i];
+		}
+		tx /= 4.0;
+		ty /= 4.0;
+
+		Pose3d cameraPose = VisionConstants.cameras[observation.camIndex()].getPose().get();
+		double distance = observation.distance();
+
+		if (observation.observationName().startsWith("A")) {
+			// Use 3D distance and tag angles to find robot pose
+			Translation2d camToTargetPos = new Pose3d(Translation3d.kZero, new Rotation3d(0, ty, -tx))
+					.transformBy(
+							new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
+					.getTranslation()
+					.rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
+					.toTranslation2d();
+			Rotation2d camToTargetRotation = robotRotation.plus(
+					cameraPose.toPose2d().getRotation().plus(camToTargetPos.getAngle()));
+			int apriltag = Integer.parseInt(observation.observationName().substring(1));
+			var tagPose2d = tagPoses2d.get(apriltag);
+			if (tagPose2d == null)
+				return;
+			Translation2d fieldToCameraTranslation = new Pose2d(tagPose2d.getTranslation(),
+					camToTargetRotation.plus(Rotation2d.kPi))
+					.transformBy(GeomUtil.toTransform2d(camToTargetPos.getNorm(), 0.0))
+					.getTranslation();
+			Pose2d robotPose = new Pose2d(
+					fieldToCameraTranslation, robotRotation.plus(cameraPose.toPose2d().getRotation()))
+					.transformBy(new Transform2d(cameraPose.toPose2d(), Pose2d.kZero));
+			// Use gyro angle at time for robot rotation
+			robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
+
+			// Add transform to current odometry based pose for latency correction
+			txTyPoses.put(
+					"A" + apriltag,
+					new TxTyPoseRecord(robotPose, camToTargetPos.getNorm(), observation.timestamp()));
+		} else {			
+			txTyPoses.put(
+					observation.observationName(),
+					new TxTyPoseRecord(observation.objectPose.get(),
+							distance,
+							observation.timestamp()));
+		}
+
+	}
+
+	public Optional<Pose2d> getTxTyPose(String tagId) {
+		if (!txTyPoses.containsKey(tagId)) {
+			return Optional.empty();
+		}
+		var data = txTyPoses.get(tagId);
+		// Check if stale
+		if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs) {
+			return Optional.empty();
+		}
+		// Get odometry based pose at timestamp
+		var sample = poseBuffer.getSample(data.timestamp());
+		// Latency compensate
+		return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
+	}
+
+	public Optional<Pose2d> getTxTyPose(int apriltag) {
+		return getTxTyPose("A" + apriltag);
+	}
+
+	public Optional<Pose2d> getTxTyPose(AITargets target) {
+		return getTxTyPose(target.name());
+	}
+
 	/**
 	 * Get the current pose of the robot with front being the GEOMETRY front
 	 * 
@@ -1005,16 +1140,19 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public void setDriveCurrentLimit(int amps) {
 		Arrays.stream(modules).forEach(module -> module.setCurrentLimit(amps));
 	}
+
 	public void setCurrentModuleLimits(ModuleLimits currentModuleLimits) {
 		this.currentModuleLimits = currentModuleLimits;
 	}
+
 	@Override
 	public void setCurrentLimit(int amps) {
 		setDriveCurrentLimit(amps);
 	}
+
 	@Override
-	public void changeDeadband(double deadbandAmps){
-		for (Module module : modules){
+	public void changeDeadband(double deadbandAmps) {
+		for (Module module : modules) {
 			module.changeDeadband(deadbandAmps);
 		}
 	}

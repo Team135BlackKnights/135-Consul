@@ -24,7 +24,7 @@ import frc.robot.utils.vision.VisionConstants.AITargets;
 import java.util.List;
 import java.util.ArrayList;
 import edu.wpi.first.math.Pair;
-
+@SuppressWarnings("unused")
 public class BotAborter extends Command {
 	final DrivetrainS drive;
 	private Pose2d currentPose, previousOpposingBotPose = null;
@@ -98,13 +98,13 @@ public class BotAborter extends Command {
 				if (object.confidence < .4) {
 					continue;
 				}
-				if (object.classID == AITargets.kGamePiece.getValue()) {
+				if (object.classID == AITargets.BLUE_BOT.ordinal()) {
 					gamePieceTx = -object.tx;
 					gamePieceTy = object.ty;
 					gamePieceTv = true;
 				} else {
 					gamePieceTv = false;
-					if (object.classID == AITargets.kRobot.getValue()) {
+					if (object.classID == AITargets.RED_BOT.ordinal()) {
 						robotTx = -object.tx;
 						robotTy = object.ty;
 						robotTv = true;
@@ -114,7 +114,7 @@ public class BotAborter extends Command {
 				}
 			}
 		}
-		Pose3d estimatedgamePiecePose3d = GeomUtil.calculateFieldRelativePose3d(
+		/*Pose3d estimatedgamePiecePose3d = GeomUtil.calculateFieldRelativePose3d(
 				currentPose, gamePieceTx, gamePieceTy,
 				Units.inchesToMeters(
 						VisionConstants.limelightLensHeightoffFloorInches),
@@ -170,7 +170,7 @@ public class BotAborter extends Command {
 				}
 			}
 			previousOpposingBotPose = estimatedOpposingBotPose3d.toPose2d();
-		}
+		}*/
 	}
 
 	@Override

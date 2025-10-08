@@ -77,7 +77,7 @@ public class VisionIOSouthmoon implements VisionIO {
                 PubSubOption.keepDuplicates(true),
                 PubSubOption.sendAll(true),
                 PubSubOption.pollStorage(5),
-                PubSubOption.periodic(0.01));
+                PubSubOption.periodic(0.01667));
     objDetectObservationSubscriber =
         outputTable
             .getDoubleArrayTopic("objdetect_observations")
@@ -86,7 +86,7 @@ public class VisionIOSouthmoon implements VisionIO {
                 PubSubOption.keepDuplicates(true),
                 PubSubOption.sendAll(true),
                 PubSubOption.pollStorage(5),
-                PubSubOption.periodic(0.01));
+                PubSubOption.periodic(0.01667));
     fpsAprilTagsSubscriber = outputTable.getIntegerTopic("fps_apriltags").subscribe(0);
     fpsObjDetectSubscriber = outputTable.getIntegerTopic("fps_objdetect").subscribe(0);
 

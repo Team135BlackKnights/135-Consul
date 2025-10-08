@@ -38,7 +38,6 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AprilTagLayoutType;
@@ -820,7 +819,7 @@ public class RobotContainer {
 	public interface CommandFactory {
 		Command generate();
 	}
-  public AprilTagLayoutType getSelectedAprilTagLayout() {
+  public static AprilTagLayoutType getSelectedAprilTagLayout() {
       return AprilTagLayoutType.OFFICIAL;
   }
 	/**

@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.SubsystemChecker.SystemStatus;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyObservation;
 import frc.robot.utils.drive.Position;
 import frc.robot.utils.maths.TimeUtil;
 
@@ -60,7 +61,15 @@ public interface DrivetrainS extends Subsystem {
 	 */
 	void newVisionMeasurement(Pose2d pose, double timestamp,
 			Matrix<N3, N1> estStdDevs);
-
+    /**
+	 * ADD, but do nothing with, a tx/ty measurement to the drivetrain
+	 * @param tx        the x angle to the target
+	 * @param ty        the y angle to the target
+	 * @param timestamp the timestamp of the measurement
+	 */
+	default void addTxTyObservation(TxTyObservation observation) {
+		// Do nothing by default
+	}
 	/**
 	 * @return the pose of the robot
 	 */

@@ -28,17 +28,9 @@ public class VisionConstants {
 	public static final FieldType fieldType = FieldType.ANDYMARK;
 
 	public enum AITargets {
-		kGamePiece(0.0), kRobot(1.0);
+		//Make SURE these are in ORDER of the actual classID.
+		BLUE_BOT,RED_BOT
 
-		private final double value;
-
-		AITargets(double value) {
-			this.value = value;
-		}
-
-		public double getValue() {
-			return value;
-		}
 	}
 
 	// Command specific constants // Aim To Pose
@@ -55,7 +47,7 @@ public class VisionConstants {
 	public static final boolean debug = true;
 
 	public static final double ambiguityThreshold = 0.3;
-	public static final double objDetectConfidenceThreshold = .3;
+	public static final double objDetectConfidenceThreshold = .4;
 	public static final double maxZError = 0.75;
 	public static final double maxYawError = 5.0;
 	public static final double linearStdDevBaseline = 0.005;

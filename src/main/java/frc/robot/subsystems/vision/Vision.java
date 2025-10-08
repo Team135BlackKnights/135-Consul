@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -21,19 +22,16 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants;
-import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyObservation;
 import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
@@ -57,9 +55,6 @@ public class Vision extends SubsystemChecker {
 	private boolean staleReading = false;
 	private Pose2d lastOdomPose = new Pose2d(0, 0, new Rotation2d(0));
 
-	private final Map<Integer, Double> lastFrameTimes = new HashMap<>();
-	private final Map<Integer, Double> lastTagDetectionTimes = new HashMap<>();
-
 	private final double disconnectedTimeout = 0.5;
 	private final Timer[] disconnectedTimers;
 	private final Alert[] disconnectedAlerts;
@@ -81,7 +76,6 @@ public class Vision extends SubsystemChecker {
 		for (int i = 0; i < io.length; i++) {
 			inputs[i] = new VisionIOInputsAutoLogged();
 			disconnectedAlerts[i] = new Alert("", Alert.AlertType.kError);
-			lastFrameTimes.put(i, 0.0);
 			disconnectedTimers[i] = new Timer();
 			disconnectedTimers[i].start();
 
@@ -155,15 +149,18 @@ public class Vision extends SubsystemChecker {
 		}
 
 		// Process camera data based on type
+		Map<String, TxTyObservation> allTxTyObservations = new HashMap<>();
+
 		for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
 			if (cameraTypes[cameraIndex] == CameraType.PHOTONVISION) {
 				processPhotonVisionCamera(cameraIndex, allTagPoses, allRobotPoses,
 						allRobotPosesAccepted, allRobotPosesRejected);
 			} else {
-				processSouthmoonCamera(cameraIndex, allTagPoses, allRobotPoses,
-						allRobotPosesAccepted, allRobotPosesRejected);
+				allTxTyObservations = processSouthmoonCamera(cameraIndex, allTagPoses, allRobotPoses,
+						allRobotPosesAccepted, allRobotPosesRejected, allTxTyObservations);
 			}
 		}
+		allTxTyObservations.values().stream().forEach((obs) -> RobotContainer.drivetrainS.addTxTyObservation(obs));
 
 		lastOdomPose = currentOdomPose;
 
@@ -196,7 +193,6 @@ public class Vision extends SubsystemChecker {
 			var tagPose = aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId);
 			if (tagPose.isPresent()) {
 				tagPoses.add(tagPose.get());
-				lastTagDetectionTimes.put(tagId, Timer.getFPGATimestamp());
 			}
 			averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId];
 		}
@@ -252,16 +248,15 @@ public class Vision extends SubsystemChecker {
 		allRobotPosesRejected.addAll(robotPosesRejected);
 	}
 
-	private void processSouthmoonCamera(
+	private Map<String, TxTyObservation> processSouthmoonCamera(
 			int cameraIndex,
 			List<Pose3d> allTagPoses,
 			List<Pose3d> allRobotPoses,
 			List<Pose3d> allRobotPosesAccepted,
-			List<Pose3d> allRobotPosesRejected) {
+			List<Pose3d> allRobotPosesRejected, Map<String, TxTyObservation> allTxTyObservations) {
 
 		// === APRILTAG POSE DETECTION ===
 		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_april.length; frameIndex++) {
-			lastFrameTimes.put(cameraIndex, Timer.getFPGATimestamp());
 			double timestamp = inputs[cameraIndex].timestamps_april[frameIndex];
 			double[] values = inputs[cameraIndex].frames_april[frameIndex];
 
@@ -334,7 +329,6 @@ public class Vision extends SubsystemChecker {
 			List<Pose3d> tagPoses = new ArrayList<>();
 			for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
 				int tagId = (int) values[i];
-				lastTagDetectionTimes.put(tagId, Timer.getFPGATimestamp());
 				aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
 			}
 			if (tagPoses.isEmpty())
@@ -363,20 +357,53 @@ public class Vision extends SubsystemChecker {
 			allTagPoses.addAll(tagPoses);
 
 			// Logging
-			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/stdDev", xyStdDev);
-			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/thetaStdDev", thetaStdDev);
-			Logger.recordOutput("Vision/" + inputs[cameraIndex].name+"/time", timestamp);
-			Logger.recordOutput("Vision/"+inputs[cameraIndex].name+"/avgDistance", avgDistance);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/stdDev", xyStdDev);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/thetaStdDev", thetaStdDev);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/time", timestamp);
+			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/avgDistance", avgDistance);
 			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/RobotPose", robotPose);
 			Logger.recordOutput("Vision/" + inputs[cameraIndex].name + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
 		}
+		// === APRILTAG TX/TY DETECTION ===
+		Map<String, TxTyObservation> txTyObservations = new HashMap<>();
+		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_april.length; frameIndex++) {
+			var timestamp = inputs[cameraIndex].timestamps_april[frameIndex];
+			var values = inputs[cameraIndex].frames_april[frameIndex];
+			int tagEstimationDataEndIndex = switch ((int) values[0]) {
+				default -> 0;
+				case 1 -> 8;
+				case 2 -> 16;
+			};
 
+			for (int index = tagEstimationDataEndIndex + 1; index < values.length; index += 10) {
+				double[] tx = new double[4];
+				double[] ty = new double[4];
+				for (int i = 0; i < 4; i++) {
+					tx[i] = values[index + 1 + (2 * i)];
+					ty[i] = values[index + 1 + (2 * i) + 1];
+				}
+				int tagId = (int) values[index];
+				double distance = values[index + 9];
+
+				txTyObservations.put(
+						"A"+String.valueOf(tagId), new TxTyObservation("A"+String.valueOf(tagId), cameraIndex, tx,
+								ty, distance, timestamp, Optional.empty()));
+			}
+		}
+
+		// Save tx ty observation data
+		for (var observation : txTyObservations.values()) {
+			if (!allTxTyObservations.containsKey(observation.observationName())
+					|| observation.distance() < allTxTyObservations.get(observation.observationName()).distance()) {
+				allTxTyObservations.put(observation.observationName(), observation);
+			}
+		}
 		// === OBJECT DETECTION ===
+
 		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_obj.length; frameIndex++) {
 			double timestamp = inputs[cameraIndex].timestamps_obj[frameIndex];
 			double[] frame = inputs[cameraIndex].frames_obj[frameIndex];
-
-			for (int i = 0; i < frame.length; i += 10) {
+			for (int i = 0; i < frame.length; i += 27) { //because of a limitation, there will only ever be one :) -G
 				int classId = (int) frame[i];
 				double confidence = frame[i + 1];
 
@@ -389,13 +416,53 @@ public class Vision extends SubsystemChecker {
 					tx[z] = frame[i + 2 + (2 * z)];
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
-				// TODO use usz
+				// Two poses (single tag, ambiguous)
+				double error0 = frame[10+1];
+				double error1 = frame[10+9];
+				Pose3d cameraPose0 = new Pose3d(
+					frame[10+2], frame[10+3], frame[10+4],
+						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[10+5], frame[10+6], frame[10+7],
+						frame[10+8])));
+				Pose3d cameraPose1 = new Pose3d(
+					frame[10+10], frame[10+11], frame[10+12],
+						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[10+13], frame[10+14],
+						frame[10+15], frame[10+16])));
+				// cameraPose0 = camera pose relative to bumper (camera->bumper)
+				// We want: bumper pose in field frame
+				Transform2d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d());
+				Pose2d objectPose0 = RobotContainer.drivetrainS.getPose()
+					.plus(robotToCamera)
+					.plus(GeomUtil.poseToTransform(cameraPose0.toPose2d()).inverse());
+				Pose2d objectPose1 = RobotContainer.drivetrainS.getPose()
+				.plus(robotToCamera)
+				.plus(GeomUtil.poseToTransform(cameraPose1.toPose2d()).inverse());
 
-				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/tx", tx);
-				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/ty", ty);
-				Logger.recordOutput("Vision/Southmoon" + cameraIndex + "/DetectedObj" + classId + "/conf", confidence);
+				// Select disambiguated pose
+				Pose3d cameraPose = null;
+				Pose2d objectPose = null;
+				if (error0 < error1){
+					cameraPose = cameraPose0;
+					objectPose = objectPose0;
+				}else{
+					cameraPose = cameraPose1;
+					objectPose = objectPose1;
+				}
+				
+			
+				if (objectPose!=null){
+					System.out.println("Object Detected: " + AITargets.values()[classId].name() + " at " + objectPose.toString());
+					allTxTyObservations.put(
+						AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
+								ty, objectPose.getTranslation().getDistance(cameraPose.toPose2d().getTranslation()) , timestamp,Optional.of(objectPose)));
+				}else{
+					System.out.println("No object.." + error0 + " vs " + error1);
+				}
+				
+
+
 			}
 		}
+		return allTxTyObservations;
 	}
 
 	/**
@@ -427,73 +494,6 @@ public class Vision extends SubsystemChecker {
 						VisionConstants.FieldConstants.aprilTagOffsets[tag] - .002);
 			}
 		}
-	}
-
-	static int counter = 0;
-	static double lastTx = 0, lastTy = 0;
-	static boolean noteDetected = false;
-
-	public static Translation2d updateNotePose() {
-		double gamePieceTx = 0, gamePieceTy = 0;
-		Pose2d currentPose = RobotContainer.drivetrainS.getPose();
-		if (Constants.currentMode == Mode.SIM) {
-			// In simulation, get the current pose, and set the degree value to
-			Translation2d targetPieceLocation = RobotContainer.fieldSimulation
-					.getClosestGamePieceOnGround().getPose3d().toPose2d()
-					.getTranslation();
-			Logger.recordOutput("ClosestGamePiece", targetPieceLocation);
-			double deltaX = targetPieceLocation.getX() - currentPose.getX();
-			double deltaY = targetPieceLocation.getY() - currentPose.getY();
-			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan
-			gamePieceTx -= currentPose.getRotation().getDegrees();
-			gamePieceTx = GeomUtil.closerAngleToZero(Rotation2d.fromDegrees(gamePieceTx));
-			double d = currentPose.getTranslation()
-					.getDistance(targetPieceLocation);
-			double tyRad = Math.PI
-					- Units.degreesToRadians(
-							VisionConstants.limeLightAngleOffsetDegrees)
-					- (Math.PI * 0.5D - Math.atan(d / Units.inchesToMeters(
-							VisionConstants.limelightLensHeightoffFloorInches)));
-			gamePieceTy = Units.radiansToDegrees(tyRad);
-			noteDetected = true;
-		} else {
-			// THESE ARE IN D E G R E E S
-			LimelightHelpers.LimelightTarget_Detector[] results = LimelightHelpers
-					.getLatestResults(
-							VisionConstants.limelightName).targetingResults.targets_Detector;
-			System.out.println(results);
-			for (LimelightHelpers.LimelightTarget_Detector object : results) {
-				if (object.confidence < .4) {
-					continue;
-				}
-				if (object.classID == AITargets.kGamePiece.getValue()) {
-					gamePieceTx = -object.tx;
-					gamePieceTy = object.ty;
-					noteDetected = true;
-					Logger.recordOutput("Vision/NoteDetected", true);
-				} else {
-					noteDetected = false;
-					Logger.recordOutput("Vision/NoteDetected", false);
-				}
-			}
-		}
-		if (gamePieceTx == lastTx && gamePieceTy == lastTy) {
-			counter++;
-		} else {
-			counter = 0;
-		}
-		if (counter > 10) { // prevent flickering of note detection
-			noteDetected = false;
-		}
-		if (noteDetected)
-			return GeomUtil
-					.calculateFieldRelativePose3d(currentPose, gamePieceTx, gamePieceTy,
-							Units.inchesToMeters(
-									VisionConstants.limelightLensHeightoffFloorInches),
-							Units.inchesToMeters(2),
-							VisionConstants.limeLightAngleOffsetDegrees)
-					.getTranslation().toTranslation2d();
-		return null;
 	}
 
 	/**
@@ -550,19 +550,6 @@ public class Vision extends SubsystemChecker {
 	}
 
 	/**
-	 * Calculate the distance from the photon vision camera to the target
-	 * 
-	 * @param cam the camera index, as defined in RobotContainer.java
-	 */
-	public double calculateDistanceFromCam(int cam) {
-		if (inputs[cam].targetObservations.length == 0) {
-			return 0;
-		}
-		double ty = inputs[cam].targetObservations[0].ty().getDegrees();
-		return calculateDistanceFromtY(ty);
-	}
-
-	/**
 	 * Get the latest target observation from the photon vision camera
 	 * 
 	 * @param cam the camera index, as defined in RobotContainer.java
@@ -589,29 +576,6 @@ public class Vision extends SubsystemChecker {
 			observations[cam.ordinal()] = getLatestTargetObservation(cam);
 		}
 		return observations;
-	}
-
-	/**
-	 * Computes the distance in inches from the limelight network table entry
-	 * 
-	 * @param tY the tY measurement from the limelight network table entry (pitch
-	 *           degrees)
-	 * @return distance in inches
-	 */
-	public static double calculateDistanceFromtY(double tY) {
-		// Calculate the angle using trigonometry
-		// how many degrees back is your limelight rotated from perfectly vertical?
-		double limelightMountAngleDegrees = VisionConstants.limeLightAngleOffsetDegrees;
-		// distance from the center of the Limelight lens to the floor
-		double limelightLensHeightInches = VisionConstants.limelightLensHeightoffFloorInches;
-		// distance from the target to the floor
-		double goalHeightInches = 0; // if multiple targets, make this an argument
-		double angleToGoalDegrees = limelightMountAngleDegrees + tY;
-		// calculate distance
-		double distance = (goalHeightInches - limelightLensHeightInches)
-				/ Math.tan(Units.degreesToRadians(angleToGoalDegrees));
-		return Math.abs(distance); // incase somehow the angle became pos when the object is below the target, and
-									// vice versa.
 	}
 
 	/**
