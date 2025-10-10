@@ -18,7 +18,6 @@ import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -34,7 +33,6 @@ import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator;
 import frc.robot.subsystems.drive.FastSwerve.Setpoints.SwerveSetpointGenerator.SwerveSetpoint;
-import frc.robot.subsystems.vision.Vision;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
@@ -132,10 +130,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public record TxTyObservation(
-			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp, Optional<Pose2d> objectPose) {
+			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp, Optional<Pose3d> objectPose) {
 	}
 
-	public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {
+	public record TxTyPoseRecord(Pose3d pose, double distance, double timestamp) {
 	}
 
 	private final Map<String, TxTyPoseRecord> txTyPoses = new HashMap<>();
@@ -181,10 +179,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					2));
 		}
 		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose2d.kZero, Double.POSITIVE_INFINITY, -1.0));
+			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
 		}
 		for (AITargets target : AITargets.values()) {
-			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose2d.kZero, Double.POSITIVE_INFINITY, -1.0));
+			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
 		}
 
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
@@ -269,8 +267,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
-		Logger.recordOutput("Vision/Southmoon0/timeDelta",
-				poseBuffer.getInternalBuffer().lastKey() - observation.timestamp());
 		if (sample.isEmpty()) {
 			// exit if not there
 			return;
@@ -626,6 +622,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
 			}
 		}
+		Logger.recordOutput("RobotState/AheadPose",getEstimatedPose().exp(getChassisSpeeds().toTwist2d(.05)));
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
@@ -1079,7 +1076,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// Add transform to current odometry based pose for latency correction
 			txTyPoses.put(
 					"A" + apriltag,
-					new TxTyPoseRecord(robotPose, camToTargetPos.getNorm(), observation.timestamp()));
+					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp()));
 		} else {			
 			txTyPoses.put(
 					observation.observationName(),
@@ -1090,7 +1087,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	}
 
-	public Optional<Pose2d> getTxTyPose(String tagId) {
+	public Optional<Pose3d> getTxTyPose(String tagId) {
 		if (!txTyPoses.containsKey(tagId)) {
 			return Optional.empty();
 		}
@@ -1102,14 +1099,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(data.timestamp());
 		// Latency compensate
-		return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
+		return sample.map(pose2d -> data.pose().plus(new Transform3d(new Pose3d(pose2d), new Pose3d(odometryPose))));
 	}
 
-	public Optional<Pose2d> getTxTyPose(int apriltag) {
+	public Optional<Pose3d> getTxTyPose(int apriltag) {
 		return getTxTyPose("A" + apriltag);
 	}
 
-	public Optional<Pose2d> getTxTyPose(AITargets target) {
+	public Optional<Pose3d> getTxTyPose(AITargets target) {
 		return getTxTyPose(target.name());
 	}
 

@@ -25,12 +25,12 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
   /**
    * Creates a new VisionIOPhotonVisionSim.
    *
-   * @param name The name of the camera.
+   * @param name         The name of the camera.
    * @param poseSupplier Supplier for the robot pose to use in simulation.
    */
   public VisionIOPhotonVisionSim(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,
       String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier) {
-    super(aprilTagLayoutSupplier,name, robotToCamera);
+    super(aprilTagLayoutSupplier, name, robotToCamera);
     this.cameraName = name;
     this.poseSupplier = poseSupplier;
 
@@ -41,10 +41,18 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     }
     // Add sim camera
     var cameraProperties = new SimCameraProperties();
-    cameraProperties.setAvgLatencyMs(15);
-    cameraProperties.setFPS(50);
-    cameraProperties.setCalibError(.61, .1);
-    cameraProperties.setCalibration(800, 600, MatBuilder.fill(Nat.N3(), Nat.N3(), 451.5581214725775,0.0,405.274839970422,0.0,453.4013764542542,339.3210175619262,0.0,0.0,1.0), VecBuilder.fill(0.04572077478465107,-0.07645251582223457,0.011983192982840202,-0.0011585844737787593,0.0031396106128620486,-5.013737433037841E-4,-0.0034827234187051357,-0.007343273311848231));
+    cameraProperties.setAvgLatencyMs(50);
+    cameraProperties.setLatencyStdDevMs(5);
+    cameraProperties.setFPS(60);
+    cameraProperties.setCalibError(.35, .1);
+    cameraProperties.setCalibration(1600, 1304,
+    MatBuilder.fill(Nat.N3(), Nat.N3(),
+        1320.0, 0.0, 800.0,
+        0.0, 1076.0, 652.0,
+        0.0, 0.0, 1.0),
+    VecBuilder.fill(
+        -0.28, 0.11, 0.002, -0.001,
+        0.0, -0.25, 0.1, 0.0)); // mild wide-angle distortion
     cameraSim = new PhotonCameraSim(camera, cameraProperties);
     visionSim.addCamera(cameraSim, robotToCamera);
   }
@@ -53,7 +61,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
   public void updateInputs(VisionIOInputs inputs) {
     long timestamp = System.currentTimeMillis();
     visionSim.update(poseSupplier.get());
-    Logger.recordOutput("Vision/"+cameraName+"SimMS",  System.currentTimeMillis() - timestamp);
+    Logger.recordOutput("Vision/" + cameraName + "SimMS", System.currentTimeMillis() - timestamp);
     super.updateInputs(inputs); // Act as real camera.
 
   }

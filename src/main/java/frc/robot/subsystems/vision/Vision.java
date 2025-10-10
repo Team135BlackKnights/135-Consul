@@ -95,6 +95,9 @@ public class Vision extends SubsystemChecker {
 
 			io[i].updateInputs(inputs[i]);
 			Logger.processInputs("Vision/Camera" + inputs[i].name, inputs[i]);
+			//turn this on for debugging camera positions
+			Logger.recordOutput("Vision/"+inputs[i].name+"/CamPose", new Pose3d(RobotContainer.drivetrainS.getPose())
+			.plus(GeomUtil.poseToTransform(VisionConstants.cameras[i].getPose().get())));
 
 		}
 
@@ -194,7 +197,7 @@ public class Vision extends SubsystemChecker {
 			if (tagPose.isPresent()) {
 				tagPoses.add(tagPose.get());
 			}
-			averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId];
+			averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId-1];
 		}
 		if (inputs[cameraIndex].tagIds.length > 0) {
 			averageTrust /= inputs[cameraIndex].tagIds.length;
@@ -429,17 +432,17 @@ public class Vision extends SubsystemChecker {
 						frame[10+15], frame[10+16])));
 				// cameraPose0 = camera pose relative to bumper (camera->bumper)
 				// We want: bumper pose in field frame
-				Transform2d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d());
-				Pose2d objectPose0 = RobotContainer.drivetrainS.getPose()
+				Transform3d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get());
+				Pose3d objectPose0 = new Pose3d(RobotContainer.drivetrainS.getPose())
 					.plus(robotToCamera)
-					.plus(GeomUtil.poseToTransform(cameraPose0.toPose2d()).inverse());
-				Pose2d objectPose1 = RobotContainer.drivetrainS.getPose()
+					.plus(GeomUtil.poseToTransform(cameraPose0).inverse());
+				Pose3d objectPose1 = new Pose3d(RobotContainer.drivetrainS.getPose())
 				.plus(robotToCamera)
-				.plus(GeomUtil.poseToTransform(cameraPose1.toPose2d()).inverse());
+				.plus(GeomUtil.poseToTransform(cameraPose1).inverse());
 
 				// Select disambiguated pose
 				Pose3d cameraPose = null;
-				Pose2d objectPose = null;
+				Pose3d objectPose = null;
 				if (error0 < error1){
 					cameraPose = cameraPose0;
 					objectPose = objectPose0;
@@ -453,7 +456,7 @@ public class Vision extends SubsystemChecker {
 					System.out.println("Object Detected: " + AITargets.values()[classId].name() + " at " + objectPose.toString());
 					allTxTyObservations.put(
 						AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
-								ty, objectPose.getTranslation().getDistance(cameraPose.toPose2d().getTranslation()) , timestamp,Optional.of(objectPose)));
+								ty, objectPose.getTranslation().getDistance(cameraPose.getTranslation()) , timestamp,Optional.of(objectPose)));
 				}else{
 					System.out.println("No object.." + error0 + " vs " + error1);
 				}
@@ -487,11 +490,11 @@ public class Vision extends SubsystemChecker {
 	private void updateTagTrust(int[] tagIds, boolean rejected) {
 		for (int tag : tagIds) {
 			if (rejected) {
-				VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.min(10,
-						VisionConstants.FieldConstants.aprilTagOffsets[tag] + .002);
+				VisionConstants.FieldConstants.aprilTagOffsets[tag-1] = Math.min(10,
+						VisionConstants.FieldConstants.aprilTagOffsets[tag-1] + .002);
 			} else {
-				VisionConstants.FieldConstants.aprilTagOffsets[tag] = Math.max(1,
-						VisionConstants.FieldConstants.aprilTagOffsets[tag] - .002);
+				VisionConstants.FieldConstants.aprilTagOffsets[tag-1] = Math.max(1,
+						VisionConstants.FieldConstants.aprilTagOffsets[tag-1] - .002);
 			}
 		}
 	}

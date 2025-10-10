@@ -29,7 +29,7 @@ public class VisionIOPhotonVision implements VisionIO {
    */
   public VisionIOPhotonVision(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
-    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(),PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,robotToCamera);
+    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(),PoseStrategy.CLOSEST_TO_CAMERA_HEIGHT,robotToCamera);
     photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_CAMERA_HEIGHT);
   }
 

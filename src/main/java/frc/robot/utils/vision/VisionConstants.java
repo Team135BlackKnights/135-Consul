@@ -41,7 +41,7 @@ public class VisionConstants {
 	public static class FieldConstants {
 		public static final double kFieldBorderMargin = 0.5;
 		public static final double kFieldTagMinTrust = .8;
-		public static double[] aprilTagOffsets = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+		public static double[] aprilTagOffsets = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 	}
 
 	public static final boolean debug = true;
@@ -78,13 +78,13 @@ public class VisionConstants {
 			CameraConfig.builder()
 					.pose(
 							() -> new Pose3d(
-									Units.inchesToMeters(12.626),
-									Units.inchesToMeters(11.001),
-									Units.inchesToMeters(8.364),
+									Units.inchesToMeters(11.791),
+									Units.inchesToMeters(-10.041),
+									Units.inchesToMeters(7.967),
 									new Rotation3d(
 											Math.toRadians(0.0),
-											Math.toRadians(-28.125),
-											Math.toRadians(33.2))))
+											Math.toRadians(-25),
+											Math.toRadians(-45))))
 					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_001")
 					.width(1600)
 					.height(1304)
@@ -99,14 +99,35 @@ public class VisionConstants {
 			CameraConfig.builder()
 					.pose(
 							() -> new Pose3d(
-									Units.inchesToMeters(12.626),
-									Units.inchesToMeters(-11.001),
-									Units.inchesToMeters(8.364),
+								Units.inchesToMeters(11.791),
+								Units.inchesToMeters(10.041),
+								Units.inchesToMeters(7.967),
+								new Rotation3d(
+										Math.toRadians(0.0),
+										Math.toRadians(-25),
+										Math.toRadians(45))))
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_002")
+					.width(1600)
+					.height(1304)
+					.exposure(180)
+					.saturation(50)
+					.hue(0)
+					.whiteBalance(2800)
+					.autoWhiteBalance(0)
+					.autoExposure(0)
+					.gain(0)
+					.build(),
+					CameraConfig.builder()
+					.pose(
+							() -> new Pose3d(
+									Units.inchesToMeters(-11.791),
+									Units.inchesToMeters(-10.041),
+									Units.inchesToMeters(7.967),
 									new Rotation3d(
 											Math.toRadians(0.0),
-											Math.toRadians(-28.125),
-											Math.toRadians(-56.8))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_002")
+											Math.toRadians(-25),
+											Math.toRadians(-135))))
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_003")
 					.width(1600)
 					.height(1304)
 					.exposure(180)
@@ -120,35 +141,24 @@ public class VisionConstants {
 			CameraConfig.builder()
 					.pose(
 							() -> new Pose3d(
-									Units.inchesToMeters(-12.626),
-									Units.inchesToMeters(11.001),
-									Units.inchesToMeters(8.364),
-									new Rotation3d(
-											Math.toRadians(0.0),
-											Math.toRadians(-28.125),
-											Math.toRadians(123.2))))
-					.id("BL_Camera")
-					.width(1280)
-					.height(960)
-					.exposure(3000)
-					.gain(10.0)
+								Units.inchesToMeters(-11.791),
+								Units.inchesToMeters(10.041),
+								Units.inchesToMeters(7.967),
+								new Rotation3d(
+										Math.toRadians(0.0),
+										Math.toRadians(-25),
+										Math.toRadians(135))))
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_004")
+					.width(1600)
+					.height(1304)
+					.exposure(180)
+					.saturation(50)
+					.hue(0)
+					.whiteBalance(2800)
+					.autoWhiteBalance(0)
+					.autoExposure(0)
+					.gain(0)
 					.build(),
-			CameraConfig.builder()
-					.pose(
-							() -> new Pose3d(
-									Units.inchesToMeters(-12.626),
-									Units.inchesToMeters(-11.001),
-									Units.inchesToMeters(8.364),
-									new Rotation3d(
-											Math.toRadians(0.0),
-											Math.toRadians(-28.125),
-											Math.toRadians(-146.8))))
-					.id("BR_Camera")
-					.width(1280)
-					.height(960)
-					.exposure(3000)
-					.gain(10.0)
-					.build()
 	};
 
 	@Builder

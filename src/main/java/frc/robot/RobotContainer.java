@@ -38,6 +38,7 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AprilTagLayoutType;
@@ -447,13 +448,26 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
-				visionS = new Vision(() ->getSelectedAprilTagLayout(), 
-				new VisionIOPhotonVision(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[0].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get())),
-						new VisionIOPhotonVision(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[1].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[1].getPose().get())),
-						new VisionIOPhotonVision(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[2].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get())),
-						new VisionIOPhotonVision(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[3].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()))
-				);
-				
+				visionS = new Vision(() -> getSelectedAprilTagLayout(),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",
+								VisionConstants.cameras[0]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
+								VisionConstants.cameras[1]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",
+								VisionConstants.cameras[2]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",
+								VisionConstants.cameras[3]));
+				/**
+				 * visionS = new Vision(() -> getSelectedAprilTagLayout(),
+								new VisionIOPhotonVision(() -> getSelectedAprilTagLayout(), VisionConstants.cameras[0].getId(),
+										GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get())),
+								new VisionIOPhotonVision(() -> getSelectedAprilTagLayout(), VisionConstants.cameras[1].getId(),
+										GeomUtil.poseToTransform3d(VisionConstants.cameras[1].getPose().get())),
+								new VisionIOPhotonVision(() -> getSelectedAprilTagLayout(), VisionConstants.cameras[2].getId(),
+										GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get())),
+								new VisionIOPhotonVision(() -> getSelectedAprilTagLayout(), VisionConstants.cameras[3].getId(),
+										GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get())));
+				 */
 				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
@@ -546,16 +560,15 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-				visionS = new Vision(() ->getSelectedAprilTagLayout(),
-				new VisionIOSouthmoon(() ->getSelectedAprilTagLayout(), "FrontCam", VisionConstants.cameras[0]),
-				new VisionIOSouthmoon(() ->getSelectedAprilTagLayout(), "BackCam", VisionConstants.cameras[1])
-				);
-				/*visionS = new Vision(() ->getSelectedAprilTagLayout(), 
-				new VisionIOPhotonVisionSim(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[0].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[1].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[1].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[2].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
-						new VisionIOPhotonVisionSim(() ->getSelectedAprilTagLayout(),VisionConstants.cameras[3].getId(), GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d())
-				);*/
+				visionS = new Vision(() -> getSelectedAprilTagLayout(),
+						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(),"FrontRightCam",
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[1].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackRightCam",
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
+						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackLeftCam",
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()), () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
 				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
@@ -577,14 +590,13 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
-				
-				visionS = new Vision(() -> getSelectedAprilTagLayout(),new VisionIO() {
+
+				visionS = new Vision(() -> getSelectedAprilTagLayout(), new VisionIO() {
 				}, new VisionIO() {
 				},
 						new VisionIO() {
 						}, new VisionIO() {
-						}
-						); // MUST be same number of cameras as in real robot	
+						}); // MUST be same number of cameras as in real robot
 		}
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
@@ -595,17 +607,20 @@ public class RobotContainer {
 		// superStructureNotifier.startPeriodic(.01);
 		// Add all the auto commands to the auto builder
 
-		// Make sure to watch your flipped poses. Our custom DriveToPose and all of those do NOT auto flip for red. 
-		autoCommands.addAll(Arrays.asList( 
-			new Pair<String, CommandPair>("RT",  //Example Drive to the right top face of the coral station
-					new CommandPair((Supplier<Command>)() -> PathFinder.goToPose(FieldConstants.CoralStation.blueRightTopFace, ()->DriveConstants.pathConstraints, drivetrainS, false, 0,.5),Set.of(drivetrainS)))
-		));
+		// Make sure to watch your flipped poses. Our custom DriveToPose and all of
+		// those do NOT auto flip for red.
+		autoCommands.addAll(Arrays.asList(
+				new Pair<String, CommandPair>("RT", // Example Drive to the right top face of the coral station
+						new CommandPair(
+								(Supplier<Command>) () -> PathFinder.goToPose(
+										FieldConstants.CoralStation.blueRightTopFace,
+										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5),
+								Set.of(drivetrainS)))));
 		precalculateAllStartAndEndChoreos();
 
 		for (Pair<String, CommandPair> autoCommand : autoCommands) {
 			PosePlotterUtil.addCommandPair(autoCommand.getFirst(), autoCommand.getSecond());
 		}
-
 
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
@@ -638,7 +653,8 @@ public class RobotContainer {
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
 		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
-		autoChooser.addDefaultOption("DynamicPathing", Commands.defer(() ->PosePlotterUtil.getAuto(),Set.of(drivetrainS)));
+		autoChooser.addDefaultOption("DynamicPathing",
+				Commands.defer(() -> PosePlotterUtil.getAuto(), Set.of(drivetrainS)));
 		if (drivetrainS instanceof Swerve) {
 			Command orientBeforeData = ((Swerve) drivetrainS).orientModules(Swerve.getCircleOrientations());
 			autoChooser.addOption("Wheel Radius Characterization",
@@ -730,7 +746,9 @@ public class RobotContainer {
 				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
 		aButtonDrive.whileTrue(
-				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS, (Supplier<Pose2d>)() -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace,false)),Set.of(drivetrainS) ));
+				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS,
+						(Supplier<Pose2d>) () -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace, false)),
+						Set.of(drivetrainS)));
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
@@ -819,9 +837,11 @@ public class RobotContainer {
 	public interface CommandFactory {
 		Command generate();
 	}
-  public static AprilTagLayoutType getSelectedAprilTagLayout() {
-      return AprilTagLayoutType.OFFICIAL;
-  }
+
+	public static AprilTagLayoutType getSelectedAprilTagLayout() {
+		return AprilTagLayoutType.OFFICIAL;
+	}
+
 	/**
 	 * Use this to pass the autonomous command to the main {@link Robot} class.
 	 *
