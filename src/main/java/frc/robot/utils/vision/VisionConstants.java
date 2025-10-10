@@ -80,7 +80,7 @@ public class VisionConstants {
 							() -> new Pose3d(
 									Units.inchesToMeters(11.791),
 									Units.inchesToMeters(-10.041),
-									Units.inchesToMeters(7.967),
+									Units.inchesToMeters(7.967-.037),
 									new Rotation3d(
 											Math.toRadians(0.0),
 											Math.toRadians(-25),
@@ -101,7 +101,7 @@ public class VisionConstants {
 							() -> new Pose3d(
 								Units.inchesToMeters(11.791),
 								Units.inchesToMeters(10.041),
-								Units.inchesToMeters(7.967),
+								Units.inchesToMeters(7.967-.037),
 								new Rotation3d(
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
@@ -122,7 +122,7 @@ public class VisionConstants {
 							() -> new Pose3d(
 									Units.inchesToMeters(-11.791),
 									Units.inchesToMeters(-10.041),
-									Units.inchesToMeters(7.967),
+									Units.inchesToMeters(7.967-.037),
 									new Rotation3d(
 											Math.toRadians(0.0),
 											Math.toRadians(-25),
@@ -143,7 +143,7 @@ public class VisionConstants {
 							() -> new Pose3d(
 								Units.inchesToMeters(-11.791),
 								Units.inchesToMeters(10.041),
-								Units.inchesToMeters(7.967),
+								Units.inchesToMeters(7.967-.037),
 								new Rotation3d(
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
