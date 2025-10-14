@@ -561,6 +561,15 @@ public class RobotContainer {
 						break;
 				}
 				visionS = new Vision(() -> getSelectedAprilTagLayout(),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",
+								VisionConstants.cameras[0]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
+								VisionConstants.cameras[1]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",
+								VisionConstants.cameras[2]),
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",
+								VisionConstants.cameras[3]));
+				/*visionS = new Vision(() -> getSelectedAprilTagLayout(),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(),"FrontRightCam",
 								GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
@@ -568,7 +577,7 @@ public class RobotContainer {
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackRightCam",
 								GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackLeftCam",
-								GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()), () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()), () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));*/
 				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
