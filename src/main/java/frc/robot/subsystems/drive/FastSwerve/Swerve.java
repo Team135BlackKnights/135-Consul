@@ -374,8 +374,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
 	public Pose2d getEstimatedPose() {
-		return estimatedPose.plus(new Transform2d(new Translation2d(),
-				DriveConstants.TrainConstants.robotOffsetAngleDirection));
+		return estimatedPose;
+		/*return estimatedPose.plus(new Transform2d(new Translation2d(),
+				DriveConstants.TrainConstants.robotOffsetAngleDirection));*/
 	}
 
 	@Override
@@ -392,11 +393,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
 		gyroIO.updateInputs(gyroInputs);
-		gyroInputs.yawPosition = gyroInputs.yawPosition
-				.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
-		for (Rotation2d value : gyroInputs.odometryYawPositions) {
-			value.plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
-		}
 		Logger.processInputs("Drive/Gyro", gyroInputs);
 		// Read inputs from modules
 		Arrays.stream(modules).forEach(Module::updateInputs);
