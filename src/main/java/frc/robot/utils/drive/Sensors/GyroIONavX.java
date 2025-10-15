@@ -46,13 +46,13 @@ public class GyroIONavX implements GyroIO {
 	@Override
 	public void updateInputs(GyroIOInputs inputs) {
 		inputs.connected = navX.isConnected();
-		current_angle_position = navX.getAngle();
+		current_angle_position = navX.getAngle() + DriveConstants.TrainConstants.robotOffsetAngleDirection.getDegrees();
 		inputs.yawPosition = Rotation2d.fromDegrees(current_angle_position);
 		inputs.yawVelocityRadPerSec = Units.degreesToRadians(
 				(current_angle_position - last_angle_position) / 200);
 		last_angle_position = current_angle_position;
 		inputs.odometryYawPositions = yawPositionQueue.stream()
-				.map((Double value) -> Rotation2d.fromDegrees(value))
+				.map((Double value) -> Rotation2d.fromDegrees(value).plus(DriveConstants.TrainConstants.robotOffsetAngleDirection))
 				.toArray(Rotation2d[]::new);
 		yawPositionQueue.clear();
 		double curr_world_linear_accel_x = navX.getWorldLinearAccelX();
