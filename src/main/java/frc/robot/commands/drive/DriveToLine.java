@@ -130,7 +130,7 @@ public class DriveToLine extends Command {
     @Override
     public void execute() {
         RobotContainer.currentPath = "DRIVE_TO_LINE";
-        var currentPose = drive.getPose().getTranslation();
+        var currentPose = drive.getEstimatedPose().getTranslation();
         var start = pointA.get();
         var end = pointB.get();
         thetaControllerCommand.execute();
@@ -165,7 +165,7 @@ public class DriveToLine extends Command {
             RobotContainer.withinLineTolerance = false;
             drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
                     driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
-                    drive.getPose().getRotation()));
+                    drive.getEstimatedPose().getRotation()));
 
         } else {
             if (timeoutTimer.isRunning()){
