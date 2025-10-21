@@ -398,7 +398,10 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	public Pose2d getPose() {
 		return estimatedPose;
 	}
-
+	@Override
+	public Pose2d getEstimatedPose() {
+		return estimatedPose.exp(getChassisSpeeds().toTwist2d(.05));
+	}
 	/** Resets the current odometry pose. */
 	@Override
 	public void resetPose(Pose2d pose) {

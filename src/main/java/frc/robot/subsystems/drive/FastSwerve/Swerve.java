@@ -58,6 +58,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			"Drive/CoastWaitTimeSeconds", 0.5, TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
 			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain); 
+	private static final LoggableTunedNumber lookAheadTime = new LoggableTunedNumber(
+			"Drive/LookAhead", 0.05, TuningConstants.isTuningDrivetrain);
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
 		TELEOP,
@@ -374,7 +376,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
 	public Pose2d getEstimatedPose() {
-		return estimatedPose;
+		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
 		/*return estimatedPose.plus(new Transform2d(new Translation2d(),
 				DriveConstants.TrainConstants.robotOffsetAngleDirection));*/
 	}

@@ -36,11 +36,11 @@ public class DriveAndAimAtPose extends Command {
 	private final LoggableTunedNumber 
 	driveKp = new LoggableTunedNumber("AimToPose/driveKp", 5, TuningConstants.isTuningMacros), 
 	driveKd = new LoggableTunedNumber("AimToPose/driveKd", 3, TuningConstants.isTuningMacros), 
-	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", 1, TuningConstants.isTuningMacros), 
+	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", .015, TuningConstants.isTuningMacros), 
 	maxThetaSpeed = new LoggableTunedNumber("AimToPose/maxThetaSpeed", Math.PI*2, TuningConstants.isTuningMacros), 
 	thetaKp = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
 	thetaKd = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
-	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(3), TuningConstants.isTuningMacros), 
+	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(1), TuningConstants.isTuningMacros), 
 	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 5, TuningConstants.isTuningMacros), 
 	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", 2, TuningConstants.isTuningMacros); 
 	
@@ -89,7 +89,7 @@ public class DriveAndAimAtPose extends Command {
 
 	@Override
 	public void execute() {
-		var currentPose = drive.getPose();
+		var currentPose = drive.getEstimatedPose();
 		var targetPose = poseSupplier.get();
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			driveController.setP(driveKp.get());
