@@ -36,11 +36,11 @@ public class DriveAndAimAtPose extends Command {
 	private final LoggableTunedNumber 
 	driveKp = new LoggableTunedNumber("AimToPose/driveKp", 5, TuningConstants.isTuningMacros), 
 	driveKd = new LoggableTunedNumber("AimToPose/driveKd", 3, TuningConstants.isTuningMacros), 
-	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", 1, TuningConstants.isTuningMacros), 
+	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", .015, TuningConstants.isTuningMacros), 
 	maxThetaSpeed = new LoggableTunedNumber("AimToPose/maxThetaSpeed", Math.PI*2, TuningConstants.isTuningMacros), 
 	thetaKp = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
 	thetaKd = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
-	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(3), TuningConstants.isTuningMacros), 
+	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(1), TuningConstants.isTuningMacros), 
 	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 5, TuningConstants.isTuningMacros), 
 	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", 2, TuningConstants.isTuningMacros); 
 	
@@ -68,7 +68,7 @@ public class DriveAndAimAtPose extends Command {
 
 	@Override
 	public void initialize() {
-		var currentPose = drive.getPose();
+		var currentPose = drive.getEstimatedPose();
 		driveController.reset(
 				currentPose.getTranslation().getDistance(poseSupplier.get()),
 				Math.min( //get our CURRENT speed, and rotate it by our actual position.
@@ -76,10 +76,10 @@ public class DriveAndAimAtPose extends Command {
 						-new Translation2d(drive.getFieldVelocity().dx,
 								drive.getFieldVelocity().dy)
 										.rotateBy(poseSupplier.get()
-												.minus(drive.getPose().getTranslation())
+												.minus(drive.getEstimatedPose().getTranslation())
 												.getAngle().unaryMinus())
 										.getX()));
-		lastSetpointTranslation = drive.getPose().getTranslation();
+		lastSetpointTranslation = drive.getEstimatedPose().getTranslation();
 		thetaController.reset(currentPose.getRotation().getRadians(),
 				drive.getRotation2d().getRadians());
 		if (overrideUserControl)
@@ -89,7 +89,7 @@ public class DriveAndAimAtPose extends Command {
 
 	@Override
 	public void execute() {
-		var currentPose = drive.getPose();
+		var currentPose = drive.getEstimatedPose();
 		var targetPose = poseSupplier.get();
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			driveController.setP(driveKp.get());

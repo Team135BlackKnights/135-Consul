@@ -70,11 +70,12 @@ public class GyroIOPigeon2 implements GyroIO {
 	public void updateInputs(GyroIOInputs inputs) {
 		inputs.connected = BaseStatusSignal
 				.refreshAll(yaw, yawVelocity, accelX, accelY, accelZ).isOK();
-		inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
+		inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble()).plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
 		inputs.yawVelocityRadPerSec = Units
 				.degreesToRadians(yawVelocity.getValueAsDouble());
 		inputs.odometryYawPositions = yawPositionQueue.stream()
-				.map(Rotation2d::fromDegrees).toArray(Rotation2d[]::new);
+		.map((Double value) -> Rotation2d.fromDegrees(value).plus(DriveConstants.TrainConstants.robotOffsetAngleDirection))
+		.toArray(Rotation2d[]::new);
 		yawPositionQueue.clear();
 		double curr_world_linear_accel_x = accelX.getValueAsDouble();
 		double currentJerkX = curr_world_linear_accel_x
