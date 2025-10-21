@@ -74,7 +74,10 @@ public interface DrivetrainS extends Subsystem {
 	 * @return the pose of the robot
 	 */
 	Pose2d getPose();
-
+	/**
+	 * @return the estimated pose of the robot (with vision/lookahead corrections)
+	 */
+	Pose2d getEstimatedPose();
 	/**
 	 * @apiNote This method is used to get the pose of the robot in the simulation
 	 *          for SWERVE ONLY.
