@@ -168,7 +168,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configure(this::getPose, this::resetPose,
+		AutoBuilder.configure(this::getEstimatedPose, this::resetPose,
 				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,

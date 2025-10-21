@@ -68,7 +68,7 @@ public class DriveAndAimAtPose extends Command {
 
 	@Override
 	public void initialize() {
-		var currentPose = drive.getPose();
+		var currentPose = drive.getEstimatedPose();
 		driveController.reset(
 				currentPose.getTranslation().getDistance(poseSupplier.get()),
 				Math.min( //get our CURRENT speed, and rotate it by our actual position.
@@ -76,10 +76,10 @@ public class DriveAndAimAtPose extends Command {
 						-new Translation2d(drive.getFieldVelocity().dx,
 								drive.getFieldVelocity().dy)
 										.rotateBy(poseSupplier.get()
-												.minus(drive.getPose().getTranslation())
+												.minus(drive.getEstimatedPose().getTranslation())
 												.getAngle().unaryMinus())
 										.getX()));
-		lastSetpointTranslation = drive.getPose().getTranslation();
+		lastSetpointTranslation = drive.getEstimatedPose().getTranslation();
 		thetaController.reset(currentPose.getRotation().getRadians(),
 				drive.getRotation2d().getRadians());
 		if (overrideUserControl)

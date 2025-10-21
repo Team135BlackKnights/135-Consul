@@ -98,7 +98,7 @@ public class PathFinder {
 					return AutoBuilder
 					.pathfindToPose(new Pose2d(goalPoint.get(), rotationGoal.get()), constraints.get(), 0);
 				}, Set.of(drive))
-				.until(() -> RobotContainer.drivetrainS.getPose().getTranslation()
+				.until(() -> RobotContainer.drivetrainS.getEstimatedPose().getTranslation()
 						.getDistance(goalPoint.get()) < outerTolerance)
 				.andThen(new DriveToLine(drive, pointA, pointB, innerTolerance, humanPlayerWaitTime, rotationGoal,() ->""))
 				.finallyDo(() -> {
