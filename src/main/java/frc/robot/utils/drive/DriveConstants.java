@@ -210,7 +210,7 @@ public class DriveConstants {
 
 		// Mecanum exclusive, shows the initial offset of the wheel
 		public static final double mecanumInitialAngleOffsetDegrees = 135, odomHz =250;
-		public static final Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(0); // 90 degrees makes robot
+		public static final Rotation2d robotOffsetAngleDirection = Rotation2d.fromDegrees(-90); // 90 degrees makes robot
 																								// front = facing left,
 																								// 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(

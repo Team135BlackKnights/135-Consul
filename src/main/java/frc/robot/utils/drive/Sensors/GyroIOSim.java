@@ -24,9 +24,13 @@ public class GyroIOSim implements GyroIO {
 	@Override
 	public void updateInputs(GyroIOInputs inputs) {
 		inputs.connected = true;
-		inputs.odometryYawPositions = gyroSimulation.getCachedGyroReadings();
+		Rotation2d[] odometryYawPositions = gyroSimulation.getCachedGyroReadings();
+		for (int i = 0; i < odometryYawPositions.length; i++) {
+			odometryYawPositions[i] = odometryYawPositions[i].plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
+		}
+		inputs.odometryYawPositions = odometryYawPositions;
 		inputs.odometryYawTimestamps = OdometryTimeStampsSim.getTimeStamps();
-		inputs.yawPosition = gyroSimulation.getGyroReading();
+		inputs.yawPosition = gyroSimulation.getGyroReading().plus(DriveConstants.TrainConstants.robotOffsetAngleDirection);
 		inputs.yawVelocityRadPerSec = gyroSimulation
 				.getMeasuredAngularVelocityRadPerSec();
 		double currentGForce = gyroPhysicsSimulationResults.gForce;
@@ -46,6 +50,12 @@ public class GyroIOSim implements GyroIO {
 				inputs.yawPosition.getDegrees());
 		Logger.recordOutput("Drive/Gyro/angular velocity (Deg per Sec)",
 				Math.toDegrees(previousAngularVelocityRadPerSec));
+	}
+	@Override
+	public void reset() {
+		previousAngularVelocityRadPerSec = 0.0;
+		currentGyroDriftAmount = new Rotation2d();
+		gyroSimulation.reset();
 	}
 	public static class GyroPhysicsSimulationResults {
 		public double robotAngularVelocityRadPerSec, gForce;
