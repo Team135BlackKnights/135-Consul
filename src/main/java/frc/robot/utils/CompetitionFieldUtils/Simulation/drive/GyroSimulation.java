@@ -216,7 +216,12 @@ public class GyroSimulation {
 
     return Rotation2d.fromDegrees(driftingInThisPeriod);
   }
-
+  public void reset() {
+    this.gyroReading = new Rotation2d();
+    this.previousAngularVelocityRadPerSec = this.measuredAngularVelocityRadPerSec = 0;
+    this.cachedRotations.clear();
+    
+  }
   /**
    *
    *
