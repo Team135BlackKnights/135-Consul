@@ -90,7 +90,7 @@ public class DrivetrainC extends Command {
 			// Convert ChassisSpeeds into the ChassisSpeeds type
 			if (DriveConstants.fieldOriented) {
 				if (RobotContainer.withinLineTolerance) {
-					if (RobotContainer.drivetrainS.getPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
+					if (RobotContainer.drivetrainS.getEstimatedPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
 						if (Robot.isRed) {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
