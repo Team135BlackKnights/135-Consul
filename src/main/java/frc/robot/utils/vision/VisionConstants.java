@@ -25,7 +25,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 
 public class VisionConstants {
-	public static final FieldType fieldType = FieldType.ANDYMARK;
+	public static final FieldType fieldType = FieldType.CUSTOM;
 
 	public enum AITargets {
 		//Make SURE these are in ORDER of the actual classID.
@@ -85,13 +85,14 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-25),
 											Math.toRadians(-45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_001")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
+					.location("0x01210000 / 3") 
 					.width(1600)
 					.height(1304)
-					.exposure(180)
+					.exposure(70)
 					.saturation(50)
 					.hue(0)
-					.whiteBalance(2800)
+					.whiteBalance(4000)
 					.autoWhiteBalance(0)
 					.autoExposure(0)
 					.gain(0)
@@ -106,13 +107,14 @@ public class VisionConstants {
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
 										Math.toRadians(45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_002")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
+					.location("0x01230000 / 4")
 					.width(1600)
 					.height(1304)
-					.exposure(180)
+					.exposure(70)
 					.saturation(50)
 					.hue(0)
-					.whiteBalance(2800)
+					.whiteBalance(4000)
 					.autoWhiteBalance(0)
 					.autoExposure(0)
 					.gain(0)
@@ -127,13 +129,14 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-25),
 											Math.toRadians(-135))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_003")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_004")
+					.location("0x02211000 / 5")
 					.width(1600)
 					.height(1304)
-					.exposure(180)
+					.exposure(70)
 					.saturation(50)
 					.hue(0)
-					.whiteBalance(2800)
+					.whiteBalance(4000)
 					.autoWhiteBalance(0)
 					.autoExposure(0)
 					.gain(0)
@@ -148,13 +151,14 @@ public class VisionConstants {
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
 										Math.toRadians(135))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_004")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_003")
+					.location("0x02213000 / 6")
 					.width(1600)
 					.height(1304)
-					.exposure(180)
+					.exposure(70)
 					.saturation(50)
 					.hue(0)
-					.whiteBalance(2800)
+					.whiteBalance(4000)
 					.autoWhiteBalance(0)
 					.autoExposure(0)
 					.gain(0)
@@ -168,6 +172,7 @@ public class VisionConstants {
 	public static class CameraConfig {
 		private Supplier<Pose3d> pose;
 		private String id;
+		private String location;
 		private int width;
 		private int height;
 		private int autoExposure;
@@ -190,6 +195,7 @@ public static final double aprilTagWidth = Units.inchesToMeters(6.50);
     BLUE_REEF("2025-blue-reef"),
     RED_REEF("2025-red-reef"),
     NONE("2025-none");
+
 
     AprilTagLayoutType(String name) {
       if (Constants.currentMode == Mode.SIM) {
@@ -234,7 +240,8 @@ public static final double aprilTagWidth = Units.inchesToMeters(6.50);
   @RequiredArgsConstructor
   public enum FieldType {
     ANDYMARK("andymark"),
-    WELDED("welded");
+    WELDED("welded"),
+	CUSTOM("offseason");
 
     @Getter private final String jsonFolder;
   }

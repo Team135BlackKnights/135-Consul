@@ -48,6 +48,7 @@ public class VisionIOSouthmoon implements VisionIO {
 
     // Publish camera configuration
     configTable.getStringTopic("camera_id").publish().set(cameraConfig.getId());
+    configTable.getStringTopic("camera_location").publish().set(cameraConfig.getLocation());
     configTable.getIntegerTopic("camera_resolution_width").publish().set(cameraConfig.getWidth());
     configTable.getIntegerTopic("camera_resolution_height").publish().set(cameraConfig.getHeight());
     configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraConfig.getAutoExposure());

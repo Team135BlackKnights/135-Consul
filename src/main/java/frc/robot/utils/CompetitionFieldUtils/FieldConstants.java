@@ -32,9 +32,9 @@ public class FieldConstants {
 	// id 1 is topmost leftmost. goes in order down, right.
 	public static final double COEFFICIENT_OF_GRAVITY = 9.81;
 	public static final Pose2d START_POSE_LEFT = new Pose2d(7.02, FIELD_HEIGHT-2.5,
-			new Rotation2d(-2*Math.PI / 3));
+			new Rotation2d(0));
 	public static final Pose2d START_POSE_RIGHT = new Pose2d(7.02, 2.5,
-			new Rotation2d(Math.PI / 3));
+			new Rotation2d(0));
 	public static final Translation3d BLUE_SCORING_LOCATION_REEFSCAPE_CORAL = new Translation3d(0.225,
 			5.55, 2.1);
 	public static final Translation3d RED_SCORING_LOCATION_REEFSCAPE_CORAL = new Translation3d(16.317,

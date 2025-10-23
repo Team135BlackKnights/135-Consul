@@ -66,7 +66,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
 			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain); 
 	private static final LoggableTunedNumber lookAheadTime = new LoggableTunedNumber(
-			"Drive/LookAhead", 0.05, TuningConstants.isTuningDrivetrain);
+			"Drive/LookAhead", 0.04, TuningConstants.isTuningDrivetrain);
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
 		TELEOP,
