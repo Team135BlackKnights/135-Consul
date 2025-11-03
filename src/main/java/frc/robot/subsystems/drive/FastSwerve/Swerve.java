@@ -163,6 +163,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 							.map(Pose3d::toPose2d)
 							.orElse(new Pose2d()));
 		}
+		tagPoses2d.put(42, new Pose2d());
 	}
 
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
@@ -182,6 +183,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
 			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
 		}
+		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
 		for (AITargets target : AITargets.values()) {
 			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
 		}

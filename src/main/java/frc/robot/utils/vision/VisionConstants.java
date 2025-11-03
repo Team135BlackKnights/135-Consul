@@ -74,6 +74,14 @@ public class VisionConstants {
 	public static final double maxStaleReadingYMeters = Units.inchesToMeters(4);
 	public static final double maxStaleReadingRotation = Units.degreesToRadians(2);
 
+	/**
+              "location_id" : "0x01240000 / 4",
+              "location_id" : "0x01220000 / 3",
+			                    "location_id" : "0x02211000 / 5",
+
+                  "location_id" : "0x02213000 / 6",
+
+	 */
 	public static final CameraConfig[] cameras = new CameraConfig[] {
 			CameraConfig.builder()
 					.pose(
@@ -85,11 +93,11 @@ public class VisionConstants {
 											Math.toRadians(0.0),
 											Math.toRadians(-25),
 											Math.toRadians(-45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
-					.location("0x01210000 / 3") 
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
+					.location("0x01240000 / 4") 
 					.width(1600)
 					.height(1304)
-					.exposure(70)
+					.exposure(16)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -107,11 +115,11 @@ public class VisionConstants {
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
 										Math.toRadians(45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
-					.location("0x01230000 / 4")
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
+					.location("0x01220000 / 3")
 					.width(1600)
 					.height(1304)
-					.exposure(70)
+					.exposure(16)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -133,7 +141,7 @@ public class VisionConstants {
 					.location("0x02211000 / 5")
 					.width(1600)
 					.height(1304)
-					.exposure(70)
+					.exposure(16)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -155,7 +163,7 @@ public class VisionConstants {
 					.location("0x02213000 / 6")
 					.width(1600)
 					.height(1304)
-					.exposure(70)
+					.exposure(16)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)

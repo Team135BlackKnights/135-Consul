@@ -325,14 +325,18 @@ public class Vision extends SubsystemChecker {
 					|| robotPose.getX() > aprilTagLayoutSupplier.get().getLayout().getFieldLength()
 					|| robotPose.getY() < 0
 					|| robotPose.getY() > aprilTagLayoutSupplier.get().getLayout().getFieldWidth()) {
-				continue;
+				//continue;
 			}
 
 			// Collect tag poses
 			List<Pose3d> tagPoses = new ArrayList<>();
 			for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
 				int tagId = (int) values[i];
-				aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
+				if (tagId == 42){
+					tagPoses.add(new Pose3d()); //assume 0
+				}else{
+					aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
+				}
 			}
 			if (tagPoses.isEmpty())
 				continue;

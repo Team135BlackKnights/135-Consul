@@ -1,5 +1,24 @@
 {
-  "tags": [],
+  "tags": [
+    {
+      "ID": 42,
+      "pose": {
+        "translation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "quaternion": {
+            "W": 0,
+            "X": 0,
+            "Y": 0,
+            "Z": 0
+          }
+        }
+      }
+    }
+  ],
   "field": {
     "length": 17.548,
     "width": 8.042
