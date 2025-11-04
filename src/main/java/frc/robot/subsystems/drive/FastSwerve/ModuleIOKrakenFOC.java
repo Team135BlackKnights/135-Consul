@@ -166,6 +166,8 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		driveTalonConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 		driveTalonConfig.CurrentLimits.SupplyCurrentLimitEnable = false;
 		driveTalonConfig.ClosedLoopRamps.TorqueClosedLoopRampPeriod = 0.02;
+		driveTalonConfig.Audio.AllowMusicDurDisable = true;
+
 		driveTalonConfig.MotorOutput.Inverted = isDriveMotorInverted
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
@@ -191,6 +193,7 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				/ DriveConstants.overallTurningMotorConstantContainer.getKa();
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kV = .12 * DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kA = DriveConstants.overallTurningMotorConstantContainer.getKa();
+		turnTalonConfig.Audio.AllowMusicDurDisable = true;
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
 			boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,

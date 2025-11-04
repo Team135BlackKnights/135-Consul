@@ -162,6 +162,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				? InvertedValue.Clockwise_Positive
 				: InvertedValue.CounterClockwise_Positive;
 		driveTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+		driveTalonConfig.Audio.AllowMusicDurDisable = true;
 		turnTalonConfig.TorqueCurrent.PeakForwardTorqueCurrent = DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.TorqueCurrent.PeakReverseTorqueCurrent = -DriveConstants.kMaxTurnCurrent;
 		turnTalonConfig.MotorOutput.Inverted = isTurnMotorInverted
@@ -178,6 +179,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kV = DriveConstants.overallTurningMotorConstantContainer.getKv()
 				* DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kA = DriveConstants.overallTurningMotorConstantContainer.getKa();
+		turnTalonConfig.Audio.AllowMusicDurDisable = true;
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
 			boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,
