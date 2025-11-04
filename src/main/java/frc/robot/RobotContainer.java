@@ -8,6 +8,7 @@ import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
+import frc.robot.commands.drive.vision.AimToAprilTagTx;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
@@ -37,8 +38,6 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModul
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AprilTagLayoutType;
@@ -107,6 +106,7 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Reefscape2025FieldSimulation;
 import frc.robot.utils.Touchboard.PosePlotterUtil;
+import frc.robot.utils.Touchboard.JukeboxUtil;
 import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 
 /**
@@ -148,6 +148,7 @@ public class RobotContainer {
 			leftBumperTest = new JoystickButton(driveController, 5),
 			rightBumperTest = new JoystickButton(testingController, 6),
 			selectButtonTest = new JoystickButton(testingController, 7),
+			selectButtonDrive = new JoystickButton(driveController,7),
 			selectButtonManip = new JoystickButton(manipController, 7),
 			startButtonTest = new JoystickButton(testingController, 8),
 			startButtonDrive = new JoystickButton(driveController, 8),
@@ -661,6 +662,10 @@ public class RobotContainer {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
+		JukeboxUtil jukebox = new JukeboxUtil();
+		for (ParentDevice device : getOrchestraDevices()){
+			jukebox.addTalon(device);
+		}
 		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
 		autoChooser.addDefaultOption("DynamicPathing",
 				Commands.defer(() -> PosePlotterUtil.getAuto(), Set.of(drivetrainS)));
@@ -750,7 +755,7 @@ public class RobotContainer {
 					drivetrainS.zeroHeading();
 					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
-
+		selectButtonDrive.toggleOnTrue(new AimToAprilTagTx(drivetrainS, 42,1.5));
 		startButtonDrive
 				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
@@ -810,7 +815,7 @@ public class RobotContainer {
 									65);
 							miloMad = false;
 						}), () -> !miloMad));
-
+		
 		leftStickDrive.onTrue(drivetrainS.orientModules(Swerve.getXOrientations()));
 		// rightStickDrive.whileTrue(new OrchestraC("rocky"));
 		// VisionConstants.Controls.autoIntake

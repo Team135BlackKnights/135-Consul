@@ -1,0 +1,148 @@
+package frc.robot.commands.drive.vision;
+
+import java.util.Optional;
+
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotContainer;
+import frc.robot.Constants.TuningConstants;
+import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyPoseRecord;
+import frc.robot.utils.GeomUtil;
+import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.vision.VisionConstants;
+
+public class AimToAprilTagTx extends Command {
+	private final DrivetrainS drive;
+	private final int tagId;
+	private final double desiredDistanceMeters;
+
+	private LoggableTunedNumber kPTx = new LoggableTunedNumber("AimToApriltagTx/kP", 0.5, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber kDTx = new LoggableTunedNumber("AimToApriltagTx/kD", 0.01, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber kPDistance = new LoggableTunedNumber("AimToApriltagTx/kPDistance", 0.03, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber maxSpeed = new LoggableTunedNumber("AimToApriltagTx/maxSpeedMetersPerSec", 1.5, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber maxRotation = new LoggableTunedNumber("AimToApriltagTx/MaxRotationRadPerSec", 3, TuningConstants.isTuningMacros);
+
+	// tolerances
+	private LoggableTunedNumber txTolerance = new LoggableTunedNumber("AimToApriltagTx/txToleranceRad", Units.degreesToRadians(2), TuningConstants.isTuningMacros);
+	private LoggableTunedNumber distanceTolerance = new LoggableTunedNumber("AimToApriltagTx/distanceToleranceMeters", Units.inchesToMeters(3), TuningConstants.isTuningMacros);
+	private LoggableTunedNumber staleTime = new LoggableTunedNumber("AimToApriltagTx/staleTime",.75,TuningConstants.isTuningMacros);
+	private double prevTxRadians = 0.0;
+	private double latestTxRadians = 0.0;
+	private double latestDistanceMeters = 0.0;
+	private boolean hasValidObservation = false;
+    private boolean isFinished = false;
+    private int camId = 0;
+
+	public AimToAprilTagTx(DrivetrainS drive, int tagId, double desiredDistanceMeters) {
+		this.drive = drive;
+		this.tagId = tagId;
+		this.desiredDistanceMeters = desiredDistanceMeters;
+	}
+
+	@Override
+	public void initialize() {
+		RobotContainer.currentPath = "AIMTOAPRILTAG_TX";
+		prevTxRadians = 0.0;
+        isFinished = false;
+	}
+
+	@Override
+	public void execute() {
+		hasValidObservation = false;
+		Optional<TxTyPoseRecord> apriltagTxTyData = ((Swerve) drive).getTxPoseRecord("A" + tagId);
+		if (apriltagTxTyData.isPresent()) {
+			var data = apriltagTxTyData.get();
+			if (Timer.getTimestamp() - data.timestamp() >= staleTime.get()){
+				hasValidObservation = false;
+			}else{
+				hasValidObservation = true;
+				latestTxRadians = -data.tx();
+				latestDistanceMeters = data.distance();
+				camId = data.camIndex();
+			}
+		}else{
+			hasValidObservation = false;
+		}
+
+		if (!hasValidObservation) {
+			drive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+			return;
+		}
+
+		double angularCommand = 0;
+		double forwardCommand = 0;
+
+		double dTx = latestTxRadians - prevTxRadians;
+
+		// only compute angular if outside tolerance
+		if (Math.abs(latestTxRadians) > txTolerance.get()) {
+			angularCommand = kPTx.get() * latestTxRadians + kDTx.get() * dTx;
+			angularCommand = Math.max(-maxRotation.get(), Math.min(maxRotation.get(), angularCommand));
+		}
+
+		// only compute forward if outside tolerance
+		double distanceError = latestDistanceMeters - desiredDistanceMeters;
+		if (Math.abs(distanceError) > distanceTolerance.get()) {
+			forwardCommand = kPDistance.get() * distanceError;
+			forwardCommand = Math.max(-maxSpeed.get(), Math.min(maxSpeed.get(), forwardCommand));
+		}
+
+		// Get current robot pose
+		Pose2d robotPose = drive.getPose();
+		
+		// Get camera-to-robot transform (this is the offset of camera from robot origin)
+		Transform2d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[camId].getPose().get().toPose2d());
+		
+		// Calculate camera pose in field coordinates
+		Pose2d cameraPose = robotPose.plus(robotToCamera);
+		
+		// The AprilTag is at distance `latestDistanceMeters` and angle `tx` from the camera
+		// Camera's heading + tx gives us the field-relative direction to the AprilTag
+		Rotation2d directionToTag = cameraPose.getRotation().plus(new Rotation2d(latestTxRadians));
+		
+		// The direction vector pointing from camera toward the AprilTag
+		Translation2d directionVector = new Translation2d(
+			Math.cos(directionToTag.getRadians()),
+			Math.sin(directionToTag.getRadians())
+		);
+		
+		// Scale by forwardCommand (positive means move closer, negative means move away)
+		Translation2d driveVelocity = directionVector.times(forwardCommand);
+		
+		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+				driveVelocity.getX(), 
+				driveVelocity.getY(),
+				angularCommand,
+				robotPose.getRotation()));
+
+		prevTxRadians = latestTxRadians;
+
+		Logger.recordOutput("AimToAprilTagTx/tx", latestTxRadians);
+		Logger.recordOutput("AimToAprilTagTx/distance", latestDistanceMeters);
+		Logger.recordOutput("AimToAprilTagTx/forwardCommand", forwardCommand);
+		Logger.recordOutput("AimToAprilTagTx/angularCommand", angularCommand);
+		Logger.recordOutput("AimToAprilTagTx/directionToTag", directionToTag.getDegrees());
+	}
+
+	@Override
+	public void end(boolean interrupted) {
+		drive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+		RobotContainer.currentPath = "";
+        isFinished = true;
+	}
+
+	@Override
+	public boolean isFinished() {
+		return isFinished;
+	}
+}

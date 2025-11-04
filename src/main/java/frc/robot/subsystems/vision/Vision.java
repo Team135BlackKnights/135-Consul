@@ -330,9 +330,11 @@ public class Vision extends SubsystemChecker {
 
 			// Collect tag poses
 			List<Pose3d> tagPoses = new ArrayList<>();
+			boolean containsDemo = false;
 			for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
 				int tagId = (int) values[i];
 				if (tagId == 42){
+					containsDemo = true;
 					tagPoses.add(new Pose3d()); //assume 0
 				}else{
 					aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
@@ -358,8 +360,8 @@ public class Vision extends SubsystemChecker {
 
 			// Add measurement
 			allRobotPoses.add(new Pose3d(robotPose));
-
-			addVisionMeasurement(robotPose, timestamp, VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev));
+			if (!containsDemo)
+				addVisionMeasurement(robotPose, timestamp, VecBuilder.fill(xyStdDev, xyStdDev, thetaStdDev));
 			allRobotPosesAccepted.add(new Pose3d(robotPose));
 			allTagPoses.addAll(tagPoses);
 
