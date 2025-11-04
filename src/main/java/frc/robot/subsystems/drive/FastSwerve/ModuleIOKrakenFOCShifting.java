@@ -187,6 +187,7 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 		turnTalonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 		// Conversions affect getPosition()/setPosition() and getVelocity()
 		driveTalonConfig.Feedback.SensorToMechanismRatio = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+		driveTalonConfig.Audio.AllowMusicDurDisable = true;
 		turnTalonConfig.Feedback.FeedbackRemoteSensorID = turnAbsoluteEncoder
 				.getDeviceID();
 		turnTalonConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
@@ -200,6 +201,8 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kV = DriveConstants.overallTurningMotorConstantContainer.getKv()
 				* DriveConstants.TrainConstants.kTurningMotorGearRatio;
 		turnTalonConfig.MotionMagic.MotionMagicExpo_kA = DriveConstants.overallTurningMotorConstantContainer.getKa();
+		turnTalonConfig.Audio.AllowMusicDurDisable = true;
+
 		// Apply configs
 		for (int i = 0; i < 4; i++) {
 			boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,

@@ -5,9 +5,10 @@
 package frc.robot.utils.Touchboard;
 
 
+import java.util.ArrayList;
+
 import com.ctre.phoenix6.Orchestra;
-import com.ctre.phoenix6.configs.AudioConfigs;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.ParentDevice;
 
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
@@ -20,7 +21,6 @@ public class JukeboxUtil extends SubsystemBase {
   /** Creates a new JukeboxUtil. */
 
   private Orchestra mOrchestra = new Orchestra();
-  private AudioConfigs configs = new AudioConfigs();
 
   final BooleanSubscriber newFileSubscriber;
   final BooleanPublisher newFilePublisher;
@@ -44,7 +44,7 @@ public class JukeboxUtil extends SubsystemBase {
   final BooleanPublisher nextSongPublisher;
 
   private Boolean prev = false;
-  
+  private ArrayList<ParentDevice> devices;
   final StringSubscriber currentMusicFileSubscriber;
 
   public JukeboxUtil() {
@@ -77,19 +77,22 @@ public class JukeboxUtil extends SubsystemBase {
   }
 
  
-  public void addTalon(TalonFX newMotor){
-    //Sets config and adds to orchestra
-    configs.AllowMusicDurDisable = true;
-    newMotor.getConfigurator().apply(configs);
-    mOrchestra.addInstrument(newMotor);
+  public void addTalon(ParentDevice newMotor){
+    devices.add(newMotor);
   }
-
+  private void setupOrchestra(){
+    mOrchestra.clearInstruments();
+    for (ParentDevice device : devices){
+      mOrchestra.addInstrument(device);
+    }
+  }
 
   @Override
   public void periodic() {
 
     if(newFileSubscriber.get()){
-      mOrchestra.loadMusic(currentMusicFileSubscriber.get());
+      mOrchestra.loadMusic(currentMusicFileSubscriber.get()); //blocking
+      setupOrchestra(); //doing it after load allows for proper track distribution.
       mOrchestra.play();
       musicIsFinishedPublisher.set(false);
       
