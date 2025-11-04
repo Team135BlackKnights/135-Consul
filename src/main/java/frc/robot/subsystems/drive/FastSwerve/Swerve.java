@@ -134,7 +134,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp, Optional<Pose3d> objectPose) {
 	}
 
-	public record TxTyPoseRecord(Pose3d pose, double distance, double timestamp) {
+	public record TxTyPoseRecord(Pose3d pose, double distance, double timestamp, double tx, double ty, int camIndex) {
 	}
 
 	private final Map<String, TxTyPoseRecord> txTyPoses = new HashMap<>();
@@ -181,11 +181,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					2));
 		}
 		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
+			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
 		}
-		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
+		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
 		for (AITargets target : AITargets.values()) {
-			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0));
+			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
 		}
 
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
@@ -1075,17 +1075,22 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// Add transform to current odometry based pose for latency correction
 			txTyPoses.put(
 					"A" + apriltag,
-					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp()));
+					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(),tx,ty,observation.camIndex()));
 		} else {			
 			txTyPoses.put(
 					observation.observationName(),
 					new TxTyPoseRecord(observation.objectPose.get(),
 							distance,
-							observation.timestamp()));
+							observation.timestamp(),tx,ty,observation.camIndex()));
 		}
 
 	}
-
+	public Optional<TxTyPoseRecord> getTxPoseRecord(String tagId){
+		if (!txTyPoses.containsKey(tagId)) {
+			return Optional.empty();
+		}
+		return Optional.of(txTyPoses.get(tagId));	
+	}
 	public Optional<Pose3d> getTxTyPose(String tagId) {
 		if (!txTyPoses.containsKey(tagId)) {
 			return Optional.empty();
