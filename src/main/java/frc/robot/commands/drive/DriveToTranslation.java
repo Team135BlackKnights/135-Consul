@@ -52,13 +52,13 @@ public class DriveToTranslation extends Command {
 	private boolean hasPose = false;
 	// Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(2.75, TuningConstants.isTuningMacros); // old 1
-		driveKi.initDefault(0.35, TuningConstants.isTuningMacros); // old .5
+		driveKp.initDefault(3, TuningConstants.isTuningMacros); // old 1
+		driveKi.initDefault(0, TuningConstants.isTuningMacros); // old .5
 		driveKd.initDefault(0.0, TuningConstants.isTuningMacros); // old .125
 
-		driveMaxVelocitySlow.initDefault(5.5, TuningConstants.isTuningMacros);
-		ffMinRadius.initDefault(.1, TuningConstants.isTuningMacros); // old .9
-		ffMaxRadius.initDefault(2.5, TuningConstants.isTuningMacros); // old 3
+		driveMaxVelocitySlow.initDefault(6, TuningConstants.isTuningMacros);
+		ffMinRadius.initDefault(.125, TuningConstants.isTuningMacros); // old .9
+		ffMaxRadius.initDefault(2, TuningConstants.isTuningMacros); // old 3
 	}
 
 	/**

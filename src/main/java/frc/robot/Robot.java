@@ -395,6 +395,7 @@ public class Robot extends LoggedRobot {
 			double y = DriveConstants.kBumperToBumperLength/2+(1-Double.parseDouble(auto[1])) * (FieldConstants.FIELD_HEIGHT-DriveConstants.kBumperToBumperLength);
 			double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
 			Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
+			RobotContainer.startingPoseCache = startingPose;
 			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				RobotContainer.fieldSimulation.getMainDriveSimulation()

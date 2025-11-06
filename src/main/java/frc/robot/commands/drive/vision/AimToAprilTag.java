@@ -67,7 +67,7 @@ public class AimToAprilTag extends Command {
             return GeomUtil.rotationFromCurrentToTarget(
                     drive.getPose().getTranslation(),
                     targetPose.getTranslation(),
-                    GeomUtil.ApproachDirection.RIGHT);
+                    GeomUtil.ApproachDirection.BACK_RIGHT);
         };
     }
 

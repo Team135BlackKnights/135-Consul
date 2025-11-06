@@ -41,8 +41,8 @@ public class DriveAndAimAtPose extends Command {
 	thetaKp = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
 	thetaKd = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
 	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(1), TuningConstants.isTuningMacros), 
-	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 5, TuningConstants.isTuningMacros), 
-	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", 2, TuningConstants.isTuningMacros); 
+	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 2, TuningConstants.isTuningMacros), 
+	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", .125, TuningConstants.isTuningMacros); 
 	
 	public DriveAndAimAtPose(DrivetrainS drive,
 			Supplier<Translation2d> poseSupplier, double givenMaxVelocity,
