@@ -85,7 +85,6 @@ public class Vision extends SubsystemChecker {
 
 		registerSelfCheckHardware();
 	}
-
 	@Override
 	public void periodic() {
 		long timestamp = System.currentTimeMillis();

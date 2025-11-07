@@ -450,13 +450,13 @@ public class RobotContainer {
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
 				visionS = new Vision(() -> getSelectedAprilTagLayout(),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",0,
 								VisionConstants.cameras[0]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",1,
 								VisionConstants.cameras[1]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",2,
 								VisionConstants.cameras[2]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",3,
 								VisionConstants.cameras[3]));
 				/**
 				 * visionS = new Vision(() -> getSelectedAprilTagLayout(),
@@ -562,13 +562,13 @@ public class RobotContainer {
 						break;
 				}
 				visionS = new Vision(() -> getSelectedAprilTagLayout(),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",0,
 								VisionConstants.cameras[0]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",1,
 								VisionConstants.cameras[1]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",2,
 								VisionConstants.cameras[2]),
-						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",
+						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",3,
 								VisionConstants.cameras[3]));
 				/*visionS = new Vision(() -> getSelectedAprilTagLayout(),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(),"FrontRightCam",

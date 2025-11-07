@@ -1,10 +1,15 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Supplier;
+
+import frc.robot.RobotContainer;
+import frc.robot.utils.GeomUtil;
 import frc.robot.utils.vision.VisionConstants;
 
 /**
@@ -26,7 +31,8 @@ public class VisionIOSouthmoon implements VisionIO {
   private final IntegerPublisher timestampPublisher;
   private final BooleanPublisher isRecordingPublisher;
   private final StringPublisher tagLayoutPublisher;
-
+  private final FloatArrayPublisher fieldCameraPosePublisher;
+  private final int camIndex; 
   private final Timer slowPeriodicTimer = new Timer();
 
   /**
@@ -39,6 +45,7 @@ public class VisionIOSouthmoon implements VisionIO {
   public VisionIOSouthmoon(
       Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier, 
       String id,
+      int i,
       VisionConstants.CameraConfig cameraConfig) {
     this.aprilTagLayoutSupplier = aprilTagLayoutSupplier;
     this.deviceId = id;
@@ -65,10 +72,11 @@ public class VisionIOSouthmoon implements VisionIO {
     isRecordingPublisher.set(false);
     timestampPublisher = configTable.getIntegerTopic("timestamp").publish();
     tagLayoutPublisher = configTable.getStringTopic("tag_layout").publish();
+    fieldCameraPosePublisher = configTable.getFloatArrayTopic("field_camera_pose").publish();
     eventNamePublisher = configTable.getStringTopic("event_name").publish();
     matchTypePublisher = configTable.getIntegerTopic("match_type").publish();
     matchNumberPublisher = configTable.getIntegerTopic("match_number").publish();
-
+    this.camIndex = i;
     var outputTable = northstarTable.getSubTable("output");
     observationSubscriber =
         outputTable
@@ -124,7 +132,20 @@ public class VisionIOSouthmoon implements VisionIO {
       lastAprilTagLayout = aprilTagType;
       tagLayoutPublisher.set(aprilTagType.getLayoutString());
     }
-
+    Pose3d camPose = new Pose3d(RobotContainer.drivetrainS.getPose())
+			.plus(GeomUtil.poseToTransform(VisionConstants.cameras[camIndex].getPose().get()));
+    Quaternion quar = camPose.getRotation().getQuaternion();
+    float[] nums = {
+      (float) camPose.getX(), 
+      (float) camPose.getY(),
+      (float) camPose.getZ(),
+      //quaternion
+      (float) quar.getW(),
+      (float) quar.getX(),
+      (float) quar.getY(),
+      (float) quar.getZ()
+    };
+    fieldCameraPosePublisher.accept(nums);
     // Get AprilTag data
     var aprilTagQueue = observationSubscriber.readQueue();
     inputs.timestamps_april = new double[aprilTagQueue.length];
