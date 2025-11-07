@@ -26,14 +26,14 @@ public class AimToAprilTagTx extends Command {
 	private final int tagId;
 	private final double desiredDistanceMeters;
 
-	private LoggableTunedNumber kPTx = new LoggableTunedNumber("AimToApriltagTx/kP", 0.5, TuningConstants.isTuningMacros);
-	private LoggableTunedNumber kDTx = new LoggableTunedNumber("AimToApriltagTx/kD", 0.01, TuningConstants.isTuningMacros);
-	private LoggableTunedNumber kPDistance = new LoggableTunedNumber("AimToApriltagTx/kPDistance", 0.03, TuningConstants.isTuningMacros);
-	private LoggableTunedNumber maxSpeed = new LoggableTunedNumber("AimToApriltagTx/maxSpeedMetersPerSec", 1.5, TuningConstants.isTuningMacros);
-	private LoggableTunedNumber maxRotation = new LoggableTunedNumber("AimToApriltagTx/MaxRotationRadPerSec", 3, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber kPTx = new LoggableTunedNumber("AimToApriltagTx/kP", 4, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber kDTx = new LoggableTunedNumber("AimToApriltagTx/kD", 0.6, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber kPDistance = new LoggableTunedNumber("AimToApriltagTx/kPDistance", 3.5, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber maxSpeed = new LoggableTunedNumber("AimToApriltagTx/maxSpeedMetersPerSec", 4.5, TuningConstants.isTuningMacros);
+	private LoggableTunedNumber maxRotation = new LoggableTunedNumber("AimToApriltagTx/MaxRotationRadPerSec", 15, TuningConstants.isTuningMacros);
 
 	// tolerances
-	private LoggableTunedNumber txTolerance = new LoggableTunedNumber("AimToApriltagTx/txToleranceRad", Units.degreesToRadians(2), TuningConstants.isTuningMacros);
+	private LoggableTunedNumber txTolerance = new LoggableTunedNumber("AimToApriltagTx/txToleranceRad", .05, TuningConstants.isTuningMacros);
 	private LoggableTunedNumber distanceTolerance = new LoggableTunedNumber("AimToApriltagTx/distanceToleranceMeters", Units.inchesToMeters(3), TuningConstants.isTuningMacros);
 	private LoggableTunedNumber staleTime = new LoggableTunedNumber("AimToApriltagTx/staleTime",.75,TuningConstants.isTuningMacros);
 	private double prevTxRadians = 0.0;

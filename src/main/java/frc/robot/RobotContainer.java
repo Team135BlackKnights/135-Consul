@@ -8,6 +8,7 @@ import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
+import frc.robot.commands.drive.vision.AimToAprilTag;
 import frc.robot.commands.drive.vision.AimToAprilTagTx;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -95,7 +96,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
-
+import frc.robot.commands.drive.AimToRotation;
 import frc.robot.commands.drive.DriveAndAimToRotation;
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
@@ -226,6 +227,7 @@ public class RobotContainer {
 	public static String closestChoreoPath = ""; // auto updates from Pathfinder, DON'T TOUCH!
 	public static boolean grabbingAlgae = false; // auto updates from Pathfinder, DON'T TOUCH!
 	int currentUpdate = 0;
+	public static Pose2d startingPoseCache = new Pose2d();
 	// Adjustable PathFollowing
 	public static LoggableTunedNumber pathFollowingMaxLinearSpeed = new LoggableTunedNumber(
 			"PathFollowing/MaxLinearSpeed", 5.5,
@@ -759,9 +761,12 @@ public class RobotContainer {
 		startButtonDrive
 				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
+		yButtonDrive.whileTrue(Commands.defer(() -> new AimToAprilTag(() -> getSelectedAprilTagLayout(), drivetrainS,visionS,2,true),
+		Set.of()));
+		bButtonDrive.whileTrue(Commands.defer(() -> new AimToRotation((Supplier<Rotation2d>) () -> startingPoseCache.getRotation(), drivetrainS, DriveConstants.pathConstraints),Set.of(drivetrainS)));
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS,
-						(Supplier<Pose2d>) () -> GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace, false)),
+						(Supplier<Pose2d>) () -> new Pose2d(3.5,4,Rotation2d.fromDegrees(-45))),
 						Set.of(drivetrainS)));
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()

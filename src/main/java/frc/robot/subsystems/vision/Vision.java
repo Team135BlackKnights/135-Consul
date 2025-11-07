@@ -261,11 +261,9 @@ public class Vision extends SubsystemChecker {
 		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_april.length; frameIndex++) {
 			double timestamp = inputs[cameraIndex].timestamps_april[frameIndex];
 			double[] values = inputs[cameraIndex].frames_april[frameIndex];
-
 			// Skip blank frame
 			if (values.length == 0 || values[0] == 0)
 				continue;
-
 			Pose3d cameraPose = null;
 			Pose2d robotPose = null;
 			boolean useVisionRotation = false;
@@ -301,14 +299,30 @@ public class Vision extends SubsystemChecker {
 					Pose2d robotPose1 = cameraPose1.toPose2d().transformBy(cameraToRobot);
 
 					// Select disambiguated pose
-					if (error0 < error1 * VisionConstants.ambiguityThreshold ||
-							error1 < error0 * VisionConstants.ambiguityThreshold) {
-						Rotation2d currentRotation = RobotContainer.drivetrainS.getPose().getRotation();
+					if (error0 < VisionConstants.ambiguityThreshold ||
+							error1 < VisionConstants.ambiguityThreshold) {
+						if (error0 < error1/2){
+							cameraPose = cameraPose0;
+							robotPose = robotPose0;
+						}
+						if (error1 < error0/2){
+							cameraPose = cameraPose1;
+							robotPose = robotPose1;
+						}
+						/*Rotation2d currentRotation = RobotContainer.drivetrainS.getPose().getRotation();
 						if (Math.abs(currentRotation.minus(robotPose0.getRotation()).getRadians()) < Math
 								.abs(currentRotation.minus(robotPose1.getRotation()).getRadians())) {
 							cameraPose = cameraPose0;
 							robotPose = robotPose0;
 						} else {
+							cameraPose = cameraPose1;
+							robotPose = robotPose1;
+						}*/
+						//take the lower one
+						if (error0 < error1){
+							cameraPose = cameraPose0;
+							robotPose = robotPose0;
+						}else{
 							cameraPose = cameraPose1;
 							robotPose = robotPose1;
 						}

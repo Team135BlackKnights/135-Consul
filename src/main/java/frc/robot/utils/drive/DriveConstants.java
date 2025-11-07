@@ -117,7 +117,7 @@ public class DriveConstants {
 	}
 
 	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
-			"Drive/MaxTranslationalAcceleration", 30,TuningConstants.isTuningMacros);
+			"Drive/MaxTranslationalAcceleration", 35,TuningConstants.isTuningMacros);
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50,TuningConstants.isTuningMacros);
 	public static boolean fieldOriented = true;
@@ -215,7 +215,7 @@ public class DriveConstants {
 																								// 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.002));
-		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .099, TuningConstants.isTuningModules),
+		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .1016, TuningConstants.isTuningModules),
 				RPMMatch = new LoggableTunedNumber("Drive/Module/RPMMatch", 4000,TuningConstants.isTuningModules),
 				extendTime = new LoggableTunedNumber("Drive/Module/extendTime", 200,TuningConstants.isTuningModules);
 		public static final double kMaxAngularSpeedRadiansPerSecond = 2 * DriveConstants.kMaxSpeedMetersPerSecond
