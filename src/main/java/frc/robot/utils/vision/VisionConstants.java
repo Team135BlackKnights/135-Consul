@@ -94,7 +94,7 @@ public class VisionConstants {
 											Math.toRadians(-25),
 											Math.toRadians(-45))))
 					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
-					.location("0x01230000 / 4") 
+					.location("0x01230000 / 4")  
 					.width(1600)
 					.height(1304)
 					.exposure(16)
@@ -115,8 +115,8 @@ public class VisionConstants {
 										Math.toRadians(0.0),
 										Math.toRadians(-25),
 										Math.toRadians(45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_007")
-					.location("0x01210000 / 3") 
+										.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
+										.location("0x01210000 / 3")
 					.width(1600)
 					.height(1304)
 					.exposure(16)
@@ -138,7 +138,7 @@ public class VisionConstants {
 											Math.toRadians(-25),
 											Math.toRadians(-135))))
 					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_004")
-					.location("0x02211000 / 7")
+					.location("0x02211000 / 5")
 					.width(1600)
 					.height(1304)
 					.exposure(16)
@@ -160,7 +160,7 @@ public class VisionConstants {
 										Math.toRadians(-25),
 										Math.toRadians(135))))
 					.id("SPCA2630 PC Camera:usb_05c8_0a00_001_003")
-					.location("0x02213000 / 5")
+					.location("0x02213000 / 6")
 					.width(1600)
 					.height(1304)
 					.exposure(16)

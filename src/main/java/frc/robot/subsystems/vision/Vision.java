@@ -438,46 +438,20 @@ public class Vision extends SubsystemChecker {
 					tx[z] = frame[i + 2 + (2 * z)];
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
-				// Two poses (single tag, ambiguous)
-				double error0 = frame[10+1];
-				double error1 = frame[10+9];
-				Pose3d cameraPose0 = new Pose3d(
+				Pose3d objectRelativeToCamera = new Pose3d(
 					frame[10+2], frame[10+3], frame[10+4],
 						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[10+5], frame[10+6], frame[10+7],
 						frame[10+8])));
-				Pose3d cameraPose1 = new Pose3d(
-					frame[10+10], frame[10+11], frame[10+12],
-						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[10+13], frame[10+14],
-						frame[10+15], frame[10+16])));
-				// cameraPose0 = camera pose relative to bumper (camera->bumper)
-				// We want: bumper pose in field frame
 				Transform3d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get());
-				Pose3d objectPose0 = new Pose3d(RobotContainer.drivetrainS.getPose())
+				Pose3d objectPose = new Pose3d(RobotContainer.drivetrainS.getPose())
 					.plus(robotToCamera)
-					.plus(GeomUtil.poseToTransform(cameraPose0).inverse());
-				Pose3d objectPose1 = new Pose3d(RobotContainer.drivetrainS.getPose())
-				.plus(robotToCamera)
-				.plus(GeomUtil.poseToTransform(cameraPose1).inverse());
-
-				// Select disambiguated pose
-				Pose3d cameraPose = null;
-				Pose3d objectPose = null;
-				if (error0 < error1){
-					cameraPose = cameraPose0;
-					objectPose = objectPose0;
-				}else{
-					cameraPose = cameraPose1;
-					objectPose = objectPose1;
-				}
+					.plus(GeomUtil.poseToTransform(objectRelativeToCamera));				
 				
-			
+				double distanceMag = objectRelativeToCamera.toPose2d().getTranslation().getNorm();
 				if (objectPose!=null){
-					System.out.println("Object Detected: " + AITargets.values()[classId].name() + " at " + objectPose.toString());
 					allTxTyObservations.put(
 						AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
-								ty, objectPose.getTranslation().getDistance(cameraPose.getTranslation()) , timestamp,Optional.of(objectPose)));
-				}else{
-					System.out.println("No object.." + error0 + " vs " + error1);
+								ty,distanceMag , timestamp,Optional.of(objectPose)));
 				}
 				
 
