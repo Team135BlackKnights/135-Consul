@@ -24,6 +24,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -438,16 +439,14 @@ public class Vision extends SubsystemChecker {
 					tx[z] = frame[i + 2 + (2 * z)];
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
-				Pose3d objectRelativeToCamera = new Pose3d(
-					frame[10+2], frame[10+3], frame[10+4],
-						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[10+5], frame[10+6], frame[10+7],
-						frame[10+8])));
-				Transform3d robotToCamera = GeomUtil.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get());
-				Pose3d objectPose = new Pose3d(RobotContainer.drivetrainS.getPose())
-					.plus(robotToCamera)
-					.plus(GeomUtil.poseToTransform(objectRelativeToCamera));				
+				Pose3d rawPose = new Pose3d(
+					frame[12], frame[13], frame[14],
+						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[15], frame[16], frame[17],
+						frame[18])));
+				//add bumper length /2 to both x and y, since we SEE the bumper
+				Pose3d objectPose = rawPose.plus(new Transform3d(Units.inchesToMeters(17), Units.inchesToMeters(17), 0, new Rotation3d()));
 				
-				double distanceMag = objectRelativeToCamera.toPose2d().getTranslation().getNorm();
+				double distanceMag = objectPose.toPose2d().getTranslation().getDistance(RobotContainer.drivetrainS.getPose().getTranslation());
 				if (objectPose!=null){
 					allTxTyObservations.put(
 						AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,

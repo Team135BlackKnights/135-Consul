@@ -617,7 +617,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			Logger.recordOutput("Vision/" + name + "/Age", age);
 			Logger.recordOutput("Vision/" + name + "/IsStale", isStale);
 			if (!isStale) {
-				Logger.recordOutput("Vision/" + name + "/Pose", record.pose);
+				if (!name.contains("A")) {
+					Logger.recordOutput("Vision/" + name + "/Pose", record.pose.toPose2d());					
+				}else{
+					Logger.recordOutput("Vision/" + name + "/Pose", record.pose);
+				}
 				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
 			}
 		}
