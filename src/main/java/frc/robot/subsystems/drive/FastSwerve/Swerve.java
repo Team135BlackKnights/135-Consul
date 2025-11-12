@@ -18,6 +18,7 @@ import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -1050,7 +1051,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		ty /= 4.0;
 
 		Pose3d cameraPose = VisionConstants.cameras[observation.camIndex()].getPose().get();
-		double distance = observation.distance();
+		Transform3d robotToCamera = new Transform3d(cameraPose.getTranslation(), cameraPose.getRotation());
 
 		if (observation.observationName().startsWith("A")) {
 			// Use 3D distance and tag angles to find robot pose
@@ -1080,11 +1081,17 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			txTyPoses.put(
 					"A" + apriltag,
 					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(),tx,ty,observation.camIndex()));
-		} else {			
+		} else {
+			Pose3d estimatedRobotPose3d = GeomUtil.calculateFieldRelativePose3d(
+			RobotContainer.drivetrainS.getPose(), Units.radiansToDegrees(tx), Units.radiansToDegrees(ty),
+			cameraPose.getZ(),
+			Units.inchesToMeters(.75),
+			Units.radiansToDegrees(cameraPose.getRotation().getY()),
+			robotToCamera);	
+				double robotDist = GeomUtil.calculateDistanceFromPose3d(estimatedPose, estimatedRobotPose3d);
 			txTyPoses.put(
 					observation.observationName(),
-					new TxTyPoseRecord(observation.objectPose.get(),
-							distance,
+					new TxTyPoseRecord(estimatedRobotPose3d, robotDist,
 							observation.timestamp(),tx,ty,observation.camIndex()));
 		}
 
