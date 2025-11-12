@@ -1,24 +1,18 @@
 package frc.robot.utils;
 
-import java.util.Objects;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 
 public class GeomUtil {
-	private static final double kMinimumSinPitch = 1e-6;
-
 	/**
 	 * Creates a pure translating transform
 	 *
@@ -137,128 +131,7 @@ public class GeomUtil {
 				speeds.omegaRadiansPerSecond);
 	}
 
-	private static Translation3d calculateRobotRelativeTranslation3d(double tx,
-			double ty, double limelightHeight, double targetHeight,
-			double limelightAngle, Transform3d robotToCamera) {
-		Objects.requireNonNull(robotToCamera, "robotToCamera transform cannot be null");
-		double txRad = Math.toRadians(tx);
-		double tyRad = Math.toRadians(ty);
-		double cameraPitchRad = Math.toRadians(limelightAngle) + tyRad;
-		double sinPitch = Math.sin(cameraPitchRad);
-		double heightDifference = targetHeight - limelightHeight;
-		if (Math.abs(sinPitch) < kMinimumSinPitch) {
-			double sign = Math.signum(sinPitch);
-			if (sign == 0.0) {
-				sign = Math.signum(cameraPitchRad);
-				if (sign == 0.0) {
-					sign = 1.0;
-				}
-			}
-			sinPitch = sign * kMinimumSinPitch;
-		}
-		double distanceAlongRay = heightDifference / sinPitch;
-		double cosPitch = Math.cos(cameraPitchRad);
-		double cosYaw = Math.cos(txRad);
-		double sinYaw = Math.sin(txRad);
-		Translation3d cameraToTargetTranslation = new Translation3d(
-				distanceAlongRay * cosPitch * cosYaw,
-				distanceAlongRay * cosPitch * sinYaw,
-				distanceAlongRay * sinPitch);
-		Transform3d cameraToTarget = new Transform3d(cameraToTargetTranslation,
-				new Rotation3d());
-		Transform3d robotToTarget = robotToCamera.plus(cameraToTarget);
-		return robotToTarget.getTranslation();
-	}
 
-	/**
-	 * Calculates the robot-relative Pose2d based on Limelight readings.
-	 *
-	 * @param tx              The horizontal angle offset to the target in degrees.
-	 * @param ty              The vertical angle offset to the target in degrees.
-	 * @param limelightHeight The height of the Limelight from the floor in meters.
-	 * @param targetHeight    The height of the target from the floor in meters.
-	 * @param limelightAngle  The Limelight pitch relative to the floor in degrees.
-	 * @param robotToCamera   Transform from the robot origin to the camera pose.
-	 * @return The robot-relative Pose2d.
-	 */
-	public static Pose2d calculateRobotRelativePose2d(double tx, double ty,
-			double limelightHeight, double targetHeight, double limelightAngle,
-			Transform3d robotToCamera) {
-		Translation3d robotRelativeTranslation = calculateRobotRelativeTranslation3d(
-				tx, ty, limelightHeight, targetHeight, limelightAngle,
-				robotToCamera);
-		Translation2d translation2d = new Translation2d(
-				robotRelativeTranslation.getX(), robotRelativeTranslation.getY());
-		Rotation2d heading = translation2d.getNorm() > 1e-9
-				? new Rotation2d(translation2d.getX(), translation2d.getY())
-				: new Rotation2d();
-		return new Pose2d(translation2d, heading);
-	}
-
-	/**
-	 * Calculates the field-relative Pose2d based on the robot's current pose and
-	 * Limelight readings.
-	 *
-	 * @param robotPose       The current field-relative pose of the robot.
-	 * @param tx              The horizontal angle offset to the target in degrees.
-	 * @param ty              The vertical angle offset to the target in degrees.
-	 * @param limelightHeight The height of the Limelight from the floor in meters.
-	 * @param targetHeight    The height of the target from the floor in meters.
-	 * @param limelightAngle  The Limelight pitch relative to the floor in degrees.
-	 * @param robotToCamera   Transform from the robot origin to the camera pose.
-	 * @return The field-relative Pose2d.
-	 */
-	public static Pose2d calculateFieldRelativePose2d(Pose2d robotPose,
-			double tx, double ty, double limelightHeight, double targetHeight,
-			double limelightAngle, Transform3d robotToCamera) {
-		Pose2d robotRelativePose = calculateRobotRelativePose2d(tx, ty,
-				limelightHeight, targetHeight, limelightAngle, robotToCamera);
-		double x_r = robotPose.getX();
-		double y_r = robotPose.getY();
-		double theta_r = robotPose.getRotation().getRadians();
-		double x = robotRelativePose.getX();
-		double y = robotRelativePose.getY();
-		double x_f = x_r + x * Math.cos(theta_r) - y * Math.sin(theta_r);
-		double y_f = y_r + x * Math.sin(theta_r) + y * Math.cos(theta_r);
-		double theta_f = theta_r + robotRelativePose.getRotation().getRadians();
-		return new Pose2d(x_f, y_f, new Rotation2d(theta_f));
-	}
-
-	/**
-	 * Calculates the field-relative Pose3d based on the robot's current pose and
-	 * Limelight readings.
-	 *
-	 * @param robotPose       The current field-relative pose of the robot.
-	 * @param tx              The horizontal angle offset to the target in degrees.
-	 * @param ty              The vertical angle offset to the target in degrees.
-	 * @param limelightHeight The height of the Limelight from the floor in meters.
-	 * @param targetHeight    The height of the target from the floor in meters.
-	 * @param limelightAngle  The Limelight pitch relative to the floor in degrees.
-	 * @param robotToCamera   Transform from the robot origin to the camera pose.
-	 * @return The field-relative Pose3d.
-	 */
-	public static Pose3d calculateFieldRelativePose3d(Pose2d robotPose,
-			double tx, double ty, double limelightHeight, double targetHeight,
-			double limelightAngle, Transform3d robotToCamera) {
-		Translation3d robotRelativeTranslation = calculateRobotRelativeTranslation3d(
-				tx, ty, limelightHeight, targetHeight, limelightAngle,
-				robotToCamera);
-		double x_r = robotPose.getX();
-		double y_r = robotPose.getY();
-		double theta_r = robotPose.getRotation().getRadians();
-		double x = robotRelativeTranslation.getX();
-		double y = robotRelativeTranslation.getY();
-		double x_f = x_r + x * Math.cos(theta_r) - y * Math.sin(theta_r);
-		double y_f = y_r + x * Math.sin(theta_r) + y * Math.cos(theta_r);
-		double z_f = robotRelativeTranslation.getZ();
-		double relativeYaw = Math.atan2(y, x);
-		double horizontalDistance = Math.hypot(x, y);
-		double relativePitch = Math.atan2(robotRelativeTranslation.getZ(),
-				horizontalDistance);
-		double fieldYaw = MathUtil.angleModulus(theta_r + relativeYaw);
-		Rotation3d fieldRotation = new Rotation3d(0, relativePitch, fieldYaw);
-		return new Pose3d(new Translation3d(x_f, y_f, z_f), fieldRotation);
-	}
 	/**
 	 * @param currentPose the robot pose
 	 * @param objectPose  the object, as a pose3d
