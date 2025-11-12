@@ -96,7 +96,7 @@ public class DriveToTranslation extends Command {
 				DriveConstants.maxRotationalAcceleration.get());
 		boolean isAuto = false;
 		double newTolerance = Units.inchesToMeters(1); // Default tolerance
-		Supplier<Pose2d> currentPoseSupplier = () -> drive.getEstimatedPose();
+		Supplier<Pose2d> currentPoseSupplier = () -> drive.getLookAheadPose();
 		// Parse arguments
 		for (Object arg : args) {
 			if (arg instanceof Translation2d translation) {

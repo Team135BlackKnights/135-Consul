@@ -49,6 +49,7 @@ public class VisionConstants {
 	public static final double ambiguityThreshold = 0.4;
 	public static final double objDetectConfidenceThreshold = .4;
 	public static final double maxZError = 0.75;
+	public static final double maxObjZError = 0.25;
 	public static final double maxYawError = 5.0;
 	public static final double linearStdDevBaseline = 0.005;
 	public static final double angularStdDevBaseline = 0.04;

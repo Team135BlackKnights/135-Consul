@@ -21,9 +21,9 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.vision.VisionConstants;
 
-public class AimToAprilTagTx extends Command {
+public class AimToObject extends Command {
 	private final DrivetrainS drive;
-	private final int tagId;
+	private final String tagId;
 	private final double desiredDistanceMeters;
 
 	private LoggableTunedNumber kPTx = new LoggableTunedNumber("AimToApriltagTx/kP", 4, TuningConstants.isTuningMacros);
@@ -43,7 +43,7 @@ public class AimToAprilTagTx extends Command {
     private boolean isFinished = false;
     private int camId = 0;
 
-	public AimToAprilTagTx(DrivetrainS drive, int tagId, double desiredDistanceMeters) {
+	public AimToObject(DrivetrainS drive, String tagId, double desiredDistanceMeters) {
 		this.drive = drive;
 		this.tagId = tagId;
 		this.desiredDistanceMeters = desiredDistanceMeters;
@@ -51,7 +51,7 @@ public class AimToAprilTagTx extends Command {
 
 	@Override
 	public void initialize() {
-		RobotContainer.currentPath = "AIMTOAPRILTAG_TX";
+		RobotContainer.currentPath = "AIMTOOBJECT_" + tagId;
 		prevTxRadians = 0.0;
         isFinished = false;
 	}
@@ -59,10 +59,10 @@ public class AimToAprilTagTx extends Command {
 	@Override
 	public void execute() {
 		hasValidObservation = false;
-		Optional<TxTyPoseRecord> apriltagTxTyData = ((Swerve) drive).getTxPoseRecord("A" + tagId);
-		if (apriltagTxTyData.isPresent()) {
-			var data = apriltagTxTyData.get();
-			if (Timer.getTimestamp() - data.timestamp() >= staleTime.get()){
+		Optional<TxTyPoseRecord> txTyData = ((Swerve) drive).getTxPoseRecord(tagId);
+		if (txTyData.isPresent()) {
+			var data = txTyData.get();
+			if (Timer.getTimestamp() - data.timestamp() >= staleTime.get() || (!tagId.contains("A") && data.pose().getZ() > VisionConstants.maxObjZError)) {
 				hasValidObservation = false;
 			}else{
 				hasValidObservation = true;
@@ -110,7 +110,7 @@ public class AimToAprilTagTx extends Command {
 		// Camera's heading + tx gives us the field-relative direction to the AprilTag
 		Rotation2d directionToTag = cameraPose.getRotation().plus(new Rotation2d(latestTxRadians));
 		
-		// The direction vector pointing from camera toward the AprilTag
+		// The direction vector pointing from camera toward the OBJ
 		Translation2d directionVector = new Translation2d(
 			Math.cos(directionToTag.getRadians()),
 			Math.sin(directionToTag.getRadians())
@@ -127,11 +127,11 @@ public class AimToAprilTagTx extends Command {
 
 		prevTxRadians = latestTxRadians;
 
-		Logger.recordOutput("AimToAprilTagTx/tx", latestTxRadians);
-		Logger.recordOutput("AimToAprilTagTx/distance", latestDistanceMeters);
-		Logger.recordOutput("AimToAprilTagTx/forwardCommand", forwardCommand);
-		Logger.recordOutput("AimToAprilTagTx/angularCommand", angularCommand);
-		Logger.recordOutput("AimToAprilTagTx/directionToTag", directionToTag.getDegrees());
+		Logger.recordOutput("AimToObject/tx", latestTxRadians);
+		Logger.recordOutput("AimToObject/distance", latestDistanceMeters);
+		Logger.recordOutput("AimToObject/forwardCommand", forwardCommand);
+		Logger.recordOutput("AimToObject/angularCommand", angularCommand);
+		Logger.recordOutput("AimToObject/directionToTag", directionToTag.getDegrees());
 	}
 
 	@Override

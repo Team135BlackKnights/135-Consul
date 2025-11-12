@@ -190,7 +190,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configure(this::getEstimatedPose, this::resetPose,
+		AutoBuilder.configure(this::getLookAheadPose, this::resetPose,
 				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
@@ -401,7 +401,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * @see {@link #getPose() getPose} for the geometrically accurate pose
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
-	public Pose2d getEstimatedPose() {
+	public Pose2d getLookAheadPose() {
 		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
 		/*return estimatedPose.plus(new Transform2d(new Translation2d(),
 				DriveConstants.TrainConstants.robotOffsetAngleDirection));*/
@@ -625,7 +625,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
 			}
 		}
-		Logger.recordOutput("RobotState/AheadPose",getEstimatedPose().exp(getChassisSpeeds().toTwist2d(.05)));
+		Logger.recordOutput("RobotState/AheadPose",getLookAheadPose().exp(getChassisSpeeds().toTwist2d(.05)));
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
@@ -1109,7 +1109,16 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Latency compensate
 		return sample.map(pose2d -> data.pose().plus(new Transform3d(new Pose3d(pose2d), new Pose3d(odometryPose))));
 	}
-
+	public ArrayList<TxTyPoseRecord> getOpposingRobotPoses(){
+		ArrayList<TxTyPoseRecord> poses = new ArrayList<>();
+		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
+			String name = entry.getKey();
+			if(!name.startsWith("A")){
+				poses.add(entry.getValue());				
+			}
+		}
+		return poses;
+	}
 	public Optional<Pose3d> getTxTyPose(int apriltag) {
 		return getTxTyPose("A" + apriltag);
 	}
@@ -1123,7 +1132,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * 
 	 * @return an INTERNAL ONLY output of the robot pose (use this for any
 	 *         driving/turning calculations)
-	 * @see {@link #getEstimatedPose() getEstimatedPose} for the visually
+	 * @see {@link #getLookAheadPose() getEstimatedPose} for the visually
 	 *      accurate pose
 	 */
 	@Override

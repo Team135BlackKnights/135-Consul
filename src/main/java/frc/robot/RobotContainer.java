@@ -9,7 +9,7 @@ import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.commands.drive.vision.AimToAprilTag;
-import frc.robot.commands.drive.vision.AimToAprilTagTx;
+import frc.robot.commands.drive.vision.AimToObject;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
@@ -41,6 +41,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
+import frc.robot.utils.vision.VisionConstants.AITargets;
 import frc.robot.utils.vision.VisionConstants.AprilTagLayoutType;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.PathFinder;
@@ -757,9 +758,10 @@ public class RobotContainer {
 					drivetrainS.zeroHeading();
 					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
-		selectButtonDrive.toggleOnTrue(new AimToAprilTagTx(drivetrainS, 42,1.5));
+		selectButtonDrive.toggleOnTrue(new AimToObject(drivetrainS,AITargets.BLUE_BOT.name(),1.5));
+		//AITargets.values()[classId].name()
 		startButtonDrive
-				.onChange(new InstantCommand(() -> DriveConstants.fieldOriented = !DriveConstants.fieldOriented));
+				.onChange(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
 		yButtonDrive.whileTrue(Commands.defer(() -> new AimToAprilTag(() -> getSelectedAprilTagLayout(), drivetrainS,visionS,2,true),
 		Set.of()));
