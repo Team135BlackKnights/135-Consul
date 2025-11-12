@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -443,15 +444,22 @@ public class Vision extends SubsystemChecker {
 					frame[12], frame[13], frame[14],
 						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[15], frame[16], frame[17],
 						frame[18])));
-				//add bumper length /2 to both x and y, since we SEE the bumper
-				Pose3d objectPose = rawPose.plus(new Transform3d(Units.inchesToMeters(17), Units.inchesToMeters(17), 0, new Rotation3d()));
-				
-				double distanceMag = objectPose.toPose2d().getTranslation().getDistance(RobotContainer.drivetrainS.getPose().getTranslation());
-				if (objectPose!=null){
-					allTxTyObservations.put(
-						AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
-								ty,distanceMag , timestamp,Optional.of(objectPose)));
-				}
+				Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
+				Translation2d separation = rawPose.toPose2d().getTranslation()
+					.minus(drivetrainPose.getTranslation());
+				double bumperHalfExtent = Units.inchesToMeters(17);
+				double xOffset = Math.abs(separation.getX()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separation.getX())
+					: 0.0;
+				double yOffset = Math.abs(separation.getY()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separation.getY())
+					: 0.0;
+				Pose3d objectPose = rawPose.plus(new Transform3d(xOffset, yOffset, 0.0, new Rotation3d()));
+
+				double distanceMag = objectPose.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
+				allTxTyObservations.put(
+					AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
+							ty,distanceMag , timestamp,Optional.of(objectPose)));
 				
 
 
