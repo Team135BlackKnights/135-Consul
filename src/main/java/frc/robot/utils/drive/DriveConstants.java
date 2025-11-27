@@ -148,10 +148,10 @@ public class DriveConstants {
 			SKID_THRESHOLD = .5, // Meters per second
 			TURN_DEADBAND_AMPS = 10, //minimum amperage allowed on turn motors (to prevent weirdo noises/eating voltage)
 			MAX_G = 1.5;
-	public static double kMaxSpeedMetersPerSecond = 6.4, // 15.1
+	public static double kMaxSpeedMetersPerSecond = 6.0, // 15.1
 			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI; // 1.33655 *2 *Math.PI
 	public static PathConstraints pathConstraints = new PathConstraints(
-			4, 1.75,
+			6, 17.5,
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get());
 	// kP = 0.1, kI = 0, kD = 0, kDistanceMultipler = .2; //for autoLock
 	// Declare the position of each module
@@ -223,7 +223,8 @@ public class DriveConstants {
 				/ (kWheelDiameter.get()),
 				kDriveMotorGearRatioLow = 5.14, kDriveMotorGearRatioHigh = 3, kTurningMotorGearRatio = 25,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
-				weight = Units.lbsToKilograms(150); // test chassis
+				moi = 2.8732, // kg m^2, moment of inertia of the robot
+				weight = Units.lbsToKilograms(56); // test chassis
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
 				0.001, 0.001, 0.001, .675,.125, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
@@ -240,13 +241,13 @@ public class DriveConstants {
 
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(2, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 2);
-			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
+			mainConfig = new RobotConfig(TrainConstants.weight, TrainConstants.moi, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0),
 					.02, kMaxSpeedMetersPerSecond);
 		} else {
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(1, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 1);
-			mainConfig = new RobotConfig(TrainConstants.weight, 7, mainModuleConfig, kModuleTranslations);
+			mainConfig = new RobotConfig(TrainConstants.weight, TrainConstants.moi, mainModuleConfig, kModuleTranslations);
 			mainController = new PPHolonomicDriveController(
 					new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(),
 							TrainConstants.pathplannerTranslationConstantContainer.getI(),

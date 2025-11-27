@@ -456,7 +456,6 @@ public class Robot extends LoggedRobot {
 			}
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				RobotContainer.fieldSimulation.resetField(true);
-
 				if (RobotContainer.currentAuto != null) {
 					try {
 						PathPlannerPath path = PathPlannerAuto
@@ -486,6 +485,7 @@ public class Robot extends LoggedRobot {
 				}
 			}
 			matchHasEnded = false;
+			System.out.println("Scheduling Auto: " + m_autonomousCommand.getName());
 			CommandScheduler.getInstance().schedule(m_autonomousCommand);
 		}
 	}
