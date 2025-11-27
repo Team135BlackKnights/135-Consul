@@ -4,6 +4,7 @@
 
 package frc.robot.utils.Touchboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -39,7 +40,7 @@ public class OneShotButton extends SubsystemBase {
 
     if (value != prev && value == true) {
       //ensures it dosent accidentally get executed twice from packet loss or network lag
-      executed.get().schedule();
+      CommandScheduler.getInstance().schedule(executed.get());
       dataPublisher.set(false);
     }
   }

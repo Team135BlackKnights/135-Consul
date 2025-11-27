@@ -90,8 +90,7 @@ public class Robot extends LoggedRobot {
 	@SuppressWarnings("unused")
 	private LoggedPowerDistribution pdh;
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-	public static final CANBus rioCanBus = new CANBus();
-	public static final CANBus driveCanBus = new CANBus(DriveConstants.canBusName);
+	public static final CANBus rioCanBus = CANBus.roboRIO();
 	public static Pose3d elevatorPose = new Pose3d();
 	public static Pose3d armPose = new Pose3d();
 	public static Pose3d algaePose = new Pose3d();
@@ -392,7 +391,13 @@ public class Robot extends LoggedRobot {
 				auto = new String[] { "-120", "5.542", "NA" };
 			}
 			double x = 7.02;
-			double y = DriveConstants.kBumperToBumperLength/2+(1-Double.parseDouble(auto[1])) * (FieldConstants.FIELD_HEIGHT-DriveConstants.kBumperToBumperLength);
+			double y;
+			if (Double.parseDouble(auto[1]) == Double.NaN) {
+				y = 7.1;
+			} else {
+				y = DriveConstants.kBumperToBumperLength / 2 + (1 - Double.parseDouble(auto[1]))
+						* (FieldConstants.FIELD_HEIGHT - DriveConstants.kBumperToBumperLength);
+			}
 			double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
 			Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
 			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
@@ -400,7 +405,7 @@ public class Robot extends LoggedRobot {
 				RobotContainer.fieldSimulation.getMainDriveSimulation()
 						.setSimulationWorldPose(GeomUtil.apply(startingPose, false));
 			}
-			if (PosePlotterUtil.getAutoString() != null && !PosePlotterUtil.getAutoString().equals(oldAutoString)){
+			if (PosePlotterUtil.getAutoString() != null && !PosePlotterUtil.getAutoString().equals(oldAutoString)) {
 				oldAutoString = PosePlotterUtil.getAutoString();
 				PosePlotterUtil.calculateAuto();
 				hasCalculatedAuto = true;
@@ -438,9 +443,9 @@ public class Robot extends LoggedRobot {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
-		
+
 		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-		
+
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
 			System.out.println(m_robotContainer.getAutoName());
@@ -481,7 +486,7 @@ public class Robot extends LoggedRobot {
 				}
 			}
 			matchHasEnded = false;
-			m_autonomousCommand.schedule();
+			CommandScheduler.getInstance().schedule(m_autonomousCommand);
 		}
 	}
 
@@ -581,7 +586,7 @@ public class Robot extends LoggedRobot {
 		}
 		// Cancels all running commands at the start of test mode.
 		CommandScheduler.getInstance().cancelAll();
-		// RobotContainer.allSystemsCheck().schedule();
+		// CommandScheduler.getInstance().schedule(RobotContainer.allSystemsCheck());
 	}
 
 	/** This function is called periodically during test mode. */
@@ -590,7 +595,7 @@ public class Robot extends LoggedRobot {
 		Constants.currentMatchState = FRCMatchState.TEST;
 		long statusCalls = System.currentTimeMillis();
 		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();
-		CANBusStatus driveCanBusStatus = driveCanBus.getStatus();
+		CANBusStatus driveCanBusStatus = DriveConstants.driveCanBus.getStatus();
 		Logger.recordOutput("SystemStatus/CANMs", Math.abs(statusCalls -
 				System.currentTimeMillis()));
 		Logger.recordOutput("SystemStatus/CANUtil", rioCanBusStatus.BusUtilization *

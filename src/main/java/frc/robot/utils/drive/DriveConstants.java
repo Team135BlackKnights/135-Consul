@@ -1,5 +1,6 @@
 package frc.robot.utils.drive;
 
+import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -32,7 +33,7 @@ public class DriveConstants {
 	// voltages directly
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
-	public static final String canBusName = "drivetrain"; // Leave "" if CTRE_ON_RIO
+	public static final CANBus driveCanBus = new CANBus("drivetrain"); // Leave null if CTRE_ON_RIO
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
 	// This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.THRIFTYSWERVE;
@@ -215,7 +216,7 @@ public class DriveConstants {
 																								// 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.002));
-		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .099, TuningConstants.isTuningModules),
+		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .1016, TuningConstants.isTuningModules),
 				RPMMatch = new LoggableTunedNumber("Drive/Module/RPMMatch", 4000,TuningConstants.isTuningModules),
 				extendTime = new LoggableTunedNumber("Drive/Module/extendTime", 200,TuningConstants.isTuningModules);
 		public static final double kMaxAngularSpeedRadiansPerSecond = 2 * DriveConstants.kMaxSpeedMetersPerSecond
