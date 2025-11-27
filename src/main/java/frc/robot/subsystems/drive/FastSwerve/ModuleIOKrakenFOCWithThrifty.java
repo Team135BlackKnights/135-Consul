@@ -73,18 +73,17 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 	 * @apiNote CANCoder offsets SHOULD be set to zero in code due to how the
 	 *          user manual works
 	 */
-	@SuppressWarnings("unused")
 	public ModuleIOKrakenFOCWithThrifty(int index) {
 		// Init controllers and encoders from config constants
 		switch (index) {
 			case 0:
-				if (DriveConstants.canBusName == "") {
+				if (DriveConstants.driveCanBus == null) {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
 
 				} else {
-					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
-					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.canBusName);
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.driveCanBus);
 				}
 				turnAbsoluteEncoder = new AnalogInput(DriveConstants.kFrontLeftAbsEncoderPort);
 				driveName = "FrontLeftDrive";
@@ -96,12 +95,12 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kFrontLeftAbsEncoderReversed;
 				break;
 			case 1:
-				if (DriveConstants.canBusName == "") {
+				if (DriveConstants.driveCanBus == null) {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
 				} else {
-					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
-					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.canBusName);
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.driveCanBus);
 				}
 				turnAbsoluteEncoder = new AnalogInput(
 						DriveConstants.kFrontRightAbsEncoderPort);
@@ -114,12 +113,12 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kFrontRightAbsEncoderReversed;
 				break;
 			case 2:
-				if (DriveConstants.canBusName == "") {
+				if (DriveConstants.driveCanBus == null) {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
 				} else {
-					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
-					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.canBusName);
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.driveCanBus);
 				}
 				turnAbsoluteEncoder = new AnalogInput(
 						DriveConstants.kBackLeftAbsEncoderPort);
@@ -132,12 +131,12 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				isTurnSensorInverted = DriveConstants.kBackLeftAbsEncoderReversed;
 				break;
 			case 3:
-				if (DriveConstants.canBusName == "") {
+				if (DriveConstants.driveCanBus == null) {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
 				} else {
-					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
-					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.canBusName);
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.driveCanBus);
 				}
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";

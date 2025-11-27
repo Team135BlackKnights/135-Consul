@@ -159,11 +159,11 @@ public class TankIOSparkBase implements TankIO {
 	public void setVelocity(double leftRadPerSec, double rightRadPerSec,
 			double leftFFVolts, double rightFFVolts) {
 		if (DriveConstants.enablePID) {
-			leftPID.setReference(
+			leftPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							leftRadPerSec * GEAR_RATIO),
 					ControlType.kVelocity, ClosedLoopSlot.kSlot0, leftFFVolts);
-			rightPID.setReference(
+			rightPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							rightRadPerSec * GEAR_RATIO),
 					ControlType.kVelocity, ClosedLoopSlot.kSlot0, rightFFVolts);

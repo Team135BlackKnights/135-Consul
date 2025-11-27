@@ -1,5 +1,6 @@
 package frc.robot.utils.drive;
 
+import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -32,7 +33,7 @@ public class DriveConstants {
 	// voltages directly
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
-	public static final String canBusName = "drivetrain"; // Leave "" if CTRE_ON_RIO
+	public static final CANBus driveCanBus = new CANBus("drivetrain"); // Leave null if CTRE_ON_RIO
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
 	// This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.THRIFTYSWERVE;

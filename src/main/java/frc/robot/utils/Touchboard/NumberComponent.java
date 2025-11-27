@@ -10,6 +10,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+
 import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.Commands;
 
@@ -48,7 +50,7 @@ public class NumberComponent extends SubsystemBase {
 
     if (value != prev) {
       prev = value;
-      passedCommand.get().schedule();
+      CommandScheduler.getInstance().schedule(passedCommand.get());
 
     }
   }

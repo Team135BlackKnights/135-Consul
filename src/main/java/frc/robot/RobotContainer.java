@@ -91,6 +91,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 
@@ -639,7 +640,7 @@ public class RobotContainer {
 			PPLibTelemetry.enableCompetitionMode();
 		}
 
-		new PathfindingCommand(
+		CommandScheduler.getInstance().schedule(new PathfindingCommand(
 				new Pose2d(15.0, 4.0, Rotation2d.k180deg),
 				new PathConstraints(8, 11, 4, 4),
 				() -> new Pose2d(1.5, 4, Rotation2d.kZero),
@@ -652,8 +653,8 @@ public class RobotContainer {
 				.andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
 				.ignoringDisable(true)
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
-						.setPose(new Pose2d(-50, -50, new Rotation2d())))
-				.schedule();
+						.setPose(new Pose2d(-50, -50, new Rotation2d()))))
+				;
 		/*
 		 * if (!superStructure.leds.gifFound(ImageStates.Error)) {
 		 * Logger.recordOutput("LEDS/Main",
