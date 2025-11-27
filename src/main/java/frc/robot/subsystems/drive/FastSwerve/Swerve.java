@@ -448,10 +448,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					if (Math.abs(omega) > currentModuleLimits.maxSteeringVelocity()
 							* 5.0
 							|| Math.abs(velocity) > currentModuleLimits
-									.maxDriveVelocity() * 5.0) {
+									.maxDriveVelocity() * 5.0 || isSkidding[i]) {
 						includeMeasurement = false;
 						break;
 					}
+
 				}
 			}
 			// If delta isn't too large we can include the measurement.
