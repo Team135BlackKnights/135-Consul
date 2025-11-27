@@ -39,6 +39,7 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModul
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AITargets;
@@ -565,7 +566,7 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-				visionS = new Vision(() -> getSelectedAprilTagLayout(),
+				/*visionS = new Vision(() -> getSelectedAprilTagLayout(),
 						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontRightCam",0,
 								VisionConstants.cameras[0]),
 						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "FrontLeftCam",1,
@@ -573,8 +574,8 @@ public class RobotContainer {
 						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackRightCam",2,
 								VisionConstants.cameras[2]),
 						new VisionIOSouthmoon(() -> getSelectedAprilTagLayout(), "BackLeftCam",3,
-								VisionConstants.cameras[3]));
-				/*visionS = new Vision(() -> getSelectedAprilTagLayout(),
+								VisionConstants.cameras[3]));*/
+				visionS = new Vision(() -> getSelectedAprilTagLayout(),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(),"FrontRightCam",
 								GeomUtil.poseToTransform3d(VisionConstants.cameras[0].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "FrontLeftCam",
@@ -582,7 +583,7 @@ public class RobotContainer {
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackRightCam",
 								GeomUtil.poseToTransform3d(VisionConstants.cameras[2].getPose().get()),() -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()),
 						new VisionIOPhotonVisionSim(() -> getSelectedAprilTagLayout(), "BackLeftCam",
-								GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()), () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));*/
+								GeomUtil.poseToTransform3d(VisionConstants.cameras[3].getPose().get()), () -> fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d()));
 				System.out.println("SIM SETUP DONE!");
 				break;
 			default:

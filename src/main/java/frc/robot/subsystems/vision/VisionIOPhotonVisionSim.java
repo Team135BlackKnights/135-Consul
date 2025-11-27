@@ -44,15 +44,15 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     cameraProperties.setAvgLatencyMs(50);
     cameraProperties.setLatencyStdDevMs(5);
     cameraProperties.setFPS(60);
-    cameraProperties.setCalibError(.35, .1);
+    cameraProperties.setExposureTimeMs(6);
+    cameraProperties.setCalibError(.2, .045);
     cameraProperties.setCalibration(1600, 1304,
     MatBuilder.fill(Nat.N3(), Nat.N3(),
-        1320.0, 0.0, 800.0,
-        0.0, 1076.0, 652.0,
-        0.0, 0.0, 1.0),
+        966.85371839149309, 0.0, 792.59524206028857, 0.0,
+            966.95923170939261, 703.31666886872517, 0.0, 0.0, 1.0),
     VecBuilder.fill(
-        -0.28, 0.11, 0.002, -0.001,
-        0.0, -0.25, 0.1, 0.0)); // mild wide-angle distortion
+         0.18157627229471812, -0.24984502994628116, 0.0, 0.0,
+            0.11545743579195793,0,0,0));
     cameraSim = new PhotonCameraSim(camera, cameraProperties);
     visionSim.addCamera(cameraSim, robotToCamera);
   }

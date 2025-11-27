@@ -217,7 +217,7 @@ public static final double aprilTagWidth = Units.inchesToMeters(6.50);
                       "deploy",
                       "apriltags",
                       fieldType.getJsonFolder(),
-                      "2025-official.json"));
+                      "2025-sim.json"));
         } catch (IOException e) {
           throw new RuntimeException(e);
         }

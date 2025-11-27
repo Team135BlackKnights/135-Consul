@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
@@ -64,9 +65,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
 			"Drive/CoastWaitTimeSeconds", 0.5, TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber coastMetersPerSecThreshold = new LoggableTunedNumber(
-			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain); 
+			"Drive/CoastMetersPerSecThreshold", 0.25, TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber lookAheadTime = new LoggableTunedNumber(
 			"Drive/LookAhead", 0.04, TuningConstants.isTuningDrivetrain);
+
 	public enum DriveMode {
 		/** Driving with input from driver joysticks. (Default) */
 		TELEOP,
@@ -131,7 +133,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public record TxTyObservation(
-			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp, Optional<Pose3d> objectPose) {
+			String observationName, int camIndex, double[] tx, double[] ty, double distance, double timestamp,
+			Optional<Pose3d> objectPose) {
 	}
 
 	public record TxTyPoseRecord(Pose3d pose, double distance, double timestamp, double tx, double ty, int camIndex) {
@@ -163,7 +166,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 							.map(Pose3d::toPose2d)
 							.orElse(new Pose2d()));
 		}
-		tagPoses2d.put(42, new Pose2d());
+		if (Constants.currentMode == Constants.Mode.REAL) {
+			tagPoses2d.put(42, new Pose2d());
+
+		}
 	}
 
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
@@ -181,11 +187,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					2));
 		}
 		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
+			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		}
-		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
+		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		for (AITargets target : AITargets.values()) {
-			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0,0,0,0));
+			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		}
 
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
@@ -403,8 +409,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
 	public Pose2d getLookAheadPose() {
 		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
-		/*return estimatedPose.plus(new Transform2d(new Translation2d(),
-				DriveConstants.TrainConstants.robotOffsetAngleDirection));*/
+		/*
+		 * return estimatedPose.plus(new Transform2d(new Translation2d(),
+		 * DriveConstants.TrainConstants.robotOffsetAngleDirection));
+		 */
 	}
 
 	@Override
@@ -618,14 +626,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			Logger.recordOutput("Vision/" + name + "/IsStale", isStale);
 			if (!isStale) {
 				if (!name.contains("A")) {
-					Logger.recordOutput("Vision/" + name + "/Pose", record.pose.toPose2d());					
-				}else{
+					Logger.recordOutput("Vision/" + name + "/Pose", record.pose.toPose2d());
+				} else {
 					Logger.recordOutput("Vision/" + name + "/Pose", record.pose);
 				}
 				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
 			}
 		}
-		Logger.recordOutput("RobotState/AheadPose",getLookAheadPose().exp(getChassisSpeeds().toTwist2d(.05)));
+		Logger.recordOutput("RobotState/AheadPose", getLookAheadPose().exp(getChassisSpeeds().toTwist2d(.05)));
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
@@ -1079,22 +1087,25 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// Add transform to current odometry based pose for latency correction
 			txTyPoses.put(
 					"A" + apriltag,
-					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(),tx,ty,observation.camIndex()));
-		} else {			
+					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(), tx, ty,
+							observation.camIndex()));
+		} else {
 			txTyPoses.put(
 					observation.observationName(),
 					new TxTyPoseRecord(observation.objectPose.get(),
 							distance,
-							observation.timestamp(),tx,ty,observation.camIndex()));
+							observation.timestamp(), tx, ty, observation.camIndex()));
 		}
 
 	}
-	public Optional<TxTyPoseRecord> getTxPoseRecord(String tagId){
+
+	public Optional<TxTyPoseRecord> getTxPoseRecord(String tagId) {
 		if (!txTyPoses.containsKey(tagId)) {
 			return Optional.empty();
 		}
-		return Optional.of(txTyPoses.get(tagId));	
+		return Optional.of(txTyPoses.get(tagId));
 	}
+
 	public Optional<Pose3d> getTxTyPose(String tagId) {
 		if (!txTyPoses.containsKey(tagId)) {
 			return Optional.empty();
@@ -1109,16 +1120,18 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		// Latency compensate
 		return sample.map(pose2d -> data.pose().plus(new Transform3d(new Pose3d(pose2d), new Pose3d(odometryPose))));
 	}
-	public ArrayList<TxTyPoseRecord> getOpposingRobotPoses(){
+
+	public ArrayList<TxTyPoseRecord> getOpposingRobotPoses() {
 		ArrayList<TxTyPoseRecord> poses = new ArrayList<>();
 		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
 			String name = entry.getKey();
-			if(!name.startsWith("A")){
-				poses.add(entry.getValue());				
+			if (!name.startsWith("A")) {
+				poses.add(entry.getValue());
 			}
 		}
 		return poses;
 	}
+
 	public Optional<Pose3d> getTxTyPose(int apriltag) {
 		return getTxTyPose("A" + apriltag);
 	}

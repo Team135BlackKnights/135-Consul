@@ -631,6 +631,8 @@ public class Robot extends LoggedRobot {
 				}
 			}
 			Logger.recordOutput("Scoring/SimMatchOver", matchHasEnded);
+			//add a log for vision error
+			Logger.recordOutput("Vision/Error", RobotContainer.drivetrainS.getLookAheadPose().getTranslation().getDistance(RobotContainer.fieldSimulation.getMainDriveSimulation().getPose3d().toPose2d().getTranslation()));
 		}
 
 	}
