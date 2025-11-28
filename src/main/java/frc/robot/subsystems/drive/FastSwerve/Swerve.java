@@ -55,6 +55,7 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.swerve.utility.WheelForceCalculator.Feedforwards;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.pathfinding.Pathfinding;
@@ -153,7 +154,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	boolean[] isSkidding = new boolean[] { false, false, false, false
 	};
 	private final OdometryThread odometryThread;
-	private double[] pathPlannerNM = new double[4];
+	private Feedforwards pathPlannerNM = new Feedforwards(4);
 	private double characterizationVelocity = 0.0;
 	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
 
@@ -481,10 +482,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					if (Math.abs(omega) > currentModuleLimits.maxSteeringVelocity()
 							* 5.0
 							|| Math.abs(velocity) > currentModuleLimits
-									.maxDriveVelocity() * 5.0) {
+									.maxDriveVelocity() * 5.0 || isSkidding[i]) {
 						includeMeasurement = false;
 						break;
 					}
+
 				}
 			}
 			// If delta isn't too large we can include the measurement.
@@ -496,11 +498,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 		}
 		// Update current velocities use gyro when possible
-		ChassisSpeeds robotRelativeVelocity = getChassisSpeeds();
-		robotRelativeVelocity.omegaRadiansPerSecond = gyroInputs.connected
+		ChassisSpeeds previousSpeeds = getChassisSpeeds();
+		previousSpeeds.omegaRadiansPerSecond = gyroInputs.connected
 				? gyroInputs.yawVelocityRadPerSec
-				: robotRelativeVelocity.omegaRadiansPerSecond;
-		addVelocityData(GeomUtil.toTwist2d(robotRelativeVelocity));
+				: previousSpeeds.omegaRadiansPerSecond;
+		addVelocityData(GeomUtil.toTwist2d(previousSpeeds));
 		// Update brake mode
 		// Reset movement timer if moved
 		if (Arrays.stream(modules)
@@ -584,16 +586,25 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			SwerveModuleState[] optimizedSetpointTorques = new SwerveModuleState[4];
 			currentSetpoint = setpointGenerator.generateSetpoint(
 					currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
+			//optimizedSetpointTorques = wheelForceCalculator.calculate(.02, previousSpeeds, desiredSpeeds);
 			for (int i = 0; i < modules.length; i++) {
 				// Optimize setpoints
 				optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
 				if (currentDriveMode == DriveMode.TRAJECTORY) {
-					optimizedSetpointTorques[i] = new SwerveModuleState(
-							pathPlannerNM[i] * (currentSetpoint.flipped()[i] ? -1 : 1),
-							optimizedSetpointStates[i].angle);
+					Vector<N2> wheelDirecton = VecBuilder.fill(
+						optimizedSetpointStates[i].angle.getCos(),
+						optimizedSetpointStates[i].angle.getSin()
+					);
+					Vector<N2> wheelForces = VecBuilder.fill(
+						pathPlannerNM.x_newtons[i],
+						pathPlannerNM.y_newtons[i]
+					);
+					double wheelTorque = wheelForces.dot(wheelDirecton) * DriveConstants.TrainConstants.kWheelDiameter.get()/2;
+					optimizedSetpointTorques[i] = new SwerveModuleState(wheelTorque, 
+						optimizedSetpointStates[i].angle);
 				} else {
-					optimizedSetpointTorques[i] = new SwerveModuleState(0.0,
-							optimizedSetpointStates[i].angle);
+					optimizedSetpointTorques[i] =
+              		new SwerveModuleState(0.0, optimizedSetpointStates[i].angle);
 				}
 
 				modules[i].runSetpoint(optimizedSetpointStates[i],
@@ -644,7 +655,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
 		// desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
 		for (int i = 0; i < 4; i++) {
-			pathPlannerNM[i] = 0;
+			pathPlannerNM.x_newtons[i] = 0;
+			pathPlannerNM.y_newtons[i] = 0;
 		}
 	}
 
@@ -655,23 +667,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
 		double[] robotRelativeForcesXNewtons = feedforwards.robotRelativeForcesXNewtons();
 		double[] robotRelativeForcesYNewtons = feedforwards.robotRelativeForcesYNewtons();
-		// calculate angles at that chassis speed
-		SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);
 		for (int i = 0; i < 4; i++) {
-			// Get the angle of the wheel in radians
-			Rotation2d moduleAngleRadians = states[i].angle;
-			Vector<N2> wheelDirection = VecBuilder.fill(moduleAngleRadians.getCos(), moduleAngleRadians.getSin());
-
-			// Project the forces onto the module's direction of motion
-			Vector<N2> moduleForce = new Translation2d(robotRelativeForcesXNewtons[i], robotRelativeForcesYNewtons[i])
-					.rotateBy(Rotation2d.fromRadians(getRotation2d().getRadians()).unaryMinus())
-					.toVector();
-
-			double wheelTorqueNm = moduleForce.dot(wheelDirection)
-					* (DriveConstants.TrainConstants.kWheelDiameter.get() / 2);
-
-			// Calculate feedforward torque in Newton-meters
-			pathPlannerNM[i] = wheelTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
+			pathPlannerNM.x_newtons[i] = robotRelativeForcesXNewtons[i];
+			pathPlannerNM.y_newtons[i] = robotRelativeForcesYNewtons[i];
 		}
 		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
 		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
@@ -996,7 +994,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			for (int i = 0; i < orientations.length; i++) {
 				modules[i].runSetpoint(
 						new SwerveModuleState(0.0, orientations[i]),
-						new SwerveModuleState(0.0, new Rotation2d()));
+						new SwerveModuleState(0.0,modules[i].getAngle())); // zero feedforwards since we're not moving
 				states[i] = new SwerveModuleState(0.0, modules[i].getAngle());
 			}
 			currentSetpoint = new SwerveSetpoint(new ChassisSpeeds(), states, new boolean[4]);

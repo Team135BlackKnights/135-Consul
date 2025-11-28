@@ -225,7 +225,7 @@ public class RobotContainer {
 	public static boolean miloMad = false;
 	// Simulation
 	public static Reefscape2025FieldSimulation fieldSimulation = null;
-	public static Command currentAuto;
+	public static Command currentAuto, lastAuto = null;
 	public static Map<String, Pair<Pose2d, Pose2d>> autoPaths = new HashMap<>();
 	public static String closestChoreoPath = ""; // auto updates from Pathfinder, DON'T TOUCH!
 	public static boolean grabbingAlgae = false; // auto updates from Pathfinder, DON'T TOUCH!
@@ -654,8 +654,7 @@ public class RobotContainer {
 				.andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
 				.ignoringDisable(true)
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
-						.setPose(new Pose2d(-50, -50, new Rotation2d()))))
-				;
+						.setPose(new Pose2d(-50, -50, new Rotation2d()))));
 		/*
 		 * if (!superStructure.leds.gifFound(ImageStates.Error)) {
 		 * Logger.recordOutput("LEDS/Main",
@@ -701,46 +700,45 @@ public class RobotContainer {
 		SmartDashboard.putData(field);
 		// Store the last known value of autoChooser.get()
 
-		/*
-		 * new Thread(() -> {
-		 * while (true) {
-		 * try {
-		 * // Get the current value from autoChooser
-		 * Command currentAutoValue = autoChooser.get();
-		 * 
-		 * // Check if the value has changed
-		 * if (currentAutoValue != null) {
-		 * if (!currentAutoValue.equals(lastAuto[0])) {
-		 * // Update the last known value
-		 * lastAuto[0] = currentAutoValue;
-		 * // Run your logic
-		 * try {
-		 * currentAuto = currentAutoValue;
-		 * Logger.recordOutput("RobotState/autoPath",
-		 * PathFinder.parseAutoToPose2dList(currentAutoValue.getName())
-		 * .toArray(Pose2d[]::new));
-		 * field.getObject("path")
-		 * .setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
-		 * } catch (Exception e) {
-		 * System.err.println("NO FOUND PATH FOR DESIRED AUTO!! Dyanmic?");
-		 * field.getObject("path").setPoses(
-		 * new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
-		 * new Pose2d(-50.2, -50, new Rotation2d())
-		 * });
-		 * }
-		 * }
-		 * }
-		 * 
-		 * // Sleep for a short duration to prevent excessive CPU usage
-		 * Thread.sleep(250); // Adjust the interval as necessary
-		 * } catch (InterruptedException e) {
-		 * Thread.currentThread().interrupt();
-		 * System.err.println("Polling thread interrupted");
-		 * break;
-		 * }
-		 * }
-		 * }).start();
-		 */
+		new Thread(() -> {
+			while (true) {
+				try {
+					// Get the current value from autoChooser
+					Command currentAutoValue = autoChooser.get();
+
+					// Check if the value has changed
+					if (currentAutoValue != null) {
+						if (!currentAutoValue.equals(lastAuto)) {
+							// Update the last known value
+							lastAuto = currentAutoValue;
+							// Run your logic
+							try {
+								currentAuto = currentAutoValue;
+								Logger.recordOutput("RobotState/autoPath",
+										PathFinder.parseAutoToPose2dList(currentAutoValue.getName())
+												.toArray(Pose2d[]::new));
+								field.getObject("path")
+										.setPoses(PathFinder.parseAutoToPose2dList(currentAutoValue.getName()));
+							} catch (Exception e) {
+								System.err.println("NO FOUND PATH FOR DESIRED AUTO!! Dyanmic?");
+								field.getObject("path").setPoses(
+										new Pose2d[] { new Pose2d(-50, -50, new Rotation2d()),
+												new Pose2d(-50.2, -50, new Rotation2d())
+										});
+							}
+						}
+					}
+
+					// Sleep for a short duration to prevent excessive CPU usage
+					Thread.sleep(250); // Adjust the interval as necessary
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					System.err.println("Polling thread interrupted");
+					break;
+				}
+			}
+		}).start();
+
 		// Configure the trigger bindings
 		configureBindings();
 		addNTCommands();
