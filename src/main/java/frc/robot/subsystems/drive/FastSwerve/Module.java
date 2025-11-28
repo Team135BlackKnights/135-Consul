@@ -17,7 +17,6 @@ import frc.robot.utils.selfCheck.SelfChecking;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix6.swerve.utility.WheelForceCalculator;
 
 public class Module {
 	private static final LoggableTunedNumber drivekP = new LoggableTunedNumber(
@@ -124,56 +123,29 @@ public class Module {
 	}
 
 	/** Runs to {@link SwerveModuleState} */
-public void runSetpoint(SwerveModuleState setpoint, WheelForceCalculator.Feedforwards ffForces) {
+	public void runSetpoint(SwerveModuleState setpoint, SwerveModuleState wheelNM) {
     setpointState = setpoint;
     Logger.recordOutput("Drive/SwerveSetpoint", setpointState.speedMetersPerSecond);
 
     double setpointWheelAngularVel = setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
     double currentWheelAngularVel = getVelocityMetersPerSec() / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
-
-    // wheel angle (drive axis) in robot frame
-    double wheelAngleRad = setpoint.angle.getRadians();
-
-    // Grab per-wheel robot-frame forces (N). Make sure index matches module ordering.
-    // Defensive: if ffForces arrays are shorter/longer, clamp or default to 0.
-    int idx = this.index; // however you identify this module's index
-    double Fx = 0.0, Fy = 0.0;
-    if (ffForces != null) {
-        if (ffForces.x_newtons != null && idx < ffForces.x_newtons.length) Fx = ffForces.x_newtons[idx];
-        if (ffForces.y_newtons != null && idx < ffForces.y_newtons.length) Fy = ffForces.y_newtons[idx];
-    }
-
-    // Project robot force onto wheel drive direction (scalar linear force the wheel must produce)
-    double wheelForceN = Fx * Math.cos(wheelAngleRad) + Fy * Math.sin(wheelAngleRad);
-
-    // Convert to torque at wheel (Nm). wheelRadius = wheelDiameter/2
-    double wheelRadiusM = (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
-    double wheelTorqueAtWheelNm = wheelForceN * wheelRadiusM;
-
-    // Convert wheel torque to motor torque using gear reduction
-    double driveReduction = DriveConstants.TrainConstants.kDriveMotorGearRatioLow;
-    double motorTorqueNm = wheelTorqueAtWheelNm / driveReduction;
-
+	double motorTorqueNm = wheelNM.speedMetersPerSecond;
     // Now use vendor-specific conversions as before:
     if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
             || DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO)
             && Constants.currentMode != Mode.SIM) {
-        // Convert desired motor torque to amps (your Kt constant may be Amp per Nm or Nm per Amp)
-        // The old code used: wheelTorqueAmps = wheelTorqueNm * KtNMPerAmp
-        // Confirm the sign/direction expected by your controller (negateFF).
-        double wheelTorqueAmps = motorTorqueNm * DriveConstants.getDriveTrainMotors(1).withReduction(driveReduction).KtNMPerAmp;
 
         if (Constants.currentMatchState == FRCMatchState.AUTO
                 || Constants.currentMatchState == FRCMatchState.AUTOINIT) {
             io.runDriveVelocitySetpoint(
                     setpointWheelAngularVel,
-                    (inputs.negateFF ? 0 : 1) * (wheelTorqueAmps)
-                            + ff.calculate(currentWheelAngularVel));
+                    ff.calculate(currentWheelAngularVel)
+            + ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp));
         } else {
             io.runDriveVelocitySetpoint(
                     setpointWheelAngularVel,
-                    (inputs.negateFF ? 0 : 1) * (wheelTorqueAmps)
-                            + ff.calculateWithVelocities(currentWheelAngularVel, setpointWheelAngularVel));
+                    (inputs.negateFF ? 0 : 1) * ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp)
+                            + ff.calculate(currentWheelAngularVel));
         }
 
     } else {

@@ -3,6 +3,7 @@ package frc.robot.subsystems.drive.FastSwerve;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -12,6 +13,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -45,7 +47,6 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.swerve.utility.WheelForceCalculator;
 import com.ctre.phoenix6.swerve.utility.WheelForceCalculator.Feedforwards;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
@@ -547,7 +548,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			// Run robot at desiredSpeeds
 			// Generate feasible next setpoint
 			SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
-			WheelForceCalculator.Feedforwards optimizedSetpointTorques = new Feedforwards(4);
+			SwerveModuleState[] optimizedSetpointTorques = new SwerveModuleState[4];
 			currentSetpoint = setpointGenerator.generateSetpoint(
 					currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
 			//optimizedSetpointTorques = wheelForceCalculator.calculate(.02, previousSpeeds, desiredSpeeds);
@@ -555,23 +556,29 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				// Optimize setpoints
 				optimizedSetpointStates[i] = currentSetpoint.moduleStates()[i];
 				if (currentDriveMode == DriveMode.TRAJECTORY) {
-					optimizedSetpointTorques = pathPlannerNM;
+					Vector<N2> wheelDirecton = VecBuilder.fill(
+						optimizedSetpointStates[i].angle.getCos(),
+						optimizedSetpointStates[i].angle.getSin()
+					);
+					Vector<N2> wheelForces = VecBuilder.fill(
+						pathPlannerNM.x_newtons[i],
+						pathPlannerNM.y_newtons[i]
+					);
+					double wheelTorque = wheelForces.dot(wheelDirecton) * DriveConstants.TrainConstants.kWheelDiameter.get()/2;
+					optimizedSetpointTorques[i] = new SwerveModuleState(wheelTorque, 
+						optimizedSetpointStates[i].angle);
 				} else {
-					if (Double.isNaN(optimizedSetpointTorques.x_newtons[i]) || Double.isNaN(optimizedSetpointTorques.y_newtons[i])) {
-						optimizedSetpointTorques.x_newtons[i] = 0;
-						optimizedSetpointTorques.y_newtons[i] = 0;
-					}
+					optimizedSetpointTorques[i] =
+              		new SwerveModuleState(0.0, optimizedSetpointStates[i].angle);
 				}
 
 				modules[i].runSetpoint(optimizedSetpointStates[i],
-						optimizedSetpointTorques);
+						optimizedSetpointTorques[i]);
 			}
 			Logger.recordOutput("Drive/SwerveStates/Setpoints",
 					optimizedSetpointStates);
-			Logger.recordOutput("Drive/SwerveStates/TorquesX",
-					optimizedSetpointTorques.x_newtons);
-			Logger.recordOutput("Drive/SwerveStates/TorquesY",
-					optimizedSetpointTorques.y_newtons);
+			Logger.recordOutput("Drive/SwerveStates/Torques",
+					optimizedSetpointTorques);
 		}
 		SwerveModuleState[] measuredStates = getModuleStates();
 		Logger.recordOutput("Drive/SwerveStates/Measured",
@@ -930,7 +937,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			for (int i = 0; i < orientations.length; i++) {
 				modules[i].runSetpoint(
 						new SwerveModuleState(0.0, orientations[i]),
-						new Feedforwards(4)); // zero feedforwards since we're not moving
+						new SwerveModuleState(0.0,modules[i].getAngle())); // zero feedforwards since we're not moving
 				states[i] = new SwerveModuleState(0.0, modules[i].getAngle());
 			}
 			currentSetpoint = new SwerveSetpoint(new ChassisSpeeds(), states, new boolean[4]);
