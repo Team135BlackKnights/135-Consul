@@ -91,6 +91,7 @@ public class Robot extends LoggedRobot {
 	private LoggedPowerDistribution pdh;
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus rioCanBus = CANBus.roboRIO();
+	public static final CANBus everythingCanBus = new CANBus("everything");
 	public static Pose3d elevatorPose = new Pose3d();
 	public static Pose3d armPose = new Pose3d();
 	public static Pose3d algaePose = new Pose3d();

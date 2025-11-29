@@ -130,7 +130,8 @@ public final class Constants {
 	public static class TuningConstants {
 		public static final boolean isTuningPID = false,
 				isTuningMacros = true,
-
+				isTuningElevator = true,
+				isTuningArm = true,
 				isTuningModules = true,
 				isTuningDrivetrain = true,
 				isTuningCharacterization = true;
