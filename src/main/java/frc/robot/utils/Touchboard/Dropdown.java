@@ -10,6 +10,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StringSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+
 import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.Commands;
 
@@ -48,7 +50,7 @@ public class Dropdown extends SubsystemBase {
 
     if (!value.equals(prev)) {
       prev = value;
-      passedCommand.get().schedule();
+      CommandScheduler.getInstance().schedule(passedCommand.get());
     }
     // This method will be called once per scheduler run
   }
