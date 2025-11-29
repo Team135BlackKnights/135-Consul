@@ -10,6 +10,7 @@ import frc.robot.Constants.TuningConstants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.drive.DriveConstants;
@@ -141,6 +142,11 @@ public class DrivetrainC extends Command {
 				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 			} else {
+				// Deal with opposing robots.
+				if (DriveConstants.autoAvoidance) {
+					chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+				}
+				Logger.recordOutput("Controller/autoAvoidance", DriveConstants.autoAvoidance);
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
 				if (RobotContainer.withinLineTolerance){
 					System.out.println("Within Line Tolerance");

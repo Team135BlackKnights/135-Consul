@@ -175,12 +175,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
 				() -> Robot.isRed, this);
-		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
 			Logger.recordOutput("Odometry/Trajectory",
 					activePath.toArray(new Pose2d[activePath.size()]));
 		});
-
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
 			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
 		});

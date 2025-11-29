@@ -220,10 +220,11 @@ public class DriveToTranslation extends Command {
 			driveVelocity = driveVelocity.interpolate(linearFF.get().times(DriveConstants.kMaxSpeedMetersPerSecond),
 					linearS);
 		}
-
-		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+		ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
-				currentPose.getRotation())); // assert that we are relative to the current pose
+				currentPose.getRotation());
+		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("DriveToPose/DistanceSetpoint",

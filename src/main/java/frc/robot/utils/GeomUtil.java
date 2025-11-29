@@ -1,5 +1,7 @@
 package frc.robot.utils;
 
+import org.littletonrobotics.junction.Logger;
+
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -12,10 +14,161 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import frc.robot.RobotContainer;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
+import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyPoseRecord;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import edu.wpi.first.math.geometry.Translation3d;
+import frc.robot.utils.drive.DriveConstants;
 
 public class GeomUtil {
+	/// Make sure the given speeds are ROBOT relative.
+	public static ChassisSpeeds avoidRobots(ChassisSpeeds speeds) {
+    final double MAX_AGE_SECONDS = 2.0;
+    final double BASE_AVOID_MARGIN_M = 0.5;        // previous constant
+    final double MAX_EXTRA_MARGIN_M = 1.2;         // additional margin at top approach (tunable)
+    final double MAX_AVOID_SPEED = DriveConstants.kMaxSpeedMetersPerSecond * 10;
+
+    Pose2d ourPose = RobotContainer.drivetrainS.getLookAheadPose();
+    double now = Timer.getFPGATimestamp();
+
+    double avoidRobotX = 0.0;
+    double avoidRobotY = 0.0;
+    boolean anyActive = false;
+
+    double len = DriveConstants.kBumperToBumperLength;
+    double wid = DriveConstants.kBumperToBumperWidth;
+
+    double thetaLoop = RobotContainer.drivetrainS.getRotation2d().getRadians();
+    double cosLoop = Math.cos(-thetaLoop);
+    double sinLoop = Math.sin(-thetaLoop);
+
+    double maxDecel = DriveConstants.maxTranslationalAcceleration.get();
+
+    // measured & commanded translational speed magnitude (global)
+    ChassisSpeeds measured =RobotContainer.drivetrainS.getChassisSpeeds();
+    double measuredSpeed = Math.hypot(measured.vxMetersPerSecond, measured.vyMetersPerSecond);
+    double commandedSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    double maxSpeed = DriveConstants.kMaxSpeedMetersPerSecond;
+
+    // Log the globals at least
+    Logger.recordOutput("Avoidance/MeasuredSpeed", measuredSpeed);
+    Logger.recordOutput("Avoidance/CommandedSpeed", commandedSpeed);
+
+    for (TxTyPoseRecord otherRobotPose : ((Swerve) RobotContainer.drivetrainS).getOpposingRobotPoses()) {
+        Pose3d other3 = otherRobotPose.pose();
+        if (other3 == null) continue;
+        double z = other3.getTranslation().getZ();
+        if (z > VisionConstants.maxObjZError) continue;
+        double age = now - otherRobotPose.timestamp();
+        if (age > MAX_AGE_SECONDS) continue;
+
+        double otherX = other3.getTranslation().getX();
+        double otherY = other3.getTranslation().getY();
+
+        double dx = ourPose.getX() - otherX;
+        double dy = ourPose.getY() - otherY;
+        double dist = Math.hypot(dx, dy);
+
+        if (dist <= 1e-6) {
+            dx = 1.0;
+            dy = 0.0;
+            dist = 1.0;
+        }
+
+        // field -> robot rotation unit vector for this target (unit from us->them)
+        double uxField = (otherX - ourPose.getX()) / dist;
+        double uyField = (otherY - ourPose.getY()) / dist;
+        double uxRobot = cosLoop * uxField - sinLoop * uyField;
+        double uyRobot = sinLoop * uxField + cosLoop * uyField;
+
+        // compute approach-projection for commanded and measured velocities
+        double cmdAlong = speeds.vxMetersPerSecond * uxRobot + speeds.vyMetersPerSecond * uyRobot;
+        double measAlong = measured.vxMetersPerSecond * uxRobot + measured.vyMetersPerSecond * uyRobot;
+
+        // Use the larger positive projection (if any) to decide "aiming"
+        double approachAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
+
+        // compute per-target dynamic margin: only expand if approachAlong > 0
+        double margin;
+        if (approachAlong <= 0.0) {
+            margin = BASE_AVOID_MARGIN_M;
+        } else {
+            // scale extra margin by how big the approach is relative to max speed
+            double approachScale = Math.min(1.0, approachAlong / Math.max(1e-6, maxSpeed));
+            margin = BASE_AVOID_MARGIN_M + MAX_EXTRA_MARGIN_M * approachScale;
+        }
+        // clamp margin for safety
+        margin = Math.max(BASE_AVOID_MARGIN_M, Math.min(BASE_AVOID_MARGIN_M + MAX_EXTRA_MARGIN_M, margin));
+
+        double halfLen = (len * 0.5) + margin;
+        double halfWid = (wid * 0.5) + margin;
+
+        double absDx = Math.abs(dx);
+        double absDy = Math.abs(dy);
+
+        if (absDx < halfLen && absDy < halfWid) {
+            double overlapX = Math.max(0.0, halfLen - absDx);
+            double overlapY = Math.max(0.0, halfWid - absDy);
+
+            double strengthX = Math.min(1.0, overlapX / halfLen);
+            double strengthY = Math.min(1.0, overlapY / halfWid);
+
+            double strength = Math.max(strengthX, strengthY);
+            double mag = strength * MAX_AVOID_SPEED;
+
+            // inward motion to consider (use max of cmd/meas)
+            double inwardAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
+            if (inwardAlong > 0.0) {
+                double minOverlap = Math.min(overlapX, overlapY);
+
+                // estimate stopping distance from current measured speed along approach
+                double stoppingDist = (measAlong * measAlong) / (2.0 * Math.max(1e-3, maxDecel));
+
+                double desiredAlong;
+                if (stoppingDist > minOverlap) {
+                    // emergency braking (unchanged behavior)
+                    double brakeVel = Math.min(maxSpeed, Math.max(0.5 * maxSpeed, measAlong));
+                    desiredAlong = -brakeVel;
+                } else {
+                    double cancel = Math.min(mag, inwardAlong);
+                    desiredAlong = cmdAlong - cancel;
+                }
+
+                double reduction = Math.max(0.0, cmdAlong - desiredAlong);
+                reduction = Math.min(reduction, mag);
+
+                avoidRobotX += -uxRobot * reduction;
+                avoidRobotY += -uyRobot * reduction;
+                anyActive = true;
+                Logger.recordOutput("Avoidance/OtherAppliedReduction", reduction);
+            }
+            Logger.recordOutput("Avoidance/OtherAge", age);
+        }
+    } // end loop
+
+    if (!anyActive) {
+        return speeds;
+    }
+
+    double newVx = speeds.vxMetersPerSecond + avoidRobotX;
+    double newVy = speeds.vyMetersPerSecond + avoidRobotY;
+
+    double maxSpeedClamp = DriveConstants.kMaxSpeedMetersPerSecond;
+    if (Math.abs(newVx) > maxSpeedClamp) newVx = Math.signum(newVx) * maxSpeedClamp;
+    if (Math.abs(newVy) > maxSpeedClamp) newVy = Math.signum(newVy) * maxSpeedClamp;
+
+    double newOmega = speeds.omegaRadiansPerSecond;
+
+    ChassisSpeeds out = new ChassisSpeeds(newVx, newVy, newOmega);
+    Logger.recordOutput("Avoidance/AppliedVX", avoidRobotX);
+    Logger.recordOutput("Avoidance/AppliedVY", avoidRobotY);
+    Logger.recordOutput("Avoidance/ResultVX", newVx);
+    Logger.recordOutput("Avoidance/ResultVY", newVy);
+
+    return out;
+}
 	/**
 	 * Creates a pure translating transform
 	 *
