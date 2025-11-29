@@ -15,6 +15,7 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import com.ctre.phoenix6.hardware.ParentDevice;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -32,7 +33,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
-import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.Mode;
 import frc.robot.subsystems.SubsystemChecker;
@@ -41,14 +41,15 @@ import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.GeomUtil;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
+import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AITargets;
+import lombok.extern.java.Log;
 
 public class Vision extends SubsystemChecker {
 	private final Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier;
@@ -177,14 +178,56 @@ public class Vision extends SubsystemChecker {
 			// Pose2d simedAIPose = new Pose2d(2,2,Rotation2d.fromDegrees(0));
 			// grab opposting robot sim poses
 			Pose2d simedAIPose = CompetitionFieldSimulation.getClosestRobotPose(currentOdomPose.getTranslation());
-			RobotContainer.drivetrainS
-					.addTxTyObservation(new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4], new double[4],
+			TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4], new double[4],
 							simedAIPose.getTranslation()
 									.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
-							TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose))));
+							TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
+			allTxTyObservations.put(AITargets.BLUE_BOT.name(), simedAIObservation);
+			RobotContainer.drivetrainS
+					.addTxTyObservation(simedAIObservation);
 
 		}
 		lastOdomPose = currentOdomPose;
+		// Lastly, update our Pathfinding dynamic obstacles. If we're out of date, clear
+		// them.
+		List<Pair<Translation2d, Translation2d>> dynamicObstacles = new ArrayList<>();
+		for (TxTyObservation obs : allTxTyObservations.values()) {
+			if ((obs.observationName().startsWith("BLUE_") || obs.observationName().startsWith("RED_")) // only AI bots
+					&& obs.objectPose().isPresent()) {
+
+				Pose2d obsPose2d = obs.objectPose().get().toPose2d();
+				double theta = obsPose2d.getRotation().getRadians();
+
+				Translation2d center = obsPose2d.getTranslation();
+
+				Translation2d fwd = new Translation2d(Math.cos(theta), Math.sin(theta));
+				Translation2d side = new Translation2d(-Math.sin(theta), Math.cos(theta));
+
+				double halfL = DriveConstants.kBumperToBumperLength / 2.0;
+				double halfW = DriveConstants.kBumperToBumperWidth / 2.0;
+
+				Translation2d c1 = center.plus(fwd.times(halfL)).plus(side.times(halfW));
+				Translation2d c2 = center.plus(fwd.times(halfL)).plus(side.times(-halfW));
+				Translation2d c3 = center.plus(fwd.times(-halfL)).plus(side.times(halfW));
+				Translation2d c4 = center.plus(fwd.times(-halfL)).plus(side.times(-halfW));
+
+				// Reduce to AABB (min/max corners)
+				double minX = Math.min(Math.min(c1.getX(), c2.getX()), Math.min(c3.getX(), c4.getX()));
+				double maxX = Math.max(Math.max(c1.getX(), c2.getX()), Math.max(c3.getX(), c4.getX()));
+				double minY = Math.min(Math.min(c1.getY(), c2.getY()), Math.min(c3.getY(), c4.getY()));
+				double maxY = Math.max(Math.max(c1.getY(), c2.getY()), Math.max(c3.getY(), c4.getY()));
+
+				dynamicObstacles.add(
+						new Pair<>(new Translation2d(minX, minY), new Translation2d(maxX, maxY)));
+
+				Logger.recordOutput("Vision/DynamicObstacle/" + obs.observationName() + "/Min",
+						new Pose2d(new Translation2d(minX, minY), new Rotation2d()));
+				Logger.recordOutput("Vision/DynamicObstacle/" + obs.observationName() + "/Max",
+						new Pose2d(new Translation2d(maxX, maxY), new Rotation2d()));
+			}
+		}
+		System.out.println("Dynamic Obstacles: " + dynamicObstacles.size());
+		RobotContainer.pathFinder.setDynamicObstacles(dynamicObstacles, currentOdomPose.getTranslation());
 
 		// Log summary data
 		Logger.recordOutput("Vision/Summary/TagPoses",
