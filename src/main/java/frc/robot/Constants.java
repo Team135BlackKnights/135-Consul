@@ -131,7 +131,7 @@ public final class Constants {
 		public static final boolean isTuningPID = false,
 				isTuningMacros = true,
 				isTuningElevator = true,
-				isTuningArm = true,
+				isTuningPinkArm = true,
 				isTuningModules = true,
 				isTuningDrivetrain = true,
 				isTuningCharacterization = true;

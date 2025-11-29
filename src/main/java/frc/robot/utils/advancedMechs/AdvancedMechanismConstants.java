@@ -1,101 +1,123 @@
 package frc.robot.utils.advancedMechs;
 
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Robot;
 import frc.robot.Constants.EncoderType;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 
 public class AdvancedMechanismConstants {
     public class PinkArm {
         public static String CANBus = "everything";
         public static MotorVendor motorVendor = MotorVendor.CTRE_ON_CANIVORE;
+        public static class ArmPosition {
+            private double extensionLengthMeters = 0;
+            private Rotation2d shoulderAngle = new Rotation2d();
+            private Rotation2d wristAngle = new Rotation2d();
 
+            public ArmPosition(double extensionLengthMeters, Rotation2d shoulderAngle, Rotation2d wristAngle) {
+                this.extensionLengthMeters = extensionLengthMeters;
+                this.shoulderAngle= shoulderAngle;
+                this.wristAngle = wristAngle;
+            }
+
+            public Rotation2d getShoulderAngle() {
+                return shoulderAngle;
+            }
+
+            public Rotation2d getWristAngle() {
+                return wristAngle;
+            }
+
+            public double getExtensionLengthMeters() {
+                return extensionLengthMeters;
+            }
+        }
+        public static final ArmPosition zeroedArmPos = new ArmPosition(0.0, Rotation2d.fromDegrees(Shoulder.startingPosition), Rotation2d.fromDegrees(Wrist.startingPosition));
+        public class Wrist{
+            public static final int kMotorID = 25;
+            public static final boolean inverted = false;
+            //Will NEVER have an attached encoder.
+            public static final double statorCurrentLimit = 80,
+            supplyCurrentLimit = 30,
+                    wristGearing = (50.0 / 9.0) * (38.0 / 12.0) * (38.0 / 12.0), //Be sure to double count the reverse chain.
+                    wristMOI = 0.018, //not real val
+                    startingPosition = 120,
+                    maxPosition = Units.degreesToRadians(240),
+                    wristLength = Units.inchesToMeters(6),
+                    wristMass = Units.lbsToKilograms(6);
+            public static final double wristPositionCoefficient = 2 * Math.PI / wristGearing;
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Wrist/kP", 4.0,
+                    TuningConstants.isTuningPinkArm),
+                    kI = new LoggableTunedNumber("PinkArm/Wrist/kI", 0.0, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Wrist/kD", 0.05, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Wrist/kS", .15, TuningConstants.isTuningPinkArm),
+                    //No KG for wrist, as it is relative to gravity of shoulder position, and thats a lot more complex and not worth it
+                    kV = new LoggableTunedNumber("PinkArm/Wrist/kV", 0.2, TuningConstants.isTuningPinkArm),
+                    maxSpeed = new LoggableTunedNumber("PinkArm/Wrist/maxSpeedDegPerSec", 720, TuningConstants.isTuningPinkArm),
+                    maxAcceleration = new LoggableTunedNumber("PinkArm/Wrist/maxAccelDegPerSec", 1440,
+                            TuningConstants.isTuningPinkArm);
+        }
         public class Shoulder {
-            public static boolean invertedFL = false, invertedFR = false, invertedBL = false, invertedBR = false;
-            public static boolean isEncoderInverted = false;
-            public static boolean isBrake = true;
-            public static int kMotorFLID = 20, kMotorFRID = 21, kMotorBLID = 22, kMotorBRID = 23;
-            public static EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER; // only other is CTRE
-            public static double statorCurrentLimit = 150,
-                    shoulderGearing = 100,
-                    encoderGearing = 1,
+            public static final boolean inverted = false;
+            public static final boolean isEncoderInverted = false;
+            public static final int kMotorFLID = 20, kMotorFRID = 21, kMotorBLID = 22, kMotorBRID = 23, kCANcoderID = 24;
+            public static final EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER; // only other is CTRE
+            public static final double statorCurrentLimit = 150,
+            supplyCurrentLimit = 45,
+                    shoulderGearing = (60.0 / 12.0) * (50.0 / 36.0) * (50.0 / 18.0) * (58.0 / 10.0),
+                    encoderGearing = (58.0 / 10.0),
                     encoderOffsetRotations = .0,
                     shoulderMOI = 0.0925974241,
+                    shoulderMOIDegreesFromZero = 0, //How many degrees, from the zero pos, is the MOI measured at? Used for gravity calc
+                    //IMPORTANT TO NOTE, THAT "ZERO POS" IS HORIZONTAL ARM STRAIGHT OUT.
                     startingPosition = 0,
                     maxPosition = Units.degreesToRadians(135),
                     shoulderLength = Units.inchesToMeters(15),
-                    shoulderMass = Units.lbsToKilograms(14),
-                    physicalX = Units.inchesToMeters(3.5),
-                    physicalY = Units.inchesToMeters(.5),
-                    physicalZ = Units.inchesToMeters(13.4);
-            public static DCMotor gearbox = DCMotor.getKrakenX60(1);
-            public static LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Shoulder/kP", 2.5,
-                    TuningConstants.isTuningArm),
-                    kI = new LoggableTunedNumber("PinkArm/Shoulder/kI", 0.000, TuningConstants.isTuningArm),
-                    kD = new LoggableTunedNumber("PinkArm/Shoulder/kD", 0.02, TuningConstants.isTuningArm),
-                    kS = new LoggableTunedNumber("PinkArm/Shoulder/kS", .3, TuningConstants.isTuningArm),
-                    kG = new LoggableTunedNumber("PinkArm/Shoulder/kG", 0, TuningConstants.isTuningArm),
-                    kV = new LoggableTunedNumber("PinkArm/Shoulder/kV", 0.3, TuningConstants.isTuningArm),
-                    maxSpeed = new LoggableTunedNumber("PinkArm/Shoulder/maxSpeed", 200, TuningConstants.isTuningArm),
-                    maxAcceleration = new LoggableTunedNumber("PinkArm/Shoulder/maxAccel", 20,
-                            TuningConstants.isTuningArm);
+                    shoulderMass = Units.lbsToKilograms(14);
+            public static final double shoulderPositionCoefficient = 2 * Math.PI /shoulderGearing,
+            shoulderEncoderPositionCoefficient = 2 * Math.PI / encoderGearing;
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Shoulder/kP", 2.5,
+                    TuningConstants.isTuningPinkArm),
+                    kI = new LoggableTunedNumber("PinkArm/Shoulder/kI", 0.000, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Shoulder/kD", 0.02, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Shoulder/kS", .3, TuningConstants.isTuningPinkArm),
+                    kG = new LoggableTunedNumber("PinkArm/Shoulder/kG", 0, TuningConstants.isTuningPinkArm),
+                    kV = new LoggableTunedNumber("PinkArm/Shoulder/kV", 0.3, TuningConstants.isTuningPinkArm),
+                    maxSpeed = new LoggableTunedNumber("PinkArm/Shoulder/maxSpeedDegPerSec", 600, TuningConstants.isTuningPinkArm),
+                    maxAcceleration = new LoggableTunedNumber("PinkArm/Shoulder/maxAccelDegPerSec", 1000,
+                            TuningConstants.isTuningPinkArm);
+        }
+        public class Extension {
+            public static final boolean inverted = false;
+            public static final int kMotorOneID = 26, kMotorTwoID = 27;
+            //Will NEVER have an attached encoder.
+            public static final double 
+            statorCurrentLimit = 120,
+            supplyCurrentLimit = 60,
+            extensionGearing = 60 / 12.0 * 30 / 25.0,
+                    pulleyDiameter = Units.inchesToMeters(.25*16/Math.PI), //effective pulley diameter from sprocket
+                    cascadeCoefficient = 2.0, //how much more extension you get from the second stage
+                    extensionMOI = 0.012,
+                    startingPosition = 0,
+                    maxPosition = Units.inchesToMeters(45.282);
+            public static final double extensionPositionCoefficient = Math.PI * pulleyDiameter / extensionGearing * cascadeCoefficient;
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Extension/kP", 8.0,
+                    TuningConstants.isTuningPinkArm),
+                    kI = new LoggableTunedNumber("PinkArm/Extension/kI", 0.0, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Extension/kD", 0.1, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Extension/kS", .2, TuningConstants.isTuningPinkArm),
+                    kV = new LoggableTunedNumber("PinkArm/Extension/kV", 0.3, TuningConstants.isTuningPinkArm),
+                    maxSpeed = new LoggableTunedNumber("PinkArm/Extension/maxSpeedMetersPerSec", 1.0,
+                            TuningConstants.isTuningPinkArm),
+                    maxAcceleration = new LoggableTunedNumber("PinkArm/Extension/maxAccelMetersPerSec", 2.0,
+                            TuningConstants.isTuningPinkArm);
         }
     }
-
-    public class AlgaeArm {
-        public static String CANBus = "everything";
-        public static MotorVendor motorVendor = MotorVendor.CTRE_ON_CANIVORE;
-        public static EncoderType encoderType = EncoderType.DUTY_CYCLE;
-        public static boolean inverted = false;
-        public static boolean isEncoderInverted = false;
-        public static boolean isBrake = true;
-        public static int kMotorID = 32, kEncoderID = 0;// rio port
-        public static DCMotor gearbox = DCMotor.getKrakenX60(1);
-        public static MotorConstantContainer armValueHolder = new MotorConstantContainer(
-                .001, .001, .001, 0, 0, 0); // must have position set in SysId
-        public static double statorCurrentLimit = 150,
-                armGearing = 3,
-                encoderGearing = 1,
-                encoderOffsetRotations = .171,
-                armMOI = 0.0925974241,
-                startingPosition = 0,
-
-                maxPosition = Units.degreesToRadians(165),
-                armLength = Units.inchesToMeters(15),
-                armMass = Units.lbsToKilograms(14),
-                physicalX = Units.inchesToMeters(3.5),
-                physicalY = Units.inchesToMeters(.5),
-                physicalZ = Units.inchesToMeters(13.4);
-        public static LoggableTunedNumber m_KalmanModelPosition = new LoggableTunedNumber(
-                "AlgaeArm/SS/KalmanModelPosition", Units.degreesToRadians(15), TuningConstants.isTuningArm),
-                m_KalmanModelVelocity = new LoggableTunedNumber("AlgaeArm/SS/KalmanModelVelocity",
-                        Units.degreesToRadians(20), TuningConstants.isTuningArm),
-                m_KalmanEncoderPosition = new LoggableTunedNumber("AlgaeArm/SS/KalmanEncoderPosition",
-                        0.0004, TuningConstants.isTuningArm),
-                m_KalmanEncoderVelocity = new LoggableTunedNumber("AlgaeArm/SS/KalmanEncoderVelocity",
-                        0.0005, TuningConstants.isTuningArm),
-                m_LQRQelmsPosition = new LoggableTunedNumber("AlgaeArm/SS/LQRQelmsPosition",
-                        .01, TuningConstants.isTuningArm),
-                m_LQRQelmsVelocity = new LoggableTunedNumber("AlgaeArm/SS/LQRQelmsVelocity",
-                        .75, TuningConstants.isTuningArm),
-                m_LQRRVolts = new LoggableTunedNumber("AlgaeArm/SS/LQRRVolts", 12, TuningConstants.isTuningArm),
-                // for FF Model
-                kS = new LoggableTunedNumber("AlgaeArm/FF/kS", .3, TuningConstants.isTuningArm),
-                kG = new LoggableTunedNumber("AlgaeArm/FF/kG", 0, TuningConstants.isTuningArm), // tune in real
-                kV = new LoggableTunedNumber("AlgaeArm/FF/kV", 0.3, TuningConstants.isTuningArm),
-                kP = new LoggableTunedNumber("AlgaeArm/kP", 2.5, TuningConstants.isTuningArm),
-                kI = new LoggableTunedNumber("AlgaeArm/kI", 0.000, TuningConstants.isTuningArm),
-                kD = new LoggableTunedNumber("AlgaeArm/kD", 0.02, TuningConstants.isTuningArm),
-                maxSpeed = new LoggableTunedNumber("AlgaeArm/maxSpeed", 200, TuningConstants.isTuningArm),
-                maxAcceleration = new LoggableTunedNumber("AlgaeArm/maxAccel", 20, TuningConstants.isTuningArm);
-        public static int currentLimit = 160;
-    }
-
     public class DynamicElevator {
 
         public static final LoggableTunedNumber kP = new LoggableTunedNumber("Elevator/Elevator kP", 850,

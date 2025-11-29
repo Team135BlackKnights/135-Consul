@@ -1,24 +1,74 @@
 package frc.robot.subsystems.advancedMechs.PinkArm;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOInputsAutoLogged;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOInputsAutoLogged;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOInputsAutoLogged;
+import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.ArmPosition;
+import frc.robot.utils.selfCheck.SelfChecking;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
-public class PinkArm{
+public class PinkArm extends SubsystemChecker {
+    private ArmPosition wantedArmPose;
+    public LoggableTunedNumber shoulderSetpointToleranceDeg = new LoggableTunedNumber(
+            "PinkArm/ShoulderSetpointToleranceDeg", 1, TuningConstants.isTuningPinkArm),
+            extensionSetpointToleranceMeters = new LoggableTunedNumber("PinkArm/ExtensionSetpointToleranceMeters",
+                    Units.inchesToMeters(0.5),
+                    TuningConstants.isTuningPinkArm),
+            wristSetpointToleranceDeg = new LoggableTunedNumber("PinkArm/WristSetpointToleranceDeg", 2,
+                    TuningConstants.isTuningPinkArm),
+            minToleranceForExtensionDegShoulder = new LoggableTunedNumber("PinkArm/MinToleranceForExtensionDegShoulder",
+                    40, TuningConstants.isTuningPinkArm), // roughly be in the right position before extending
+            extensionHomeMeters = new LoggableTunedNumber("PinkArm/ExtensionHomeMeters", -.005, // slightly negative
+                                                                                                // since we were PUSHING
+                                                                                                // into the hard stop
+                    TuningConstants.isTuningPinkArm),
+            shoulderHomeDegrees = new LoggableTunedNumber("PinkArm/ShoulderHomeDegrees", -.5,
+                    TuningConstants.isTuningPinkArm),
+            wristHomeDegrees = new LoggableTunedNumber("PinkArm/WristHomeDegrees", 135,
+                    TuningConstants.isTuningPinkArm),
+            extensionButtonHomeMeters = new LoggableTunedNumber("PinkArm/ExtensionButtonHomeMeters",
+                    0, TuningConstants.isTuningPinkArm), // humans go to exact zero.
+            shoulderButtonHomeDegrees = new LoggableTunedNumber("PinkArm/ShoulderButtonHomeDegrees", -.5, // slightly up
+                                                                                                          // on
+                                                                                                          // kickstand
+                    TuningConstants.isTuningPinkArm),
+            wristButtonHomeDegrees = new LoggableTunedNumber("PinkArm/WristButtonHomeDegrees", 135, // angled in
+                    TuningConstants.isTuningPinkArm),
+            extensionHomingDuty = new LoggableTunedNumber("PinkArm/ExtensionHomingDuty", -.07,
+                    TuningConstants.isTuningPinkArm),
+            shoulderHomingDuty = new LoggableTunedNumber("PinkArm/ShoulderHomingDuty", -.05,
+                    TuningConstants.isTuningPinkArm),
+            wristHomingDuty = new LoggableTunedNumber("PinkArm/WristHomingDuty", .07,
+                    TuningConstants.isTuningPinkArm),
+            zeroVelExtensionCutoff = new LoggableTunedNumber("PinkArm/ZeroVelExtensionCutoffMPS", 0.08,
+                    TuningConstants.isTuningPinkArm),
+            zeroVelShoulderCutoff = new LoggableTunedNumber("PinkArm/ZeroVelShoulderCutoffRPS", 0.08,
+                    TuningConstants.isTuningPinkArm),
 
-    /*private ArmPosition wantedArmPose;
+            zeroVelWristCutoff = new LoggableTunedNumber("PinkArm/ZeroVelWristCutoffRPS", 0.03,
+                    TuningConstants.isTuningPinkArm),
 
+            zeroVelTime = new LoggableTunedNumber("PinkArm/ZeroVelTime", 0.05, TuningConstants.isTuningPinkArm);
     private final ExtensionIO extensionIO;
     private final ShoulderIO shoulderIO;
     private final WristIO wristIO;
@@ -56,60 +106,43 @@ public class PinkArm{
         this.shoulderIO = shoulderIO;
         this.wristIO = wristIO;
 
-        extensionIO.setShoulderAngleSupplier(() -> shoulderInputs.shoulderAngle);
-        wantedArmPose = ArmPoseConstants.ZEROED;
-
-        SubsystemDataProcessor.createAndStartSubsystemDataProcessor(
-                () -> {
-                    synchronized (extensionInputs) {
-                        synchronized (shoulderInputs) {
-                            synchronized (wristInputs) {
-                                extensionIO.updateInputs(extensionInputs);
-                                shoulderIO.updateInputs(shoulderInputs);
-                                wristIO.updateInputs(wristInputs);
-                            }
-                        }
-                    }
-                },
-                extensionIO,
-                shoulderIO,
-                wristIO);
+        wantedArmPose = AdvancedMechanismConstants.PinkArm.zeroedArmPos;
     }
 
     @Override
     public void periodic() {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                synchronized (wristInputs) {
-                    Logger.processInputs("Subsystems/Arm/Extension", extensionInputs);
-                    Logger.processInputs("Subsystems/Arm/Shoulder", shoulderInputs);
-                    Logger.processInputs("Subsystems/Arm/Wrist", wristInputs);
 
-                    systemState = handleStateTransitions();
+        // update
+        extensionIO.updateInputs(extensionInputs);
+        shoulderIO.updateInputs(shoulderInputs);
+        wristIO.updateInputs(wristInputs);
+        Logger.processInputs("Subsystems/Arm/Extension", extensionInputs);
+        Logger.processInputs("Subsystems/Arm/Shoulder", shoulderInputs);
+        Logger.processInputs("Subsystems/Arm/Wrist", wristInputs);
 
-                    Logger.recordOutput("Subsystems/Arm/SystemState", systemState);
-                    Logger.recordOutput("Subsystems/Arm/WantedState", wantedState);
-                    Logger.recordOutput("Subsystems/Arm/ReachedSetpoint", reachedSetpoint());
+        systemState = handleStateTransitions();
 
-                    double wantedExtensionMeters;
-                    Rotation2d wantedShoulderAngle;
-                    Rotation2d wantedWristAngle;
+        Logger.recordOutput("Subsystems/Arm/SystemState", systemState);
+        Logger.recordOutput("Subsystems/Arm/WantedState", wantedState);
+        Logger.recordOutput("Subsystems/Arm/ReachedSetpoint", reachedSetpoint());
 
-                    if (wantedArmPose != null) {
-                        wantedShoulderAngle = wantedArmPose.getShoulderAngleRot2d();
-                        wantedExtensionMeters = wantedArmPose.getExtensionLengthMeters();
-                        wantedWristAngle = wantedArmPose.getWristAngleRot2d();
-                        Logger.recordOutput("Subsystems/Arm/WantedShoulderAngle", wantedShoulderAngle);
-                        Logger.recordOutput("Subsystems/Arm/WantedExtensionMeters", wantedExtensionMeters);
-                        Logger.recordOutput("Subsystems/Arm/WantedWristAngle", wantedWristAngle);
-                    }
+        double wantedExtensionMeters;
+        Rotation2d wantedShoulderAngle;
+        Rotation2d wantedWristAngle;
 
-                    applyStates();
-
-                    previousWantedState = this.wantedState;
-                }
-            }
+        if (wantedArmPose != null) {
+            wantedShoulderAngle = wantedArmPose.getShoulderAngle();
+            wantedExtensionMeters = wantedArmPose.getExtensionLengthMeters();
+            wantedWristAngle = wantedArmPose.getWristAngle();
+            Logger.recordOutput("Subsystems/Arm/WantedShoulderAngle", wantedShoulderAngle);
+            Logger.recordOutput("Subsystems/Arm/WantedExtensionMeters", wantedExtensionMeters);
+            Logger.recordOutput("Subsystems/Arm/WantedWristAngle", wantedWristAngle);
         }
+
+        applyStates();
+
+        previousWantedState = this.wantedState;
+
     }
 
     public SystemState handleStateTransitions() {
@@ -121,15 +154,14 @@ public class PinkArm{
                 }
 
                 if (!DriverStation.isDisabled()) {
-                    if (Math.abs(extensionInputs.extensionVelocityMetersPerSec)
-                                    <= ArmConstants.EXTENSION_ZERO_VELOCITY_THRESHOLD_METERS_PER_SECOND
-                            && Math.abs(shoulderInputs.shoulderAngularVelocityRadPerSec)
-                                    <= ArmConstants.SHOULDER_ZERO_VELOCITY_THRESHOLD_RADIANS_PER_SECOND) {
+                    if (Math.abs(extensionInputs.extensionVelocityMetersPerSec) <= zeroVelExtensionCutoff.get()
+                            && Math.abs(shoulderInputs.shoulderAngularVelocityRadPerSec) <= zeroVelShoulderCutoff
+                                    .get()) {
                         if (Double.isNaN(extensionAndShoulderHomeTimeStamp)) {
                             extensionAndShoulderHomeTimeStamp = Timer.getFPGATimestamp();
                             return SystemState.HOMING_SHOULDER_AND_EXTENSION;
-                        } else if ((Timer.getFPGATimestamp() - extensionAndShoulderHomeTimeStamp)
-                                >= ArmConstants.ZERO_VELOCITY_TIME_PERIOD) {
+                        } else if ((Timer.getFPGATimestamp() - extensionAndShoulderHomeTimeStamp) >= zeroVelTime
+                                .get()) {
 
                             if (!hasInitialHomeCompleted) {
                                 hasInitialHomeCompleted = true;
@@ -137,13 +169,11 @@ public class PinkArm{
                                 return SystemState.HOMING_WRIST;
                             }
 
-                            if (Math.abs(wristInputs.wristAngularVelocityRadPerSec)
-                                    <= ArmConstants.WRIST_ZERO_VELOCITY_THRESHOLD_RADIANS_PER_SECOND) {
+                            if (Math.abs(wristInputs.wristAngularVelocityRadPerSec) <= zeroVelWristCutoff.get()) {
                                 if (Double.isNaN(wristHomeTimeStamp)) {
                                     wristHomeTimeStamp = Timer.getFPGATimestamp();
                                     return SystemState.HOMING_WRIST;
-                                } else if ((Timer.getFPGATimestamp() - wristHomeTimeStamp)
-                                        >= ArmConstants.ZERO_VELOCITY_TIME_PERIOD) {
+                                } else if ((Timer.getFPGATimestamp() - wristHomeTimeStamp) >= zeroVelTime.get()) {
 
                                     isWristHomed = true;
                                     wristHomeTimeStamp = Double.NaN;
@@ -184,13 +214,13 @@ public class PinkArm{
     public void applyStates() {
         switch (systemState) {
             case HOMING_SHOULDER_AND_EXTENSION:
-                extensionIO.setDutyCycle(ArmConstants.EXTENSION_ZEROING_DUTY_CYCLE);
-                shoulderIO.setDutyCycle(ArmConstants.SHOULDER_ZEROING_DUTY_CYCLE);
+                extensionIO.setDutyCycle(extensionHomingDuty.get());
+                shoulderIO.setDutyCycle(shoulderHomingDuty.get());
                 break;
             case HOMING_WRIST:
-                wristIO.setDutyCycle(ArmConstants.WRIST_ZEROING_DUTY_CYCLE);
-                extensionIO.setDutyCycle(ArmConstants.EXTENSION_ZEROING_DUTY_CYCLE);
-                shoulderIO.setDutyCycle(ArmConstants.SHOULDER_ZEROING_DUTY_CYCLE);
+                wristIO.setDutyCycle(wristHomingDuty.get());
+                extensionIO.setDutyCycle(extensionHomingDuty.get());
+                shoulderIO.setDutyCycle(shoulderHomingDuty.get());
                 break;
             case IDLING:
                 extensionIO.setDutyCycle(0);
@@ -199,38 +229,25 @@ public class PinkArm{
                 break;
             case MOVING_TO_POSITION:
                 if (isExtensionAndShoulderHomed && isWristHomed) {
-                    if ((extensionInputs.extensionPositionInMeters - wantedArmPose.getExtensionLengthMeters())
-                                    > Units.inchesToMeters(5.0)
-                            && extensionInputs.extensionPositionInMeters
-                                    >= Units.inchesToMeters(35.0)) { // if coming down from L4
 
-                        if (shoulderInputs.shoulderAngle.getDegrees() >= 93.0) { // if scoring over back
-                            shoulderIO.setTargetAngle(Rotation2d.fromDegrees(91.0));
-                        } else if (shoulderInputs.shoulderAngle.getDegrees() <= 73.0) { // if scoring over front
-                            shoulderIO.setTargetAngle(Rotation2d.fromDegrees(75.0));
-                        } else { // do this after the shoulder has been moved within the robot
-                            extensionIO.setTargetExtension(wantedArmPose.getExtensionLengthMeters());
-                        }
+                    shoulderIO.setTargetAngle(wantedArmPose.getShoulderAngle());
+                    if (!MathUtil.isNear(
+                            wantedArmPose.getShoulderAngle().getDegrees(),
+                            shoulderInputs.shoulderAngle.getDegrees(),
+                            minToleranceForExtensionDegShoulder.get())) { // if we are not close enough to where the
+                        // shoulder is supposed to be, keep the
+                        // extension at zero in order to avoid collisions
+                        extensionIO.setTargetExtension(0);
                     } else {
-                        shoulderIO.setTargetAngle(wantedArmPose.getShoulderAngleRot2d());
-                        if (!MathUtil.isNear(
-                                wantedArmPose.getShoulderAngleRot2d().getDegrees(),
-                                shoulderInputs.shoulderAngle.getDegrees(),
-                                ArmConstants
-                                        .TOLERANCE_FOR_EXTENSION_DEGREES)) { // if we are not close enough to where the
-                            // shoulder is supposed to be, keep the
-                            // extension at zero
-                            extensionIO.setTargetExtension(0);
-                        } else {
-                            extensionIO.setTargetExtension(wantedArmPose.getExtensionLengthMeters());
-                        }
+                        extensionIO.setTargetExtension(wantedArmPose.getExtensionLengthMeters());
                     }
 
-                    if (Units.metersToInches(extensionInputs.extensionPositionInMeters) <= 27.0) {
+                    if (Units.metersToInches(extensionInputs.extensionPositionInMeters) <= 27.0) {// 180 = flat, 130ish
+                                                                                                  // = facing IN bot.
                         wristIO.setTargetAngle(Rotation2d.fromDegrees(
-                                Math.min(wantedArmPose.getWristAngleRot2d().getDegrees(), 130.0)));
+                                Math.min(wantedArmPose.getWristAngle().getDegrees(), 130.0)));
                     } else {
-                        wristIO.setTargetAngle(wantedArmPose.getWristAngleRot2d());
+                        wristIO.setTargetAngle(wantedArmPose.getWristAngle());
                     }
                 }
                 break;
@@ -238,18 +255,14 @@ public class PinkArm{
     }
 
     public void tareAllAxesUsingButtonValues() {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                synchronized (wristInputs) {
-                    isExtensionAndShoulderHomed = true;
-                    isWristHomed = true;
-                    extensionIO.resetExtensionPosition(ArmConstants.EXTENSION_BUTTON_HOME_LENGTH_METERS);
-                    shoulderIO.resetShoulderAngle(
-                            Rotation2d.fromDegrees(ArmConstants.SHOULDER_BUTTON_HOME_ANGLE_DEGREES));
-                    wristIO.resetWristAngle(Rotation2d.fromDegrees(ArmConstants.WRIST_BUTTON_HOME_ANGLE_DEGREES));
-                }
-            }
-        }
+
+        isExtensionAndShoulderHomed = true;
+        isWristHomed = true;
+        extensionIO.resetExtensionPosition(extensionButtonHomeMeters.get());
+        shoulderIO.resetShoulderAngle(
+                Rotation2d.fromDegrees(shoulderButtonHomeDegrees.get()));
+        wristIO.resetWristAngle(Rotation2d.fromDegrees(wristButtonHomeDegrees.get()));
+
     }
 
     public void tareAllAxes() {
@@ -258,32 +271,24 @@ public class PinkArm{
     }
 
     public void tareWrist() {
-        synchronized (wristInputs) {
-            isWristHomed = true;
-            wristIO.resetWristAngle(Rotation2d.fromDegrees(ArmConstants.WRIST_DRIVEN_HOME_ANGLE_DEGREES));
-        }
+        isWristHomed = true;
+        wristIO.resetWristAngle(Rotation2d.fromDegrees(wristHomeDegrees.get()));
+
     }
 
     public void tareExtensionAndShoulder() {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                isExtensionAndShoulderHomed = true;
-                extensionIO.resetExtensionPosition(ArmConstants.EXTENSION_DRIVEN_HOME_LENGTH_METERS);
-                shoulderIO.resetShoulderAngle(Rotation2d.fromDegrees(ArmConstants.SHOULDER_DRIVEN_HOME_ANGLE_DEGREES));
-            }
-        }
+        isExtensionAndShoulderHomed = true;
+        extensionIO.resetExtensionPosition(extensionHomeMeters.get());
+        shoulderIO.resetShoulderAngle(Rotation2d.fromDegrees(shoulderHomeDegrees.get()));
+
     }
 
-    public void setNeutralMode(NeutralModeValue neutralModeValue) {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                synchronized (wristInputs) {
-                    extensionIO.setNeutralMode(neutralModeValue);
-                    shoulderIO.setNeutralMode(neutralModeValue);
-                    wristIO.setNeutralMode(neutralModeValue);
-                }
-            }
-        }
+    public void setBrakeMode(boolean brakeModeEnabled) {
+
+        extensionIO.setBrakeMode(brakeModeEnabled);
+        shoulderIO.setBrakeMode(brakeModeEnabled);
+        wristIO.setBrakeMode(brakeModeEnabled);
+
     }
 
     public boolean hasHomeCompleted() {
@@ -291,21 +296,18 @@ public class PinkArm{
     }
 
     public double getCurrentExtensionPositionInMeters() {
-        synchronized (extensionInputs) {
-            return extensionInputs.extensionPositionInMeters;
-        }
+        return extensionInputs.extensionPositionInMeters;
+
     }
 
     public Rotation2d getCurrentShoulderPosition() {
-        synchronized (shoulderInputs) {
-            return shoulderInputs.shoulderAngle;
-        }
+        return shoulderInputs.shoulderAngle;
+
     }
 
     public Rotation2d getCurrentWristPosition() {
-        synchronized (wristInputs) {
-            return wristInputs.wristAngle;
-        }
+        return wristInputs.wristAngle;
+
     }
 
     public ArmPosition getWantedArmPose() {
@@ -313,45 +315,37 @@ public class PinkArm{
     }
 
     public boolean reachedSetpoint() {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                synchronized (wristInputs) {
-                    return MathUtil.isNear(
-                                    wantedArmPose.getShoulderAngleRot2d().getDegrees(),
-                                    shoulderInputs.shoulderAngle.getDegrees(),
-                                    ArmConstants.SHOULDER_SETPOINT_TOLERANCE_DEGREES)
-                            && MathUtil.isNear(
-                                    wantedArmPose.getExtensionLengthMeters(),
-                                    extensionInputs.extensionPositionInMeters,
-                                    ArmConstants.EXTENSION_SETPOINT_TOLERANCE_METERS)
-                            && MathUtil.isNear(
-                                    wantedArmPose.getWristAngleRot2d().getDegrees(),
-                                    wristInputs.wristAngle.getDegrees(),
-                                    ArmConstants.WRIST_SETPOINT_TOLERANCE_DEGREES);
-                }
-            }
-        }
+
+        return MathUtil.isNear(
+                wantedArmPose.getShoulderAngle().getDegrees(),
+                shoulderInputs.shoulderAngle.getDegrees(),
+                shoulderSetpointToleranceDeg.get())
+                && MathUtil.isNear(
+                        wantedArmPose.getExtensionLengthMeters(),
+                        extensionInputs.extensionPositionInMeters,
+                        extensionSetpointToleranceMeters.get())
+                && MathUtil.isNear(
+                        wantedArmPose.getWristAngle().getDegrees(),
+                        wristInputs.wristAngle.getDegrees(),
+                        wristSetpointToleranceDeg.get());
+
     }
 
     public boolean reachedSetpoint(ArmPosition armPosition) {
-        synchronized (extensionInputs) {
-            synchronized (shoulderInputs) {
-                synchronized (wristInputs) {
-                    return MathUtil.isNear(
-                                    armPosition.getShoulderAngleRot2d().getDegrees(),
-                                    shoulderInputs.shoulderAngle.getDegrees(),
-                                    ArmConstants.SHOULDER_SETPOINT_TOLERANCE_DEGREES)
-                            && MathUtil.isNear(
-                                    armPosition.getExtensionLengthMeters(),
-                                    extensionInputs.extensionPositionInMeters,
-                                    ArmConstants.EXTENSION_SETPOINT_TOLERANCE_METERS)
-                            && MathUtil.isNear(
-                                    armPosition.getWristAngleRot2d().getDegrees(),
-                                    wristInputs.wristAngle.getDegrees(),
-                                    ArmConstants.WRIST_SETPOINT_TOLERANCE_DEGREES);
-                }
-            }
-        }
+
+        return MathUtil.isNear(
+                armPosition.getShoulderAngle().getDegrees(),
+                shoulderInputs.shoulderAngle.getDegrees(),
+                shoulderSetpointToleranceDeg.get())
+                && MathUtil.isNear(
+                        armPosition.getExtensionLengthMeters(),
+                        extensionInputs.extensionPositionInMeters,
+                        extensionSetpointToleranceMeters.get())
+                && MathUtil.isNear(
+                        armPosition.getWristAngle().getDegrees(),
+                        wristInputs.wristAngle.getDegrees(),
+                        wristSetpointToleranceDeg.get());
+
     }
 
     public void setWantedState(WantedState wantedState) {
@@ -365,38 +359,71 @@ public class PinkArm{
 
     public void setOnlyExtensionAndShoulder(WantedState wantedState, ArmPosition armPosition) {
         this.wantedState = wantedState;
-        var wantedWrist = wantedArmPose.getWristAngleRot2d();
+        Rotation2d wantedWrist = wantedArmPose.getWristAngle();
         this.wantedArmPose = new ArmPosition(
-                armPosition.getExtensionLengthMeters(), armPosition.getShoulderAngleRot2d(), wantedWrist);
+                armPosition.getExtensionLengthMeters(), armPosition.getShoulderAngle(), wantedWrist);
     }
 
     @Override
     public List<ParentDevice> getOrchestraDevices() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getOrchestraDevices'");
+        List<ParentDevice> orchestra = new ArrayList<>();
+        List<SelfChecking> extensionHardware = extensionIO.getSelfCheckingHardware();
+        for (SelfChecking motor : extensionHardware) {
+            if (motor.getHardware() instanceof TalonFX) {
+                orchestra.add((TalonFX) motor.getHardware());
+            }
+        }
+        List<SelfChecking> shoulderHardware = shoulderIO.getSelfCheckingHardware();
+        for (SelfChecking motor : shoulderHardware) {
+            if (motor.getHardware() instanceof TalonFX) {
+                orchestra.add((TalonFX) motor.getHardware());
+            }
+        }
+        List<SelfChecking> wristHardware = wristIO.getSelfCheckingHardware();
+        for (SelfChecking motor : wristHardware) {
+            if (motor.getHardware() instanceof TalonFX) {
+                orchestra.add((TalonFX) motor.getHardware());
+            }
+        }
+        return orchestra;
     }
 
     @Override
     public double getCurrent() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getCurrent'");
+        double totalCurrent = 0.0;
+        totalCurrent += Math.abs(extensionInputs.extensionStatorCurrentAmps);
+        totalCurrent += Math.abs(shoulderInputs.shoulderStatorCurrentAmps);
+        totalCurrent += Math.abs(wristInputs.wristStatorCurrentAmps);
+        return totalCurrent;
     }
 
     @Override
     public HashMap<String, Double> getTemps() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTemps'");
+        HashMap<String, Double> tempMap = new HashMap<>();
+        tempMap.put("ExtensionOneMotorTemp", extensionInputs.extensionOneMotorTemp);
+        tempMap.put("ExtensionTwoMotorTemp", extensionInputs.extensionTwoMotorTemp);
+        tempMap.put("ShoulderFRMotorTemp", shoulderInputs.shoulderFRMotorTemp);
+        tempMap.put("ShoulderFLMotorTemp", shoulderInputs.shoulderFLMotorTemp);
+        tempMap.put("ShoulderBRMotorTemp", shoulderInputs.shoulderBRMotorTemp);
+        tempMap.put("ShoulderBLMotorTemp", shoulderInputs.shoulderBLMotorTemp);
+        tempMap.put("WristMotorTemp", wristInputs.wristMotorTemp);
+        return tempMap;
+    }
+
+    public void setAllCurrentLimit(int extensionAmps, int shoulderAmps, int wristAmps) {
+        extensionIO.setCurrentLimit(extensionAmps);
+        shoulderIO.setCurrentLimit(shoulderAmps);
+        wristIO.setCurrentLimit(wristAmps);
     }
 
     @Override
-    public void setCurrentLimit(int amps) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setCurrentLimit'");
+    public void setCurrentLimit(int extensionAmps) {
+        setAllCurrentLimit(extensionAmps, 0, 0);
     }
 
     @Override
     protected Command systemCheckCommand() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'systemCheckCommand'");
-    }*/
+        return Commands.none(); // This system is too mechanically complex for a simple system check command.
+                                // Return a no-op.
+    }
 }
