@@ -31,13 +31,18 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.Mode;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyObservation;
 import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
@@ -87,6 +92,7 @@ public class Vision extends SubsystemChecker {
 
 		registerSelfCheckHardware();
 	}
+
 	@Override
 	public void periodic() {
 		long timestamp = System.currentTimeMillis();
@@ -96,9 +102,10 @@ public class Vision extends SubsystemChecker {
 
 			io[i].updateInputs(inputs[i]);
 			Logger.processInputs("Vision/Camera" + inputs[i].name, inputs[i]);
-			//turn this on for debugging camera positions
-			Logger.recordOutput("Vision/"+inputs[i].name+"/CamPose", new Pose3d(RobotContainer.drivetrainS.getPose())
-			.plus(GeomUtil.poseToTransform(VisionConstants.cameras[i].getPose().get())));
+			// turn this on for debugging camera positions
+			Logger.recordOutput("Vision/" + inputs[i].name + "/CamPose",
+					new Pose3d(RobotContainer.drivetrainS.getPose())
+							.plus(GeomUtil.poseToTransform(VisionConstants.cameras[i].getPose().get())));
 
 		}
 
@@ -159,13 +166,24 @@ public class Vision extends SubsystemChecker {
 			if (cameraTypes[cameraIndex] == CameraType.PHOTONVISION) {
 				processPhotonVisionCamera(cameraIndex, allTagPoses, allRobotPoses,
 						allRobotPosesAccepted, allRobotPosesRejected);
+				// TODO add tx ty obs for photonvision? unnecessary?
 			} else {
 				allTxTyObservations = processSouthmoonCamera(cameraIndex, allTagPoses, allRobotPoses,
 						allRobotPosesAccepted, allRobotPosesRejected, allTxTyObservations);
 			}
 		}
 		allTxTyObservations.values().stream().forEach((obs) -> RobotContainer.drivetrainS.addTxTyObservation(obs));
+		if (Constants.currentMode == Mode.SIM) {
+			// Pose2d simedAIPose = new Pose2d(2,2,Rotation2d.fromDegrees(0));
+			// grab opposting robot sim poses
+			Pose2d simedAIPose = CompetitionFieldSimulation.getClosestRobotPose(currentOdomPose.getTranslation());
+			RobotContainer.drivetrainS
+					.addTxTyObservation(new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4], new double[4],
+							simedAIPose.getTranslation()
+									.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
+							TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose))));
 
+		}
 		lastOdomPose = currentOdomPose;
 
 		// Log summary data
@@ -198,7 +216,7 @@ public class Vision extends SubsystemChecker {
 			if (tagPose.isPresent()) {
 				tagPoses.add(tagPose.get());
 			}
-			averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId-1];
+			averageTrust += VisionConstants.FieldConstants.aprilTagOffsets[tagId - 1];
 		}
 		if (inputs[cameraIndex].tagIds.length > 0) {
 			averageTrust /= inputs[cameraIndex].tagIds.length;
@@ -303,28 +321,32 @@ public class Vision extends SubsystemChecker {
 					// Select disambiguated pose
 					if (error0 < VisionConstants.ambiguityThreshold ||
 							error1 < VisionConstants.ambiguityThreshold) {
-						if (error0 < error1/2){
+						if (error0 < error1 / 2) {
 							cameraPose = cameraPose0;
 							robotPose = robotPose0;
 						}
-						if (error1 < error0/2){
+						if (error1 < error0 / 2) {
 							cameraPose = cameraPose1;
 							robotPose = robotPose1;
 						}
-						/*Rotation2d currentRotation = RobotContainer.drivetrainS.getPose().getRotation();
-						if (Math.abs(currentRotation.minus(robotPose0.getRotation()).getRadians()) < Math
-								.abs(currentRotation.minus(robotPose1.getRotation()).getRadians())) {
+						/*
+						 * Rotation2d currentRotation =
+						 * RobotContainer.drivetrainS.getPose().getRotation();
+						 * if (Math.abs(currentRotation.minus(robotPose0.getRotation()).getRadians()) <
+						 * Math
+						 * .abs(currentRotation.minus(robotPose1.getRotation()).getRadians())) {
+						 * cameraPose = cameraPose0;
+						 * robotPose = robotPose0;
+						 * } else {
+						 * cameraPose = cameraPose1;
+						 * robotPose = robotPose1;
+						 * }
+						 */
+						// take the lower one
+						if (error0 < error1) {
 							cameraPose = cameraPose0;
 							robotPose = robotPose0;
 						} else {
-							cameraPose = cameraPose1;
-							robotPose = robotPose1;
-						}*/
-						//take the lower one
-						if (error0 < error1){
-							cameraPose = cameraPose0;
-							robotPose = robotPose0;
-						}else{
 							cameraPose = cameraPose1;
 							robotPose = robotPose1;
 						}
@@ -340,7 +362,7 @@ public class Vision extends SubsystemChecker {
 					|| robotPose.getX() > aprilTagLayoutSupplier.get().getLayout().getFieldLength()
 					|| robotPose.getY() < 0
 					|| robotPose.getY() > aprilTagLayoutSupplier.get().getLayout().getFieldWidth()) {
-				//continue;
+				// continue;
 			}
 
 			// Collect tag poses
@@ -348,10 +370,10 @@ public class Vision extends SubsystemChecker {
 			boolean containsDemo = false;
 			for (int i = (values[0] == 1 ? 9 : 17); i < values.length; i += 10) {
 				int tagId = (int) values[i];
-				if (tagId == 42){
+				if (tagId == 42) {
 					containsDemo = true;
-					tagPoses.add(new Pose3d()); //assume 0
-				}else{
+					tagPoses.add(new Pose3d()); // assume 0
+				} else {
 					aprilTagLayoutSupplier.get().getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
 				}
 			}
@@ -410,7 +432,7 @@ public class Vision extends SubsystemChecker {
 				double distance = values[index + 9];
 
 				txTyObservations.put(
-						"A"+String.valueOf(tagId), new TxTyObservation("A"+String.valueOf(tagId), cameraIndex, tx,
+						"A" + String.valueOf(tagId), new TxTyObservation("A" + String.valueOf(tagId), cameraIndex, tx,
 								ty, distance, timestamp, Optional.empty()));
 			}
 		}
@@ -427,7 +449,7 @@ public class Vision extends SubsystemChecker {
 		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_obj.length; frameIndex++) {
 			double timestamp = inputs[cameraIndex].timestamps_obj[frameIndex];
 			double[] frame = inputs[cameraIndex].frames_obj[frameIndex];
-			for (int i = 0; i < frame.length; i += 27) { //because of a limitation, there will only ever be one :) -G
+			for (int i = 0; i < frame.length; i += 27) { // because of a limitation, there will only ever be one :) -G
 				int classId = (int) frame[i];
 				double confidence = frame[i + 1];
 
@@ -441,27 +463,27 @@ public class Vision extends SubsystemChecker {
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
 				Pose3d rawPose = new Pose3d(
-					frame[12], frame[13], frame[14],
+						frame[12], frame[13], frame[14],
 						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[15], frame[16], frame[17],
-						frame[18])));
+								frame[18])));
 				Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
 				Translation2d separation = rawPose.toPose2d().getTranslation()
-					.minus(drivetrainPose.getTranslation());
+						.minus(drivetrainPose.getTranslation());
 				double bumperHalfExtent = Units.inchesToMeters(17);
 				double xOffset = Math.abs(separation.getX()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separation.getX())
-					: 0.0;
+						? Math.copySign(bumperHalfExtent, separation.getX())
+						: 0.0;
 				double yOffset = Math.abs(separation.getY()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separation.getY())
-					: 0.0;
+						? Math.copySign(bumperHalfExtent, separation.getY())
+						: 0.0;
 				Pose3d objectPose = rawPose.plus(new Transform3d(xOffset, yOffset, 0.0, new Rotation3d()));
 
-				double distanceMag = objectPose.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
+				double distanceMag = objectPose.toPose2d().getTranslation()
+						.getDistance(drivetrainPose.getTranslation());
 				allTxTyObservations.put(
-					AITargets.values()[classId].name(), new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
-							ty,distanceMag , timestamp,Optional.of(objectPose)));
-				
-
+						AITargets.values()[classId].name(),
+						new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
+								ty, distanceMag, timestamp, Optional.of(objectPose)));
 
 			}
 		}
@@ -490,11 +512,11 @@ public class Vision extends SubsystemChecker {
 	private void updateTagTrust(int[] tagIds, boolean rejected) {
 		for (int tag : tagIds) {
 			if (rejected) {
-				VisionConstants.FieldConstants.aprilTagOffsets[tag-1] = Math.min(10,
-						VisionConstants.FieldConstants.aprilTagOffsets[tag-1] + .002);
+				VisionConstants.FieldConstants.aprilTagOffsets[tag - 1] = Math.min(10,
+						VisionConstants.FieldConstants.aprilTagOffsets[tag - 1] + .002);
 			} else {
-				VisionConstants.FieldConstants.aprilTagOffsets[tag-1] = Math.max(1,
-						VisionConstants.FieldConstants.aprilTagOffsets[tag-1] - .002);
+				VisionConstants.FieldConstants.aprilTagOffsets[tag - 1] = Math.max(1,
+						VisionConstants.FieldConstants.aprilTagOffsets[tag - 1] - .002);
 			}
 		}
 	}

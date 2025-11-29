@@ -44,6 +44,7 @@ public class DrivetrainC extends Command {
 			"Drive/RotationalSpeedMaxPercentage", .75, TuningConstants.isTuningDrivetrain);
 	private Function<Double, Double> translationalCurve = ResponseCurve.QUADRATIC;
 	private Function<Double, Double> rotationalCurve = ResponseCurve.SOFT;
+
 	public DrivetrainC(DrivetrainS drivetrainS) {
 		this.drivetrainS = drivetrainS;
 		controller = new TunedJoystick(RobotContainer.driveController);
@@ -51,112 +52,165 @@ public class DrivetrainC extends Command {
 		addRequirements(drivetrainS);
 
 	}
-	/**
-	 * Avoid opponents by adding a repulsive velocity to the requested chassis speeds.
-	 * Rules:
-	 *  - ignore poses with Z > MAX_Z_M (likely bad)
-	 *  - ignore poses older than MAX_AGE_SECONDS
-	 *  - only use XY positions
-	 *  - safety area is derived from bumper dimensions (assumes both robots same size)
-	 *
-	 * This expects chassisSpeeds to be in the robot frame (vx forward, vy left).
-	 */
-	private ChassisSpeeds avoidRobots(ChassisSpeeds speeds){
-		final double MAX_AGE_SECONDS = 2.0; 
-		final double AVOID_MARGIN_M = 0.5;
-		final double MAX_AVOID_SPEED = DriveConstants.kMaxSpeedMetersPerSecond * 0.3;
 
-		Pose2d ourPose = drivetrainS.getLookAheadPose();
-		double now = Timer.getFPGATimestamp();
+private ChassisSpeeds avoidRobots(ChassisSpeeds speeds) {
+    final double MAX_AGE_SECONDS = 2.0;
+    final double BASE_AVOID_MARGIN_M = 0.5;        // previous constant
+    final double MAX_EXTRA_MARGIN_M = 1.2;         // additional margin at top approach (tunable)
+    final double MAX_AVOID_SPEED = DriveConstants.kMaxSpeedMetersPerSecond * 10;
 
-		double avoidFieldX = 0.0;
-		double avoidFieldY = 0.0;
-		boolean anyActive = false;
+    Pose2d ourPose = drivetrainS.getLookAheadPose();
+    double now = Timer.getFPGATimestamp();
 
-		// We assume both robots have same bumper size; circular
-		double len = DriveConstants.kBumperToBumperLength;
-		double wid = DriveConstants.kBumperToBumperWidth;
-		double safetyDistance = Math.hypot(len, wid) * 0.5; 
-		double safetyWithMargin = safetyDistance + AVOID_MARGIN_M;
+    double avoidRobotX = 0.0;
+    double avoidRobotY = 0.0;
+    boolean anyActive = false;
 
-		for (TxTyPoseRecord otherRobotPose : ((Swerve)drivetrainS).getOpposingRobotPoses()){
-			Pose3d other3 = otherRobotPose.pose();
-			if (other3 == null) {
-				continue;
-			}
-			double z = other3.getTranslation().getZ();
-			if (z > VisionConstants.maxObjZError) {
-				continue;
-			}
-			double age = now - otherRobotPose.timestamp();
-			if (age > MAX_AGE_SECONDS) {
-				continue;
-			}
+    double len = DriveConstants.kBumperToBumperLength;
+    double wid = DriveConstants.kBumperToBumperWidth;
 
-			double otherX = other3.getTranslation().getX();
-			double otherY = other3.getTranslation().getY();
+    double thetaLoop = drivetrainS.getRotation2d().getRadians();
+    double cosLoop = Math.cos(-thetaLoop);
+    double sinLoop = Math.sin(-thetaLoop);
 
-			double dx = ourPose.getX() - otherX;
-			double dy = ourPose.getY() - otherY;
-			double dist = Math.hypot(dx, dy);
+    double maxDecel = DriveConstants.maxTranslationalAcceleration.get();
 
-			if (dist <= 1e-6) {
-				dx = 1.0;
-				dy = 0.0;
-				dist = 1.0;
-			}
+    // measured & commanded translational speed magnitude (global)
+    ChassisSpeeds measured = drivetrainS.getChassisSpeeds();
+    double measuredSpeed = Math.hypot(measured.vxMetersPerSecond, measured.vyMetersPerSecond);
+    double commandedSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    double maxSpeed = DriveConstants.kMaxSpeedMetersPerSecond;
 
-			// If within the safety zone, compute repulsive vector
-			if (dist < safetyWithMargin){
-				double overlap = Math.max(0.0, safetyWithMargin - dist); 
-				double strength = Math.min(1.0, overlap / safetyWithMargin);
+    // Log the globals at least
+    Logger.recordOutput("Avoidance/MeasuredSpeed", measuredSpeed);
+    Logger.recordOutput("Avoidance/CommandedSpeed", commandedSpeed);
 
-				double unitX = dx / dist;
-				double unitY = dy / dist;
+    for (TxTyPoseRecord otherRobotPose : ((Swerve) drivetrainS).getOpposingRobotPoses()) {
+        Pose3d other3 = otherRobotPose.pose();
+        if (other3 == null) continue;
+        double z = other3.getTranslation().getZ();
+        if (z > VisionConstants.maxObjZError) continue;
+        double age = now - otherRobotPose.timestamp();
+        if (age > MAX_AGE_SECONDS) continue;
 
-				double mag = strength * MAX_AVOID_SPEED;
+        double otherX = other3.getTranslation().getX();
+        double otherY = other3.getTranslation().getY();
 
-				avoidFieldX += unitX * mag;
-				avoidFieldY += unitY * mag;
+        double dx = ourPose.getX() - otherX;
+        double dy = ourPose.getY() - otherY;
+        double dist = Math.hypot(dx, dy);
 
-				anyActive = true;
+        if (dist <= 1e-6) {
+            dx = 1.0;
+            dy = 0.0;
+            dist = 1.0;
+        }
 
-				Logger.recordOutput("Avoidance/OtherAge", age);
-				Logger.recordOutput("Avoidance/OtherDist", dist);
-			}
-		}
+        // field -> robot rotation unit vector for this target (unit from us->them)
+        double uxField = (otherX - ourPose.getX()) / dist;
+        double uyField = (otherY - ourPose.getY()) / dist;
+        double uxRobot = cosLoop * uxField - sinLoop * uyField;
+        double uyRobot = sinLoop * uxField + cosLoop * uyField;
 
-		if (!anyActive) {
-			return speeds;
-		}
+        // compute approach-projection for commanded and measured velocities
+        double cmdAlong = speeds.vxMetersPerSecond * uxRobot + speeds.vyMetersPerSecond * uyRobot;
+        double measAlong = measured.vxMetersPerSecond * uxRobot + measured.vyMetersPerSecond * uyRobot;
 
-		double theta = drivetrainS.getRotation2d().getRadians(); 
-		double cos = Math.cos(-theta);
-		double sin = Math.sin(-theta);
-		double avoidRobotX = cos * avoidFieldX - sin * avoidFieldY;
-		double avoidRobotY = sin * avoidFieldX + cos * avoidFieldY;
+        // Use the larger positive projection (if any) to decide "aiming"
+        double approachAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
 
-		double newVx = speeds.vxMetersPerSecond + avoidRobotX;
-		double newVy = speeds.vyMetersPerSecond + avoidRobotY;
+        // compute per-target dynamic margin: only expand if approachAlong > 0
+        double margin;
+        if (approachAlong <= 0.0) {
+            margin = BASE_AVOID_MARGIN_M;
+        } else {
+            // scale extra margin by how big the approach is relative to max speed
+            double approachScale = Math.min(1.0, approachAlong / Math.max(1e-6, maxSpeed));
+            margin = BASE_AVOID_MARGIN_M + MAX_EXTRA_MARGIN_M * approachScale;
+        }
+        // clamp margin for safety
+        margin = Math.max(BASE_AVOID_MARGIN_M, Math.min(BASE_AVOID_MARGIN_M + MAX_EXTRA_MARGIN_M, margin));
 
-		double maxSpeed = DriveConstants.kMaxSpeedMetersPerSecond;
-		if (Math.abs(newVx) > maxSpeed) {
-			newVx = Math.signum(newVx) * maxSpeed;
-		}
-		if (Math.abs(newVy) > maxSpeed) {
-			newVy = Math.signum(newVy) * maxSpeed;
-		}
+        Logger.recordOutput("Avoidance/PerTargetMargin", margin);
+        Logger.recordOutput("Avoidance/PerTargetCmdAlong", cmdAlong);
+        Logger.recordOutput("Avoidance/PerTargetMeasAlong", measAlong);
 
-		double newOmega = speeds.omegaRadiansPerSecond;
+        double halfLen = (len * 0.5) + margin;
+        double halfWid = (wid * 0.5) + margin;
 
-		ChassisSpeeds out = new ChassisSpeeds(newVx, newVy, newOmega);
-		Logger.recordOutput("Avoidance/AppliedVX", avoidRobotX);
-		Logger.recordOutput("Avoidance/AppliedVY", avoidRobotY);
-		Logger.recordOutput("Avoidance/ResultVX", newVx);
-		Logger.recordOutput("Avoidance/ResultVY", newVy);
+        double absDx = Math.abs(dx);
+        double absDy = Math.abs(dy);
 
-		return out;
-	}	
+        if (absDx < halfLen && absDy < halfWid) {
+            double overlapX = Math.max(0.0, halfLen - absDx);
+            double overlapY = Math.max(0.0, halfWid - absDy);
+
+            double strengthX = Math.min(1.0, overlapX / halfLen);
+            double strengthY = Math.min(1.0, overlapY / halfWid);
+
+            double strength = Math.max(strengthX, strengthY);
+            double mag = strength * MAX_AVOID_SPEED;
+
+            Logger.recordOutput("Avoidance/OtherOverlapX", overlapX);
+            Logger.recordOutput("Avoidance/OtherOverlapY", overlapY);
+            Logger.recordOutput("Avoidance/OtherStrength", strength);
+
+            // inward motion to consider (use max of cmd/meas)
+            double inwardAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
+            if (inwardAlong > 0.0) {
+                double minOverlap = Math.min(overlapX, overlapY);
+
+                // estimate stopping distance from current measured speed along approach
+                double stoppingDist = (measAlong * measAlong) / (2.0 * Math.max(1e-3, maxDecel));
+                Logger.recordOutput("Avoidance/StoppingDist", stoppingDist);
+                Logger.recordOutput("Avoidance/MinOverlap", minOverlap);
+
+                double desiredAlong;
+                if (stoppingDist > minOverlap) {
+                    // emergency braking (unchanged behavior)
+                    double brakeVel = Math.min(maxSpeed, Math.max(0.5 * maxSpeed, measAlong));
+                    desiredAlong = -brakeVel;
+                    Logger.recordOutput("Avoidance/EmergencyBrake", brakeVel);
+                } else {
+                    double cancel = Math.min(mag, inwardAlong);
+                    desiredAlong = cmdAlong - cancel;
+                }
+
+                double reduction = Math.max(0.0, cmdAlong - desiredAlong);
+                reduction = Math.min(reduction, mag);
+
+                avoidRobotX += -uxRobot * reduction;
+                avoidRobotY += -uyRobot * reduction;
+                anyActive = true;
+                Logger.recordOutput("Avoidance/OtherAppliedReduction", reduction);
+            }
+            Logger.recordOutput("Avoidance/OtherAge", age);
+        }
+    } // end loop
+
+    if (!anyActive) {
+        return speeds;
+    }
+
+    double newVx = speeds.vxMetersPerSecond + avoidRobotX;
+    double newVy = speeds.vyMetersPerSecond + avoidRobotY;
+
+    double maxSpeedClamp = DriveConstants.kMaxSpeedMetersPerSecond;
+    if (Math.abs(newVx) > maxSpeedClamp) newVx = Math.signum(newVx) * maxSpeedClamp;
+    if (Math.abs(newVy) > maxSpeedClamp) newVy = Math.signum(newVy) * maxSpeedClamp;
+
+    double newOmega = speeds.omegaRadiansPerSecond;
+
+    ChassisSpeeds out = new ChassisSpeeds(newVx, newVy, newOmega);
+    Logger.recordOutput("Avoidance/AppliedVX", avoidRobotX);
+    Logger.recordOutput("Avoidance/AppliedVY", avoidRobotY);
+    Logger.recordOutput("Avoidance/ResultVX", newVx);
+    Logger.recordOutput("Avoidance/ResultVY", newVy);
+
+    return out;
+}
+
+
 	@Override
 	public void initialize() {
 	}
@@ -205,12 +259,14 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal+RobotContainer.xSpeed, -yVal+RobotContainer.ySpeed, 0);
+							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal+RobotContainer.xSpeed, yVal+RobotContainer.ySpeed, 0);
+							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+									yVal + RobotContainer.ySpeed, 0);
 						}
 
 					} else {
@@ -218,12 +274,14 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal+RobotContainer.xSpeed,-yVal+RobotContainer.ySpeed, 0);
+							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal+RobotContainer.xSpeed, yVal+RobotContainer.ySpeed, 0);
+							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+									yVal + RobotContainer.ySpeed, 0);
 						}
 					}
 				} else {
@@ -251,12 +309,13 @@ public class DrivetrainC extends Command {
 				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 			} else {
-				//Deal with opposing robots.
-				if (DriveConstants.autoAvoidance){
+				// Deal with opposing robots.
+				if (DriveConstants.autoAvoidance) {
 					chassisSpeeds = avoidRobots(chassisSpeeds);
 				}
+				Logger.recordOutput("Controller/autoAvoidance", DriveConstants.autoAvoidance);
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
-				if (RobotContainer.withinLineTolerance){
+				if (RobotContainer.withinLineTolerance) {
 					System.out.println("Within Line Tolerance");
 				}
 				Logger.recordOutput("Controller/SetX", xSpeed);
