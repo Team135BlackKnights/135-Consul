@@ -142,10 +142,10 @@ public class FieldConstants {
 			new Translation2d(.75, 6.74),
 			};
 		public static final Pose2d blueRightTopFace = new Pose2d(1.57, .6, Rotation2d.fromDegrees(144.011 - 90));
-		public static final Pose2d blueRightBottomFace = new Pose2d(.7, 1.45, Rotation2d.fromDegrees(138 - 90));
+		public static final Pose2d blueRightBottomFace = new Pose2d(.7, 1.45, Rotation2d.fromDegrees(144.011- 90));
 		public static final Pose2d blueRightCenterFace = new Pose2d(
-				Units.inchesToMeters(33.526),
-				Units.inchesToMeters(25.824),
+				1.117,
+				1,
 				Rotation2d.fromDegrees(144.011 - 90));
 		public static final Translation2d[] validBlueRight = new Translation2d[] {
 			new Translation2d(1.57, GeomUtil.applyY(validBlueLeft[0].getY(),true)),

@@ -90,7 +90,7 @@ public class DrivetrainC extends Command {
 			// Convert ChassisSpeeds into the ChassisSpeeds type
 			if (DriveConstants.fieldOriented) {
 				if (RobotContainer.withinLineTolerance) {
-					if (RobotContainer.drivetrainS.getEstimatedPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
+					if (RobotContainer.drivetrainS.getLookAheadPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
 						if (Robot.isRed) {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
@@ -141,6 +141,11 @@ public class DrivetrainC extends Command {
 				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 			} else {
+				// Deal with opposing robots.
+				if (DriveConstants.autoAvoidance) {
+					//chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+				}
+				Logger.recordOutput("Controller/autoAvoidance", DriveConstants.autoAvoidance);
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
 				if (RobotContainer.withinLineTolerance){
 					System.out.println("Within Line Tolerance");

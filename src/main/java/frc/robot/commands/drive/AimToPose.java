@@ -51,7 +51,7 @@ public class AimToPose extends Command {
 	@Override
 	public void initialize() {
 		// Reset the controller
-		Pose2d currentPose = drive.getEstimatedPose();
+		Pose2d currentPose = drive.getLookAheadPose();
 		thetaController.reset(currentPose.getRotation().getRadians(),
 				drive.getRotation2d().getRadians());
 		drive.changeDeadband(.02); // Make sure the commands aren't trying to move tiny movements when the drivetrain won't allow it
@@ -71,11 +71,11 @@ public class AimToPose extends Command {
 		RobotContainer.currentPath = "AIMTOPOSE";
 		//set Chassis to be aimed at it.
 		double targetAngle = GeomUtil.closerAngleToZero(GeomUtil
-				.rotationFromCurrentToTarget(drive.getEstimatedPose().getTranslation(),
+				.rotationFromCurrentToTarget(drive.getLookAheadPose().getTranslation(),
 						poseSupplier.get().getTranslation(),
 						GeomUtil.ApproachDirection.BACK));
 		Logger.recordOutput("CurretP", thetaController.getP());
-		Rotation2d currentRotation = drive.getEstimatedPose().getRotation();
+		Rotation2d currentRotation = drive.getLookAheadPose().getRotation();
 		Logger.recordOutput("TargetAngle", targetAngle);
 		Logger.recordOutput("currentROtation", currentRotation);
 		RobotContainer.angleOverrider = Optional.of(new Rotation2d(targetAngle));

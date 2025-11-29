@@ -104,7 +104,7 @@ public class MecanumIOSparkBase implements MecanumIO {
 		loopConfig.d(KD);
 		loopConfig.p(KP);
 		MAXMotionConfig MaxMotionConfig = new MAXMotionConfig();
-		MaxMotionConfig.maxVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
+		MaxMotionConfig.cruiseVelocity(Units.radiansPerSecondToRotationsPerMinute(TrainConstants.kMaxAngularSpeedRadiansPerSecond));
 		sparkConfig.apply(loopConfig);
 		frontLeft.configure(sparkConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 		sparkConfig.inverted(DriveConstants.kFrontRightDriveReversed);
@@ -183,19 +183,19 @@ public class MecanumIOSparkBase implements MecanumIO {
 			double frontRightFFVolts, double backLeftFFVolts,
 			double backRightFFVolts) {
 		if (DriveConstants.enablePID) {
-			frontLeftPID.setReference(
+			frontLeftPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontLeftRadPerSec * GEAR_RATIO),
 					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontLeftFFVolts);
-			frontRightPID.setReference(
+			frontRightPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							frontRightRadPerSec * GEAR_RATIO),
 					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, frontRightFFVolts);
-			backLeftPID.setReference(
+			backLeftPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backLeftRadPerSec * GEAR_RATIO),
 					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backLeftFFVolts);
-			backRightPID.setReference(
+			backRightPID.setSetpoint(
 					Units.radiansPerSecondToRotationsPerMinute(
 							backRightRadPerSec * GEAR_RATIO),
 					ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, backRightFFVolts);
