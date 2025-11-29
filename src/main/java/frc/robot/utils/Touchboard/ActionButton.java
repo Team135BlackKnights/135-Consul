@@ -8,6 +8,7 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ActionButton extends SubsystemBase {
@@ -36,7 +37,7 @@ public class ActionButton extends SubsystemBase {
     boolean value = dataSubscriber.get();
 
     if (value) {
-      executed.schedule();
+      CommandScheduler.getInstance().schedule(executed);
     }else{
       executed.cancel();
     }

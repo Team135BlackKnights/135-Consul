@@ -43,7 +43,7 @@ public class PathFinder {
 	 */
 	public static Command goToPose(Pose2d pose,
 			Supplier<PathConstraints> constraints, DrivetrainS drive,
-			boolean isAuto, double endVelocity, double tolerance) {
+			boolean isAuto, double endVelocity, double tolerance, double innerTolerance) {
 		if (isAuto) { // skip accuracy for speed
 
 			return
@@ -71,6 +71,10 @@ public class PathFinder {
 				) 
 				.andThen(
 						new DriveAndAimToRotation(drive, pose, constraints))
+				.until(
+						() -> drive.getPose().getTranslation()
+								.getDistance(pose.getTranslation()) < innerTolerance
+				) 	
 				.finallyDo(() -> {
 					RobotContainer.field.getObject("target pose")
 							.setPose(new Pose2d(-50, -50, new Rotation2d()));
@@ -98,7 +102,7 @@ public class PathFinder {
 					return AutoBuilder
 					.pathfindToPose(new Pose2d(goalPoint.get(), rotationGoal.get()), constraints.get(), 0);
 				}, Set.of(drive))
-				.until(() -> RobotContainer.drivetrainS.getEstimatedPose().getTranslation()
+				.until(() -> RobotContainer.drivetrainS.getLookAheadPose().getTranslation()
 						.getDistance(goalPoint.get()) < outerTolerance)
 				.andThen(new DriveToLine(drive, pointA, pointB, innerTolerance, humanPlayerWaitTime, rotationGoal,() ->""))
 				.finallyDo(() -> {
