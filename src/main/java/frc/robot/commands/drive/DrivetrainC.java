@@ -10,7 +10,6 @@ import frc.robot.Constants.TuningConstants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.drive.DriveConstants;
@@ -91,7 +90,7 @@ public class DrivetrainC extends Command {
 			// Convert ChassisSpeeds into the ChassisSpeeds type
 			if (DriveConstants.fieldOriented) {
 				if (RobotContainer.withinLineTolerance) {
-					if (RobotContainer.drivetrainS.getEstimatedPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
+					if (RobotContainer.drivetrainS.getLookAheadPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
 						if (Robot.isRed) {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
@@ -144,7 +143,7 @@ public class DrivetrainC extends Command {
 			} else {
 				// Deal with opposing robots.
 				if (DriveConstants.autoAvoidance) {
-					chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+					//chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
 				}
 				Logger.recordOutput("Controller/autoAvoidance", DriveConstants.autoAvoidance);
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);

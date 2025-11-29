@@ -96,7 +96,7 @@ public class DriveToTranslation extends Command {
 				DriveConstants.maxRotationalAcceleration.get());
 		boolean isAuto = false;
 		double newTolerance = Units.inchesToMeters(1); // Default tolerance
-		Supplier<Pose2d> currentPoseSupplier = () -> drive.getEstimatedPose();
+		Supplier<Pose2d> currentPoseSupplier = () -> drive.getLookAheadPose();
 		// Parse arguments
 		for (Object arg : args) {
 			if (arg instanceof Translation2d translation) {
@@ -223,7 +223,7 @@ public class DriveToTranslation extends Command {
 		ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
 				currentPose.getRotation());
-		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+		//chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
 		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);

@@ -168,7 +168,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		}
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
-		AutoBuilder.configure(this::getEstimatedPose, this::resetPose,
+		AutoBuilder.configure(this::getLookAheadPose, this::resetPose,
 				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
@@ -373,7 +373,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * @see {@link #getPose() getPose} for the geometrically accurate pose
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
-	public Pose2d getEstimatedPose() {
+	@Override
+	public Pose2d getLookAheadPose() {
 		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
 		/*return estimatedPose.plus(new Transform2d(new Translation2d(),
 				DriveConstants.TrainConstants.robotOffsetAngleDirection));*/
@@ -973,7 +974,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * 
 	 * @return an INTERNAL ONLY output of the robot pose (use this for any
 	 *         driving/turning calculations)
-	 * @see {@link #getEstimatedPose() getEstimatedPose} for the visually
+	 * @see {@link #getLookAheadPose() getLookAheadPose} for the visually
 	 *      accurate pose
 	 */
 	@Override

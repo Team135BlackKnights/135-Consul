@@ -53,7 +53,6 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
