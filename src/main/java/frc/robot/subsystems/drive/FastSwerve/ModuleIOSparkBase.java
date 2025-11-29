@@ -12,6 +12,7 @@ import java.util.Queue;
 import static frc.robot.utils.SparkUtil.*;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
@@ -20,7 +21,6 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -176,10 +176,9 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 .uvwAverageDepth(2);
                 driveConfig.closedLoop
                                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                                .pidf(
-                                                DriveConstants.overallDriveMotorConstantContainer.getP(),
-                                                DriveConstants.overallDriveMotorConstantContainer.getI(),
-                                                DriveConstants.overallDriveMotorConstantContainer.getD(), 0.0);
+                                .pid(DriveConstants.overallTurningMotorConstantContainer.getP(),
+                                                DriveConstants.overallTurningMotorConstantContainer.getI(),
+                                                DriveConstants.overallTurningMotorConstantContainer.getD());
                 driveConfig.signals
                                 .primaryEncoderPositionAlwaysOn(true)
                                 .primaryEncoderPositionPeriodMs((int) (1000.0 / DriveConstants.TrainConstants.odomHz))
@@ -212,9 +211,9 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 .positionWrappingEnabled(true)
                                 .positionWrappingInputRange(-Math.PI * RobotController.getVoltage3V3(),
                                                 Math.PI * RobotController.getVoltage3V3())
-                                .pidf(DriveConstants.overallTurningMotorConstantContainer.getP(),
+                                .pid(DriveConstants.overallTurningMotorConstantContainer.getP(),
                                                 DriveConstants.overallTurningMotorConstantContainer.getI(),
-                                                DriveConstants.overallTurningMotorConstantContainer.getD(), 0.0);
+                                                DriveConstants.overallTurningMotorConstantContainer.getD());
                 turnConfig.signals
                                 .analogPositionAlwaysOn(true)
                                 .analogPositionPeriodMs((int) (1000.0 / DriveConstants.TrainConstants.odomHz))
@@ -292,7 +291,7 @@ public class ModuleIOSparkBase implements ModuleIO {
 
         @Override
         public void runDriveVelocitySetpoint(double velocityRadPerSec, double feedForward) {
-                driveController.setReference(
+                driveController.setSetpoint(
                                 velocityRadPerSec,
                                 ControlType.kVelocity,
                                 ClosedLoopSlot.kSlot0,
@@ -314,7 +313,7 @@ public class ModuleIOSparkBase implements ModuleIO {
                 double pos = MathUtil.inputModulus(
                                 (rotation + zeroRotation.getRadians()) * RobotController.getVoltage3V3(),
                                 -Math.PI * RobotController.getVoltage3V3(), Math.PI * RobotController.getVoltage3V3());
-                turnController.setReference(pos, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+                turnController.setSetpoint(pos, ControlType.kPosition, ClosedLoopSlot.kSlot0);
         }
 
         /** Configure drive PID */
@@ -322,10 +321,11 @@ public class ModuleIOSparkBase implements ModuleIO {
         public void setDrivePID(double kP, double kI, double kD, double kS, double kV) {
                 driveConfig.closedLoop
                                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                                .pidf(
+                                .pid(
                                                 kP,
                                                 kI,
-                                                kD, kV);
+                                                kD);
+                driveConfig.closedLoop.feedForward.kV(kV);
                 driveSpark.configureAsync(
                                                 driveConfig, ResetMode.kResetSafeParameters,
                                                 PersistMode.kNoPersistParameters);
@@ -339,9 +339,10 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 .positionWrappingEnabled(true)
                                 .positionWrappingInputRange(-Math.PI * RobotController.getVoltage3V3(),
                                                 Math.PI * RobotController.getVoltage3V3())
-                                .pidf(
+                                .pid(
                                                 kP,
-                                                kI, kD, kS);
+                                                kI, kD);
+                turnConfig.closedLoop.feedForward.kS(kS);
                 turnSpark.configureAsync(
                                 turnConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
         }

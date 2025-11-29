@@ -44,12 +44,11 @@ public class GyroIOPigeon2 implements GyroIO {
 	private double zPosition = 0.0;
 	private double last_world_linear_accel_x, last_world_linear_accel_y;
 
-	@SuppressWarnings("unused")
 	public GyroIOPigeon2() {
-		if (DriveConstants.canBusName == "") {
+		if (DriveConstants.driveCanBus == null) {
 			pigeon = new Pigeon2(DriveConstants.kGyroPort);
 		} else {
-			pigeon = new Pigeon2(DriveConstants.kGyroPort, DriveConstants.canBusName);
+			pigeon = new Pigeon2(DriveConstants.kGyroPort, DriveConstants.driveCanBus);
 		}
 		yaw = pigeon.getYaw();
 		yawVelocity = pigeon.getAngularVelocityZWorld();

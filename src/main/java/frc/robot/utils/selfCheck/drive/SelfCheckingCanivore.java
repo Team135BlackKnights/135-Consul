@@ -3,11 +3,10 @@ package frc.robot.utils.selfCheck.drive;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.CANBus.CANBusStatus;
 
-import frc.robot.Robot;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 /**
@@ -24,11 +23,11 @@ public class SelfCheckingCanivore implements SelfChecking {
 	 * Creates a new self checking Canivore (CANBus)
 	 * @param label the name of the can bus
 	 */
-	public SelfCheckingCanivore(String label) {
-		this.label = label;
+	public SelfCheckingCanivore(CANBus bus) {
+		this.label = bus.getName();
 		
-		this.busStatus = Robot.driveCanBus.getStatus();
-		this.isNetworkCANFD = Robot.driveCanBus.isNetworkFD(); 
+		this.busStatus = bus.getStatus();
+		this.isNetworkCANFD = bus.isNetworkFD(); 
 	}
 	@Override
 	public ConcurrentLinkedQueue<SubsystemFault> checkForFaults() {
