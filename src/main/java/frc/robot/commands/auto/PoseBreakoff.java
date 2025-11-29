@@ -140,7 +140,7 @@ public class PoseBreakoff extends Command{
             System.out.println("No valid breakoff type provided, defaulting to 0,0,0");
             desiredPose = new Pose2d(0, 0, Rotation2d.fromDegrees(0));
         }
-        return PathFinder.goToPose(desiredPose, () -> constraints, drive, true, endVelocity,tolerance);
+        return PathFinder.goToPose(desiredPose, () -> constraints, drive, true, endVelocity,tolerance, tolerance / 2);
     }
     @Override
     public void execute(){
