@@ -38,7 +38,6 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.EqualsUtil;
-import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.DriveConstants.SwerveModuleType;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
@@ -58,7 +57,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.utility.WheelForceCalculator.Feedforwards;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
@@ -202,12 +200,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
 				() -> Robot.isRed, this);
-		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
 			Logger.recordOutput("Odometry/Trajectory",
 					activePath.toArray(new Pose2d[activePath.size()]));
 		});
-
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
 			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
 		});
@@ -408,6 +404,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * @see {@link #getPose() getPose} for the geometrically accurate pose
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
+	@Override
 	public Pose2d getLookAheadPose() {
 		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
 		/*
@@ -1143,7 +1140,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * 
 	 * @return an INTERNAL ONLY output of the robot pose (use this for any
 	 *         driving/turning calculations)
-	 * @see {@link #getLookAheadPose() getEstimatedPose} for the visually
+	 * @see {@link #getLookAheadPose() getLookAheadPose} for the visually
 	 *      accurate pose
 	 */
 	@Override

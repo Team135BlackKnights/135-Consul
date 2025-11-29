@@ -99,6 +99,19 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
+import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.drive.DrivetrainC;
+import frc.robot.commands.drive.WheelRadiusCharacterization;
+import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.commands.drive.AimToRotation;
 import frc.robot.commands.drive.DriveAndAimToRotation;
 
@@ -628,37 +641,37 @@ public class RobotContainer {
 				new Pair<String, CommandPair>("RT", // Example Drive to the right top face of the coral station
 						new CommandPair(
 								(Supplier<Command>) () -> PathFinder.goToPose(
-										FieldConstants.CoralStation.blueRightTopFace,
+										GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace, false),
 										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
 								Set.of(drivetrainS))),
 				new Pair<String, CommandPair>("RM", // Example Drive to the right top face of the coral station
 						new CommandPair(
 								(Supplier<Command>) () -> PathFinder.goToPose(
-										FieldConstants.CoralStation.blueRightCenterFace,
+										GeomUtil.apply(FieldConstants.CoralStation.blueRightCenterFace, false),
 										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
 								Set.of(drivetrainS))),
 				new Pair<String, CommandPair>("RB", // Example Drive to the right top face of the coral station
 						new CommandPair(
 								(Supplier<Command>) () -> PathFinder.goToPose(
-										FieldConstants.CoralStation.blueRightBottomFace,
+										GeomUtil.apply(FieldConstants.CoralStation.blueRightBottomFace, false),
 										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
 								Set.of(drivetrainS))),
 				new Pair<String, CommandPair>("10", // Example Drive to the right top face of the coral station
 					new CommandPair(
 							(Supplier<Command>) () -> PathFinder.goToPose(
-									new Pose2d(4,2.82,new Rotation2d(Math.PI/3)),
+									GeomUtil.apply(new Pose2d(4,2.82,new Rotation2d(Math.PI/3)), false),
 									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
 							Set.of(drivetrainS))),
 				new Pair<String, CommandPair>("11", // Example Drive to the right top face of the coral station
 					new CommandPair(
 							(Supplier<Command>) () -> PathFinder.goToPose(
-									new Pose2d(3.693,3.01,new Rotation2d(Math.PI/3)),
+									GeomUtil.apply(new Pose2d(3.693,3.01,new Rotation2d(Math.PI/3)), false),
 									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
 							Set.of(drivetrainS))),
 				new Pair<String, CommandPair>("12", // Example Drive to the right top face of the coral station
 					new CommandPair(
 							(Supplier<Command>) () -> PathFinder.goToPose(
-									new Pose2d(3.211,3.883,new Rotation2d(0)),
+									GeomUtil.apply(new Pose2d(3.211,3.883,new Rotation2d(0)), false),
 									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
 							Set.of(drivetrainS)))
 								));
@@ -792,15 +805,14 @@ public class RobotContainer {
 		selectButtonDrive.toggleOnTrue(new AimToObject(drivetrainS,AITargets.BLUE_BOT.name(),1.5));
 		//AITargets.values()[classId].name()
 		startButtonDrive
-				.onChange(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
+				.onTrue(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
 		yButtonDrive.whileTrue(Commands.defer(() -> new AimToAprilTag(() -> getSelectedAprilTagLayout(), drivetrainS,visionS,2,true),
 		Set.of()));
 		bButtonDrive.whileTrue(Commands.defer(() -> new AimToRotation((Supplier<Rotation2d>) () -> startingPoseCache.getRotation(), drivetrainS, DriveConstants.pathConstraints),Set.of(drivetrainS)));
 		aButtonDrive.whileTrue(
-				Commands.defer(() -> new DriveAndAimToRotation(drivetrainS,
-						(Supplier<Pose2d>) () -> new Pose2d(3.5,4,Rotation2d.fromDegrees(-45))),
-						Set.of(drivetrainS)));
+				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5, .05),
+						Set.of(drivetrainS))); //3.5,4
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
