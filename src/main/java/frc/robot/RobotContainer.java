@@ -99,21 +99,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.DrivetrainC;
-import frc.robot.commands.drive.WheelRadiusCharacterization;
-import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.commands.drive.AimToRotation;
-import frc.robot.commands.drive.DriveAndAimToRotation;
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 

@@ -223,7 +223,7 @@ public class DriveToTranslation extends Command {
 		ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
 				currentPose.getRotation());
-		//chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
 		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
