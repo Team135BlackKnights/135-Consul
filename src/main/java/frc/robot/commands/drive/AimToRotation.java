@@ -42,7 +42,7 @@ public class AimToRotation extends Command {
 	 */
 	public AimToRotation(Supplier<Pose2d> goalPose, ApproachDirection approachDirection, DrivetrainS drive) {
 		this(() -> GeomUtil.rotationFromCurrentToTarget(
-			drive.getEstimatedPose().getTranslation(),
+			drive.getLookAheadPose().getTranslation(),
 			goalPose.get().getTranslation(), // Fixed: Call goalPose.get() to retrieve the Pose2d
 			approachDirection
 		), drive,DriveConstants.pathConstraints);
@@ -54,7 +54,7 @@ public class AimToRotation extends Command {
 	 */
 	public AimToRotation(Pose2d goalPose, ApproachDirection approachDirection, DrivetrainS drive) {
 		this(() -> GeomUtil.rotationFromCurrentToTarget(
-			drive.getEstimatedPose().getTranslation(),
+			drive.getLookAheadPose().getTranslation(),
 			goalPose.getTranslation(),
 			approachDirection
 		), drive, DriveConstants.pathConstraints);
@@ -86,7 +86,7 @@ public class AimToRotation extends Command {
 		this.drive = drive;
 		this.filter = new MedianFilter(5);
 		controller.reset(
-				drive.getEstimatedPose().getRotation().getRadians(),
+				drive.getLookAheadPose().getRotation().getRadians(),
 				drive.getFieldVelocity().dtheta);
 	}
 	public void updateConstraints(PathConstraints constraints) {
@@ -102,7 +102,7 @@ public class AimToRotation extends Command {
 		controller.setTolerance(Units.degreesToRadians(toleranceDegrees.get()));
 		double targetRads = filter.calculate(goalHeadingSupplier.get().getRadians());
 		output = controller.calculate(
-				drive.getEstimatedPose().getRotation().getRadians(),
+				drive.getLookAheadPose().getRotation().getRadians(),
 				targetRads);
 		Logger.recordOutput("Drive/HeadingController/HeadingGoal", targetRads);
 		Logger.recordOutput("Drive/HeadingController/Output Rad/s Before Deadband", output);

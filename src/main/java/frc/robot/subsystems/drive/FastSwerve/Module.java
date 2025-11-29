@@ -6,8 +6,6 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.*;
-import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
@@ -18,6 +16,7 @@ import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import org.littletonrobotics.junction.Logger;
+
 
 public class Module {
 	private static final LoggableTunedNumber drivekP = new LoggableTunedNumber(
@@ -124,53 +123,43 @@ public class Module {
 	}
 
 	/** Runs to {@link SwerveModuleState} */
-	public void runSetpoint(SwerveModuleState setpoint,
-			SwerveModuleState torqueFF) {
-		setpointState = setpoint;
-		Logger.recordOutput("Drive/SwerveSetpoint",
-				setpointState.speedMetersPerSecond);
-		double wheelTorqueNm = torqueFF.speedMetersPerSecond; // Using SwerveModuleState for torque for easy logging
-		// get current setpoint as Measure<? extends PerUnit<U, TimeUnit>>
-		LinearVelocity setpointVelocity = Units.MetersPerSecond
-				.of(setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2));
-		LinearVelocity currentVelocity = Units.MetersPerSecond.of(getVelocityMetersPerSec());
-		if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
-				|| DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO)
-				&& Constants.currentMode != Mode.SIM) {
-			double wheelTorqueAmps = wheelTorqueNm * DriveConstants.getDriveTrainMotors(1).KtNMPerAmp;
-			if (Constants.currentMatchState == FRCMatchState.AUTO
-					|| Constants.currentMatchState == FRCMatchState.AUTOINIT) {
-				io.runDriveVelocitySetpoint(
-						setpoint.speedMetersPerSecond
-								/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
-						(inputs.negateFF ? 0 : 1) *
-								(wheelTorqueAmps)
-								+ ff.calculate(currentVelocity.baseUnitMagnitude()));
-			} else {
-				io.runDriveVelocitySetpoint(
-						setpoint.speedMetersPerSecond
-								/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
-						(inputs.negateFF ? 0 : 1) *
-								(wheelTorqueAmps) +
-								ff.calculateWithVelocities(currentVelocity.baseUnitMagnitude(),
-										setpointVelocity.baseUnitMagnitude())); // might be wrong
-			}
+	public void runSetpoint(SwerveModuleState setpoint, SwerveModuleState wheelNM) {
+    setpointState = setpoint;
+    Logger.recordOutput("Drive/SwerveSetpoint", setpointState.speedMetersPerSecond);
 
-		} else {
-			double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(wheelTorqueNm,
-					(setpoint.speedMetersPerSecond
-							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2)));
-			Logger.recordOutput("Drive/" + name + "/wheelTorque", wheelTorqueVolts);
-			io.runDriveVelocitySetpoint(
-					setpoint.speedMetersPerSecond
-							/ (DriveConstants.TrainConstants.kWheelDiameter.get() / 2),
-					(inputs.negateFF ? 0 : 1) *
-							ff.calculateWithVelocities(currentVelocity.baseUnitMagnitude(),
-									setpointVelocity.baseUnitMagnitude())
-							+ ((wheelTorqueVolts)));
-		}
-		io.runTurnPositionSetpoint(setpoint.angle.getRadians());
-	}
+    double setpointWheelAngularVel = setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
+    double currentWheelAngularVel = getVelocityMetersPerSec() / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
+	double motorTorqueNm = wheelNM.speedMetersPerSecond;
+    // Now use vendor-specific conversions as before:
+    if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
+            || DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO)
+            && Constants.currentMode != Mode.SIM) {
+
+        if (Constants.currentMatchState == FRCMatchState.AUTO
+                || Constants.currentMatchState == FRCMatchState.AUTOINIT) {
+            io.runDriveVelocitySetpoint(
+                    setpointWheelAngularVel,
+                    ff.calculate(currentWheelAngularVel)
+            + ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp));
+        } else {
+            io.runDriveVelocitySetpoint(
+                    setpointWheelAngularVel,
+                    (inputs.negateFF ? 0 : 1) * ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp)
+                            + ff.calculate(currentWheelAngularVel));
+        }
+
+    } else {
+        double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(motorTorqueNm, setpointWheelAngularVel);
+        Logger.recordOutput("Drive/" + name + "/wheelTorqueVolts", wheelTorqueVolts);
+        io.runDriveVelocitySetpoint(
+                setpointWheelAngularVel,
+                (inputs.negateFF ? 0 : 1) * ff.calculateWithVelocities(currentWheelAngularVel, setpointWheelAngularVel)
+                        + (wheelTorqueVolts));
+    }
+
+    io.runTurnPositionSetpoint(setpoint.angle.getRadians());
+}
+
 
 	/**
 	 * Runs characterization volts or amps depending on using voltage or current

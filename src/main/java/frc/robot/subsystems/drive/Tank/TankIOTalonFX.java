@@ -18,6 +18,7 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
@@ -61,19 +62,18 @@ public class TankIOTalonFX implements TankIO {
 	private final TalonFXConfiguration config;
 	private static final Executor currentExecutor = Executors.newFixedThreadPool(8);
 
-	@SuppressWarnings("unused")
 	public TankIOTalonFX(GyroIO gyro) {
 		this.gyro = gyro;
-		if (DriveConstants.canBusName == "") {
+		if (DriveConstants.driveCanBus == null) {
 			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort);
 			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort);
 			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort);
 			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort);
 		} else {
-			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
-			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
-			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
-			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
+			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
+			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
+			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
+			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
 		}
 
 		this.leftPosition = leftLeader.getPosition();
@@ -113,9 +113,9 @@ public class TankIOTalonFX implements TankIO {
 				: InvertedValue.Clockwise_Positive;
 		rightFollower.getConfigurator().apply(config);
 		leftFollower.setControl(new Follower(leftLeader.getDeviceID(),
-				DriveConstants.kBackLeftDriveReversed));
+				DriveConstants.kBackLeftDriveReversed ? MotorAlignmentValue.Opposed : MotorAlignmentValue.Aligned));
 		rightFollower.setControl(new Follower(rightLeader.getDeviceID(),
-				DriveConstants.kBackRightDriveReversed));
+				DriveConstants.kBackRightDriveReversed ? MotorAlignmentValue.Opposed : MotorAlignmentValue.Aligned));
 		BaseStatusSignal.setUpdateFrequencyForAll(100.0, leftPosition,
 				rightPosition); // Required for odometry, use faster rate
 		BaseStatusSignal.setUpdateFrequencyForAll(50.0, leftVelocity,

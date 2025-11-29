@@ -1,5 +1,6 @@
 package frc.robot.utils.drive;
 
+import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -32,7 +33,7 @@ public class DriveConstants {
 	// voltages directly
 	public static final boolean enablePID = true;
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
-	public static final String canBusName = "drivetrain"; // Leave "" if CTRE_ON_RIO
+	public static final CANBus driveCanBus = new CANBus("drivetrain"); // Leave null if CTRE_ON_RIO
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
 	// This one is swerve-exclusive
 	public static final SwerveModuleType swerveModuleType = SwerveModuleType.THRIFTYSWERVE;
@@ -121,6 +122,7 @@ public class DriveConstants {
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50,TuningConstants.isTuningMacros);
 	public static boolean fieldOriented = true;
+	public static boolean autoAvoidance = false;
 	// 135-Blocks was tested on a chassis with all CANSparkMaxes, as well as all
 	// Kraken-x60s.
 	public static final double kChassisWidth = Units.inchesToMeters(24.25), // Distance between Left and Right wheels
@@ -147,10 +149,10 @@ public class DriveConstants {
 			SKID_THRESHOLD = .5, // Meters per second
 			TURN_DEADBAND_AMPS = 10, //minimum amperage allowed on turn motors (to prevent weirdo noises/eating voltage)
 			MAX_G = 1.5;
-	public static double kMaxSpeedMetersPerSecond = 6.4, // 15.1
+	public static double kMaxSpeedMetersPerSecond = 6.0, // 15.1
 			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI; // 1.33655 *2 *Math.PI
 	public static PathConstraints pathConstraints = new PathConstraints(
-			4, 1.75,
+			6, 17.5,
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get());
 	// kP = 0.1, kI = 0, kD = 0, kDistanceMultipler = .2; //for autoLock
 	// Declare the position of each module
@@ -215,14 +217,15 @@ public class DriveConstants {
 																								// 270 = right
 		public static final Matrix<N3, N1> odometryStateStdDevs = new Matrix<>(
 				VecBuilder.fill(0.003, 0.003, 0.002));
-		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .099, TuningConstants.isTuningModules),
+		public static final LoggableTunedNumber kWheelDiameter = new LoggableTunedNumber("Drive/moduleDiameter", .1016, TuningConstants.isTuningModules),
 				RPMMatch = new LoggableTunedNumber("Drive/Module/RPMMatch", 4000,TuningConstants.isTuningModules),
 				extendTime = new LoggableTunedNumber("Drive/Module/extendTime", 200,TuningConstants.isTuningModules);
 		public static final double kMaxAngularSpeedRadiansPerSecond = 2 * DriveConstants.kMaxSpeedMetersPerSecond
 				/ (kWheelDiameter.get()),
 				kDriveMotorGearRatioLow = 5.14, kDriveMotorGearRatioHigh = 3, kTurningMotorGearRatio = 25,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
-				weight = Units.lbsToKilograms(150); // test chassis
+				moi = 2.8732, // kg m^2, moment of inertia of the robot
+				weight = Units.lbsToKilograms(56); // test chassis
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
 				0.001, 0.001, 0.001, .675,.125, 0),
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
@@ -239,13 +242,13 @@ public class DriveConstants {
 
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(2, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 2);
-			mainConfig = new RobotConfig(TrainConstants.weight, 2.887, mainModuleConfig, kChassisWidth);
+			mainConfig = new RobotConfig(TrainConstants.weight, TrainConstants.moi, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0),
 					.02, kMaxSpeedMetersPerSecond);
 		} else {
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(1, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 1);
-			mainConfig = new RobotConfig(TrainConstants.weight, 7, mainModuleConfig, kModuleTranslations);
+			mainConfig = new RobotConfig(TrainConstants.weight, TrainConstants.moi, mainModuleConfig, kModuleTranslations);
 			mainController = new PPHolonomicDriveController(
 					new PIDConstants(TrainConstants.pathplannerTranslationConstantContainer.getP(),
 							TrainConstants.pathplannerTranslationConstantContainer.getI(),

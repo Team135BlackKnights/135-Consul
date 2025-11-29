@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -146,12 +147,14 @@ public class AIRobotInSimulation {
                 behaviorChooser.addOption(
                                 "Joystick Drive",
                                 getJoystickDriveCommand());
-                behaviorChooser.onChange((Command::schedule));
+                behaviorChooser.onChange(selected -> {
+                if (selected != null) CommandScheduler.getInstance().schedule(selected);
+                });
                 if (!isAlliancePartner) {
                         RobotModeTriggers.autonomous()
-                                        .onTrue(Commands.runOnce(() -> behaviorChooser.getSelected().schedule()));
+                                        .onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().schedule(behaviorChooser.getSelected())));
                 }
-                RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> behaviorChooser.getSelected().schedule()));
+                RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().schedule(behaviorChooser.getSelected())));
                 RobotModeTriggers.disabled().onTrue(Commands.runOnce(() -> {
                         driveSimulation.setSimulationWorldPose(queeningPose);
                         driveSimulation.runChassisSpeeds(new ChassisSpeeds(), false);

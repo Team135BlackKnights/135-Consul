@@ -69,18 +69,17 @@ public class MecanumIOTalonFX implements MecanumIO {
 	private final TalonFXConfiguration config = new TalonFXConfiguration();
 	private static final Executor currentExecutor = Executors.newFixedThreadPool(8);
 
-	@SuppressWarnings("unused")
 	public MecanumIOTalonFX(GyroIO gyro) {
-		if (DriveConstants.canBusName == "") {
+		if (DriveConstants.driveCanBus == null) {
 			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort);
 			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort);
 			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort);
 			backRight = new TalonFX(DriveConstants.kBackRightDrivePort);
 		} else {
-			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.canBusName);
-			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.canBusName);
-			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.canBusName);
-			backRight = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.canBusName);
+			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
+			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
+			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
+			backRight = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
 		}
 
 		frontLeftPosition = frontLeft.getPosition();

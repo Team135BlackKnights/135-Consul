@@ -7,6 +7,12 @@
         {
           "type": "path",
           "data": {
+            "pathName": "New Path"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "Example Path"
           }
         }
