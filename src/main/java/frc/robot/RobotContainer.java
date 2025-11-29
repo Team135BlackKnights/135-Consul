@@ -565,8 +565,39 @@ public class RobotContainer {
 						new CommandPair(
 								(Supplier<Command>) () -> PathFinder.goToPose(
 										FieldConstants.CoralStation.blueRightTopFace,
-										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5),
-								Set.of(drivetrainS)))));
+										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
+								Set.of(drivetrainS))),
+				new Pair<String, CommandPair>("RM", // Example Drive to the right top face of the coral station
+						new CommandPair(
+								(Supplier<Command>) () -> PathFinder.goToPose(
+										FieldConstants.CoralStation.blueRightCenterFace,
+										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
+								Set.of(drivetrainS))),
+				new Pair<String, CommandPair>("RB", // Example Drive to the right top face of the coral station
+						new CommandPair(
+								(Supplier<Command>) () -> PathFinder.goToPose(
+										FieldConstants.CoralStation.blueRightBottomFace,
+										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
+								Set.of(drivetrainS))),
+				new Pair<String, CommandPair>("10", // Example Drive to the right top face of the coral station
+					new CommandPair(
+							(Supplier<Command>) () -> PathFinder.goToPose(
+									new Pose2d(4,2.82,new Rotation2d(Math.PI/3)),
+									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
+							Set.of(drivetrainS))),
+				new Pair<String, CommandPair>("11", // Example Drive to the right top face of the coral station
+					new CommandPair(
+							(Supplier<Command>) () -> PathFinder.goToPose(
+									new Pose2d(3.693,3.01,new Rotation2d(Math.PI/3)),
+									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
+							Set.of(drivetrainS))),
+				new Pair<String, CommandPair>("12", // Example Drive to the right top face of the coral station
+					new CommandPair(
+							(Supplier<Command>) () -> PathFinder.goToPose(
+									new Pose2d(3.211,3.883,new Rotation2d(0)),
+									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
+							Set.of(drivetrainS)))
+								));
 		precalculateAllStartAndEndChoreos();
 
 		for (Pair<String, CommandPair> autoCommand : autoCommands) {
