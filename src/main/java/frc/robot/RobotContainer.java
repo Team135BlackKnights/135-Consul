@@ -954,7 +954,6 @@ public class RobotContainer {
 		armS.setDefaultCommand(new SingleJointedArmC(armS));
 		elevatorS.setDefaultCommand(new ElevatorC(elevatorS));
 		doubleJointedArmS.setDefaultCommand(new DoubleJointedArmC(doubleJointedArmS));
-						.setPose(new Pose2d(-50, -50, new Rotation2d()))));
 		/*
 		 * if (!superStructure.leds.gifFound(ImageStates.Error)) {
 		 * Logger.recordOutput("LEDS/Main",
