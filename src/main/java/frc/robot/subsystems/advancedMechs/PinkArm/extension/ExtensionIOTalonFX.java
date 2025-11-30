@@ -1,5 +1,8 @@
 package frc.robot.subsystems.advancedMechs.PinkArm.extension;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -14,6 +17,8 @@ import edu.wpi.first.units.measure.*;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.Extension;
+import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 
 public class ExtensionIOTalonFX implements ExtensionIO {
     private final TalonFX extensionOne;
@@ -144,5 +149,12 @@ public class ExtensionIOTalonFX implements ExtensionIO {
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = current;
         extensionOne.getConfigurator().apply(config);
+    }
+        @Override
+    public List<SelfChecking> getSelfCheckingHardware() {
+        List<SelfChecking> selfChecking = new ArrayList<>();
+        selfChecking.add(new SelfCheckingTalonFX("PinkExtensionOne", extensionOne));
+        selfChecking.add(new SelfCheckingTalonFX("PinkExtensionTwo", extensionTwo));
+        return selfChecking;
     }
 }

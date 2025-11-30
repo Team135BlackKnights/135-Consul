@@ -1,5 +1,7 @@
 package frc.robot.utils.advancedMechs;
 
+import com.ctre.phoenix6.CANBus;
+
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -12,7 +14,7 @@ import frc.robot.utils.drive.DriveConstants.MotorVendor;
 
 public class AdvancedMechanismConstants {
     public class PinkArm {
-        public static String CANBus = "everything";
+        public static CANBus CANBus = Robot.everythingCanBus;
         public static MotorVendor motorVendor = MotorVendor.CTRE_ON_CANIVORE;
         public static class ArmPosition {
             private double extensionLengthMeters = 0;
@@ -46,7 +48,7 @@ public class AdvancedMechanismConstants {
             supplyCurrentLimit = 30,
                     wristGearing = (50.0 / 9.0) * (38.0 / 12.0) * (38.0 / 12.0), //Be sure to double count the reverse chain.
                     wristMOI = 0.018, //not real val
-                    startingPosition = 120,
+                    startingPosition = Units.degreesToRadians(120),
                     maxPosition = Units.degreesToRadians(240),
                     wristLength = Units.inchesToMeters(6),
                     wristMass = Units.lbsToKilograms(6);

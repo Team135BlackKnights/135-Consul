@@ -1,6 +1,9 @@
 package frc.robot.subsystems.advancedMechs.PinkArm.shoulder;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -20,6 +23,8 @@ import frc.robot.Constants.EncoderType;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.Shoulder;
+import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 
 public class ShoulderIOTalonFX implements ShoulderIO {
     public final TalonFX shoulderFR;
@@ -191,5 +196,14 @@ public class ShoulderIOTalonFX implements ShoulderIO {
         shoulderFL.getConfigurator().apply(config);
         shoulderBR.getConfigurator().apply(config);
         shoulderBL.getConfigurator().apply(config);
+    }
+    @Override
+    public List<SelfChecking> getSelfCheckingHardware() {
+        List<SelfChecking> selfChecking = new ArrayList<>();
+        selfChecking.add(new SelfCheckingTalonFX("PinkShoulderFR", shoulderFR));
+        selfChecking.add(new SelfCheckingTalonFX("PinkShoulderFL", shoulderFL));
+        selfChecking.add(new SelfCheckingTalonFX("PinkShoulderBR", shoulderBR));
+        selfChecking.add(new SelfCheckingTalonFX("PinkShoulderBL", shoulderBL));
+        return selfChecking;
     }
 }

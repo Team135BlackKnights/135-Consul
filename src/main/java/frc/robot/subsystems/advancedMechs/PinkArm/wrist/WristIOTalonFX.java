@@ -1,6 +1,9 @@
 
 package frc.robot.subsystems.advancedMechs.PinkArm.wrist;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -14,6 +17,8 @@ import edu.wpi.first.units.measure.*;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
 import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.Wrist;
+import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
 public class WristIOTalonFX implements WristIO {
     private TalonFX wrist;
 
@@ -125,5 +130,10 @@ public class WristIOTalonFX implements WristIO {
         config.CurrentLimits.StatorCurrentLimit = current;
         wrist.getConfigurator().apply(config);
     }
-    
+    @Override
+    public List<SelfChecking> getSelfCheckingHardware() {
+        List<SelfChecking> selfChecking = new ArrayList<>();
+        selfChecking.add(new SelfCheckingTalonFX("PinkWrist", wrist));
+        return selfChecking;
+    }
 }

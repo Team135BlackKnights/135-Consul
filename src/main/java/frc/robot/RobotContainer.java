@@ -56,6 +56,16 @@ import frc.robot.commands.StaticCharacterization;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOTalonFX;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOTalonFX;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOTalonFX;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
 import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
@@ -106,6 +116,7 @@ import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static PinkArm pinkArm;
 	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	private final LoggedDashboardChooser<Command> autoChooser;
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
@@ -433,6 +444,10 @@ public class RobotContainer {
 						throw new IllegalArgumentException(
 								"Unknown drivetrain implementation type, please check DriveConstants.java!");
 				}
+				ExtensionIO extensionIO = new ExtensionIOTalonFX();
+				ShoulderIO shoulderIO = new ShoulderIOTalonFX();
+				WristIO wristIO = new WristIOTalonFX();
+				pinkArm = new PinkArm(extensionIO, shoulderIO, wristIO);
 				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
@@ -525,7 +540,10 @@ public class RobotContainer {
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
 				}
-
+				ExtensionIO extensionIOSim = new ExtensionIOSim();
+				ShoulderIO shoulderIOSim = new ShoulderIOSim();
+				WristIO wristIOSim = new WristIOSim();
+				pinkArm = new PinkArm(extensionIOSim, shoulderIOSim, wristIOSim);
 				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
@@ -547,6 +565,13 @@ public class RobotContainer {
 						drivetrainS = new Mecanum(new MecanumIO() {
 						});
 				}
+				ExtensionIO extensionIODummy = new ExtensionIO() {
+				};
+				ShoulderIO shoulderIODummy = new ShoulderIO() {
+				};
+				WristIO wristIODummy = new WristIO() {
+				};
+				pinkArm = new PinkArm(extensionIODummy, shoulderIODummy, wristIODummy);
 		}
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
