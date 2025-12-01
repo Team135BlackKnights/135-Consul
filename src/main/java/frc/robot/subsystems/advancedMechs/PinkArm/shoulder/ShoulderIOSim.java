@@ -49,17 +49,15 @@ public class ShoulderIOSim implements ShoulderIO {
 
     public ShoulderIOSim() {
     forwardLimitRad = Shoulder.maxPosition;
-    reverseLimitRad = -Units.degreesToRadians(5);
+    reverseLimitRad = -Units.degreesToRadians(0);
 
     SimMotorConfigs configs = new SimMotorConfigs(
         DCMotor.getKrakenX60Foc(MOTOR_COUNT),
         Shoulder.shoulderGearing,
         KilogramSquareMeters.of(Shoulder.shoulderMOI),
-        Volts.of(Math.max(Shoulder.kS.get(), 0.01)));
-
+        Volts.of(Math.max(Shoulder.kS.get(), 0.01))).withHardLimits(Radians.of(Double.POSITIVE_INFINITY), Radians.of(reverseLimitRad));
         motorSim = new MapleMotorSim(configs);
-        motorController = motorSim.useSimpleDCMotorController();
-        motorController.withCurrentLimit(Amps.of(statorCurrentLimitPerMotor * MOTOR_COUNT));
+        motorController = motorSim.useSimpleDCMotorController().withCurrentLimit(Amps.of(statorCurrentLimitPerMotor * MOTOR_COUNT)).withSoftwareLimits(Radians.of(Double.POSITIVE_INFINITY), Radians.of(reverseLimitRad));
 
         positionController = new PIDController(Shoulder.kP.get(), Shoulder.kI.get(), Shoulder.kD.get());
         feedforward = new SimpleMotorFeedforward(Shoulder.kS.get(), Shoulder.kV.get());
@@ -78,7 +76,7 @@ public class ShoulderIOSim implements ShoulderIO {
         refreshTuningsIfNeeded();
         runControlStep();
 
-        double mechanismPositionRad = motorSim.getAngularPosition().in(Radians);
+        double mechanismPositionRad = clampToLimits(motorSim.getAngularPosition().in(Radians));  
         double mechanismVelocityRadPerSec = motorSim.getVelocity().in(RadiansPerSecond);
         double angularAcceleration = (mechanismVelocityRadPerSec - previousVelocityRadPerSec) / LOOP_PERIOD_SEC;
         previousVelocityRadPerSec = mechanismVelocityRadPerSec;
@@ -108,7 +106,7 @@ public class ShoulderIOSim implements ShoulderIO {
         double internalTarget = desiredActualRadians - sensorOffsetRadians;
         goalState = new TrapezoidProfile.State(internalTarget, 0.0);
         setpointState = new TrapezoidProfile.State(
-                motorSim.getAngularPosition().in(Radians),
+                clampToLimits(motorSim.getAngularPosition().in(Radians)),
                 motorSim.getVelocity().in(RadiansPerSecond));
         controlMode = ControlMode.POSITION;
         dutyCycleCommand = 0.0;
@@ -117,6 +115,7 @@ public class ShoulderIOSim implements ShoulderIO {
     @Override
     public void resetShoulderAngle(Rotation2d angle) {
         double actualPosition = motorSim.getAngularPosition().in(Radians);
+        actualPosition = clampToLimits(actualPosition);
         sensorOffsetRadians = angle.getRadians() - actualPosition;
         setpointState = new TrapezoidProfile.State(actualPosition, motorSim.getVelocity().in(RadiansPerSecond));
         goalState = new TrapezoidProfile.State(actualPosition, 0.0);
@@ -158,18 +157,20 @@ public class ShoulderIOSim implements ShoulderIO {
         setpointState = profile.calculate(LOOP_PERIOD_SEC, setpointState, goalState);
         positionController.setSetpoint(setpointState.position);
 
-        double measured = motorSim.getAngularPosition().in(Radians);
+        double measured = clampToLimits(motorSim.getAngularPosition().in(Radians));
+        
         double pidVolts = positionController.calculate(measured);
         double ffVolts = feedforward.calculate(setpointState.velocity);
         double gravityVolts = Shoulder.kG.get() * Math.cos(
                 (measured + sensorOffsetRadians) - Units.degreesToRadians(Shoulder.shoulderMOIDegreesFromZero));
 
+        System.out.println("measured: " + Units.radiansToDegrees(measured) + " pidVolts: " + pidVolts + " ffVolts: " + ffVolts + " gravityVolts: " + gravityVolts);
         requestVoltage(pidVolts + ffVolts + gravityVolts);
     }
 
     private void runDutyCycleControl() {
         double batteryVoltage = SimulatedBattery.getBatteryVoltage().in(Volts);
-        requestVoltage(dutyCycleCommand * batteryVoltage);
+        requestVoltage(batteryVoltage * dutyCycleCommand);
     }
 
     private void requestVoltage(double volts) {

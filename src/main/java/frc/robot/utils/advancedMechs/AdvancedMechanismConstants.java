@@ -46,20 +46,20 @@ public class AdvancedMechanismConstants {
             //Will NEVER have an attached encoder.
             public static final double statorCurrentLimit = 80,
             supplyCurrentLimit = 30,
-                    wristGearing = (50.0 / 9.0) * (38.0 / 12.0) * (38.0 / 12.0), //Be sure to double count the reverse chain.
-                    wristMOI = 0.018, //not real val
+                    wristGearing = 1/((50.0 / 9.0) * (38.0 / 12.0) * (38.0 / 12.0)), //Be sure to double count the reverse chain.
+                    wristMOI = 0.002, //not real val
                     startingPosition = Units.degreesToRadians(120),
                     maxPosition = Units.degreesToRadians(240),
                     wristLength = Units.inchesToMeters(6),
                     wristMass = Units.lbsToKilograms(6);
             public static final double wristPositionCoefficient = 2 * Math.PI / wristGearing;
-            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Wrist/kP", 4.0,
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Wrist/kP", 5.0,
                     TuningConstants.isTuningPinkArm),
                     kI = new LoggableTunedNumber("PinkArm/Wrist/kI", 0.0, TuningConstants.isTuningPinkArm),
-                    kD = new LoggableTunedNumber("PinkArm/Wrist/kD", 0.05, TuningConstants.isTuningPinkArm),
-                    kS = new LoggableTunedNumber("PinkArm/Wrist/kS", .15, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Wrist/kD", 0, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Wrist/kS", 0, TuningConstants.isTuningPinkArm),
                     //No KG for wrist, as it is relative to gravity of shoulder position, and thats a lot more complex and not worth it
-                    kV = new LoggableTunedNumber("PinkArm/Wrist/kV", 0.2, TuningConstants.isTuningPinkArm),
+                    kV = new LoggableTunedNumber("PinkArm/Wrist/kV", 0, TuningConstants.isTuningPinkArm),
                     maxSpeed = new LoggableTunedNumber("PinkArm/Wrist/maxSpeedDegPerSec", 720, TuningConstants.isTuningPinkArm),
                     maxAcceleration = new LoggableTunedNumber("PinkArm/Wrist/maxAccelDegPerSec", 1440,
                             TuningConstants.isTuningPinkArm);
@@ -71,7 +71,7 @@ public class AdvancedMechanismConstants {
             public static final EncoderType encoderType = EncoderType.NO_ATTACHED_ENCODER; // only other is CTRE
             public static final double statorCurrentLimit = 150,
             supplyCurrentLimit = 45,
-                    shoulderGearing = (60.0 / 12.0) * (50.0 / 36.0) * (50.0 / 18.0) * (58.0 / 10.0),
+                    shoulderGearing = 1/((60.0 / 12.0) * (50.0 / 36.0) * (50.0 / 18.0) * (58.0 / 10.0)),
                     encoderGearing = (58.0 / 10.0),
                     encoderOffsetRotations = .0,
                     shoulderMOI = 0.0925974241,
@@ -83,13 +83,13 @@ public class AdvancedMechanismConstants {
                     shoulderMass = Units.lbsToKilograms(14);
             public static final double shoulderPositionCoefficient = 2 * Math.PI /shoulderGearing,
             shoulderEncoderPositionCoefficient = 2 * Math.PI / encoderGearing;
-            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Shoulder/kP", 2.5,
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Shoulder/kP", 5,
                     TuningConstants.isTuningPinkArm),
                     kI = new LoggableTunedNumber("PinkArm/Shoulder/kI", 0.000, TuningConstants.isTuningPinkArm),
-                    kD = new LoggableTunedNumber("PinkArm/Shoulder/kD", 0.02, TuningConstants.isTuningPinkArm),
-                    kS = new LoggableTunedNumber("PinkArm/Shoulder/kS", .3, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Shoulder/kD", 0.00, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Shoulder/kS", 0, TuningConstants.isTuningPinkArm),
                     kG = new LoggableTunedNumber("PinkArm/Shoulder/kG", 0, TuningConstants.isTuningPinkArm),
-                    kV = new LoggableTunedNumber("PinkArm/Shoulder/kV", 0.3, TuningConstants.isTuningPinkArm),
+                    kV = new LoggableTunedNumber("PinkArm/Shoulder/kV", 0, TuningConstants.isTuningPinkArm),
                     maxSpeed = new LoggableTunedNumber("PinkArm/Shoulder/maxSpeedDegPerSec", 600, TuningConstants.isTuningPinkArm),
                     maxAcceleration = new LoggableTunedNumber("PinkArm/Shoulder/maxAccelDegPerSec", 1000,
                             TuningConstants.isTuningPinkArm);
@@ -101,19 +101,19 @@ public class AdvancedMechanismConstants {
             public static final double 
             statorCurrentLimit = 120,
             supplyCurrentLimit = 60,
-            extensionGearing = 60 / 12.0 * 30 / 25.0,
+            extensionGearing = 1/((60.0 / 12.0) * (30.0 / 25.0)),
                     pulleyDiameter = Units.inchesToMeters(.25*16/Math.PI), //effective pulley diameter from sprocket
                     cascadeCoefficient = 2.0, //how much more extension you get from the second stage
-                    extensionMOI = 0.012,
+                    extensionMOI = 0.002,
                     startingPosition = 0,
                     maxPosition = Units.inchesToMeters(45.282);
             public static final double extensionPositionCoefficient = Math.PI * pulleyDiameter / extensionGearing * cascadeCoefficient;
-            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Extension/kP", 8.0,
+            public static final LoggableTunedNumber kP = new LoggableTunedNumber("PinkArm/Extension/kP", 5,
                     TuningConstants.isTuningPinkArm),
                     kI = new LoggableTunedNumber("PinkArm/Extension/kI", 0.0, TuningConstants.isTuningPinkArm),
-                    kD = new LoggableTunedNumber("PinkArm/Extension/kD", 0.1, TuningConstants.isTuningPinkArm),
-                    kS = new LoggableTunedNumber("PinkArm/Extension/kS", .2, TuningConstants.isTuningPinkArm),
-                    kV = new LoggableTunedNumber("PinkArm/Extension/kV", 0.3, TuningConstants.isTuningPinkArm),
+                    kD = new LoggableTunedNumber("PinkArm/Extension/kD", 0.0, TuningConstants.isTuningPinkArm),
+                    kS = new LoggableTunedNumber("PinkArm/Extension/kS", 0, TuningConstants.isTuningPinkArm),
+                    kV = new LoggableTunedNumber("PinkArm/Extension/kV", 0.0, TuningConstants.isTuningPinkArm),
                     maxSpeed = new LoggableTunedNumber("PinkArm/Extension/maxSpeedMetersPerSec", 1.0,
                             TuningConstants.isTuningPinkArm),
                     maxAcceleration = new LoggableTunedNumber("PinkArm/Extension/maxAccelMetersPerSec", 2.0,

@@ -29,7 +29,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class PinkArm extends SubsystemChecker {
     private ArmPosition wantedArmPose;
-    public LoggableTunedNumber shoulderSetpointToleranceDeg = new LoggableTunedNumber(
+    private final LoggableTunedNumber shoulderSetpointToleranceDeg = new LoggableTunedNumber(
             "PinkArm/ShoulderSetpointToleranceDeg", 1, TuningConstants.isTuningPinkArm),
             extensionSetpointToleranceMeters = new LoggableTunedNumber("PinkArm/ExtensionSetpointToleranceMeters",
                     Units.inchesToMeters(0.5),
@@ -38,11 +38,11 @@ public class PinkArm extends SubsystemChecker {
                     TuningConstants.isTuningPinkArm),
             minToleranceForExtensionDegShoulder = new LoggableTunedNumber("PinkArm/MinToleranceForExtensionDegShoulder",
                     40, TuningConstants.isTuningPinkArm), // roughly be in the right position before extending
-            extensionHomeMeters = new LoggableTunedNumber("PinkArm/ExtensionHomeMeters", -.005, // slightly negative
+            extensionHomeMeters = new LoggableTunedNumber("PinkArm/ExtensionHomeMeters", 0, // slightly negative
                                                                                                 // since we were PUSHING
                                                                                                 // into the hard stop
                     TuningConstants.isTuningPinkArm),
-            shoulderHomeDegrees = new LoggableTunedNumber("PinkArm/ShoulderHomeDegrees", -.5,
+            shoulderHomeDegrees = new LoggableTunedNumber("PinkArm/ShoulderHomeDegrees", 0,
                     TuningConstants.isTuningPinkArm),
             wristHomeDegrees = new LoggableTunedNumber("PinkArm/WristHomeDegrees", 135,
                     TuningConstants.isTuningPinkArm),
@@ -116,15 +116,15 @@ public class PinkArm extends SubsystemChecker {
         extensionIO.updateInputs(extensionInputs);
         shoulderIO.updateInputs(shoulderInputs);
         wristIO.updateInputs(wristInputs);
-        Logger.processInputs("Subsystems/Arm/Extension", extensionInputs);
-        Logger.processInputs("Subsystems/Arm/Shoulder", shoulderInputs);
-        Logger.processInputs("Subsystems/Arm/Wrist", wristInputs);
+        Logger.processInputs("Arm/Extension", extensionInputs);
+        Logger.processInputs("Arm/Shoulder", shoulderInputs);
+        Logger.processInputs("Arm/Wrist", wristInputs);
 
         systemState = handleStateTransitions();
 
-        Logger.recordOutput("Subsystems/Arm/SystemState", systemState);
-        Logger.recordOutput("Subsystems/Arm/WantedState", wantedState);
-        Logger.recordOutput("Subsystems/Arm/ReachedSetpoint", reachedSetpoint());
+        Logger.recordOutput("Arm/SystemState", systemState);
+        Logger.recordOutput("Arm/WantedState", wantedState);
+        Logger.recordOutput("Arm/ReachedSetpoint", reachedSetpoint());
 
         double wantedExtensionMeters;
         Rotation2d wantedShoulderAngle;
@@ -134,9 +134,9 @@ public class PinkArm extends SubsystemChecker {
             wantedShoulderAngle = wantedArmPose.getShoulderAngle();
             wantedExtensionMeters = wantedArmPose.getExtensionLengthMeters();
             wantedWristAngle = wantedArmPose.getWristAngle();
-            Logger.recordOutput("Subsystems/Arm/WantedShoulderAngle", wantedShoulderAngle);
-            Logger.recordOutput("Subsystems/Arm/WantedExtensionMeters", wantedExtensionMeters);
-            Logger.recordOutput("Subsystems/Arm/WantedWristAngle", wantedWristAngle);
+            Logger.recordOutput("Arm/WantedShoulderAngle", wantedShoulderAngle);
+            Logger.recordOutput("Arm/WantedExtensionMeters", wantedExtensionMeters);
+            Logger.recordOutput("Arm/WantedWristAngle", wantedWristAngle);
         }
 
         applyStates();

@@ -56,12 +56,11 @@ public class ExtensionIOSim implements ExtensionIO {
                 DCMotor.getKrakenX60Foc(MOTOR_COUNT),
                 Extension.extensionGearing,
                 KilogramSquareMeters.of(Extension.extensionMOI),
-                Volts.of(Math.max(Extension.kS.get(), 0.01)));
+                Volts.of(Math.max(Extension.kS.get(), 0.01)))
+                .withHardLimits(Radians.of(Double.POSITIVE_INFINITY), Radians.of(reverseLimitRad));
 
         motorSim = new MapleMotorSim(configs);
-        motorController = motorSim.useSimpleDCMotorController();
-        motorController.withCurrentLimit(Amps.of(statorCurrentLimitPerMotor * MOTOR_COUNT));
-
+        motorController = motorSim.useSimpleDCMotorController().withCurrentLimit(Amps.of(statorCurrentLimitPerMotor * MOTOR_COUNT)).withSoftwareLimits(Radians.of(Double.POSITIVE_INFINITY), Radians.of(reverseLimitRad));
         positionController = new PIDController(Extension.kP.get(), Extension.kI.get(), Extension.kD.get());
         feedforward = new SimpleMotorFeedforward(Extension.kS.get(), Extension.kV.get());
         profileConstraints = createConstraints();

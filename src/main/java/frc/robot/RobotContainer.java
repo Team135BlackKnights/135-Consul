@@ -57,6 +57,7 @@ import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm;
+import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm.WantedState;
 import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIO;
 import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOSim;
 import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOTalonFX;
@@ -104,8 +105,14 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
+import frc.robot.utils.robotToggles.Toggles;
+import frc.robot.utils.robotToggles.TogglesIO;
+import frc.robot.utils.robotToggles.TogglesIOHardware;
+import frc.robot.utils.robotToggles.TogglesIONetworkTables;
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.ArmPosition;
 
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -117,6 +124,7 @@ public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
 	public static PinkArm pinkArm;
+	public static Toggles toggles;
 	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	private final LoggedDashboardChooser<Command> autoChooser;
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
@@ -146,6 +154,7 @@ public class RobotContainer {
 			leftBumperTest = new JoystickButton(driveController, 5),
 			rightBumperTest = new JoystickButton(testingController, 6),
 			selectButtonTest = new JoystickButton(testingController, 7),
+			selectButtonDrive = new JoystickButton(driveController, 7),
 			selectButtonManip = new JoystickButton(manipController, 7),
 			startButtonTest = new JoystickButton(testingController, 8),
 			startButtonDrive = new JoystickButton(driveController, 8),
@@ -448,6 +457,8 @@ public class RobotContainer {
 				ShoulderIO shoulderIO = new ShoulderIOTalonFX();
 				WristIO wristIO = new WristIOTalonFX();
 				pinkArm = new PinkArm(extensionIO, shoulderIO, wristIO);
+				//Advanced Mechs Require Toggles
+				toggles = new Toggles(new TogglesIOHardware());
 				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
@@ -544,6 +555,7 @@ public class RobotContainer {
 				ShoulderIO shoulderIOSim = new ShoulderIOSim();
 				WristIO wristIOSim = new WristIOSim();
 				pinkArm = new PinkArm(extensionIOSim, shoulderIOSim, wristIOSim);
+				toggles = new Toggles(new TogglesIONetworkTables());
 				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
@@ -572,6 +584,8 @@ public class RobotContainer {
 				WristIO wristIODummy = new WristIO() {
 				};
 				pinkArm = new PinkArm(extensionIODummy, shoulderIODummy, wristIODummy);
+				toggles = new Toggles(new TogglesIO() {
+				});
 		}
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
@@ -745,13 +759,28 @@ public class RobotContainer {
 					drivetrainS.zeroHeading();
 					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
-
+		new Trigger(toggles::isHomeButtonPressed).onTrue(
+				new InstantCommand(() -> pinkArm.tareAllAxesUsingButtonValues())
+		);
+		selectButtonDrive.onTrue(
+			//a command which runs armSubsystem.setWantedState(ArmSubsystem.WantedState.HOME) until armSubsystem.hasHomeCompleted() is true && pinkArm.isAtTaredPositions()
+			Commands.runOnce(() -> pinkArm.setWantedState(PinkArm.WantedState.HOME)
+			).until(() -> pinkArm.hasHomeCompleted() && pinkArm.reachedSetpoint())			
+		);
+		bButtonDrive
+				//Simply sets the pinkArmWantedState to up position
+				.onTrue(new InstantCommand(() -> pinkArm.setWantedState(PinkArm.WantedState.MOVE_TO_POSITION, new ArmPosition(.5, new Rotation2d(Math.PI/2), new Rotation2d()))));
+		bButtonDrive
+				.onFalse(new InstantCommand(() -> {
+					pinkArm.setWantedState(WantedState.MOVE_TO_POSITION, AdvancedMechanismConstants.PinkArm.zeroedArmPos);
+				}));
 		startButtonDrive
 				.onTrue(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
+		
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
