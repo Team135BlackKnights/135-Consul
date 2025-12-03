@@ -505,24 +505,58 @@ public class Vision extends SubsystemChecker {
 					tx[z] = frame[i + 2 + (2 * z)];
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
-				Pose3d rawPose = new Pose3d(
-						frame[12], frame[13], frame[14],
-						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[15], frame[16], frame[17],
-								frame[18])));
+				double error1 = frame[i+11];
+				double error2 = frame[i+19];
+				Pose3d rawFirstPose = new Pose3d(
+					frame[i+12], frame[i+13], frame[i+14],
+						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[i+15], frame[i+16], frame[i+17],
+						frame[i+18])));
+				Pose3d rawSecondPose = new Pose3d(
+					frame[i+20], frame[i+21], frame[i+22],
+						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[i+23], frame[i+24], frame[i+25],
+						frame[i+26])));
 				Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
-				Translation2d separation = rawPose.toPose2d().getTranslation()
-						.minus(drivetrainPose.getTranslation());
-				double bumperHalfExtent = Units.inchesToMeters(17);
-				double xOffset = Math.abs(separation.getX()) > 1e-3
-						? Math.copySign(bumperHalfExtent, separation.getX())
-						: 0.0;
-				double yOffset = Math.abs(separation.getY()) > 1e-3
-						? Math.copySign(bumperHalfExtent, separation.getY())
-						: 0.0;
-				Pose3d objectPose = rawPose.plus(new Transform3d(xOffset, yOffset, 0.0, new Rotation3d()));
-
-				double distanceMag = objectPose.toPose2d().getTranslation()
-						.getDistance(drivetrainPose.getTranslation());
+				Translation2d separationFirst = rawFirstPose.toPose2d().getTranslation()
+					.minus(drivetrainPose.getTranslation());
+				double bumperHalfExtent = Units.inchesToMeters(36);
+				double xOffsetFirst = Math.abs(separationFirst.getX()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separationFirst.getX())
+					: 0.0;
+				double yOffsetFirst = Math.abs(separationFirst.getY()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separationFirst.getY())
+					: 0.0;
+					Translation2d separationSecond = rawSecondPose.toPose2d().getTranslation()
+					.minus(drivetrainPose.getTranslation());
+				double xOffsetSecond = Math.abs(separationSecond.getX()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separationSecond.getX())
+					: 0.0;
+				double yOffsetSecond = Math.abs(separationSecond.getY()) > 1e-3
+					? Math.copySign(bumperHalfExtent, separationSecond.getY())
+					: 0.0;
+				Pose3d objectPoseFirst = rawFirstPose.plus(new Transform3d(xOffsetFirst, yOffsetFirst, 0.0, new Rotation3d()));
+				Pose3d objectPoseSecond = rawSecondPose.plus(new Transform3d(xOffsetSecond, yOffsetSecond, 0.0, new Rotation3d()));
+				double distanceMagOne = objectPoseFirst.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
+				double distanceMagTwo = objectPoseSecond.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
+				//use the closer one if either is below 1m, otherwise, use lower error
+				Pose3d objectPose = null;
+				double distanceMag;
+				if (distanceMagOne < 1|| distanceMagTwo < 1){
+					if (distanceMagOne > distanceMagTwo){
+						objectPose = objectPoseFirst;
+						distanceMag = distanceMagOne;
+					}else{
+						objectPose = objectPoseSecond;
+						distanceMag = distanceMagTwo;
+					}
+				}else{
+					if (error1 < error2){
+						objectPose = objectPoseFirst;
+						distanceMag = distanceMagOne;
+					}else{
+						objectPose = objectPoseSecond;
+						distanceMag = distanceMagTwo;
+					}
+				}
 				allTxTyObservations.put(
 						AITargets.values()[classId].name(),
 						new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,

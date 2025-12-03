@@ -788,7 +788,7 @@ public class RobotContainer {
 					drivetrainS.zeroHeading();
 					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
-		selectButtonDrive.toggleOnTrue(new AimToObject(drivetrainS,AITargets.BLUE_BOT.name(),1.5));
+		selectButtonDrive.toggleOnTrue(new AimToObject(drivetrainS,"A42",1.25));
 		//AITargets.values()[classId].name()
 		startButtonDrive
 				.onTrue(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
