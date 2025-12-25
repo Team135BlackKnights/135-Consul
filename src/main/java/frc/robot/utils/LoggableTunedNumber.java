@@ -8,20 +8,19 @@ import java.util.function.Consumer;
 
 import frc.robot.Constants.TuningConstants;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns
  * default if not or value not in dashboard.
  */
-@SuppressWarnings("deprecation")
 public class LoggableTunedNumber {
 	private static final String tableKey = "TunableNumbers";
 	private final String key;
 	private boolean hasDefault = false;
 	private double defaultValue;
 	private boolean canLogSpecific = false;
-	private LoggedDashboardNumber dashboardNumber;
+	private LoggedNetworkNumber dashboardNumber;
 	private Map<Integer, Double> lastHasChangedValues = new HashMap<>();
 
 	/**
@@ -57,7 +56,7 @@ public class LoggableTunedNumber {
 		if (!hasDefault) {
 			hasDefault = true;
 			if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
-				dashboardNumber = new LoggedDashboardNumber(key, defaultValue);
+				dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
 			}else if (dashboardNumber != null) {
 				dashboardNumber.setDefault(defaultValue);
 			}
@@ -120,7 +119,7 @@ public class LoggableTunedNumber {
 	public void changeDefault(double value){
 		defaultValue = value;
 		if (TuningConstants.isTuningPID && canLogSpecific && dashboardNumber == null) {
-				dashboardNumber = new LoggedDashboardNumber(key, value);
+				dashboardNumber = new LoggedNetworkNumber(key, value);
 			}else if (dashboardNumber != null) {
 				dashboardNumber.setDefault(value);
 			}
