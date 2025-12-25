@@ -226,7 +226,7 @@ public class Vision extends SubsystemChecker {
 						new Pose2d(new Translation2d(maxX, maxY), new Rotation2d()));
 			}
 		}
-		System.out.println("Dynamic Obstacles: " + dynamicObstacles.size());
+		//System.out.println("Dynamic Obstacles: " + dynamicObstacles.size());
 		RobotContainer.pathFinder.setDynamicObstacles(dynamicObstacles, currentOdomPose.getTranslation());
 
 		// Log summary data

@@ -77,26 +77,25 @@ public class VisionConstants {
 	public static final double maxStaleReadingRotation = Units.degreesToRadians(2);
 
 	/**
-	 *
-	 * ["0x01210000 / 3", "0x01230000 / 4", "0x02211000 / 5", "0x02213000 / 7"]
+	 * ["0x01210000 / 3", "0x01230000 / 4", "0x02211000 / 5", "0x02213000 / 6"]	
 	 * ["SPCA2630 PC Camera:usb_05c8_0a00_002_007", "SPCA2630 PC Camera:usb_05c8_0a00_002_005", "SPCA2630 PC Camera:usb_05c8_0a00_001_004", "SPCA2630 PC Camera:usb_05c8_0a00_001_003"]
 	 */
 	public static final CameraConfig[] cameras = new CameraConfig[] {
 			CameraConfig.builder()
 					.pose(
 							() -> new Pose3d(
-									Units.inchesToMeters(11.791),
-									Units.inchesToMeters(-10.041),
-									Units.inchesToMeters(7.967-.037),
+									Units.inchesToMeters(12.117),
+									Units.inchesToMeters(-10.367),
+									Units.inchesToMeters(8.512+.037),
 									new Rotation3d(
 											Math.toRadians(0.0),
-											Math.toRadians(-25),
+											Math.toRadians(10),
 											Math.toRadians(-45))))
-					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
-					.location("0x01230000 / 4")  
+					.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
+					.location("0x01210000 / 3")  
 					.width(1600)
 					.height(1304)
-					.exposure(16)
+					.exposure(150)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -109,16 +108,16 @@ public class VisionConstants {
 							() -> new Pose3d(
 								Units.inchesToMeters(11.791),
 								Units.inchesToMeters(10.041),
-								Units.inchesToMeters(7.967-.037),
+								Units.inchesToMeters(8.512+.037),
 								new Rotation3d(
 										Math.toRadians(0.0),
-										Math.toRadians(-25),
+										Math.toRadians(10),
 										Math.toRadians(45))))
-										.id("SPCA2630 PC Camera:usb_05c8_0a00_002_006")
-										.location("0x01210000 / 3")
+										.id("SPCA2630 PC Camera:usb_05c8_0a00_002_005")
+										.location("0x01230000 / 4")
 					.width(1600)
 					.height(1304)
-					.exposure(16)
+					.exposure(150)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -140,7 +139,7 @@ public class VisionConstants {
 					.location("0x02211000 / 5")
 					.width(1600)
 					.height(1304)
-					.exposure(16)
+					.exposure(150)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
@@ -162,7 +161,7 @@ public class VisionConstants {
 					.location("0x02213000 / 6")
 					.width(1600)
 					.height(1304)
-					.exposure(16)
+					.exposure(150)
 					.saturation(50)
 					.hue(0)
 					.whiteBalance(4000)
