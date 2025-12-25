@@ -42,7 +42,6 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOSouthmoon;
 import frc.robot.utils.vision.VisionConstants;
-import frc.robot.utils.vision.VisionConstants.AITargets;
 import frc.robot.utils.vision.VisionConstants.AprilTagLayoutType;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.PathFinder;

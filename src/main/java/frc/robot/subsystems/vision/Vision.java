@@ -49,7 +49,6 @@ import frc.robot.utils.selfCheck.vision.SelfCheckingLimelight;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AITargets;
-import lombok.extern.java.Log;
 
 public class Vision extends SubsystemChecker {
 	private final Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier;
@@ -178,10 +177,11 @@ public class Vision extends SubsystemChecker {
 			// Pose2d simedAIPose = new Pose2d(2,2,Rotation2d.fromDegrees(0));
 			// grab opposting robot sim poses
 			Pose2d simedAIPose = CompetitionFieldSimulation.getClosestRobotPose(currentOdomPose.getTranslation());
-			TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4], new double[4],
-							simedAIPose.getTranslation()
-									.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
-							TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
+			TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4],
+					new double[4],
+					simedAIPose.getTranslation()
+							.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
+					TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
 			allTxTyObservations.put(AITargets.BLUE_BOT.name(), simedAIObservation);
 			RobotContainer.drivetrainS
 					.addTxTyObservation(simedAIObservation);
@@ -492,7 +492,7 @@ public class Vision extends SubsystemChecker {
 		for (int frameIndex = 0; frameIndex < inputs[cameraIndex].timestamps_obj.length; frameIndex++) {
 			double timestamp = inputs[cameraIndex].timestamps_obj[frameIndex];
 			double[] frame = inputs[cameraIndex].frames_obj[frameIndex];
-			for (int i = 0; i < frame.length; i += 27) { // because of a limitation, there will only ever be one :) -G
+			for (int i = 0; i < frame.length; i += 27) {
 				int classId = (int) frame[i];
 				double confidence = frame[i + 1];
 
@@ -505,54 +505,64 @@ public class Vision extends SubsystemChecker {
 					tx[z] = frame[i + 2 + (2 * z)];
 					ty[z] = frame[i + 2 + (2 * z) + 1];
 				}
-				double error1 = frame[i+11];
-				double error2 = frame[i+19];
+				double error1 = frame[i + 11];
+				double error2 = frame[i + 19];
 				Pose3d rawFirstPose = new Pose3d(
-					frame[i+12], frame[i+13], frame[i+14],
-						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[i+15], frame[i+16], frame[i+17],
-						frame[i+18])));
+						frame[i + 12], frame[i + 13], frame[i + 14],
+						new Rotation3d(
+								new edu.wpi.first.math.geometry.Quaternion(frame[i + 15], frame[i + 16], frame[i + 17],
+										frame[i + 18])));
 				Pose3d rawSecondPose = new Pose3d(
-					frame[i+20], frame[i+21], frame[i+22],
-						new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(frame[i+23], frame[i+24], frame[i+25],
-						frame[i+26])));
+						frame[i + 20], frame[i + 21], frame[i + 22],
+						new Rotation3d(
+								new edu.wpi.first.math.geometry.Quaternion(frame[i + 23], frame[i + 24], frame[i + 25],
+										frame[i + 26])));
+				Pose3d objectPoseFirst = rawFirstPose;
+				Pose3d objectPoseSecond = rawSecondPose;
 				Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
-				Translation2d separationFirst = rawFirstPose.toPose2d().getTranslation()
-					.minus(drivetrainPose.getTranslation());
-				double bumperHalfExtent = Units.inchesToMeters(36);
-				double xOffsetFirst = Math.abs(separationFirst.getX()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separationFirst.getX())
-					: 0.0;
-				double yOffsetFirst = Math.abs(separationFirst.getY()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separationFirst.getY())
-					: 0.0;
+				if (VisionConstants.bumperDetection) {
+					Translation2d separationFirst = rawFirstPose.toPose2d().getTranslation()
+							.minus(drivetrainPose.getTranslation());
+					double bumperHalfExtent = Units.inchesToMeters(36);
+					double xOffsetFirst = Math.abs(separationFirst.getX()) > 1e-3
+							? Math.copySign(bumperHalfExtent, separationFirst.getX())
+							: 0.0;
+					double yOffsetFirst = Math.abs(separationFirst.getY()) > 1e-3
+							? Math.copySign(bumperHalfExtent, separationFirst.getY())
+							: 0.0;
 					Translation2d separationSecond = rawSecondPose.toPose2d().getTranslation()
-					.minus(drivetrainPose.getTranslation());
-				double xOffsetSecond = Math.abs(separationSecond.getX()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separationSecond.getX())
-					: 0.0;
-				double yOffsetSecond = Math.abs(separationSecond.getY()) > 1e-3
-					? Math.copySign(bumperHalfExtent, separationSecond.getY())
-					: 0.0;
-				Pose3d objectPoseFirst = rawFirstPose.plus(new Transform3d(xOffsetFirst, yOffsetFirst, 0.0, new Rotation3d()));
-				Pose3d objectPoseSecond = rawSecondPose.plus(new Transform3d(xOffsetSecond, yOffsetSecond, 0.0, new Rotation3d()));
-				double distanceMagOne = objectPoseFirst.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
-				double distanceMagTwo = objectPoseSecond.toPose2d().getTranslation().getDistance(drivetrainPose.getTranslation());
-				//use the closer one if either is below 1m, otherwise, use lower error
+							.minus(drivetrainPose.getTranslation());
+					double xOffsetSecond = Math.abs(separationSecond.getX()) > 1e-3
+							? Math.copySign(bumperHalfExtent, separationSecond.getX())
+							: 0.0;
+					double yOffsetSecond = Math.abs(separationSecond.getY()) > 1e-3
+							? Math.copySign(bumperHalfExtent, separationSecond.getY())
+							: 0.0;
+					objectPoseFirst = rawFirstPose
+							.plus(new Transform3d(xOffsetFirst, yOffsetFirst, 0.0, new Rotation3d()));
+					objectPoseSecond = rawSecondPose
+							.plus(new Transform3d(xOffsetSecond, yOffsetSecond, 0.0, new Rotation3d()));
+				}
+				double distanceMagOne = objectPoseFirst.toPose2d().getTranslation()
+						.getDistance(drivetrainPose.getTranslation());
+				double distanceMagTwo = objectPoseSecond.toPose2d().getTranslation()
+						.getDistance(drivetrainPose.getTranslation());
+				// use the closer one if either is below 1m, otherwise, use lower error
 				Pose3d objectPose = null;
 				double distanceMag;
-				if (distanceMagOne < 1|| distanceMagTwo < 1){
-					if (distanceMagOne > distanceMagTwo){
+				if (distanceMagOne < 1 || distanceMagTwo < 1) {
+					if (distanceMagOne > distanceMagTwo) {
 						objectPose = objectPoseFirst;
 						distanceMag = distanceMagOne;
-					}else{
+					} else {
 						objectPose = objectPoseSecond;
 						distanceMag = distanceMagTwo;
 					}
-				}else{
-					if (error1 < error2){
+				} else {
+					if (error1 < error2) {
 						objectPose = objectPoseFirst;
 						distanceMag = distanceMagOne;
-					}else{
+					} else {
 						objectPose = objectPoseSecond;
 						distanceMag = distanceMagTwo;
 					}

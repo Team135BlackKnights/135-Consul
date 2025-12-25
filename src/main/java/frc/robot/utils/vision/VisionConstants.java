@@ -32,7 +32,8 @@ public class VisionConstants {
 		BLUE_BOT,RED_BOT
 
 	}
-
+	public static final long[] objLowerHSV = {50,100,100};
+	public static final long[] objUpperHSV = {90,255,255};
 	// Command specific constants // Aim To Pose
 	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.FRONT, // Drive And Aim At Pose public static final ApproachDirection
 			driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT; // Drive To AI
@@ -77,11 +78,8 @@ public class VisionConstants {
 
 	/**
 	 *
-	 * 0x01210000 / 3
-	 * 0x01230000 / 4
-	 * 0x02211000 / 5
-	 * 0x02213000 / 6
-
+	 * ["0x01210000 / 3", "0x01230000 / 4", "0x02211000 / 5", "0x02213000 / 7"]
+	 * ["SPCA2630 PC Camera:usb_05c8_0a00_002_007", "SPCA2630 PC Camera:usb_05c8_0a00_002_005", "SPCA2630 PC Camera:usb_05c8_0a00_001_004", "SPCA2630 PC Camera:usb_05c8_0a00_001_003"]
 	 */
 	public static final CameraConfig[] cameras = new CameraConfig[] {
 			CameraConfig.builder()
@@ -196,6 +194,7 @@ public class VisionConstants {
 	//Transforms for alternative functions (like aiming)
 
 public static final double aprilTagWidth = Units.inchesToMeters(6.50);
+public static final boolean bumperDetection = false;
 
   @Getter
   public enum AprilTagLayoutType {

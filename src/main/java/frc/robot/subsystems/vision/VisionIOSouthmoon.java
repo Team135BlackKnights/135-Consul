@@ -67,7 +67,10 @@ public class VisionIOSouthmoon implements VisionIO {
     configTable.getDoubleTopic("camera_gain").publish().set(cameraConfig.getGain());
     configTable.getDoubleTopic("camera_denoise").publish().set(cameraConfig.getDenoise());
     configTable.getDoubleTopic("fiducial_size_m").publish().set(VisionConstants.aprilTagWidth);
-    
+    configTable.getIntegerArrayTopic("obj_lower_hsv").publish().set(VisionConstants.objLowerHSV);
+    configTable.getIntegerArrayTopic("obj_upper_hsv").publish().set(VisionConstants.objUpperHSV);
+    configTable.getIntegerTopic("obj_blender_ai_id").publish().set(VisionConstants.AITargets.BLUE_BOT.ordinal());
+
     isRecordingPublisher = configTable.getBooleanTopic("is_recording").publish();
     isRecordingPublisher.set(false);
     timestampPublisher = configTable.getIntegerTopic("timestamp").publish();
