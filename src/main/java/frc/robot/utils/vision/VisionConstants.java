@@ -32,8 +32,8 @@ public class VisionConstants {
 		BLUE_BOT,RED_BOT
 
 	}
-	public static final long[] objLowerHSV = {50,100,100};
-	public static final long[] objUpperHSV = {90,255,255};
+	public static final long[] objLowerHSV = {0,0,100};
+	public static final long[] objUpperHSV = {180,45,210};
 	// Command specific constants // Aim To Pose
 	public static final ApproachDirection aimToPoseApproachDirection = ApproachDirection.FRONT, // Drive And Aim At Pose public static final ApproachDirection
 			driveAndAimAtPoseApproachDirection = ApproachDirection.FRONT; // Drive To AI
