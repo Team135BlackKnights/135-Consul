@@ -24,6 +24,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -226,7 +227,7 @@ public class Vision extends SubsystemChecker {
 						new Pose2d(new Translation2d(maxX, maxY), new Rotation2d()));
 			}
 		}
-		//System.out.println("Dynamic Obstacles: " + dynamicObstacles.size());
+		// System.out.println("Dynamic Obstacles: " + dynamicObstacles.size());
 		RobotContainer.pathFinder.setDynamicObstacles(dynamicObstacles, currentOdomPose.getTranslation());
 
 		// Log summary data
@@ -494,6 +495,24 @@ public class Vision extends SubsystemChecker {
 			double[] frame = inputs[cameraIndex].frames_obj[frameIndex];
 			for (int i = 0; i < frame.length; i += 27) {
 				int classId = (int) frame[i];
+				if (classId == -1) {
+					double[] tx = new double[4];
+					double[] ty = new double[4];
+					Pose3d pose = new Pose3d(
+							frame[i + 12], frame[i + 13], frame[i + 14],
+							new Rotation3d(
+									new edu.wpi.first.math.geometry.Quaternion(frame[i + 15], frame[i + 16],
+											frame[i + 17],
+											frame[i + 18])));
+					Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
+					double distanceMag = pose.toPose2d().getTranslation()
+							.getDistance(drivetrainPose.getTranslation());
+					allTxTyObservations.put(
+							"CORAL",
+							new TxTyObservation("CORAL", cameraIndex, tx,
+									ty, distanceMag, timestamp, Optional.of(pose)));
+					continue; // done with the obv
+				}
 				double confidence = frame[i + 1];
 
 				if (confidence < VisionConstants.objDetectConfidenceThreshold)
@@ -550,27 +569,38 @@ public class Vision extends SubsystemChecker {
 				// use the closer one if either is below 1m, otherwise, use lower error
 				Pose3d objectPose = null;
 				double distanceMag;
-				if (distanceMagOne < 1 || distanceMagTwo < 1) {
-					if (distanceMagOne > distanceMagTwo) {
-						objectPose = objectPoseFirst;
-						distanceMag = distanceMagOne;
-					} else {
-						objectPose = objectPoseSecond;
-						distanceMag = distanceMagTwo;
-					}
+				if (classId == 0) {
+					objectPose = objectPoseFirst;
+					distanceMag = distanceMagOne;
+					if (!objectPose.getTranslation().equals(Translation3d.kZero))
+						allTxTyObservations.put("CORAL",
+							new TxTyObservation("CORAL", cameraIndex, tx,
+									ty, distanceMag, timestamp, Optional.of(objectPose)));
 				} else {
-					if (error1 < error2) {
-						objectPose = objectPoseFirst;
-						distanceMag = distanceMagOne;
+					if (distanceMagOne < 1 || distanceMagTwo < 1) {
+						if (distanceMagOne >= distanceMagTwo) {
+							objectPose = objectPoseFirst;
+							distanceMag = distanceMagOne;
+						} else {
+							objectPose = objectPoseSecond;
+							distanceMag = distanceMagTwo;
+						}
 					} else {
-						objectPose = objectPoseSecond;
-						distanceMag = distanceMagTwo;
+						if (error1 <= error2) {
+							objectPose = objectPoseFirst;
+							distanceMag = distanceMagOne;
+						} else {
+							objectPose = objectPoseSecond;
+							distanceMag = distanceMagTwo;
+						}
 					}
-				}
-				allTxTyObservations.put(
+					allTxTyObservations.put(
 						AITargets.values()[classId].name(),
 						new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
 								ty, distanceMag, timestamp, Optional.of(objectPose)));
+				}
+
+				
 
 			}
 		}
