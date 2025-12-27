@@ -1,5 +1,7 @@
 package frc.robot.utils.drive;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+
 import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
@@ -123,6 +125,7 @@ public class DriveConstants {
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50,TuningConstants.isTuningMacros);
 	public static boolean fieldOriented = true;
 	public static boolean autoAvoidance = false;
+	@AutoLogOutput(key = "Drive/AutoIntake")
 	public static boolean autoIntake = false;
 	// 135-Blocks was tested on a chassis with all CANSparkMaxes, as well as all
 	// Kraken-x60s.

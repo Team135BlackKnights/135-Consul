@@ -16,6 +16,8 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants.Reef;
+import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
@@ -43,7 +45,7 @@ public class BotAborter extends Command {
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
 			this.targetPieceLocation = CompetitionFieldSimulation
-					.getClosestGamePiece(drive.getPose().getTranslation()).getTranslation();
+					.getClosestGamePiece(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class, drive.getPose().getTranslation()).getTranslation();
 		}
 	}
 
@@ -55,6 +57,11 @@ public class BotAborter extends Command {
 		if (Constants.currentMode == Mode.SIM) {
 			//In simulation, get the current pose, and set the degree value to 
 			currentPose = drive.getPose();
+			targetPieceLocation = CompetitionFieldSimulation
+					.getClosestGamePiece(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class, drive.getPose().getTranslation()).getTranslation();
+			if (targetPieceLocation == null) {
+				return;
+			}
 			double deltaX = targetPieceLocation.getX() - currentPose.getX();
 			double deltaY = targetPieceLocation.getY() - currentPose.getY();
 			gamePieceTx = Units.radiansToDegrees(Math.atan2(deltaY, deltaX)); // Use atan2 instead of atan

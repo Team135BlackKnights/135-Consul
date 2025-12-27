@@ -788,7 +788,7 @@ public class RobotContainer {
 					// drivetrainS.resetPose(GeomUtil.apply(startingPose.get(), false));
 				}));
 		selectButtonDrive.toggleOnTrue(new AimToObject(drivetrainS,"A42",1.25));
-		driverPOVUp.onTrue(new InstantCommand(() -> {
+		driverPOVUp.onChange(new InstantCommand(() -> {
 			DriveConstants.autoIntake = !DriveConstants.autoIntake;
 		}));
 		//AITargets.values()[classId].name()

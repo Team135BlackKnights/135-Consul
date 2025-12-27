@@ -1,6 +1,7 @@
 package frc.robot.commands.drive;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -24,7 +25,6 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.TunedJoystick;
 import frc.robot.utils.drive.TunedJoystick.ResponseCurve;
 import frc.robot.utils.vision.VisionConstants;
-import frc.robot.utils.GeomUtil;
 import frc.robot.utils.GeomUtil.ApproachDirection;
 
 /*
@@ -47,6 +47,8 @@ public class DrivetrainC extends Command {
 			DriveConstants.DriverConstants.kDeadband, TuningConstants.isTuningDrivetrain);
 	static final LoggableTunedNumber rotationalSpeedMaxPercentage = new LoggableTunedNumber(
 			"Drive/RotationalSpeedMaxPercentage", .75, TuningConstants.isTuningDrivetrain);
+	static final LoggableTunedNumber autoIntakeAssistPercentage = new LoggableTunedNumber(
+			"Drive/AutoIntakeAssistPercentage", .35, TuningConstants.isTuningDrivetrain);
 	private Function<Double, Double> translationalCurve = ResponseCurve.QUADRATIC;
 	private Function<Double, Double> rotationalCurve = ResponseCurve.SOFT;
 
@@ -275,22 +277,22 @@ public class DrivetrainC extends Command {
 		if (DriveConstants.autoIntake && !lastAutoIntake) {
 			// went false->true: try to create aim if coral exists
 			if (drivetrainS instanceof Swerve) {
-				TxTyPoseRecord coralRec = ((Swerve) drivetrainS).getClosestCoralPose();
-				if (isRecentValidCoral(coralRec)) {
-					Pose3d p3 = coralRec.pose();
-					final Pose2d goalPose = new Pose2d(
-							p3.getTranslation().getX(),
-							p3.getTranslation().getY(),
-							GeomUtil.rotationFromCurrentToTarget(
-									drivetrainS.getLookAheadPose().getTranslation(),
-									p3.getTranslation().toTranslation2d(),
-									ApproachDirection.FRONT));
+					Supplier<Pose2d> coralPoseSupplier = () ->{
+						TxTyPoseRecord coralPose = ((Swerve) drivetrainS).getClosestCoralPose();
+						if (isRecentValidCoral(coralPose)) {
+							Pose2d pose = coralPose.pose().toPose2d();
+							return pose;
+						} else {
+							// fallback to current pose if coral lost
+							return drivetrainS.getLookAheadPose();
+						}
+					};
 					PathConstraints constraints = new PathConstraints(
 							DriveConstants.kMaxSpeedMetersPerSecond,
 							DriveConstants.maxTranslationalAcceleration.get(),
 							DriveConstants.kMaxTurningSpeedRadPerSec,
 							DriveConstants.maxRotationalAcceleration.get());
-					activeAimCommand = new AimToRotation(() -> goalPose, ApproachDirection.FRONT, drivetrainS,
+					activeAimCommand = new AimToRotation(coralPoseSupplier, ApproachDirection.FRONT, drivetrainS,
 							constraints);
 					// initialize it
 					try {
@@ -302,7 +304,6 @@ public class DrivetrainC extends Command {
 						System.out.println("DrivetrainC failed to initialize AimToRotation: " + e.toString());
 					}
 				}
-			}
 		}
 		if (!DriveConstants.autoIntake && lastAutoIntake) {
 			if (activeAimCommand != null && aimInitialized) {
@@ -417,6 +418,7 @@ public class DrivetrainC extends Command {
 					TxTyPoseRecord coralRec = ((Swerve) drivetrainS).getClosestCoralPose();
 					Pose2d ourPose = drivetrainS.getLookAheadPose();
 					if (isRecentValidCoral(coralRec) && ourPose != null) {
+						System.out.println("Applying coral approach assist");
 						Pose3d coralP3 = coralRec.pose();
 						double dx = coralP3.getTranslation().getX() - ourPose.getX();
 						double dy = coralP3.getTranslation().getY() - ourPose.getY();
@@ -429,8 +431,8 @@ public class DrivetrainC extends Command {
 							double assistScale = Math.min(1.0,
 									userCmdMag / Math.max(1e-6, DriveConstants.kMaxSpeedMetersPerSecond));
 
-							// Tunable assist gain (fraction of max speed). Change 0.35 as desired.
-							double assistFractionOfMax = 0.35;
+							// Tunable assist gain (fraction of max speed). Change 0.25 as desired. (negative = go TOWARDS)
+							double assistFractionOfMax = -autoIntakeAssistPercentage.get();
 							double assistMag = DriveConstants.kMaxSpeedMetersPerSecond * assistFractionOfMax
 									* assistScale;
 

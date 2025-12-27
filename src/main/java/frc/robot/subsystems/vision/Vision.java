@@ -42,6 +42,7 @@ import frc.robot.subsystems.vision.VisionIO.CameraID;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.TargetObservation;
 import frc.robot.utils.GeomUtil;
+import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.TimeUtil;
@@ -178,23 +179,27 @@ public class Vision extends SubsystemChecker {
 			// Pose2d simedAIPose = new Pose2d(2,2,Rotation2d.fromDegrees(0));
 			// grab opposting robot sim poses
 			Pose2d simedAIPose = CompetitionFieldSimulation.getClosestRobotPose(currentOdomPose.getTranslation());
-			Pose2d simedAICoralPose = CompetitionFieldSimulation.getClosestGamePiece(currentOdomPose.getTranslation());
+			Pose2d simedAICoralPose = CompetitionFieldSimulation.getClosestGamePiece(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class, currentOdomPose.getTranslation());
+			if (simedAIPose != null) {
+				TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4],
+						new double[4],
+						simedAIPose.getTranslation()
+								.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
+						TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
+				allTxTyObservations.put(AITargets.BLUE_BOT.name(), simedAIObservation);
+				RobotContainer.drivetrainS
+						.addTxTyObservation(simedAIObservation);
+			}
+			if (simedAICoralPose != null) {
+				TxTyObservation simedAICoralObservation = new TxTyObservation("CORAL", 0, new double[4], new double[4],
+						simedAICoralPose.getTranslation()
+								.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
+						TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAICoralPose)));
+				allTxTyObservations.put("CORAL", simedAICoralObservation);
 
-			TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4],
-					new double[4],
-					simedAIPose.getTranslation()
-							.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
-					TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
-			TxTyObservation simedAICoralObservation = new TxTyObservation("CORAL", 0, new double[4], new double[4],
-					simedAICoralPose.getTranslation()
-							.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
-					TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAICoralPose)));
-			allTxTyObservations.put(AITargets.BLUE_BOT.name(), simedAIObservation);
-			allTxTyObservations.put("CORAL", simedAICoralObservation);
-			RobotContainer.drivetrainS
-					.addTxTyObservation(simedAIObservation);
-			RobotContainer.drivetrainS
-					.addTxTyObservation(simedAICoralObservation);
+				RobotContainer.drivetrainS
+						.addTxTyObservation(simedAICoralObservation);
+			}
 
 		}
 		lastOdomPose = currentOdomPose;
@@ -583,8 +588,8 @@ public class Vision extends SubsystemChecker {
 					distanceMag = distanceMagOne;
 					if (!objectPose.getTranslation().equals(Translation3d.kZero))
 						allTxTyObservations.put("CORAL",
-							new TxTyObservation("CORAL", cameraIndex, tx,
-									ty, distanceMag, timestamp, Optional.of(objectPose)));
+								new TxTyObservation("CORAL", cameraIndex, tx,
+										ty, distanceMag, timestamp, Optional.of(objectPose)));
 				} else {
 					if (distanceMagOne < 1 || distanceMagTwo < 1) {
 						if (distanceMagOne >= distanceMagTwo) {
@@ -604,12 +609,10 @@ public class Vision extends SubsystemChecker {
 						}
 					}
 					allTxTyObservations.put(
-						AITargets.values()[classId].name(),
-						new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
-								ty, distanceMag, timestamp, Optional.of(objectPose)));
+							AITargets.values()[classId].name(),
+							new TxTyObservation(AITargets.values()[classId].name(), cameraIndex, tx,
+									ty, distanceMag, timestamp, Optional.of(objectPose)));
 				}
-
-				
 
 			}
 		}
