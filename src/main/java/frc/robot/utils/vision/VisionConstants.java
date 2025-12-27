@@ -48,7 +48,7 @@ public class VisionConstants {
 	public static final boolean debug = true;
 
 	public static final double ambiguityThreshold = 0.4;
-	public static final double objDetectConfidenceThreshold = .4;
+	public static final double objDetectConfidenceThreshold = .6;
 	public static final double maxZError = 0.75;
 	public static final double maxObjZError = 0.25;
 	public static final double maxYawError = 5.0;

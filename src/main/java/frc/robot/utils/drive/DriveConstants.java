@@ -268,8 +268,8 @@ public class DriveConstants {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.25, 0.04, 0.001, 1500, 0, 35); // Average the turning motors for these vals.
 						//Test chassis: 1.65, 125, 0.6, 200, 35, 13.25
-				overallDriveMotorConstantContainer = new MotorConstantContainer(5, 
-						.09, 0.001, 35, 0.0, 0.00);
+				overallDriveMotorConstantContainer = new MotorConstantContainer(1.5, 
+						.09, 0.001, 50, 0.0, 0.085);
 			} else {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001); // Average the turning motors for these vals.
