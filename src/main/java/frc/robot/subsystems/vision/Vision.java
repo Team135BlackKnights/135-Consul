@@ -178,14 +178,23 @@ public class Vision extends SubsystemChecker {
 			// Pose2d simedAIPose = new Pose2d(2,2,Rotation2d.fromDegrees(0));
 			// grab opposting robot sim poses
 			Pose2d simedAIPose = CompetitionFieldSimulation.getClosestRobotPose(currentOdomPose.getTranslation());
+			Pose2d simedAICoralPose = CompetitionFieldSimulation.getClosestGamePiece(currentOdomPose.getTranslation());
+
 			TxTyObservation simedAIObservation = new TxTyObservation(AITargets.BLUE_BOT.name(), 0, new double[4],
 					new double[4],
 					simedAIPose.getTranslation()
 							.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
 					TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAIPose)));
+			TxTyObservation simedAICoralObservation = new TxTyObservation("CORAL", 0, new double[4], new double[4],
+					simedAICoralPose.getTranslation()
+							.getDistance(RobotContainer.drivetrainS.getPose().getTranslation()),
+					TimeUtil.getLogTimeSeconds(), Optional.of(new Pose3d(simedAICoralPose)));
 			allTxTyObservations.put(AITargets.BLUE_BOT.name(), simedAIObservation);
+			allTxTyObservations.put("CORAL", simedAICoralObservation);
 			RobotContainer.drivetrainS
 					.addTxTyObservation(simedAIObservation);
+			RobotContainer.drivetrainS
+					.addTxTyObservation(simedAICoralObservation);
 
 		}
 		lastOdomPose = currentOdomPose;

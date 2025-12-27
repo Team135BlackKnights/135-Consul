@@ -534,7 +534,7 @@ public abstract class CompetitionFieldSimulation {
 		gamePieces.clear();
 	}
 	//YEARLYUPDATE: change these to match the year's gamepiece
-	public static Translation2d getClosestGamePiece(
+	public static Pose2d getClosestGamePiece(
 			Translation2d robotPosition) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;
@@ -553,7 +553,7 @@ public abstract class CompetitionFieldSimulation {
 				closestDistance = distance;
 			}
 		}
-		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
+		return closestGamePiece.getPose3d().toPose2d();
 	}
 	/**
 	 * Used to simulate vision detection of other robots

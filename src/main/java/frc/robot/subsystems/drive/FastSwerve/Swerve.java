@@ -1120,11 +1120,17 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		ArrayList<TxTyPoseRecord> poses = new ArrayList<>();
 		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
 			String name = entry.getKey();
-			if (!name.startsWith("A")) {
+			if (!name.startsWith("A") && !name.startsWith("C")) {
 				poses.add(entry.getValue());
 			}
 		}
 		return poses;
+	}
+	public TxTyPoseRecord getClosestCoralPose(){
+		if (txTyPoses.containsKey("CORAL")) {
+			return txTyPoses.get("CORAL");
+		}
+		return null;
 	}
 
 	public Optional<Pose3d> getTxTyPose(int apriltag) {

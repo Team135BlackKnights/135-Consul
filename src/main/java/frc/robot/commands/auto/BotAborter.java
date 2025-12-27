@@ -43,7 +43,7 @@ public class BotAborter extends Command {
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
 			this.targetPieceLocation = CompetitionFieldSimulation
-					.getClosestGamePiece(drive.getPose().getTranslation());
+					.getClosestGamePiece(drive.getPose().getTranslation()).getTranslation();
 		}
 	}
 
