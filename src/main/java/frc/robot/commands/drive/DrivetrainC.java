@@ -48,15 +48,13 @@ public class DrivetrainC extends Command {
 	static final LoggableTunedNumber rotationalSpeedMaxPercentage = new LoggableTunedNumber(
 			"Drive/RotationalSpeedMaxPercentage", .75, TuningConstants.isTuningDrivetrain);
 	static final LoggableTunedNumber autoIntakeAssistPercentage = new LoggableTunedNumber(
-			"Drive/AutoIntakeAssistPercentage", .35, TuningConstants.isTuningDrivetrain);
+			"Drive/AutoIntakeAssistPercentage", .75, TuningConstants.isTuningDrivetrain);
 	private Function<Double, Double> translationalCurve = ResponseCurve.QUADRATIC;
 	private Function<Double, Double> rotationalCurve = ResponseCurve.SOFT;
 
-	// ---------- AUTO-INTAKE (non-scheduled) state ----------
-	private Command activeAimCommand = null; // the AimToRotation instance (not scheduled)
-	private boolean aimInitialized = false; // whether we've called initialize() on it
-	private boolean lastAutoIntake = false; // track toggle so we init/end at transitions
-	// -------------------------------------------------------
+	private Command activeAimCommand = null; 
+	private boolean aimInitialized = false; 
+	private boolean lastAutoIntake = false; 
 
 	public DrivetrainC(DrivetrainS drivetrainS) {
 		this.drivetrainS = drivetrainS;
@@ -418,7 +416,6 @@ public class DrivetrainC extends Command {
 					TxTyPoseRecord coralRec = ((Swerve) drivetrainS).getClosestCoralPose();
 					Pose2d ourPose = drivetrainS.getLookAheadPose();
 					if (isRecentValidCoral(coralRec) && ourPose != null) {
-						System.out.println("Applying coral approach assist");
 						Pose3d coralP3 = coralRec.pose();
 						double dx = coralP3.getTranslation().getX() - ourPose.getX();
 						double dy = coralP3.getTranslation().getY() - ourPose.getY();
