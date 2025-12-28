@@ -863,7 +863,7 @@ public class RobotContainer {
 		// Button Board Controls
 
 		if (Constants.currentMode == Mode.SIM) {
-			testDPadUp.onTrue(new InstantCommand(() -> {
+			/*testDPadUp.onTrue(new InstantCommand(() -> {
 				try {
 					System.out.println("Creating Algae");
 					fieldSimulation.addGamePiece(new Reefscape2025FieldObjects.AlgaeBallOnManipulator(
@@ -881,7 +881,7 @@ public class RobotContainer {
 				} catch (Exception e) {
 					System.out.println("Failed to Create Algae");
 				}
-			}));
+			}));*/
 		}
 	}
 

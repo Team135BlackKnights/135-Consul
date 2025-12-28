@@ -7,8 +7,10 @@ import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.path.PathConstraints;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
@@ -48,7 +50,7 @@ public class DrivetrainC extends Command {
 	static final LoggableTunedNumber rotationalSpeedMaxPercentage = new LoggableTunedNumber(
 			"Drive/RotationalSpeedMaxPercentage", .75, TuningConstants.isTuningDrivetrain);
 	static final LoggableTunedNumber autoIntakeAssistPercentage = new LoggableTunedNumber(
-			"Drive/AutoIntakeAssistPercentage", .75, TuningConstants.isTuningDrivetrain);
+			"Drive/AutoIntakeAssistPercentage", .5, TuningConstants.isTuningDrivetrain);
 	private Function<Double, Double> translationalCurve = ResponseCurve.QUADRATIC;
 	private Function<Double, Double> rotationalCurve = ResponseCurve.SOFT;
 
@@ -420,51 +422,37 @@ public class DrivetrainC extends Command {
 						double dx = coralP3.getTranslation().getX() - ourPose.getX();
 						double dy = coralP3.getTranslation().getY() - ourPose.getY();
 						double dist = Math.hypot(dx, dy);
-						if (dist > 1e-6) {
-							double uxField = dx / dist;
-							double uyField = dy / dist;
+						if (dist < 1e-6) return;
+						Rotation2d robotRot = drivetrainS.getRotation2d();
+						double cos = Math.cos(-robotRot.getRadians());
+						double sin = Math.sin(-robotRot.getRadians());
 
-							double userCmdMag = Math.hypot(xSpeed, ySpeed);
-							double assistScale = Math.min(1.0,
-									userCmdMag / Math.max(1e-6, DriveConstants.kMaxSpeedMetersPerSecond));
+						double rx = (cos * dx - sin * dy) / dist; 
 
-							// Tunable assist gain (fraction of max speed). Change 0.25 as desired. (negative = go TOWARDS)
-							double assistFractionOfMax = -autoIntakeAssistPercentage.get();
-							double assistMag = DriveConstants.kMaxSpeedMetersPerSecond * assistFractionOfMax
-									* assistScale;
+						double driverVx = chassisSpeeds.vxMetersPerSecond;
 
-							if (DriveConstants.fieldOriented) {
-								chassisSpeeds = new ChassisSpeeds(
-										chassisSpeeds.vxMetersPerSecond + uxField * assistMag,
-										chassisSpeeds.vyMetersPerSecond + uyField * assistMag,
-										chassisSpeeds.omegaRadiansPerSecond);
-							} else {
-								// convert field unit vector to robot frame (same transform as avoidRobots)
-								double thetaLoop = drivetrainS.getRotation2d().getRadians();
-								double cosLoop = Math.cos(-thetaLoop);
-								double sinLoop = Math.sin(-thetaLoop);
-								double uxRobot = cosLoop * uxField - sinLoop * uyField;
-								double uyRobot = sinLoop * uxField + cosLoop * uyField;
-								chassisSpeeds = new ChassisSpeeds(
-										chassisSpeeds.vxMetersPerSecond + uxRobot * assistMag,
-										chassisSpeeds.vyMetersPerSecond + uyRobot * assistMag,
-										chassisSpeeds.omegaRadiansPerSecond);
-							}
-							double max = DriveConstants.kMaxSpeedMetersPerSecond;
-							double newVx = chassisSpeeds.vxMetersPerSecond;
-							double newVy = chassisSpeeds.vyMetersPerSecond;
-							if (Math.abs(newVx) > max)
-								newVx = Math.signum(newVx) * max;
-							if (Math.abs(newVy) > max)
-								newVy = Math.signum(newVy) * max;
-							chassisSpeeds = new ChassisSpeeds(newVx, newVy, chassisSpeeds.omegaRadiansPerSecond);
-						}
+						double driverMag = Math.hypot(
+								chassisSpeeds.vxMetersPerSecond,
+								chassisSpeeds.vyMetersPerSecond
+						);
+
+						double desiredVx = Math.signum(rx) * driverMag;
+
+						double k = autoIntakeAssistPercentage.get(); // 0–1 where 0.5 = can go ZERO speed "towards" coral, but cannot INCREASE distance from coral
+						//ANYTHING above .5 means that the input *must* move towards coral, cannot go away
+						//ANYTHING below .5 means that the input *does not have to* move towards coral, can go away if desired
+						double correctedVx = MathUtil.interpolate(driverVx, desiredVx, k);
+
+						chassisSpeeds = new ChassisSpeeds(
+								correctedVx,
+								chassisSpeeds.vyMetersPerSecond,
+								chassisSpeeds.omegaRadiansPerSecond
+						);
 					} else {
 						if (activeAimCommand != null && aimInitialized) {
 							try {
 								activeAimCommand.end(true);
-							} catch (Exception e) {
-							}
+							} catch (Exception e) {}
 							activeAimCommand = null;
 							aimInitialized = false;
 						}
