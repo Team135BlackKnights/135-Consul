@@ -29,6 +29,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import com.therekrab.autopilot.APTarget;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -53,6 +54,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.commands.FeedForwardCharacterization;
 import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.drive.AutoPilotAlign;
 import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
@@ -725,8 +727,11 @@ public class RobotContainer {
 				.onTrue(new InstantCommand(() -> DriveConstants.autoAvoidance = !DriveConstants.autoAvoidance));
 		// aButtonDrive.whileTrue(superStructure.setGoalCommand(Goal.ONE_METER));
 		aButtonDrive.whileTrue(
-				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5, .05),
+				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
+		bButtonDrive.whileTrue(
+			new AutoPilotAlign(new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS)
+		);
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
