@@ -730,7 +730,7 @@ public class RobotContainer {
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
 		bButtonDrive.whileTrue(
-			new AutoPilotAlign(new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS)
+			new AutoPilotAlign(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,2)
 		);
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
@@ -815,7 +815,6 @@ public class RobotContainer {
 			}));
 		}
 	}
-
 	// Interface for command factories
 	public interface CommandFactory {
 		Command generate();
