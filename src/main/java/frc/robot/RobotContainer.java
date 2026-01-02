@@ -3,6 +3,53 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot;
 
+import frc.robot.Constants.Mode;
+import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.drive.DrivetrainC;
+import frc.robot.commands.drive.WheelRadiusCharacterization;
+import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
+import frc.robot.subsystems.drive.Mecanum.Mecanum;
+import frc.robot.subsystems.drive.Mecanum.MecanumIO;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
+import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
+import frc.robot.subsystems.drive.Tank.TankIO;
+import frc.robot.subsystems.drive.Tank.TankIOSim;
+import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
+import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
+import frc.robot.subsystems.drive.Tank.Tank;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
+import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
+import frc.robot.utils.drive.DriveConstants;
+import frc.robot.utils.drive.LocalADStarAK;
+import frc.robot.utils.drive.PathFinder;
+import frc.robot.utils.drive.Sensors.GyroIO;
+import frc.robot.utils.drive.Sensors.GyroIONavX;
+import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
+import frc.robot.utils.drive.Sensors.GyroIOSim;
+
+import com.ctre.phoenix6.hardware.ParentDevice;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathfindingCommand;
+import com.pathplanner.lib.pathfinding.Pathfinding;
+import com.pathplanner.lib.util.PPLibTelemetry;
+
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,16 +66,11 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-import com.ctre.phoenix6.hardware.ParentDevice;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.PPLibTelemetry;
 import com.therekrab.autopilot.APTarget;
 
 import edu.wpi.first.math.Pair;
@@ -50,52 +92,16 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.AutoPilotAlign;
-import frc.robot.commands.drive.DrivetrainC;
-import frc.robot.commands.drive.WheelRadiusCharacterization;
-import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
+
+
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
-import frc.robot.subsystems.drive.Mecanum.Mecanum;
-import frc.robot.subsystems.drive.Mecanum.MecanumIO;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
-import frc.robot.subsystems.drive.Tank.Tank;
-import frc.robot.subsystems.drive.Tank.TankIO;
-import frc.robot.subsystems.drive.Tank.TankIOSim;
-import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
-import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
+
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Reefscape2025FieldSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.LocalADStarAK;
-import frc.robot.utils.drive.PathFinder;
-import frc.robot.utils.drive.Sensors.GyroIO;
-import frc.robot.utils.drive.Sensors.GyroIONavX;
-import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
-import frc.robot.utils.drive.Sensors.GyroIOSim;
+
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 
@@ -729,8 +735,7 @@ public class RobotContainer {
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
-		bButtonDrive.whileTrue(
-			new AutoPilotAlign(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,2)
+		bButtonDrive.whileTrue(PathFinder.goToAutoPilotPose(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,() -> DriveConstants.pathConstraints, 1, .02)
 		);
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()

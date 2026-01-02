@@ -218,9 +218,9 @@ public class DriveConstants {
 
 			public static final APProfile kFastProfile =
 			new APProfile(kFastAPConstraints)
-				.withErrorXY(Centimeters.of(15))
+				.withErrorXY(Centimeters.of(5))
 				.withErrorTheta(Degrees.of(5))
-				.withBeelineRadius(Centimeters.of(10));
+				.withBeelineRadius(Centimeters.of(50));
 	}
 	public static class TrainConstants {
 
