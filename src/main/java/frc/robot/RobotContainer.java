@@ -55,6 +55,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PPLibTelemetry;
+
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -76,7 +78,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import com.pathplanner.lib.util.PPLibTelemetry;
 import com.therekrab.autopilot.APTarget;
 
 import edu.wpi.first.math.Pair;
@@ -102,27 +103,16 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.commands.drive.AimToRotation;
 
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.AutoPilotAlign;
-import frc.robot.commands.drive.DrivetrainC;
-import frc.robot.commands.drive.WheelRadiusCharacterization;
-import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
+
+
+
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Reefscape2025FieldSimulation;
+
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.JukeboxUtil;
 import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
@@ -817,8 +807,7 @@ public class RobotContainer {
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
-		bButtonDrive.whileTrue(
-			new AutoPilotAlign(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,2)
+		bButtonDrive.whileTrue(PathFinder.goToAutoPilotPose(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,() -> DriveConstants.pathConstraints, 1, .02)
 		);
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()

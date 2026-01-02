@@ -84,14 +84,28 @@ public class AutoPilotAlign extends Command {
             activeTarget = makeAPTargetFromPose(lookaheadPose, Optional.of(tangent), m_finalTarget);
         }
 
-        APResult out = Swerve.autopilot.calculate(robotPose, currentRobotRelative, activeTarget);
+        Rotation2d maskedRot = activeTarget.getReference().getRotation();
+        Translation2d fieldRelativeVel = new Translation2d(
+                currentRobotRelative.vxMetersPerSecond,
+                currentRobotRelative.vyMetersPerSecond)
+                .rotateBy(robotPose.getRotation());
+        Translation2d maskedRobotRelativeVel = fieldRelativeVel.rotateBy(maskedRot.unaryMinus());
+
+        ChassisSpeeds maskedRobotRelative = new ChassisSpeeds(
+                maskedRobotRelativeVel.getX(),
+                maskedRobotRelativeVel.getY(),
+                currentRobotRelative.omegaRadiansPerSecond);
+        Pose2d maskedPose = new Pose2d(
+                robotPose.getTranslation(),
+                maskedRot);
+        APResult out = Swerve.autopilot.calculate(maskedPose, maskedRobotRelative, activeTarget);
 
         ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(out.vx().baseUnitMagnitude(),
                 out.vy().baseUnitMagnitude(), 0.0);
         ChassisSpeeds robotRelativeFromField = ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds,
                 m_drivetrain.getRotation2d());
 
-        desiredRotation = out.targetAngle();
+        desiredRotation = goalEndState.rotation();
         thetaControllerCommand.execute();
 
         m_drivetrain
