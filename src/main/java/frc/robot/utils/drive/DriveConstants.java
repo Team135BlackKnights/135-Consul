@@ -1,6 +1,8 @@
 package frc.robot.utils.drive;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import static edu.wpi.first.units.Units.Centimeters;
+import static edu.wpi.first.units.Units.Degrees;
 
 import com.ctre.phoenix6.CANBus;
 import com.pathplanner.lib.config.ModuleConfig;
@@ -28,7 +30,8 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation.DriveTrainSimulationProfile;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
-
+import com.therekrab.autopilot.APConstraints;
+import com.therekrab.autopilot.APProfile;
 public class DriveConstants {
 	// YEARLYUPDATE:  Change these to the drivetrain being used. Duh -N
 	// If true, tank/mecanum use their native PIDs. If false, tank/mech output their
@@ -204,7 +207,24 @@ public class DriveConstants {
 			getDriveTrainMotors(1).freeSpeedRadPerSec / TrainConstants.kDriveMotorGearRatioHigh
 					* TrainConstants.kWheelDiameter.get() / 2
 					/ new Translation2d(kChassisLength / 2, kChassisWidth / 2).getNorm());
+	public static class AutopilotConstants {
+			public static final APConstraints kTightAutopilotAPConstraints =
+			new APConstraints().withAcceleration(maxTranslationalAcceleration.get()/2).withJerk(1.5);
 
+			public static final APProfile kTightProfile =
+			new APProfile(kTightAutopilotAPConstraints)
+				.withErrorXY(Centimeters.of(1))
+				.withErrorTheta(Degrees.of(1))
+				.withBeelineRadius(Centimeters.of(10));
+			public static final APConstraints kFastAPConstraints =
+			new APConstraints().withAcceleration(maxTranslationalAcceleration.get()*2).withJerk(maxTranslationalAcceleration.get()*2);
+
+			public static final APProfile kFastProfile =
+			new APProfile(kFastAPConstraints)
+				.withErrorXY(Centimeters.of(15))
+				.withErrorTheta(Degrees.of(5))
+				.withBeelineRadius(Centimeters.of(10));
+	}
 	public static class TrainConstants {
 
 		/**
