@@ -292,7 +292,7 @@ public class DrivetrainC extends Command {
 							DriveConstants.maxTranslationalAcceleration.get(),
 							DriveConstants.kMaxTurningSpeedRadPerSec,
 							DriveConstants.maxRotationalAcceleration.get());
-					activeAimCommand = new AimToRotation(coralPoseSupplier, ApproachDirection.FRONT, drivetrainS,
+					activeAimCommand = new AimToRotation(coralPoseSupplier, ApproachDirection.FRONT_RIGHT, drivetrainS,
 							constraints);
 					// initialize it
 					try {
