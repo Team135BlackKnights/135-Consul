@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -84,9 +83,8 @@ public class AimToPose extends Command {
 						targetAngle); //Go to target rotation using FF.
 		Logger.recordOutput("THETA", thetaVelocity);
 		PPHolonomicDriveController.overrideRotationFeedback(() -> thetaVelocity);
-		if (Constants.currentMatchState == Constants.FRCMatchState.TELEOP) {
-			RobotContainer.angularSpeed = thetaVelocity;
-		}
+		RobotContainer.angularSpeed = thetaVelocity;
+		
 	}
 
 	@Override
