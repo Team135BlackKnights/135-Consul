@@ -652,8 +652,7 @@ public class RobotContainer {
 				.andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
 				.ignoringDisable(true)
 				.finallyDo(() -> RobotContainer.field.getObject("target pose")
-						.setPose(new Pose2d(-50, -50, new Rotation2d())))
-				.schedule();
+						.setPose(new Pose2d(-50, -50, new Rotation2d()))));
 		if (!leds.gifFound(ImageStates.debug)) {
 			Logger.recordOutput("LEDS/Main",
 					"No images found for " + ImageStates.debug.name());
