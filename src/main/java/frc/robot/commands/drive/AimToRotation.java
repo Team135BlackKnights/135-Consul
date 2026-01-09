@@ -40,12 +40,12 @@ public class AimToRotation extends Command {
 	 * @param approachDirection
 	 * @param drive
 	 */
-	public AimToRotation(Supplier<Pose2d> goalPose, ApproachDirection approachDirection, DrivetrainS drive) {
+	public AimToRotation(Supplier<Pose2d> goalPose, ApproachDirection approachDirection, DrivetrainS drive, PathConstraints constraints) {
 		this(() -> GeomUtil.rotationFromCurrentToTarget(
 			drive.getLookAheadPose().getTranslation(),
 			goalPose.get().getTranslation(), // Fixed: Call goalPose.get() to retrieve the Pose2d
 			approachDirection
-		), drive,DriveConstants.pathConstraints);
+		), drive,constraints);
 	}
 	/**
 	 * Aim the robot at a specific pose2d
