@@ -13,11 +13,9 @@ import java.util.function.BiConsumer;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.CANBus.CANBusStatus;
@@ -88,7 +86,6 @@ public class Robot extends LoggedRobot {
 	public static double matchTime = 0;
 	private double lastMatchTime = 0, previousTime = Logger.getTimestamp(), accumulatedCharge = 0;
 	@SuppressWarnings("unused")
-	private LoggedPowerDistribution pdh;
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
 	public static final CANBus rioCanBus = CANBus.roboRIO();
 	public static final CANBus everythingCanBus = new CANBus("everything");
@@ -194,7 +191,6 @@ public class Robot extends LoggedRobot {
 				break;
 		}
 		Logger.addDataReceiver(new LogTimingReceiver());
-		Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		SignalLogger.enableAutoLogging(false);
 		try {
@@ -250,7 +246,6 @@ public class Robot extends LoggedRobot {
 				((SubsystemChecker) subsys).allowFaultPolling(false);
 			}
 		}
-		pdh = LoggedPowerDistribution.getInstance();
 		RobotController.setBrownoutVoltage(6.0);
 		SmartDashboard.putBoolean("ShouldEndLog", false);
 		// read the accumated charge from the last boot, so we can set it to that on

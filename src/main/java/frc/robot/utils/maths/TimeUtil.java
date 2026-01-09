@@ -39,8 +39,7 @@ public class TimeUtil {
 	 * 
 	 * @return
 	 */
-	@SuppressWarnings("deprecation")
 	public static double getRealTimeSeconds() {
-		return Logger.getRealTimestamp() / 1_000_000.0;
+		return Logger.getTimestamp() / 1_000_000.0;
 	}
 }
