@@ -190,7 +190,6 @@ public class Robot extends LoggedRobot {
 				break;
 		}
 		Logger.addDataReceiver(new LogTimingReceiver());
-		//Logger.registerURCL(URCL.startExternal(Constants.manCanIdsToNames()));
 		Logger.start();
 		SignalLogger.enableAutoLogging(false);
 		try {

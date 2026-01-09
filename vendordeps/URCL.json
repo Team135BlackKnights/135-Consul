@@ -1,69 +1,63 @@
 {
-    "fileName": "Studica.json",
-    "name": "Studica",
-    "version": "2026.0.0-beta",
+    "fileName": "URCL.json",
+    "name": "URCL",
+    "version": "2026.0.0",
     "frcYear": "2026",
-    "uuid": "cb311d09-36e9-4143-a032-55bb2b94443b",
+    "uuid": "84246d17-a797-4d1e-bd9f-c59cd8d2477c",
     "mavenUrls": [
-        "https://dev.studica.com/maven/release/2026/"
+        "https://frcmaven.wpi.edu/artifactory/littletonrobotics-mvn-release/"
     ],
-    "jsonUrl": "https://dev.studica.com/maven/release/2026/json/Studica-2026.0.0-beta.json",
+    "jsonUrl": "https://raw.githubusercontent.com/Mechanical-Advantage/URCL/main/URCL.json",
     "javaDependencies": [
         {
-            "groupId": "com.studica.frc",
-            "artifactId": "Studica-java",
-            "version": "2026.0.0-beta"
+            "groupId": "org.littletonrobotics.urcl",
+            "artifactId": "URCL-java",
+            "version": "2026.0.0"
         }
     ],
     "jniDependencies": [
         {
-            "groupId": "com.studica.frc",
-            "artifactId": "Studica-driver",
-            "version": "2026.0.0-beta",
+            "groupId": "org.littletonrobotics.urcl",
+            "artifactId": "URCL-driver",
+            "version": "2026.0.0",
             "skipInvalidPlatforms": true,
             "isJar": false,
             "validPlatforms": [
                 "windowsx86-64",
-                "linuxarm64",
                 "linuxx86-64",
                 "linuxathena",
-                "linuxarm32",
                 "osxuniversal"
             ]
         }
     ],
     "cppDependencies": [
         {
-            "groupId": "com.studica.frc",
-            "artifactId": "Studica-cpp",
-            "version": "2026.0.0-beta",
-            "libName": "Studica",
+            "groupId": "org.littletonrobotics.urcl",
+            "artifactId": "URCL-cpp",
+            "version": "2026.0.0",
+            "libName": "URCL",
             "headerClassifier": "headers",
             "sharedLibrary": false,
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
                 "windowsx86-64",
-                "linuxarm64",
                 "linuxx86-64",
                 "linuxathena",
-                "linuxarm32",
                 "osxuniversal"
             ]
         },
         {
-            "groupId": "com.studica.frc",
-            "artifactId": "Studica-driver",
-            "version": "2026.0.0-beta",
-            "libName": "StudicaDriver",
+            "groupId": "org.littletonrobotics.urcl",
+            "artifactId": "URCL-driver",
+            "version": "2026.0.0",
+            "libName": "URCLDriver",
             "headerClassifier": "headers",
             "sharedLibrary": false,
             "skipInvalidPlatforms": true,
             "binaryPlatforms": [
                 "windowsx86-64",
-                "linuxarm64",
                 "linuxx86-64",
                 "linuxathena",
-                "linuxarm32",
                 "osxuniversal"
             ]
         }
