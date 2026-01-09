@@ -1,6 +1,8 @@
 package frc.robot.utils.drive;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
@@ -11,12 +13,15 @@ import com.pathplanner.lib.pathfinding.LocalADStar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 public class LocalADStarAK implements Pathfinder {
 	private final ADStarIO io = new ADStarIO();
+	public List<Pose2d> cachedPath = null;
 
 	/**
 	 * Get if a new path has been calculated since the last time a path was
@@ -100,7 +105,31 @@ public class LocalADStarAK implements Pathfinder {
 			io.adStar.setDynamicObstacles(obs, currentRobotPos);
 		}
 	}
+	public BiConsumer<PathConstraints, GoalEndState> pathConsumer() {
+    return (constraints, goalEndState) -> {
+        PathPlannerPath path =
+            getCurrentPath(constraints, goalEndState);
 
+        if (path == null) {
+            return;
+        }
+
+        if (cachedPath == null) {
+            cachedPath = new ArrayList<>();
+        } else {
+            cachedPath.clear();
+        }
+
+        for (PathPoint pp : path.getAllPathPoints()) {
+            cachedPath.add(new Pose2d(
+                pp.position,
+                pp.rotationTarget != null
+                    ? pp.rotationTarget.rotation()
+                    : Rotation2d.fromRadians(0.0)
+            ));
+        }
+    };
+}
 	private static class ADStarIO implements LoggableInputs {
 		public LocalADStar adStar = new LocalADStar();
 		public boolean isNewPathAvailable = false;

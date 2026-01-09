@@ -534,15 +534,13 @@ public abstract class CompetitionFieldSimulation {
 		gamePieces.clear();
 	}
 	//YEARLYUPDATE: change these to match the year's gamepiece
-	public static Translation2d getClosestGamePiece(
+	public static Pose2d getClosestGamePiece(Class<?> wantedType,
 			Translation2d robotPosition) {
 		GamePieceInSimulation closestGamePiece = null;
 		double closestDistance = Double.MAX_VALUE;
 		for (GamePieceInSimulation gamePiece : gamePieces) {
-			if (!(gamePiece instanceof AlgaeBallOnFieldSimulated)) {
-				continue;
-			}
-			if (!(gamePiece instanceof ReefscapeCoralOnFieldSimulated)) {
+			Class<?> gamePieceClass = gamePiece.getClass();
+			if (!(gamePieceClass.equals(wantedType))) {
 				continue;
 			}
 			double distance = gamePiece.getPose3d().getTranslation()
@@ -553,7 +551,10 @@ public abstract class CompetitionFieldSimulation {
 				closestDistance = distance;
 			}
 		}
-		return closestGamePiece.getPose3d().getTranslation().toTranslation2d();
+		if (closestGamePiece == null) {
+			return null;
+		}
+		return closestGamePiece.getPose3d().toPose2d();
 	}
 	/**
 	 * Used to simulate vision detection of other robots
