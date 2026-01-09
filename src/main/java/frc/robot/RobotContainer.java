@@ -93,20 +93,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.DrivetrainC;
-import frc.robot.commands.drive.WheelRadiusCharacterization;
-import frc.robot.subsystems.SubsystemChecker;
-
-import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
 
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
@@ -115,10 +101,9 @@ import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.subsystems.servos.ServoS;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
+
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Reefscape2025FieldSimulation;
+import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
 
 /**
