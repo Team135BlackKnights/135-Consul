@@ -51,6 +51,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import com.therekrab.autopilot.Autopilot;
 
 public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
@@ -140,6 +141,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	};
 	private final OdometryThread odometryThread;
 	private Feedforwards pathPlannerNM = new Feedforwards(4);
+	public static final Autopilot autopilot = new Autopilot(DriveConstants.AutopilotConstants.kFastProfile);
 	private double characterizationVelocity = 0.0;
 	//Do not use CTRE's WheelForceCalculator. It has been proven worse than simply using the correction method.
 	// static {
@@ -446,7 +448,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					if (Math.abs(omega) > currentModuleLimits.maxSteeringVelocity()
 							* 5.0
 							|| Math.abs(velocity) > currentModuleLimits
-									.maxDriveVelocity() * 5.0 || isSkidding[i]) {
+									.maxDriveVelocity() * 5.0 || isSkidding[j]) {
 						includeMeasurement = false;
 						break;
 					}
