@@ -43,7 +43,10 @@ public interface DrivetrainS extends Subsystem {
 	 * @return the ChassisSpeeds of the drivetrain
 	 */
 	ChassisSpeeds getChassisSpeeds();
-
+	/**
+	 * @return the ChassisSpeeds of the drivetrain in field relative
+	 */
+	ChassisSpeeds getFieldChassisSpeeds();
 	/**
 	 * Reset the drivetrain's odometry to a particular pose
 	 * 

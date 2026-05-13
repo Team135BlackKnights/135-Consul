@@ -1,9 +1,14 @@
 package frc.robot.utils.drive;
 
+import org.littletonrobotics.junction.AutoLogOutput;
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 import com.ctre.phoenix6.CANBus;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -12,6 +17,7 @@ import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -20,6 +26,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
@@ -29,6 +36,9 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.MotorConstantContainer;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.AbstractDriveTrainSimulation.DriveTrainSimulationProfile;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation.WHEEL_GRIP;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import com.therekrab.autopilot.APConstraints;
 import com.therekrab.autopilot.APProfile;
 public class DriveConstants {
@@ -44,6 +54,7 @@ public class DriveConstants {
 	public static final GyroType gyroType = GyroType.PIGEON;
 	public static final boolean useThriftyEncoder = false;
 	public static final WHEEL_GRIP gripType = WHEEL_GRIP.VEX_GRIP_V2;
+	public static final FieldType fieldType = FieldType.ANDYMARK;
 	public static final int maximumAutoCycles = 6;
 	public class DriverConstants {
 		public static final double kDeadband = 0.1, translationalResponseCurveExponent = 2.4,
@@ -122,17 +133,19 @@ public class DriveConstants {
 	}
 
 	public static final LoggableTunedNumber maxTranslationalAcceleration = new LoggableTunedNumber(
-			"Drive/MaxTranslationalAcceleration", 30,TuningConstants.isTuningMacros);
+			"Drive/MaxTranslationalAcceleration", 36,TuningConstants.isTuningMacros);
 	public static final LoggableTunedNumber maxRotationalAcceleration = new LoggableTunedNumber(
 			"Drive/MaxRotationalAcceleration", 2 * Math.PI * 50,TuningConstants.isTuningMacros);
 	public static boolean fieldOriented = true;
 	public static boolean autoAvoidance = false;
+	@AutoLogOutput(key = "Drive/AutoIntake")
+	public static boolean autoIntake = false;
 	// 135-Blocks was tested on a chassis with all CANSparkMaxes, as well as all
 	// Kraken-x60s.
-	public static final double kChassisWidth = Units.inchesToMeters(24.25), // Distance between Left and Right wheels
-			kChassisLength = Units.inchesToMeters(24.25), // Distance betwwen Front and Back wheels
-			kBumperToBumperWidth = Units.inchesToMeters(37.5), // Distance between bumpers
-			kBumperToBumperLength = Units.inchesToMeters(37.5), // Distance between bumpers
+	public static final double kChassisWidth = Units.inchesToMeters(25), // Distance between Left and Right wheels
+			kChassisLength = Units.inchesToMeters(20), // Distance betwwen Front and Back wheels
+			kBumperToBumperWidth = .962, // Distance between bumpers
+			kBumperToBumperLength = .834, // Distance between bumpers
 			kDriveBaseRadius = Math.sqrt(
 					kChassisLength * kChassisLength + kChassisWidth * kChassisWidth)
 					/ 2,
@@ -151,12 +164,12 @@ public class DriveConstants {
 			kFrontLeftAbsEncoderOffsetRad = 0, kFrontRightAbsEncoderOffsetRad = 0, // -.935 , BR -.7792
 			kBackLeftAbsEncoderOffsetRad = 0, kBackRightAbsEncoderOffsetRad = 0, // -.2392 FL -.5813
 			SKID_THRESHOLD = .5, // Meters per second
-			TURN_DEADBAND_AMPS = 10, //minimum amperage allowed on turn motors (to prevent weirdo noises/eating voltage)
+			TURN_DEADBAND_AMPS = 5, //minimum amperage allowed on turn motors (to prevent weirdo noises/eating voltage)
 			MAX_G = 1.5;
-	public static double kMaxSpeedMetersPerSecond = 6.0, // 15.1
-			kMaxTurningSpeedRadPerSec = 3.914667 * 2 * Math.PI; // 1.33655 *2 *Math.PI
+	public static double kMaxSpeedMetersPerSecond = 4.558, // 15.1
+			kMaxTurningSpeedRadPerSec = 11.2; // 1.33655 *2 *Math.PI
 	public static PathConstraints pathConstraints = new PathConstraints(
-			6, 17.5,
+			4.558, 24,
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get());
 	// kP = 0.1, kI = 0, kD = 0, kDistanceMultipler = .2; //for autoLock
 	// Declare the position of each module
@@ -183,14 +196,17 @@ public class DriveConstants {
 			kFrontRightShifterForward = 2, kFrontRightShifterReverse = 3,
 			kBackLeftShifterForward = 4, kBackLeftShifterReverse = 5,
 			kBackRightShifterForward = 6, kBackRightShifterReverse = 7,
-			kMaxDriveCurrent = 65, kMaxTurnCurrent = 20;
+			kMaxDriveCurrent = 50, kMaxTurnCurrent = 20;
 	public static final boolean kFrontLeftDriveReversed = false,
 			kFrontLeftTurningReversed = false, kFrontLeftAbsEncoderReversed = false,
-			kFrontRightDriveReversed = false, kFrontRightTurningReversed = false,
-			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = true,
+			kFrontRightDriveReversed = true, kFrontRightTurningReversed = false,
+			kFrontRightAbsEncoderReversed = false, kBackLeftDriveReversed = false,
 			kBackLeftTurningReversed = false, kBackLeftAbsEncoderReversed = false,
 			kBackRightDriveReversed = true, kBackRightTurningReversed = false,
 			kBackRightAbsEncoderReversed = false;
+	public static ModuleLimits moduleLimitsAuto = new ModuleLimits(
+			DriveConstants.kMaxSpeedMetersPerSecond*2,
+			maxTranslationalAcceleration.get()*2, DriveConstants.kMaxTurningSpeedRadPerSec*4);
 	public static ModuleLimits moduleLimitsLow = new ModuleLimits(
 			DriveConstants.kMaxSpeedMetersPerSecond,
 			maxTranslationalAcceleration.get(), DriveConstants.kMaxTurningSpeedRadPerSec);
@@ -206,7 +222,7 @@ public class DriveConstants {
 					/ new Translation2d(kChassisLength / 2, kChassisWidth / 2).getNorm());
 	public static class AutopilotConstants {
 			public static final APConstraints kTightAutopilotAPConstraints =
-			new APConstraints().withAcceleration(maxTranslationalAcceleration.get()/2).withJerk(1.5);
+			new APConstraints().withVelocity(kMaxSpeedMetersPerSecond).withAcceleration(maxTranslationalAcceleration.get()).withJerk(10);
 
 			public static final APProfile kTightProfile =
 			new APProfile(kTightAutopilotAPConstraints)
@@ -214,7 +230,7 @@ public class DriveConstants {
 				.withErrorTheta(Degrees.of(1))
 				.withBeelineRadius(Centimeters.of(10));
 			public static final APConstraints kFastAPConstraints =
-			new APConstraints().withAcceleration(maxTranslationalAcceleration.get()*2).withJerk(maxTranslationalAcceleration.get()*2);
+			new APConstraints().withVelocity(kMaxSpeedMetersPerSecond).withAcceleration(maxTranslationalAcceleration.get()*2).withJerk(maxTranslationalAcceleration.get()*2);
 
 			public static final APProfile kFastProfile =
 			new APProfile(kFastAPConstraints)
@@ -243,14 +259,14 @@ public class DriveConstants {
 				extendTime = new LoggableTunedNumber("Drive/Module/extendTime", 200,TuningConstants.isTuningModules);
 		public static final double kMaxAngularSpeedRadiansPerSecond = 2 * DriveConstants.kMaxSpeedMetersPerSecond
 				/ (kWheelDiameter.get()),
-				kDriveMotorGearRatioLow = 5.14, kDriveMotorGearRatioHigh = 3, kTurningMotorGearRatio = 25,
+				kDriveMotorGearRatioLow = 6.75, kDriveMotorGearRatioHigh = 3, kTurningMotorGearRatio = 25,
 				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
 				moi = 2.8732, // kg m^2, moment of inertia of the robot
 				weight = Units.lbsToKilograms(56); // test chassis
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
-				0.001, 0.001, 0.001, .675,.125, 0),
+				0.001, 0.001, 0.001, 1,.125, 0), //.675,.125.0
 				pathplannerRotationConstantContainer = new MotorConstantContainer(
-						0.001, 0.001, 0.001, 5, 0, 0);
+						0.001, 0.001, 0.001, 2, 0, .05);
 
 	}
 
@@ -287,10 +303,10 @@ public class DriveConstants {
 			if (robotMotorController == MotorVendor.CTRE_ON_CANIVORE
 					|| robotMotorController == MotorVendor.CTRE_ON_RIO) {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
-						0.25, 0.04, 0.001, 1000, 0, 50); // Average the turning motors for these vals.
+						0.25, 0.04, 0.001, 1500, 0, 35); // Average the turning motors for these vals.
 						//Test chassis: 1.65, 125, 0.6, 200, 35, 13.25
-				overallDriveMotorConstantContainer = new MotorConstantContainer(5, 
-						.09, 0.001, 35, 0.0, 0.00);
+				overallDriveMotorConstantContainer = new MotorConstantContainer(1.5, 
+						.09, 0.001, 50, 0.0, 0.085);
 			} else {
 				overallTurningMotorConstantContainer = new MotorConstantContainer(
 						0.001, 0.001, 0.001, 5, 0, 0.001); // Average the turning motors for these vals.
@@ -309,4 +325,69 @@ public class DriveConstants {
 		public static final double SIMULATION_DT = Robot.defaultPeriodSecs / SIM_ITERATIONS_PER_ROBOT_PERIOD;
 		public static final double MAX_FAKE_G = 0.1;
 	}
+	// Physical AprilTag/ArUco marker side length used by solvePnP on the coprocessor.
+public static final double aprilTagWidth = Units.inchesToMeters(6.50);
+public static final boolean bumperDetection = false;
+@RequiredArgsConstructor
+  public enum FieldType {
+    ANDYMARK("andymark"),
+	OFFSEASON("offseason"),
+    WELDED("welded");
+
+    @Getter private final String jsonFolder;
+  }
+
+  public enum AprilTagLayoutType {
+    OFFICIAL("2026-official"),
+	HOME("2026-home"),
+    NONE("2026-none");
+
+    private final String name;
+    private volatile AprilTagFieldLayout layout;
+    private volatile String layoutString;
+
+    AprilTagLayoutType(String name) {
+      this.name = name;
+    }
+
+    public AprilTagFieldLayout getLayout() {
+      if (layout == null) {
+        synchronized (this) {
+          if (layout == null) {
+            try {
+              // Sim uses the source-tree deploy folder; the real robot reads from
+              // the roboRIO deploy directory. getLayoutString() sends this same
+              // JSON to Southmoon so both sides use the same tag coordinates.
+              Path p =
+                  Constants.currentMode == Mode.SIM
+                      ? Path.of(
+                          "src",
+                          "main",
+                          "deploy",
+                          "apriltags",
+                          fieldType.getJsonFolder(),
+                          "2026-sim" + ".json")
+                      : Path.of(
+                          Filesystem.getDeployDirectory().getPath(),
+                          "apriltags",
+                          fieldType.getJsonFolder(),
+                          name + ".json");
+              layout = new AprilTagFieldLayout(p);
+              layoutString = new ObjectMapper().writeValueAsString(layout);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
+      }
+      return layout;
+    }
+
+    public String getLayoutString() {
+      if (layoutString == null) {
+        getLayout();
+      }
+      return layoutString;
+    }
+  }
 }

@@ -23,6 +23,8 @@ public interface GamePieceOnFieldDisplay
 	 * @return the height of the game piece when standing from ground, in meters
 	 */
 	double getGamePieceHeight();
+	String getType();
+    boolean isGrounded();
 
 	/**
 	 * Checks if the game piece is in the score zone.

@@ -44,7 +44,7 @@ public class JukeboxUtil extends SubsystemBase {
   final BooleanPublisher nextSongPublisher;
 
   private Boolean prev = false;
-  private ArrayList<ParentDevice> devices;
+  private ArrayList<ParentDevice> devices = new ArrayList<>();
   final StringSubscriber currentMusicFileSubscriber;
 
   public JukeboxUtil() {
@@ -74,6 +74,8 @@ public class JukeboxUtil extends SubsystemBase {
     nextSongPublisher =  datatable.getBooleanTopic("goToNextSong").publish();
     nextSongSubscriber = datatable.getBooleanTopic("goToNextSong").subscribe(false);
 
+
+
   }
 
  
@@ -82,8 +84,9 @@ public class JukeboxUtil extends SubsystemBase {
   }
   private void setupOrchestra(){
     mOrchestra.clearInstruments();
+    System.out.print(devices.size());
     for (ParentDevice device : devices){
-      mOrchestra.addInstrument(device);
+      mOrchestra.addInstrument(device,0);
     }
   }
 

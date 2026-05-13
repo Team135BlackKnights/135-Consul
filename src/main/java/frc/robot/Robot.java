@@ -32,7 +32,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobotBase;
@@ -52,9 +51,9 @@ import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LogTimingReceiver;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.utils.VirtualSubsystem;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims.SimulatedBattery;
 import frc.robot.utils.Touchboard.PosePlotterUtil;
+import frc.robot.utils.Touchboard.TouchboardAutoPlan;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.DriveTrainType;
 import frc.robot.utils.maths.TimeUtil;
@@ -93,7 +92,7 @@ public class Robot extends LoggedRobot {
 	public static Pose3d algaePose = new Pose3d();
 	private boolean autoHasStarted = false, hasCalculatedAuto = false;
 	private String oldAutoString = "";
-
+	private boolean oldIsRed = false;
 	public Robot() {
 		CanBridge.runTCP();
 	}
@@ -374,48 +373,72 @@ public class Robot extends LoggedRobot {
 			}
 		}
 	}
+private void generateAuto() {
+		String raw = PosePlotterUtil.getAutoString();
+		if (raw != null && (!raw.equals(oldAutoString) || isRed != oldIsRed)) {
+			oldAutoString = raw;
 
+			var planOpt = PosePlotterUtil.tryGetPlan();
+			if (planOpt.isPresent()) {
+				TouchboardAutoPlan plan = planOpt.get();
+
+				// startPose from JSON (fallback if missing)
+				Pose2d startingPose;
+				if (plan.startPose != null) {
+					startingPose = new Pose2d(
+							plan.startPose.x,
+							GeomUtil.applyY(plan.startPose.y, true),
+							new Rotation2d());
+				} else {
+					startingPose = new Pose2d(4.398, 7.586, new Rotation2d());
+				}
+				startingPose = GeomUtil.apply(startingPose, false);
+				RobotContainer.startingPoseCache = startingPose;
+				RobotContainer.drivetrainS.resetPose(startingPose);
+
+				if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
+					RobotContainer.fieldSimulation.getMainDriveSimulation()
+							.setSimulationWorldPose(startingPose);
+				}
+
+				PosePlotterUtil.calculateAuto(plan, () -> RobotContainer.touchboardAutoFactory.build(plan));
+				hasCalculatedAuto = true;
+			} else {
+				System.out.println("[disabledPeriodic] No valid Touchboard plan JSON (keeping last auto).");
+			}
+		}
+	}
 	@Override
 	public void disabledPeriodic() {
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
+
 		if (!autoHasStarted) {
-			String[] auto = PosePlotterUtil.getAutoString().split("_");
-			if (auto.length < 2) {
-				auto = new String[] { "-120", "5.542", "NA" };
-			}
-			double x = 7.02;
-			double y;
-			if (Double.parseDouble(auto[1]) == Double.NaN) {
-				y = 7.1;
-			} else {
-				y = DriveConstants.kBumperToBumperLength / 2 + (1 - Double.parseDouble(auto[1]))
-						* (FieldConstants.FIELD_HEIGHT - DriveConstants.kBumperToBumperLength);
-			}
-			double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
-			Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
-			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
-			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
-				RobotContainer.fieldSimulation.getMainDriveSimulation()
-						.setSimulationWorldPose(GeomUtil.apply(startingPose, false));
-			}
-			if (PosePlotterUtil.getAutoString() != null && !PosePlotterUtil.getAutoString().equals(oldAutoString)) {
-				oldAutoString = PosePlotterUtil.getAutoString();
-				PosePlotterUtil.calculateAuto();
-				hasCalculatedAuto = true;
-			}
+			// generateAuto();
+			// reset to starting pose
+			RobotContainer.drivetrainS.resetPose(GeomUtil.apply(new Pose2d(4.398, 7.586, new Rotation2d()), false));
+			/*
+			 * if (RobotContainer.startingPoseCache != null) {
+			 * RobotContainer.drivetrainS.resetPose(RobotContainer.startingPoseCache);
+			 * if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
+			 * RobotContainer.fieldSimulation.getMainDriveSimulation()
+			 * .setSimulationWorldPose(RobotContainer.startingPoseCache);
+			 * }
+			 * }
+			 */
+
 		}
+		oldIsRed = isRed;
+
 		if (loggerStarted && SmartDashboard.getBoolean("ShouldEndLog", false)) {
 			Logger.recordOutput("EndedProperly", true);
 			Logger.end();
-			loggerStarted = false; // debonuces
+			loggerStarted = false;
 			System.out.println("ENDING LOG");
 		} else {
-			{
-				if (loggerStarted) {
-					Logger.recordOutput("EndedProperly", false);
-				}
+			if (loggerStarted) {
+				Logger.recordOutput("EndedProperly", false);
 			}
 		}
 	}
@@ -431,6 +454,7 @@ public class Robot extends LoggedRobot {
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
 		Elastic.selectTab("Autonomous");
+		frc.robot.utils.AutoTime.startAuto();
 		autoHasStarted = true;
 		Constants.currentMatchState = FRCMatchState.AUTOINIT;
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
@@ -440,44 +464,55 @@ public class Robot extends LoggedRobot {
 		}
 
 		m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
 		// schedule the autonomous command (example)
 		if (m_autonomousCommand != null) {
-			System.out.println(m_robotContainer.getAutoName());
-			if (m_robotContainer.getAutoName().equals("DynamicPathing") && !hasCalculatedAuto) {
-				System.out.println("Building Dynamic Auto");
-				PosePlotterUtil.calculateAuto();
-				hasCalculatedAuto = true;
-			}
+			/*
+			 * PathPlannerPath path = PathPlannerAuto
+			 * .getPathGroupFromAutoFile(
+			 * RobotContainer.currentAuto.getName())
+			 * .get(0);
+			 * if (DriveConstants.driveType == DriveTrainType.TANK) {
+			 * RobotContainer.fieldSimulation.getMainDriveSimulation()
+			 * .setSimulationWorldPose(path.getStartingDifferentialPose());
+			 * } else {
+			 * RobotContainer.fieldSimulation.getMainDriveSimulation()
+			 * .setSimulationWorldPose(
+			 * Robot.isRed ? FlippingUtil.flipFieldPose(new Pose2d(
+			 * path.getPoint(0).position,
+			 * path.getIdealStartingState().rotation()))
+			 * : new Pose2d(
+			 * path.getPoint(0).position,
+			 * path.getIdealStartingState().rotation()));
+			 */
+
 			if (Constants.currentMode == frc.robot.Constants.Mode.SIM) {
 				RobotContainer.fieldSimulation.resetField(true);
-				if (RobotContainer.currentAuto != null) {
-					try {
-						PathPlannerPath path = PathPlannerAuto
-								.getPathGroupFromAutoFile(
-										RobotContainer.currentAuto.getName())
-								.get(0);
-						if (DriveConstants.driveType == DriveTrainType.TANK) {
-							RobotContainer.fieldSimulation.getMainDriveSimulation()
-									.setSimulationWorldPose(path.getStartingDifferentialPose());
-						} else {
-							RobotContainer.fieldSimulation.getMainDriveSimulation()
-									.setSimulationWorldPose(
-											Robot.isRed ? FlippingUtil.flipFieldPose(new Pose2d(
-													path.getPoint(0).position,
-													path.getIdealStartingState().rotation()))
-													: new Pose2d(
-															path.getPoint(0).position,
-															path.getIdealStartingState().rotation()));
-						}
-					} catch (Exception e) {
-
+				try {
+					PathPlannerPath path = PathPlannerAuto
+							.getPathGroupFromAutoFile(
+									m_autonomousCommand.getName())
+							.get(0);
+					if (DriveConstants.driveType == DriveTrainType.TANK) {
+						RobotContainer.fieldSimulation.getMainDriveSimulation()
+								.setSimulationWorldPose(path.getStartingDifferentialPose());
+					} else {
+						RobotContainer.fieldSimulation.getMainDriveSimulation()
+								.setSimulationWorldPose(
+										Robot.isRed ? FlippingUtil.flipFieldPose(new Pose2d(
+												path.getPoint(0).position,
+												path.getIdealStartingState().rotation()))
+												: new Pose2d(
+														path.getPoint(0).position,
+														path.getIdealStartingState().rotation()));
 					}
-					RobotContainer.fieldSimulation.getMainDriveSimulation()
-							.resetOdometryToActualRobotPose();
-					RobotContainer.fieldSimulation.resetField(true);
-					RobotContainer.fieldSimulation.addPoints(3);
+				} catch (Exception e) {
+
 				}
+				RobotContainer.fieldSimulation.getMainDriveSimulation()
+						.resetOdometryToActualRobotPose();
+				RobotContainer.fieldSimulation.resetField(true);
+				RobotContainer.fieldSimulation.addPoints(3);
+
 			}
 			matchHasEnded = false;
 			System.out.println("Scheduling Auto: " + m_autonomousCommand.getName());
@@ -497,6 +532,7 @@ public class Robot extends LoggedRobot {
 		isRed = DriverStation.getAlliance().isPresent()
 				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
 				: false;
+		frc.robot.utils.AutoTime.stop();
 
 		autoHasStarted = true;
 		Elastic.selectTab("Teleoperated");

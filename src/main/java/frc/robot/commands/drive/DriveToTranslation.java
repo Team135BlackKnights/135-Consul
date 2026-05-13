@@ -52,13 +52,13 @@ public class DriveToTranslation extends Command {
 	private boolean hasPose = false;
 	// Default the TunedNumbers on boot
 	static {
-		driveKp.initDefault(2.75, TuningConstants.isTuningMacros); // old 1
-		driveKi.initDefault(0.35, TuningConstants.isTuningMacros); // old .5
+		driveKp.initDefault(3, TuningConstants.isTuningMacros); // old 1
+		driveKi.initDefault(0, TuningConstants.isTuningMacros); // old .5
 		driveKd.initDefault(0.0, TuningConstants.isTuningMacros); // old .125
 
-		driveMaxVelocitySlow.initDefault(5.5, TuningConstants.isTuningMacros);
-		ffMinRadius.initDefault(.1, TuningConstants.isTuningMacros); // old .9
-		ffMaxRadius.initDefault(2.5, TuningConstants.isTuningMacros); // old 3
+		driveMaxVelocitySlow.initDefault(6, TuningConstants.isTuningMacros);
+		ffMinRadius.initDefault(.125, TuningConstants.isTuningMacros); // old .9
+		ffMaxRadius.initDefault(2, TuningConstants.isTuningMacros); // old 3
 	}
 
 	/**
@@ -137,7 +137,7 @@ public class DriveToTranslation extends Command {
 		// Reset all controllers
 		running = true;
 		var currentPose = currentPoseSupplier.get();
-		ChassisSpeeds fieldVelocity = drive.getChassisSpeeds();
+		ChassisSpeeds fieldVelocity = drive.getFieldChassisSpeeds();
 		Translation2d fieldVelocityTranslation = new Translation2d(
 				fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
 		driveController.reset(
@@ -223,16 +223,16 @@ public class DriveToTranslation extends Command {
 		ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
 				currentPose.getRotation());
-		//chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
+		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
 		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
-		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
-		Logger.recordOutput("DriveToPose/DistanceSetpoint",
+		Logger.recordOutput("Drive/DriveToPose/DistanceError", currentDistance);
+		Logger.recordOutput("Drive/DriveToPose/DistanceSetpoint",
 				driveController.getSetpoint().position);
-		Logger.recordOutput("Odometry/DriveToPoseSetpoint",
+		Logger.recordOutput("RobotState/DriveToPoseSetpoint",
 				new Pose2d(lastSetpointTranslation,
 						currentPose.getRotation()));
-		Logger.recordOutput("Odometry/DriveToPoseGoal", new Pose2d(targetPose, currentPose.getRotation()));
+		Logger.recordOutput("RobotState/DriveToPoseGoal", new Pose2d(targetPose, currentPose.getRotation()));
 		if (atGoal())
 			running = false; // If we've reached our goal, stop command.
 	}

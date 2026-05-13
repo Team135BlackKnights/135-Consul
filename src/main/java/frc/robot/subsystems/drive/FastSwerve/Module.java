@@ -149,7 +149,7 @@ public class Module {
         }
 
     } else {
-        double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(motorTorqueNm, setpointWheelAngularVel);
+        double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(2).getVoltage(motorTorqueNm, setpointWheelAngularVel);
         Logger.recordOutput("Drive/" + name + "/wheelTorqueVolts", wheelTorqueVolts);
         io.runDriveVelocitySetpoint(
                 setpointWheelAngularVel,
