@@ -5,7 +5,7 @@ package frc.robot;
  */
 public final class BuildConstants {
    public static final String MAVEN_GROUP = "";
-   public static final String MAVEN_NAME = "135-Consul";
+   public static final String MAVEN_NAME = "135-Blocks";
    public static final String VERSION = "unspecified";
    public static final int GIT_REVISION = 502;
    public static final String GIT_SHA = "c4989f798b1d796e3e296f44a6b0895ce1b69c14";
