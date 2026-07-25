@@ -87,6 +87,30 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
+import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.StaticCharacterization;
+import frc.robot.commands.drive.DrivetrainC;
+import frc.robot.commands.drive.WheelRadiusCharacterization;
+import frc.robot.subsystems.SubsystemChecker;
+import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm;
+import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm.WantedState;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOTalonFX;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOTalonFX;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIO;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOSim;
+import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOTalonFX;
+import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
+import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
+import frc.robot.subsystems.drive.FastSwerve.Swerve;
 
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
@@ -129,6 +153,15 @@ import frc.robot.utils.simpleMechanisms.SimpleMechanismConstants;
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.TouchboardAutoFactory;
 import frc.robot.utils.Touchboard.TouchboardAutoPlan;
+import frc.robot.utils.robotToggles.Toggles;
+import frc.robot.utils.robotToggles.TogglesIO;
+import frc.robot.utils.robotToggles.TogglesIOHardware;
+import frc.robot.utils.robotToggles.TogglesIONetworkTables;
+
+import frc.robot.utils.Touchboard.PosePlotterUtil;
+import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
+import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.ArmPosition;
 
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -139,6 +172,8 @@ import frc.robot.utils.Touchboard.TouchboardAutoPlan;
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
+	public static PinkArm pinkArm;
+	public static Toggles toggles;
 	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	public static Intake intake;
 	public static shooter shooterWheel;
@@ -472,6 +507,13 @@ public class RobotContainer {
 				// // Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// // new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				// ));
+				ExtensionIO extensionIO = new ExtensionIOTalonFX();
+				ShoulderIO shoulderIO = new ShoulderIOTalonFX();
+				WristIO wristIO = new WristIOTalonFX();
+				pinkArm = new PinkArm(extensionIO, shoulderIO, wristIO);
+				//Advanced Mechs Require Toggles
+				toggles = new Toggles(new TogglesIOHardware());
+				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
 				GyroSimulation gyroSimulation = null;
@@ -566,6 +608,12 @@ public class RobotContainer {
 				intake = new Intake(new IntakeIOSim());
 				shooterWheel = new shooter(new liftIOSim());
 
+				ExtensionIO extensionIOSim = new ExtensionIOSim();
+				ShoulderIO shoulderIOSim = new ShoulderIOSim();
+				WristIO wristIOSim = new WristIOSim();
+				pinkArm = new PinkArm(extensionIOSim, shoulderIOSim, wristIOSim);
+				toggles = new Toggles(new TogglesIONetworkTables());
+				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
 				switch (DriveConstants.driveType) {
@@ -587,6 +635,15 @@ public class RobotContainer {
 						});
 				}
 				intake = new Intake(new IntakeIO(){});
+				ExtensionIO extensionIODummy = new ExtensionIO() {
+				};
+				ShoulderIO shoulderIODummy = new ShoulderIO() {
+				};
+				WristIO wristIODummy = new WristIO() {
+				};
+				pinkArm = new PinkArm(extensionIODummy, shoulderIODummy, wristIODummy);
+				toggles = new Toggles(new TogglesIO() {
+				});
 		}
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));

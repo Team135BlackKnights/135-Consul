@@ -2,6 +2,7 @@ package frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
