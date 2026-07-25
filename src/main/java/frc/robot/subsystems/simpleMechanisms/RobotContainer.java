@@ -109,6 +109,10 @@ import frc.robot.subsystems.simpleMechanisms.roller.shooter.ShooterIOSim;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooter;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIO;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIOKrakenFOC;
+import frc.robot.subsystems.simpleMechanisms.roller.lift.liftIOSim;
+import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooter;
+import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIO;
+import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIOKrakenFOC;
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
@@ -564,7 +568,7 @@ public class RobotContainer {
 						break;
 				}
 				intake = new Intake(new IntakeIOSim());
-				shooterWheel = new shooter(new liftIOSim());
+				shooterWheel = new shooter(new ShooterIOSim());
 
 				break;
 			default:

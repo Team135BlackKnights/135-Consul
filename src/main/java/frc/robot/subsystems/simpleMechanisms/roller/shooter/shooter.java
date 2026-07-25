@@ -1,4 +1,4 @@
-package frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake;
+package frc.robot.subsystems.simpleMechanisms.roller.shooter;
 
 import java.util.function.DoubleSupplier;
 
@@ -8,10 +8,10 @@ import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.Constants;
 import frc.robot.subsystems.simpleMechanisms.roller.GenericRollerSystem;
 
-public class Intake extends GenericRollerSystem<Intake.Goal> {
+public class shooter extends GenericRollerSystem<shooter.Goal> {
     public enum Goal implements GenericRollerSystem.VoltageGoal {
         IDLING(() -> 0),
-        INTAKING(new LoggableTunedNumber("Intake/AmpScoringVoltage", 12.0,Constants.TuningConstants.isTuningIntake));
+        SHOOTING(new LoggableTunedNumber("Intake/AmpScoringVoltage", 12.0,Constants.TuningConstants.isTuningIntake));
 
         private final DoubleSupplier voltageSupplier;
 
@@ -31,7 +31,7 @@ public class Intake extends GenericRollerSystem<Intake.Goal> {
 
     private Goal goal = Goal.IDLING;
 
-    public Intake(IntakeIO io) {
+    public shooter(shooterIO io) {
         super("Intake", io);
     }
 
