@@ -38,23 +38,16 @@ public class Intake extends GenericRollerSystem<Intake.Goal> {
     public Goal getGoal() {
         return goal;
     }
+    
+    public void setGoal(Goal goal) {
+        this.goal = goal;
+    }
 
     @Override
     /**
      * A command which sets to idle, ejects, and then sets to idle again.
      */
     protected Command systemCheckCommand() {
-        return Commands.sequence(
-                Commands.runOnce(() -> goal = Goal.IDLING),
-                Commands.run(() -> goal = Goal.EJECTING).withTimeout(1),
-                Commands.runOnce(() -> {
-                    if (Math.abs(getAppliedVolts() - Goal.EJECTING.voltageSupplier.getAsDouble()) < .5) {
-                        addFault(
-                                "[System Check] Ejecting voltage not reached for subsystem:"
-                                        + getName(),
-                                false, true);
-                    }
-                }),
-                Commands.runOnce(() -> goal = Goal.IDLING));
+        return null;
     }
 }

@@ -87,43 +87,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.TuningConstants;
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.StaticCharacterization;
-import frc.robot.commands.drive.DrivetrainC;
-import frc.robot.commands.drive.WheelRadiusCharacterization;
-import frc.robot.subsystems.SubsystemChecker;
-import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm;
-import frc.robot.subsystems.advancedMechs.PinkArm.PinkArm.WantedState;
-import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIO;
-import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOSim;
-import frc.robot.subsystems.advancedMechs.PinkArm.extension.ExtensionIOTalonFX;
-import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIO;
-import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOSim;
-import frc.robot.subsystems.advancedMechs.PinkArm.shoulder.ShoulderIOTalonFX;
-import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIO;
-import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOSim;
-import frc.robot.subsystems.advancedMechs.PinkArm.wrist.WristIOTalonFX;
-import frc.robot.subsystems.drive.DrivetrainS;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIO;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOC;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCShifting;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOKrakenFOCWithThrifty;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSim;
-import frc.robot.subsystems.drive.FastSwerve.ModuleIOSparkBase;
-import frc.robot.subsystems.drive.FastSwerve.Swerve;
 
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
-import frc.robot.subsystems.drive.Mecanum.Mecanum;
-import frc.robot.subsystems.drive.Mecanum.MecanumIO;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
-import frc.robot.subsystems.drive.Tank.Tank;
-import frc.robot.subsystems.drive.Tank.TankIO;
-import frc.robot.subsystems.drive.Tank.TankIOSim;
-import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
-import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
+import frc.robot.subsystems.simpleMechanisms.motor.Hood.Hood;
 import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.Intake;
 import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIO;
 import frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake.IntakeIOKrakenFOC;
@@ -133,35 +100,20 @@ import frc.robot.subsystems.simpleMechanisms.roller.shooter.ShooterIOSim;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooter;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIO;
 import frc.robot.subsystems.simpleMechanisms.roller.shooter.shooterIOKrakenFOC;
+import frc.robot.subsystems.simpleMechanisms.motor.Hood.HoodIOSim;
+import frc.robot.subsystems.simpleMechanisms.motor.Hood.HoodIO;
+import frc.robot.subsystems.simpleMechanisms.motor.IntakeFold.IntakeFold;
+import frc.robot.subsystems.simpleMechanisms.motor.IntakeFold.IntakeFoldIO;
+import frc.robot.subsystems.simpleMechanisms.motor.IntakeFold.IntakeFoldIOSim;
+import frc.robot.subsystems.simpleMechanisms.motor.IntakeFold.IntakeFold.Goal;
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.Rebuilt2026FieldSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.LocalADStarAK;
-import frc.robot.utils.drive.PathFinder;
-import frc.robot.utils.drive.Sensors.GyroIO;
-import frc.robot.utils.drive.Sensors.GyroIONavX;
-import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
-import frc.robot.utils.drive.Sensors.GyroIOSim;
 import frc.robot.utils.simpleMechanisms.SimpleMechanismConstants;
 
 import frc.robot.utils.Touchboard.PosePlotterUtil;
 import frc.robot.utils.Touchboard.TouchboardAutoFactory;
 import frc.robot.utils.Touchboard.TouchboardAutoPlan;
-import frc.robot.utils.robotToggles.Toggles;
-import frc.robot.utils.robotToggles.TogglesIO;
-import frc.robot.utils.robotToggles.TogglesIOHardware;
-import frc.robot.utils.robotToggles.TogglesIONetworkTables;
-
-import frc.robot.utils.Touchboard.PosePlotterUtil;
-import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
-import frc.robot.utils.advancedMechs.AdvancedMechanismConstants;
-import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.ArmPosition;
 
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -172,11 +124,11 @@ import frc.robot.utils.advancedMechs.AdvancedMechanismConstants.PinkArm.ArmPosit
 public class RobotContainer {
 	// The robot's subsystems and commands are defined here...
 	public static DrivetrainS drivetrainS;
-	public static PinkArm pinkArm;
-	public static Toggles toggles;
 	public static LocalADStarAK pathFinder = new LocalADStarAK();
 	public static Intake intake;
 	public static shooter shooterWheel;
+	public static Hood hood;
+	public static IntakeFold intakeFold;
 	private final LoggedDashboardChooser<Command> autoChooser;
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
@@ -302,6 +254,7 @@ public class RobotContainer {
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
 	public RobotContainer() {
+
 		/*
 		 * These example states were originally used in 2025, retrofit to be an example
 		 * (placeholder levels used)
@@ -507,13 +460,6 @@ public class RobotContainer {
 				// // Pose2d(1.9,7.7,new Rotation2d(Units.degreesToRadians(90))))),
 				// // new Pair<String, Command>("PlayMiiSong", new OrchestraC("mii")),
 				// ));
-				ExtensionIO extensionIO = new ExtensionIOTalonFX();
-				ShoulderIO shoulderIO = new ShoulderIOTalonFX();
-				WristIO wristIO = new WristIOTalonFX();
-				pinkArm = new PinkArm(extensionIO, shoulderIO, wristIO);
-				//Advanced Mechs Require Toggles
-				toggles = new Toggles(new TogglesIOHardware());
-				System.out.println("REAL SETUP DONE!");
 				break;
 			case SIM:
 				GyroSimulation gyroSimulation = null;
@@ -606,14 +552,11 @@ public class RobotContainer {
 						break;
 				}
 				intake = new Intake(new IntakeIOSim());
-				shooterWheel = new shooter(new liftIOSim());
+				shooterWheel = new shooter(new ShooterIOSim());
+				hood = new Hood(new HoodIOSim());
+				intakeFold = new IntakeFold(new IntakeFoldIOSim());
+				
 
-				ExtensionIO extensionIOSim = new ExtensionIOSim();
-				ShoulderIO shoulderIOSim = new ShoulderIOSim();
-				WristIO wristIOSim = new WristIOSim();
-				pinkArm = new PinkArm(extensionIOSim, shoulderIOSim, wristIOSim);
-				toggles = new Toggles(new TogglesIONetworkTables());
-				System.out.println("SIM SETUP DONE!");
 				break;
 			default:
 				switch (DriveConstants.driveType) {
@@ -635,15 +578,6 @@ public class RobotContainer {
 						});
 				}
 				intake = new Intake(new IntakeIO(){});
-				ExtensionIO extensionIODummy = new ExtensionIO() {
-				};
-				ShoulderIO shoulderIODummy = new ShoulderIO() {
-				};
-				WristIO wristIODummy = new WristIO() {
-				};
-				pinkArm = new PinkArm(extensionIODummy, shoulderIODummy, wristIODummy);
-				toggles = new Toggles(new TogglesIO() {
-				});
 		}
 
 		drivetrainS.resetPose(GeomUtil.apply(startingPose, false));
@@ -765,7 +699,32 @@ public class RobotContainer {
 		// Some condition that should decide if we want to override rotation
 		return angleOverrider;
 	}
+
 	private void configureBindings() {
+
+		driveController.b().onTrue(new InstantCommand(
+			() -> intakeFold.setGoal(IntakeFold.Goal.LIFTED)
+		));
+		driveController.a().onTrue(new InstantCommand(
+			() -> intakeFold.setGoal(IntakeFold.Goal.LOWERED)
+		));
+		
+		driveController.x().whileTrue(new InstantCommand(
+			() -> intake.setGoal(Intake.Goal.INTAKING)  
+		));
+
+		driveController.y().onTrue(new InstantCommand(
+			() -> shooterWheel.setGoal(shooter.Goal.SHOOTING)  //make this toggle using if logic
+		));
+
+		driveController.leftBumper().onTrue(new InstantCommand(
+			() -> hood.setGoal(Hood.Goal.LOW)
+		));
+		
+		driveController.rightBumper().onTrue(new InstantCommand(
+			() -> hood.setGoal(Hood.Goal.HIGH)
+		));
+
 		// DO ALL OF THESE
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()	
