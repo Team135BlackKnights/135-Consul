@@ -49,7 +49,10 @@ public class IntakeFold extends MotorSys<IntakeFold.Goal> {
     @Override
  // not good needs changed
   protected Command systemCheckCommand() {
-        return null;
+        return new Command(){
+            
+        };
     }
 }
+
 

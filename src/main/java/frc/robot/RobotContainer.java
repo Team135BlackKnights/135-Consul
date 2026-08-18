@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.checkerframework.checker.units.qual.Length;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -76,6 +77,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -843,6 +845,7 @@ public class RobotContainer {
 
 	private static void addNTCommands() {
 		// Setup all SystemChecks
+		System.out.print(getAllSubsystems().length);
 		for (SubsystemChecker subsystem : getAllSubsystems()) {
 			subsystem.setupSystemCheck();
 		}
@@ -900,7 +903,7 @@ public class RobotContainer {
 
 	public static SubsystemChecker[] getAllSubsystems() {
 
-		SubsystemChecker[] subsystems = new SubsystemChecker[3];
+		SubsystemChecker[] subsystems = new SubsystemChecker[5];
 		switch (DriveConstants.driveType) {
 			case SWERVE:
 				subsystems[0] = (Swerve) drivetrainS;
@@ -913,6 +916,9 @@ public class RobotContainer {
 				break;
 		}
 		subsystems[1] = intake;
+		subsystems[2] = hood;
+		subsystems[3] = shooterWheel;
+		subsystems[4] = intakeFold;
 		return subsystems;
 	}
 

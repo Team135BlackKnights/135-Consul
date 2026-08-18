@@ -50,7 +50,9 @@ public class Hood extends MotorSys<Hood.Goal> {
     @Override
  // not good needs changed
   protected Command systemCheckCommand() {
-        return null;
+        return new Command(){
+            
+        };
     }
 }
 

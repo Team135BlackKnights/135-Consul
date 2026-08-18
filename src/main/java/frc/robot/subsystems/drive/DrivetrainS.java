@@ -132,8 +132,8 @@ public interface DrivetrainS extends Subsystem {
 	HashMap<String, Double> getTemps();
 
 	default Command getRunnableSystemCheckCommand() {
-		throw new UnsupportedOperationException(
-				"Unimplemented method 'getRunnableSystemCheckCommand'");
+		return new Command() {
+		};
 	}
 
 	default SystemStatus getTrueSystemStatus() {

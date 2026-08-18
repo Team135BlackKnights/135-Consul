@@ -48,6 +48,8 @@ public class Intake extends GenericRollerSystem<Intake.Goal> {
      * A command which sets to idle, ejects, and then sets to idle again.
      */
     protected Command systemCheckCommand() {
-        return null;
-    }
+            return new Command(){
+                
+            };
+        }
 }
