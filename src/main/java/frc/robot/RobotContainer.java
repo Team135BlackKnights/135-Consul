@@ -223,32 +223,32 @@ public class RobotContainer {
 	ModuleLimits normalSpeeds = DriveConstants.moduleLimitsLow;
 
 	public static void precalculateAllStartAndEndChoreos() {
-		File choreoDirectory = new File(Filesystem.getDeployDirectory(),
-				"choreo/");
-		for (String choreo : choreoDirectory.list()) {
-			// count number of . in the name using regex
-			int dotCount = choreo.split("\\.", -1).length - 1;
-			if (choreo.contains(".traj") && dotCount == 1) {
-				// remove the .traj from the name
-				choreo = choreo.replace(".traj", "");
-				try {
-					// get only the first path, as all choreo files should only have one path
-					PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreo);
-					autoPaths.put(choreo, new Pair<>(path.getStartingHolonomicPose().get(), new Pose2d(
-							path.getPoint(path.getAllPathPoints().size() - 1).position,
-							path.getGoalEndState().rotation())));
-					// put the flipped/mirrored path in the map as well
-					autoPaths.put(choreo + "Flipped",
-							new Pair<>(GeomUtil.apply(path.getStartingHolonomicPose().get(), true),
-									GeomUtil.apply(new Pose2d(
-											path.getPoint(path.getAllPathPoints().size() - 1).position,
-											path.getGoalEndState().rotation().plus(new Rotation2d(Math.PI))), true)));
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		// File choreoDirectory = new File(Filesystem.getDeployDirectory(),
+		// 		"choreo/");
+		// for (String choreo : choreoDirectory.list()) {
+		// 	// count number of . in the name using regex
+		// 	int dotCount = choreo.split("\\.", -1).length - 1;
+		// 	if (choreo.contains(".traj") && dotCount == 1) {
+		// 		// remove the .traj from the name
+		// 		choreo = choreo.replace(".traj", "");
+		// 		try {
+		// 			// get only the first path, as all choreo files should only have one path
+		// 			PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreo);
+		// 			autoPaths.put(choreo, new Pair<>(path.getStartingHolonomicPose().get(), new Pose2d(
+		// 					path.getPoint(path.getAllPathPoints().size() - 1).position,
+		// 					path.getGoalEndState().rotation())));
+		// 			// put the flipped/mirrored path in the map as well
+		// 			autoPaths.put(choreo + "Flipped",
+		// 					new Pair<>(GeomUtil.apply(path.getStartingHolonomicPose().get(), true),
+		// 							GeomUtil.apply(new Pose2d(
+		// 									path.getPoint(path.getAllPathPoints().size() - 1).position,
+		// 									path.getGoalEndState().rotation().plus(new Rotation2d(Math.PI))), true)));
+		// 		} catch (Exception e) {
+		// 			e.printStackTrace();
+		// 		}
 
-			}
-		}
+		// 	}
+		// }
 	}
 
 	/**

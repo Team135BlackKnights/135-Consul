@@ -174,7 +174,7 @@ public class DrivetrainC extends Command {
 			if (xSpeed == 0 && ySpeed == 0 && turningSpeed == 0) {
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
 				Logger.recordOutput("Controller/SetX", xSpeed);
-				Logger.recordOutput("Controller/SetY", ySpeed);
+				Logger.recordOutput("Controler/SetY", ySpeed);
 				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 				} else {
