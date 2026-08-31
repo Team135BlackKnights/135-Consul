@@ -1,6 +1,6 @@
 package frc.robot.utils.selfCheck.drive;
 
-import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
+import org.wpilib.hardware.motor.PWMMotorController;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SubsystemFault;
 

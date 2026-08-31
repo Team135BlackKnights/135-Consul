@@ -1,7 +1,7 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform3d;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.vision.VisionConstants;
 
@@ -16,7 +16,6 @@ import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 public class VisionIOPhotonVision implements VisionIO {
   protected final PhotonCamera camera;
@@ -29,8 +28,7 @@ public class VisionIOPhotonVision implements VisionIO {
    */
   public VisionIOPhotonVision(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
-    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(),PoseStrategy.CLOSEST_TO_CAMERA_HEIGHT,robotToCamera);
-    photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_CAMERA_HEIGHT);
+    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(), robotToCamera);
   }
 
   @Override
@@ -45,7 +43,7 @@ public class VisionIOPhotonVision implements VisionIO {
     for (var result : camera.getAllUnreadResults()) {
       // Update latest target observation
       if (result.hasTargets()) {
-        Optional<EstimatedRobotPose> visionEst = photonEstimator.update(result);
+        Optional<EstimatedRobotPose> visionEst = photonEstimator.estimateClosestToCameraHeightPose(result);
         if (visionEst.isPresent()) {
           var visionResult = visionEst.get();
           double ambiguity;

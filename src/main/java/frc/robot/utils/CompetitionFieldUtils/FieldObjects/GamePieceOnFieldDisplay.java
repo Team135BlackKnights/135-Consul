@@ -1,7 +1,7 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.*;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.*;
 import frc.robot.utils.CompetitionFieldUtils.CompField;
 
 /**

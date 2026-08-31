@@ -13,9 +13,9 @@ import org.littletonrobotics.junction.Logger;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
@@ -24,7 +24,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
@@ -56,23 +56,23 @@ public class TankIOSparkBase implements TankIO {
 	public TankIOSparkBase(GyroIO gyro) {
 		this.gyro = gyro;
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
-			leftLeader = new SparkMax(DriveConstants.kFrontLeftDrivePort,
+			leftLeader = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			rightLeader = new SparkMax(DriveConstants.kFrontRightDrivePort,
+			rightLeader = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			leftFollower = new SparkMax(DriveConstants.kBackLeftDrivePort,
+			leftFollower = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			rightFollower = new SparkMax(DriveConstants.kBackRightDrivePort,
+			rightFollower = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
 			sparkConfig = new SparkMaxConfig();
 		} else {
-			leftLeader = new SparkFlex(DriveConstants.kFrontLeftDrivePort,
+			leftLeader = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			rightLeader = new SparkFlex(DriveConstants.kFrontRightDrivePort,
+			rightLeader = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			leftFollower = new SparkFlex(DriveConstants.kBackLeftDrivePort,
+			leftFollower = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			rightFollower = new SparkFlex(DriveConstants.kBackRightDrivePort,
+			rightFollower = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
 			sparkConfig = new SparkFlexConfig();
 		}
@@ -105,28 +105,28 @@ public class TankIOSparkBase implements TankIO {
 		gyro.updateInputs(gyroInputs);
 		Logger.processInputs("Gyro", gyroInputs);
 		inputs.leftPositionRad = Units
-				.rotationsToRadians(leftEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(leftEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.leftVelocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(
-				leftEncoder.getVelocity() / GEAR_RATIO);
-		inputs.leftAppliedVolts = leftLeader.getAppliedOutput()
-				* leftLeader.getBusVoltage();
-		inputs.leftCurrentAmps = new double[] { leftLeader.getOutputCurrent(),
-				leftFollower.getOutputCurrent()
+				leftEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.leftAppliedVolts = leftLeader.getAppliedOutput().get()
+				* leftLeader.getBusVoltage().get();
+		inputs.leftCurrentAmps = new double[] { leftLeader.getOutputCurrent().get(),
+				leftFollower.getOutputCurrent().get()
 		};
-		inputs.frontLeftDriveTemp = leftLeader.getMotorTemperature();
-		inputs.backLeftDriveTemp = leftFollower.getMotorTemperature();
+		inputs.frontLeftDriveTemp = leftLeader.getMotorTemperature().get();
+		inputs.backLeftDriveTemp = leftFollower.getMotorTemperature().get();
 		inputs.rightPositionRad = Units
-				.rotationsToRadians(rightEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(rightEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.rightVelocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(
-						rightEncoder.getVelocity() / GEAR_RATIO);
-		inputs.rightAppliedVolts = rightLeader.getAppliedOutput()
-				* rightLeader.getBusVoltage();
-		inputs.rightCurrentAmps = new double[] { rightLeader.getOutputCurrent(),
-				rightFollower.getOutputCurrent()
+						rightEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.rightAppliedVolts = rightLeader.getAppliedOutput().get()
+				* rightLeader.getBusVoltage().get();
+		inputs.rightCurrentAmps = new double[] { rightLeader.getOutputCurrent().get(),
+				rightFollower.getOutputCurrent().get()
 		};
-		inputs.frontRightDriveTemp = rightLeader.getMotorTemperature();
-		inputs.backRightDriveTemp = rightFollower.getMotorTemperature();
+		inputs.frontRightDriveTemp = rightLeader.getMotorTemperature().get();
+		inputs.backRightDriveTemp = rightFollower.getMotorTemperature().get();
 		inputs.gyroConnected = gyroInputs.connected;
 		inputs.gyroYaw = gyroInputs.yawPosition;
 		inputs.collisionDetected = gyroInputs.collisionDetected;

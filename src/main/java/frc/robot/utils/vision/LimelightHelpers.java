@@ -2,16 +2,16 @@
 
 package frc.robot.utils.vision;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableEntry;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.util.Units;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation2d;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -19,30 +19,27 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 
 public class LimelightHelpers {
 
     public static class LimelightTarget_Retro {
 
-        @JsonProperty("t6c_ts")
+        @SerializedName("t6c_ts")
         private double[] cameraPose_TargetSpace;
 
-        @JsonProperty("t6r_fs")
+        @SerializedName("t6r_fs")
         private double[] robotPose_FieldSpace;
 
-        @JsonProperty("t6r_ts")
+        @SerializedName("t6r_ts")
         private  double[] robotPose_TargetSpace;
 
-        @JsonProperty("t6t_cs")
+        @SerializedName("t6t_cs")
         private double[] targetPose_CameraSpace;
 
-        @JsonProperty("t6t_rs")
+        @SerializedName("t6t_rs")
         private double[] targetPose_RobotSpace;
 
         public Pose3d getCameraPose_TargetSpace()
@@ -87,22 +84,22 @@ public class LimelightHelpers {
             return toPose2D(targetPose_RobotSpace);
         }
 
-        @JsonProperty("ta")
+        @SerializedName("ta")
         public double ta;
 
-        @JsonProperty("tx")
+        @SerializedName("tx")
         public double tx;
 
-        @JsonProperty("txp")
+        @SerializedName("txp")
         public double tx_pixels;
 
-        @JsonProperty("ty")
+        @SerializedName("ty")
         public double ty;
 
-        @JsonProperty("typ")
+        @SerializedName("typ")
         public double ty_pixels;
 
-        @JsonProperty("ts")
+        @SerializedName("ts")
         public double ts;
 
         public LimelightTarget_Retro() {
@@ -117,25 +114,25 @@ public class LimelightHelpers {
 
     public static class LimelightTarget_Fiducial {
 
-        @JsonProperty("fID")
+        @SerializedName("fID")
         public double fiducialID;
 
-        @JsonProperty("fam")
+        @SerializedName("fam")
         public String fiducialFamily;
 
-        @JsonProperty("t6c_ts")
+        @SerializedName("t6c_ts")
         private double[] cameraPose_TargetSpace;
 
-        @JsonProperty("t6r_fs")
+        @SerializedName("t6r_fs")
         private double[] robotPose_FieldSpace;
 
-        @JsonProperty("t6r_ts")
+        @SerializedName("t6r_ts")
         private double[] robotPose_TargetSpace;
 
-        @JsonProperty("t6t_cs")
+        @SerializedName("t6t_cs")
         private double[] targetPose_CameraSpace;
 
-        @JsonProperty("t6t_rs")
+        @SerializedName("t6t_rs")
         private double[] targetPose_RobotSpace;
 
         public Pose3d getCameraPose_TargetSpace()
@@ -180,22 +177,22 @@ public class LimelightHelpers {
             return toPose2D(targetPose_RobotSpace);
         }
         
-        @JsonProperty("ta")
+        @SerializedName("ta")
         public double ta;
 
-        @JsonProperty("tx")
+        @SerializedName("tx")
         public double tx;
 
-        @JsonProperty("txp")
+        @SerializedName("txp")
         public double tx_pixels;
 
-        @JsonProperty("ty")
+        @SerializedName("ty")
         public double ty;
 
-        @JsonProperty("typ")
+        @SerializedName("typ")
         public double ty_pixels;
 
-        @JsonProperty("ts")
+        @SerializedName("ts")
         public double ts;
         
         public LimelightTarget_Fiducial() {
@@ -213,28 +210,28 @@ public class LimelightHelpers {
 
     public static class LimelightTarget_Classifier {
 
-        @JsonProperty("class")
+        @SerializedName("class")
         public String className;
 
-        @JsonProperty("classID")
+        @SerializedName("classID")
         public double classID;
 
-        @JsonProperty("conf")
+        @SerializedName("conf")
         public double confidence;
 
-        @JsonProperty("zone")
+        @SerializedName("zone")
         public double zone;
 
-        @JsonProperty("tx")
+        @SerializedName("tx")
         public double tx;
 
-        @JsonProperty("txp")
+        @SerializedName("txp")
         public double tx_pixels;
 
-        @JsonProperty("ty")
+        @SerializedName("ty")
         public double ty;
 
-        @JsonProperty("typ")
+        @SerializedName("typ")
         public double ty_pixels;
 
         public  LimelightTarget_Classifier() {
@@ -243,28 +240,28 @@ public class LimelightHelpers {
 
     public static class LimelightTarget_Detector {
 
-        @JsonProperty("class")
+        @SerializedName("class")
         public String className;
 
-        @JsonProperty("classID")
+        @SerializedName("classID")
         public double classID;
 
-        @JsonProperty("conf")
+        @SerializedName("conf")
         public double confidence;
 
-        @JsonProperty("ta")
+        @SerializedName("ta")
         public double ta;
 
-        @JsonProperty("tx")
+        @SerializedName("tx")
         public double tx;
 
-        @JsonProperty("txp")
+        @SerializedName("txp")
         public double tx_pixels;
 
-        @JsonProperty("ty")
+        @SerializedName("ty")
         public double ty;
 
-        @JsonProperty("typ")
+        @SerializedName("typ")
         public double ty_pixels;
 
         public LimelightTarget_Detector() {
@@ -273,49 +270,48 @@ public class LimelightHelpers {
 
     public static class Results {
 
-        @JsonProperty("pID")
+        @SerializedName("pID")
         public double pipelineID;
 
-        @JsonProperty("tl")
+        @SerializedName("tl")
         public double latency_pipeline;
 
-        @JsonProperty("cl")
+        @SerializedName("cl")
         public double latency_capture;
 
         public double latency_jsonParse;
 
-        @JsonProperty("ts")
+        @SerializedName("ts")
         public double timestamp_LIMELIGHT_publish;
 
-        @JsonProperty("ts_rio")
+        @SerializedName("ts_rio")
         public double timestamp_RIOFPGA_capture;
 
-        @JsonProperty("v")
-        @JsonFormat(shape = Shape.NUMBER)
+        @SerializedName("v")
         public boolean valid;
 
-        @JsonProperty("botpose")
+        @SerializedName("botpose")
         public double[] botpose;
 
-        @JsonProperty("botpose_wpired")
+        @SerializedName("botpose_wpired")
         public double[] botpose_wpired;
 
-        @JsonProperty("botpose_wpiblue")
+        @SerializedName("botpose_wpiblue")
         public double[] botpose_wpiblue;
 
-        @JsonProperty("botpose_tagcount")
+        @SerializedName("botpose_tagcount")
         public double botpose_tagcount;
        
-        @JsonProperty("botpose_span")
+        @SerializedName("botpose_span")
         public double botpose_span;
        
-        @JsonProperty("botpose_avgdist")
+        @SerializedName("botpose_avgdist")
         public double botpose_avgdist;
        
-        @JsonProperty("botpose_avgarea")
+        @SerializedName("botpose_avgarea")
         public double botpose_avgarea;
 
-        @JsonProperty("t6c_rs")
+        @SerializedName("t6c_rs")
         public double[] camerapose_robotspace;
 
         public Pose3d getBotPose3d() {
@@ -342,19 +338,19 @@ public class LimelightHelpers {
             return toPose2D(botpose_wpiblue);
         }
 
-        @JsonProperty("Retro")
+        @SerializedName("Retro")
         public LimelightTarget_Retro[] targets_Retro;
 
-        @JsonProperty("Fiducial")
+        @SerializedName("Fiducial")
         public LimelightTarget_Fiducial[] targets_Fiducials;
 
-        @JsonProperty("Classifier")
+        @SerializedName("Classifier")
         public LimelightTarget_Classifier[] targets_Classifier;
 
-        @JsonProperty("Detector")
+        @SerializedName("Detector")
         public LimelightTarget_Detector[] targets_Detector;
 
-        @JsonProperty("Barcode")
+        @SerializedName("Barcode")
         public LimelightTarget_Barcode[] targets_Barcode;
 
         public Results() {
@@ -372,7 +368,7 @@ public class LimelightHelpers {
     }
 
     public static class LimelightResults {
-        @JsonProperty("Results")
+        @SerializedName("Results")
         public Results targetingResults;
         
         public String error;
@@ -406,7 +402,7 @@ public class LimelightHelpers {
         }
     }
 
-    private static ObjectMapper mapper;
+    private static Gson mapper;
 
     /**
      * Print JSON Parse time to the console in milliseconds
@@ -845,12 +841,12 @@ public class LimelightHelpers {
         long start = System.nanoTime();
         LimelightHelpers.LimelightResults results = new LimelightHelpers.LimelightResults();
         if (mapper == null) {
-            mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper = new Gson();
         }
 
         try {
-            results = mapper.readValue(getJSONDump(limelightName), LimelightResults.class);
-        } catch (JsonProcessingException e) {
+            results = mapper.fromJson(getJSONDump(limelightName), LimelightResults.class);
+        } catch (JsonParseException e) {
             results.error = "lljson error: " + e.getMessage();
         }
 

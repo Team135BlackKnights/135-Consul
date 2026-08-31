@@ -14,9 +14,9 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.MAXMotionConfig;
@@ -26,7 +26,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.util.Units;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
@@ -63,23 +63,23 @@ public class MecanumIOSparkBase implements MecanumIO {
 	public MecanumIOSparkBase(GyroIO gyroIO) {
 		this.gyroIO = gyroIO;
 		if (DriveConstants.robotMotorController == MotorVendor.NEO_SPARK_MAX) {
-			frontLeft = new SparkMax(DriveConstants.kFrontLeftDrivePort,
+			frontLeft = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			frontRight = new SparkMax(DriveConstants.kFrontRightDrivePort,
+			frontRight = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			backLeft = new SparkMax(DriveConstants.kBackLeftDrivePort,
+			backLeft = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			backRight = new SparkMax(DriveConstants.kBackRightDrivePort,
+			backRight = new SparkMax(DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
 			sparkConfig = new SparkMaxConfig();
 		} else {
-			frontLeft = new SparkFlex(DriveConstants.kFrontLeftDrivePort,
+			frontLeft = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort,
 					MotorType.kBrushless);
-			frontRight = new SparkFlex(DriveConstants.kFrontRightDrivePort,
+			frontRight = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort,
 					MotorType.kBrushless);
-			backLeft = new SparkFlex(DriveConstants.kBackLeftDrivePort,
+			backLeft = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort,
 					MotorType.kBrushless);
-			backRight = new SparkFlex(DriveConstants.kBackRightDrivePort,
+			backRight = new SparkFlex(DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort,
 					MotorType.kBrushless);
 			sparkConfig = new SparkFlexConfig();
 		}
@@ -120,43 +120,43 @@ public class MecanumIOSparkBase implements MecanumIO {
 	@Override
 	public void updateInputs(MecanumIOInputs inputs) {
 		inputs.leftFrontPositionRad = Units
-				.rotationsToRadians(frontLeftEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(frontLeftEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.leftFrontVelocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(
-						frontLeftEncoder.getVelocity() / GEAR_RATIO);
-		inputs.leftFrontAppliedVolts = frontLeft.getAppliedOutput()
-				* frontLeft.getBusVoltage();
+						frontLeftEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.leftFrontAppliedVolts = frontLeft.getAppliedOutput().get()
+				* frontLeft.getBusVoltage().get();
 		inputs.leftBackPositionRad = Units
-				.rotationsToRadians(backLeftEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(backLeftEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.leftBackVelocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(
-						backLeftEncoder.getVelocity() / GEAR_RATIO);
-		inputs.leftBackAppliedVolts = backLeft.getAppliedOutput()
-				* backLeft.getBusVoltage();
-		inputs.leftCurrentAmps = new double[] { frontLeft.getOutputCurrent(),
-				backLeft.getOutputCurrent()
+						backLeftEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.leftBackAppliedVolts = backLeft.getAppliedOutput().get()
+				* backLeft.getBusVoltage().get();
+		inputs.leftCurrentAmps = new double[] { frontLeft.getOutputCurrent().get(),
+				backLeft.getOutputCurrent().get()
 		};
-		inputs.frontLeftDriveTemp = frontLeft.getMotorTemperature();
-		inputs.backLeftDriveTemp = backLeft.getMotorTemperature();
+		inputs.frontLeftDriveTemp = frontLeft.getMotorTemperature().get();
+		inputs.backLeftDriveTemp = backLeft.getMotorTemperature().get();
 		inputs.rightFrontPositionRad = Units
-				.rotationsToRadians(frontRightEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(frontRightEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.rightFrontVelocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(
-						frontRightEncoder.getVelocity() / GEAR_RATIO);
-		inputs.rightFrontAppliedVolts = frontRight.getAppliedOutput()
-				* frontRight.getBusVoltage();
+						frontRightEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.rightFrontAppliedVolts = frontRight.getAppliedOutput().get()
+				* frontRight.getBusVoltage().get();
 		inputs.rightBackPositionRad = Units
-				.rotationsToRadians(backRightEncoder.getPosition() / GEAR_RATIO);
+				.rotationsToRadians(backRightEncoder.getPosition().get() / GEAR_RATIO);
 		inputs.rightBackVelocityRadPerSec = Units
 				.rotationsPerMinuteToRadiansPerSecond(
-						backRightEncoder.getVelocity() / GEAR_RATIO);
-		inputs.rightBackAppliedVolts = backRight.getAppliedOutput()
-				* backRight.getBusVoltage();
-		inputs.rightCurrentAmps = new double[] { frontRight.getOutputCurrent(),
-				backRight.getOutputCurrent()
+						backRightEncoder.getVelocity().get() / GEAR_RATIO);
+		inputs.rightBackAppliedVolts = backRight.getAppliedOutput().get()
+				* backRight.getBusVoltage().get();
+		inputs.rightCurrentAmps = new double[] { frontRight.getOutputCurrent().get(),
+				backRight.getOutputCurrent().get()
 		};
-		inputs.frontRightDriveTemp = frontRight.getMotorTemperature();
-		inputs.backRightDriveTemp = backRight.getMotorTemperature();
+		inputs.frontRightDriveTemp = frontRight.getMotorTemperature().get();
+		inputs.backRightDriveTemp = backRight.getMotorTemperature().get();
 		gyroIO.updateInputs(gyroInputs);
 		Logger.processInputs("Gyro", gyroInputs);
 		inputs.gyroConnected = gyroInputs.connected;

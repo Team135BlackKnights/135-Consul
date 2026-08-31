@@ -4,14 +4,14 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -75,7 +75,7 @@ public class AimToObject extends Command {
 		}
 
 		if (!hasValidObservation) {
-			drive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+			drive.setChassisSpeeds(new ChassisVelocities(0, 0, 0));
 			return;
 		}
 
@@ -119,7 +119,7 @@ public class AimToObject extends Command {
 		// Scale by forwardCommand (positive means move closer, negative means move away)
 		Translation2d driveVelocity = directionVector.times(forwardCommand);
 		
-		drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+		drive.setChassisSpeeds(frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(
 				driveVelocity.getX(), 
 				driveVelocity.getY(),
 				angularCommand,
@@ -136,7 +136,7 @@ public class AimToObject extends Command {
 
 	@Override
 	public void end(boolean interrupted) {
-		drive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+		drive.setChassisSpeeds(new ChassisVelocities(0, 0, 0));
 		RobotContainer.currentPath = "";
         isFinished = true;
 	}

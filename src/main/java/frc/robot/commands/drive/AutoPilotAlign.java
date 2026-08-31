@@ -11,14 +11,14 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot.APResult;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.units.Units;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.command2.Command;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
@@ -68,7 +68,7 @@ public class AutoPilotAlign extends Command {
     public void execute() {
         long currentTime = System.currentTimeMillis();
         Pose2d robotPose = m_drivetrain.getLookAheadPose();
-        ChassisSpeeds currentRobotRelative = ChassisSpeeds.fromRobotRelativeSpeeds(m_drivetrain.getChassisSpeeds(),
+        ChassisVelocities currentRobotRelative = frc.robot.utils.drive.ChassisVelocityUtil.fromRobotRelative(m_drivetrain.getChassisSpeeds(),
                 robotPose.getRotation());
         adStar.setStartPosition(robotPose.getTranslation());
         adStar.setGoalPosition(m_finalTarget.getReference().getTranslation());
@@ -92,23 +92,23 @@ public class AutoPilotAlign extends Command {
 
         Rotation2d maskedRot = activeTarget.getReference().getRotation();
         Translation2d fieldRelativeVel = new Translation2d(
-                currentRobotRelative.vxMetersPerSecond,
-                currentRobotRelative.vyMetersPerSecond)
+                currentRobotRelative.vx,
+                currentRobotRelative.vy)
                 .rotateBy(robotPose.getRotation());
         Translation2d maskedRobotRelativeVel = fieldRelativeVel.rotateBy(maskedRot.unaryMinus());
 
-        ChassisSpeeds maskedRobotRelative = new ChassisSpeeds(
+        ChassisVelocities maskedRobotRelative = new ChassisVelocities(
                 maskedRobotRelativeVel.getX(),
                 maskedRobotRelativeVel.getY(),
-                currentRobotRelative.omegaRadiansPerSecond);
+                currentRobotRelative.omega);
         Pose2d maskedPose = new Pose2d(
                 robotPose.getTranslation(),
                 maskedRot);
         APResult out = Swerve.autopilot.calculate(maskedPose, maskedRobotRelative, activeTarget);
         
-        ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(out.vx().baseUnitMagnitude(),
+        ChassisVelocities fieldRelativeSpeeds = new ChassisVelocities(out.vx().baseUnitMagnitude(),
                 out.vy().baseUnitMagnitude(), 0.0);
-        ChassisSpeeds robotRelativeFromField = ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds,
+        ChassisVelocities robotRelativeFromField = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(fieldRelativeSpeeds,
                 m_drivetrain.getRotation2d());
 
         desiredRotation = goalEndState.rotation();
@@ -116,7 +116,7 @@ public class AutoPilotAlign extends Command {
         thetaControllerCommand.execute();
 
         m_drivetrain
-                .setChassisSpeeds(robotRelativeFromField.plus(new ChassisSpeeds(0, 0, RobotContainer.angularSpeed)));
+                .setChassisSpeeds(robotRelativeFromField.plus(new ChassisVelocities(0, 0, RobotContainer.angularSpeed)));
 
         if (Swerve.autopilot.atTarget(m_drivetrain.getPose(), m_finalTarget) && thetaControllerCommand.atGoal()) {
             isFinished = true;
@@ -167,8 +167,8 @@ public class AutoPilotAlign extends Command {
                 Rotation2d r1 = path.get(i).getRotation();
                 Rotation2d r2 = path.get(i + 1).getRotation();
                 Rotation2d interpRot = new Rotation2d(
-                        MathUtil.interpolate(r1.getCos(), r2.getCos(), t),
-                        MathUtil.interpolate(r1.getSin(), r2.getSin(), t));
+                        MathUtil.lerp(r1.getCos(), r2.getCos(), t),
+                        MathUtil.lerp(r1.getSin(), r2.getSin(), t));
                 return new Pose2d(interpTrans, interpRot);
             } else {
                 acc += seg;

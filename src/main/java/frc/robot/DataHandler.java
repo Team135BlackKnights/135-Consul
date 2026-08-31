@@ -14,8 +14,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
-import edu.wpi.first.net.PortForwarder;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.wpilib.net.PortForwarder;
+import org.wpilib.smartdashboard.SmartDashboard;
 import frc.robot.utils.maths.TimeUtil;
 
 import java.io.InputStreamReader;

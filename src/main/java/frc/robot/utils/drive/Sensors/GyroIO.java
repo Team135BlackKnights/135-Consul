@@ -3,7 +3,7 @@
 // Be sure to understand how it creates the "inputs" variable and edits it!
 package frc.robot.utils.drive.Sensors;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation2d;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.ArrayList;

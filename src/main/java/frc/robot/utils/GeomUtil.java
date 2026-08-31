@@ -2,17 +2,17 @@ package frc.robot.utils;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Timer;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyPoseRecord;
@@ -22,14 +22,14 @@ import frc.robot.utils.vision.VisionConstants;
 
 public class GeomUtil {
 	/// Make sure the given speeds are ROBOT relative.
-	public static ChassisSpeeds avoidRobots(ChassisSpeeds speeds) {
+	public static ChassisVelocities avoidRobots(ChassisVelocities speeds) {
 		final double MAX_AGE_SECONDS = 2.0;
 		final double BASE_AVOID_MARGIN_M = 0.5; // previous constant
 		final double MAX_EXTRA_MARGIN_M = 1.2; // additional margin at top approach (tunable)
 		final double MAX_AVOID_SPEED = DriveConstants.kMaxSpeedMetersPerSecond * 10;
 
 		Pose2d ourPose = RobotContainer.drivetrainS.getLookAheadPose();
-		double now = Timer.getFPGATimestamp();
+		double now = Timer.getTimestamp();
 
 		double avoidRobotX = 0.0;
 		double avoidRobotY = 0.0;
@@ -45,9 +45,9 @@ public class GeomUtil {
 		double maxDecel = DriveConstants.maxTranslationalAcceleration.get();
 
 		// measured & commanded translational speed magnitude (global)
-		ChassisSpeeds measured = RobotContainer.drivetrainS.getChassisSpeeds();
-		double measuredSpeed = Math.hypot(measured.vxMetersPerSecond, measured.vyMetersPerSecond);
-		double commandedSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+		ChassisVelocities measured = RobotContainer.drivetrainS.getChassisSpeeds();
+		double measuredSpeed = Math.hypot(measured.vx, measured.vy);
+		double commandedSpeed = Math.hypot(speeds.vx, speeds.vy);
 		double maxSpeed = DriveConstants.kMaxSpeedMetersPerSecond;
 
 		// Log the globals at least
@@ -85,8 +85,8 @@ public class GeomUtil {
 			double uyRobot = sinLoop * uxField + cosLoop * uyField;
 
 			// compute approach-projection for commanded and measured velocities
-			double cmdAlong = speeds.vxMetersPerSecond * uxRobot + speeds.vyMetersPerSecond * uyRobot;
-			double measAlong = measured.vxMetersPerSecond * uxRobot + measured.vyMetersPerSecond * uyRobot;
+			double cmdAlong = speeds.vx * uxRobot + speeds.vy * uyRobot;
+			double measAlong = measured.vx * uxRobot + measured.vy * uyRobot;
 
 			// Use the larger positive projection (if any) to decide "aiming"
 			double approachAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
@@ -153,8 +153,8 @@ public class GeomUtil {
 			return speeds;
 		}
 
-		double newVx = speeds.vxMetersPerSecond + avoidRobotX;
-		double newVy = speeds.vyMetersPerSecond + avoidRobotY;
+		double newVx = speeds.vx + avoidRobotX;
+		double newVy = speeds.vy + avoidRobotY;
 
 		double maxSpeedClamp = DriveConstants.kMaxSpeedMetersPerSecond;
 		if (Math.abs(newVx) > maxSpeedClamp)
@@ -162,9 +162,9 @@ public class GeomUtil {
 		if (Math.abs(newVy) > maxSpeedClamp)
 			newVy = Math.signum(newVy) * maxSpeedClamp;
 
-		double newOmega = speeds.omegaRadiansPerSecond;
+		double newOmega = speeds.omega;
 
-		ChassisSpeeds out = new ChassisSpeeds(newVx, newVy, newOmega);
+		ChassisVelocities out = new ChassisVelocities(newVx, newVy, newOmega);
 		Logger.recordOutput("Avoidance/AppliedVX", avoidRobotX);
 		Logger.recordOutput("Avoidance/AppliedVY", avoidRobotY);
 		Logger.recordOutput("Avoidance/ResultVX", newVx);
@@ -280,15 +280,15 @@ public class GeomUtil {
 	}
 
 	/**
-	 * Converts a ChassisSpeeds to a Twist2d by extracting two dimensions (Y and
+	 * Converts a ChassisVelocities to a Twist2d by extracting two dimensions (Y and
 	 * Z). chain
 	 *
 	 * @param speeds The original translation
 	 * @return The resulting translation
 	 */
-	public static Twist2d toTwist2d(ChassisSpeeds speeds) {
-		return new Twist2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond,
-				speeds.omegaRadiansPerSecond);
+	public static Twist2d toTwist2d(ChassisVelocities speeds) {
+		return new Twist2d(speeds.vx, speeds.vy,
+				speeds.omega);
 	}
 
 	/**
@@ -358,7 +358,7 @@ public class GeomUtil {
 	}
 
 	public static boolean shouldFlip() {
-		return DriverStation.getAlliance().isPresent()
-				&& DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+		return MatchState.getAlliance().isPresent()
+				&& MatchState.getAlliance().get() == Alliance.RED;
 	}
 }

@@ -7,14 +7,14 @@ import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.path.PathConstraints;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
@@ -36,7 +36,7 @@ import frc.robot.utils.GeomUtil.ApproachDirection;
  * it into a txt file and upload it to smth
  */
 public class DrivetrainC extends Command {
-	public ChassisSpeeds chassisSpeeds;
+	public ChassisVelocities chassisSpeeds;
 	private final DrivetrainS drivetrainS;
 	private final TunedJoystick controller;
 	static final LoggableTunedNumber translationalResponseCurve = new LoggableTunedNumber(
@@ -75,7 +75,7 @@ public class DrivetrainC extends Command {
 		if (p3 == null)
 			return false;
 
-		double now = Timer.getFPGATimestamp();
+		double now = Timer.getTimestamp();
 		double age = now - coralRec.timestamp();
 		if (age > MAX_CORAL_AGE_SECONDS)
 			return false;
@@ -88,14 +88,14 @@ public class DrivetrainC extends Command {
 		return true;
 	}
 
-	private ChassisSpeeds avoidRobots(ChassisSpeeds speeds) {
+	private ChassisVelocities avoidRobots(ChassisVelocities speeds) {
 		final double MAX_AGE_SECONDS = 2.0;
 		final double BASE_AVOID_MARGIN_M = 0.5; // previous constant
 		final double MAX_EXTRA_MARGIN_M = 1.2; // additional margin at top approach (tunable)
 		final double MAX_AVOID_SPEED = DriveConstants.kMaxSpeedMetersPerSecond * 10;
 
 		Pose2d ourPose = drivetrainS.getLookAheadPose();
-		double now = Timer.getFPGATimestamp();
+		double now = Timer.getTimestamp();
 
 		double avoidRobotX = 0.0;
 		double avoidRobotY = 0.0;
@@ -111,9 +111,9 @@ public class DrivetrainC extends Command {
 		double maxDecel = DriveConstants.maxTranslationalAcceleration.get();
 
 		// measured & commanded translational speed magnitude (global)
-		ChassisSpeeds measured = drivetrainS.getChassisSpeeds();
-		double measuredSpeed = Math.hypot(measured.vxMetersPerSecond, measured.vyMetersPerSecond);
-		double commandedSpeed = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+		ChassisVelocities measured = drivetrainS.getChassisSpeeds();
+		double measuredSpeed = Math.hypot(measured.vx, measured.vy);
+		double commandedSpeed = Math.hypot(speeds.vx, speeds.vy);
 		double maxSpeed = DriveConstants.kMaxSpeedMetersPerSecond;
 
 		// Log the globals at least
@@ -151,8 +151,8 @@ public class DrivetrainC extends Command {
 			double uyRobot = sinLoop * uxField + cosLoop * uyField;
 
 			// compute approach-projection for commanded and measured velocities
-			double cmdAlong = speeds.vxMetersPerSecond * uxRobot + speeds.vyMetersPerSecond * uyRobot;
-			double measAlong = measured.vxMetersPerSecond * uxRobot + measured.vyMetersPerSecond * uyRobot;
+			double cmdAlong = speeds.vx * uxRobot + speeds.vy * uyRobot;
+			double measAlong = measured.vx * uxRobot + measured.vy * uyRobot;
 
 			// Use the larger positive projection (if any) to decide "aiming"
 			double approachAlong = Math.max(0.0, Math.max(cmdAlong, measAlong));
@@ -230,8 +230,8 @@ public class DrivetrainC extends Command {
 			return speeds;
 		}
 
-		double newVx = speeds.vxMetersPerSecond + avoidRobotX;
-		double newVy = speeds.vyMetersPerSecond + avoidRobotY;
+		double newVx = speeds.vx + avoidRobotX;
+		double newVy = speeds.vy + avoidRobotY;
 
 		double maxSpeedClamp = DriveConstants.kMaxSpeedMetersPerSecond;
 		if (Math.abs(newVx) > maxSpeedClamp)
@@ -239,9 +239,9 @@ public class DrivetrainC extends Command {
 		if (Math.abs(newVy) > maxSpeedClamp)
 			newVy = Math.signum(newVy) * maxSpeedClamp;
 
-		double newOmega = speeds.omegaRadiansPerSecond;
+		double newOmega = speeds.omega;
 
-		ChassisSpeeds out = new ChassisSpeeds(newVx, newVy, newOmega);
+		ChassisVelocities out = new ChassisVelocities(newVx, newVy, newOmega);
 		Logger.recordOutput("Avoidance/AppliedVX", avoidRobotX);
 		Logger.recordOutput("Avoidance/AppliedVY", avoidRobotY);
 		Logger.recordOutput("Avoidance/ResultVX", newVx);
@@ -351,7 +351,7 @@ public class DrivetrainC extends Command {
 				turningSpeed = RobotContainer.angularSpeed;
 			}
 
-			// Convert ChassisSpeeds into the ChassisSpeeds type
+			// Convert ChassisVelocities into the ChassisVelocities type
 			if (DriveConstants.fieldOriented) {
 				if (RobotContainer.withinLineTolerance) {
 					if (RobotContainer.drivetrainS.getLookAheadPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
@@ -359,13 +359,13 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(-xVal + RobotContainer.xSpeed,
 									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(xVal + RobotContainer.xSpeed,
 									yVal + RobotContainer.ySpeed, 0);
 						}
 
@@ -374,13 +374,13 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(-xVal + RobotContainer.xSpeed,
 									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(xVal + RobotContainer.xSpeed,
 									yVal + RobotContainer.ySpeed, 0);
 						}
 					}
@@ -391,14 +391,14 @@ public class DrivetrainC extends Command {
 					if (RobotContainer.ySpeed != 0) {
 						ySpeed = RobotContainer.ySpeed + ySpeed;
 					}
-					chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed,
+					chassisSpeeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(xSpeed, ySpeed,
 							turningSpeed, drivetrainS.getRotation2d());
 				}
 			} else {
-				chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
+				chassisSpeeds = new ChassisVelocities(xSpeed, ySpeed, turningSpeed);
 			}
 			if (DriveConstants.driveType == DriveConstants.DriveTrainType.TANK) {
-				chassisSpeeds.vyMetersPerSecond = 0;
+				chassisSpeeds.vy = 0;
 			}
 			// set modules to proper speeds
 
@@ -406,7 +406,7 @@ public class DrivetrainC extends Command {
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
 				Logger.recordOutput("Controller/SetX", xSpeed);
 				Logger.recordOutput("Controller/SetY", ySpeed);
-				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
+				drivetrainS.setChassisSpeeds(new ChassisVelocities(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 			} else {
 				// Deal with opposing robots.
@@ -429,11 +429,11 @@ public class DrivetrainC extends Command {
 
 						double rx = (cos * dx - sin * dy) / dist; 
 
-						double driverVx = chassisSpeeds.vxMetersPerSecond;
+						double driverVx = chassisSpeeds.vx;
 
 						double driverMag = Math.hypot(
-								chassisSpeeds.vxMetersPerSecond,
-								chassisSpeeds.vyMetersPerSecond
+								chassisSpeeds.vx,
+								chassisSpeeds.vy
 						);
 
 						double desiredVx = Math.signum(rx) * driverMag;
@@ -441,12 +441,12 @@ public class DrivetrainC extends Command {
 						double k = autoIntakeAssistPercentage.get(); // 0–1 where 0.5 = can go ZERO speed "towards" coral, but cannot INCREASE distance from coral
 						//ANYTHING above .5 means that the input *must* move towards coral, cannot go away
 						//ANYTHING below .5 means that the input *does not have to* move towards coral, can go away if desired
-						double correctedVx = MathUtil.interpolate(driverVx, desiredVx, k);
+						double correctedVx = MathUtil.lerp(driverVx, desiredVx, k);
 
-						chassisSpeeds = new ChassisSpeeds(
+						chassisSpeeds = new ChassisVelocities(
 								correctedVx,
-								chassisSpeeds.vyMetersPerSecond,
-								chassisSpeeds.omegaRadiansPerSecond
+								chassisSpeeds.vy,
+								chassisSpeeds.omega
 						);
 					} else {
 						if (activeAimCommand != null && aimInitialized) {

@@ -1,10 +1,10 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform3d;
+import org.wpilib.math.linalg.MatBuilder;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Transform3d;
 import frc.robot.utils.vision.VisionConstants;
 
 import java.util.function.Supplier;

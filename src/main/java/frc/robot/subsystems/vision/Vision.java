@@ -14,25 +14,25 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.Units;
+import org.wpilib.driverstation.Alert;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.Mode;
@@ -84,7 +84,7 @@ public class Vision extends SubsystemChecker {
 
 		for (int i = 0; i < io.length; i++) {
 			inputs[i] = new VisionIOInputsAutoLogged();
-			disconnectedAlerts[i] = new Alert("", Alert.AlertType.kError);
+			disconnectedAlerts[i] = new Alert("", Alert.Level.HIGH);
 			disconnectedTimers[i] = new Timer();
 			disconnectedTimers[i].start();
 
@@ -114,7 +114,7 @@ public class Vision extends SubsystemChecker {
 		Logger.recordOutput("SystemStatus/Periodic/VisionInputsMS", System.currentTimeMillis() - timestamp);
 
 		// Update recording state for Southmoon cameras
-		boolean shouldRecord = DriverStation.isFMSAttached() || recordingRequest.get();
+		boolean shouldRecord = RobotState.isFMSAttached() || recordingRequest.get();
 		for (int i = 0; i < io.length; i++) {
 			if (cameraTypes[i] == CameraType.Southmoon) {
 				io[i].setRecording(shouldRecord);
@@ -351,7 +351,7 @@ public class Vision extends SubsystemChecker {
 					// One pose (multi-tag)
 					cameraPose = new Pose3d(
 							values[2], values[3], values[4],
-							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7],
+							new Rotation3d(new org.wpilib.math.geometry.Quaternion(values[5], values[6], values[7],
 									values[8])));
 					robotPose = cameraPose.toPose2d()
 							.transformBy(GeomUtil
@@ -365,11 +365,11 @@ public class Vision extends SubsystemChecker {
 					double error1 = values[9];
 					Pose3d cameraPose0 = new Pose3d(
 							values[2], values[3], values[4],
-							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[5], values[6], values[7],
+							new Rotation3d(new org.wpilib.math.geometry.Quaternion(values[5], values[6], values[7],
 									values[8])));
 					Pose3d cameraPose1 = new Pose3d(
 							values[10], values[11], values[12],
-							new Rotation3d(new edu.wpi.first.math.geometry.Quaternion(values[13], values[14],
+							new Rotation3d(new org.wpilib.math.geometry.Quaternion(values[13], values[14],
 									values[15], values[16])));
 					Transform2d cameraToRobot = GeomUtil
 							.poseToTransform(VisionConstants.cameras[cameraIndex].getPose().get().toPose2d()).inverse();
@@ -515,7 +515,7 @@ public class Vision extends SubsystemChecker {
 					Pose3d pose = new Pose3d(
 							frame[i + 12], frame[i + 13], frame[i + 14],
 							new Rotation3d(
-									new edu.wpi.first.math.geometry.Quaternion(frame[i + 15], frame[i + 16],
+									new org.wpilib.math.geometry.Quaternion(frame[i + 15], frame[i + 16],
 											frame[i + 17],
 											frame[i + 18])));
 					Pose2d drivetrainPose = RobotContainer.drivetrainS.getPose();
@@ -543,12 +543,12 @@ public class Vision extends SubsystemChecker {
 				Pose3d rawFirstPose = new Pose3d(
 						frame[i + 12], frame[i + 13], frame[i + 14],
 						new Rotation3d(
-								new edu.wpi.first.math.geometry.Quaternion(frame[i + 15], frame[i + 16], frame[i + 17],
+								new org.wpilib.math.geometry.Quaternion(frame[i + 15], frame[i + 16], frame[i + 17],
 										frame[i + 18])));
 				Pose3d rawSecondPose = new Pose3d(
 						frame[i + 20], frame[i + 21], frame[i + 22],
 						new Rotation3d(
-								new edu.wpi.first.math.geometry.Quaternion(frame[i + 23], frame[i + 24], frame[i + 25],
+								new org.wpilib.math.geometry.Quaternion(frame[i + 23], frame[i + 24], frame[i + 25],
 										frame[i + 26])));
 				Pose3d objectPoseFirst = rawFirstPose;
 				Pose3d objectPoseSecond = rawSecondPose;

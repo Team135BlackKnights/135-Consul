@@ -1,17 +1,16 @@
 package frc.robot.utils.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Filesystem;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.Filesystem;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.avaje.jsonb.Jsonb;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -233,12 +232,7 @@ public static final boolean bumperDetection = false;
         }
       }
 
-      try {
-        layoutString = new ObjectMapper().writeValueAsString(layout);
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException(
-            "Failed to serialize AprilTag layout JSON " + toString() + "for Northstar");
-      }
+      layoutString = Jsonb.instance().toJson(layout);
     }
 
     private final AprilTagFieldLayout layout;

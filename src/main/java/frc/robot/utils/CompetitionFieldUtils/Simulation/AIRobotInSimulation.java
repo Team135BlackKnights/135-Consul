@@ -6,21 +6,21 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.driverstation.*;
+import org.wpilib.driverstation.NiDsXboxController;
+import org.wpilib.smartdashboard.SendableChooser;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SequentialCommandGroup;
+import org.wpilib.command2.button.RobotModeTriggers;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
@@ -119,7 +119,7 @@ public class AIRobotInSimulation {
                                         ROBOT_QUEENING_POSITIONS[4],
                                         5, getIsAlliancePartner(ROBOTS_STARTING_POSITIONS[4]));
                 } catch (Exception e) {
-                        DriverStation.reportError(
+                        DriverStationErrors.reportError(
                                         "failed to load opponent cycle path, error:" + e.getMessage(),
                                         false);
                 }
@@ -157,7 +157,7 @@ public class AIRobotInSimulation {
                 RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().schedule(behaviorChooser.getSelected())));
                 RobotModeTriggers.disabled().onTrue(Commands.runOnce(() -> {
                         driveSimulation.setSimulationWorldPose(queeningPose);
-                        driveSimulation.runChassisSpeeds(new ChassisSpeeds(), false);
+                        driveSimulation.runChassisSpeeds(new ChassisVelocities(), false);
                         System.out.println("disabled!!!");
                 }, driveSimulation).ignoringDisable(true));
 
@@ -199,8 +199,8 @@ public class AIRobotInSimulation {
         }
 
         private Command getJoystickDriveCommand() {
-                final XboxController joystick = new XboxController(id);
-                final Supplier<ChassisSpeeds> joystickSpeeds = () -> new ChassisSpeeds(
+                final NiDsXboxController joystick = new NiDsXboxController(id);
+                final Supplier<ChassisVelocities> joystickSpeeds = () -> new ChassisVelocities(
                                 -joystick.getLeftY() * 3.5,
                                 -joystick.getLeftX() * 3.5,
                                 -joystick.getRightX() * Math.toRadians(360));

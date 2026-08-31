@@ -1,11 +1,11 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Quaternion;
-import edu.wpi.first.networktables.*;
-import edu.wpi.first.util.WPIUtilJNI;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Quaternion;
+import org.wpilib.networktables.*;
+import org.wpilib.util.WPIUtilJNI;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Timer;
 import java.util.function.Supplier;
 
 import frc.robot.RobotContainer;
@@ -86,8 +86,8 @@ public class VisionIOSouthmoon implements VisionIO {
             .getDoubleArrayTopic("observations")
             .subscribe(
                 new double[] {},
-                PubSubOption.keepDuplicates(true),
-                PubSubOption.sendAll(true),
+                PubSubOption.KEEP_DUPLICATES,
+                PubSubOption.SEND_ALL,
                 PubSubOption.pollStorage(5),
                 PubSubOption.periodic(0.01667));
     objDetectObservationSubscriber =
@@ -95,8 +95,8 @@ public class VisionIOSouthmoon implements VisionIO {
             .getDoubleArrayTopic("objdetect_observations")
             .subscribe(
                 new double[] {},
-                PubSubOption.keepDuplicates(true),
-                PubSubOption.sendAll(true),
+                PubSubOption.KEEP_DUPLICATES,
+                PubSubOption.SEND_ALL,
                 PubSubOption.pollStorage(5),
                 PubSubOption.periodic(0.01667));
     fpsAprilTagsSubscriber = outputTable.getIntegerTopic("fps_apriltags").subscribe(0);
@@ -113,7 +113,7 @@ public class VisionIOSouthmoon implements VisionIO {
     // Update NT connection status
     inputs.ntConnected = false;
     for (var client : NetworkTableInstance.getDefault().getConnections()) {
-      if (client.remote_id.startsWith(this.deviceId)) {
+      if (client.remoteId.startsWith(this.deviceId)) {
         inputs.ntConnected = true;
         break;
       }
@@ -124,9 +124,9 @@ public class VisionIOSouthmoon implements VisionIO {
     // Publish timestamp
     if (slowPeriodic) {
       timestampPublisher.set(WPIUtilJNI.getSystemTime() / 1000000);
-      eventNamePublisher.set(DriverStation.getEventName());
-      matchTypePublisher.set(DriverStation.getMatchType().ordinal());
-      matchNumberPublisher.set(DriverStation.getMatchNumber());
+      eventNamePublisher.set(MatchState.getEventName());
+      matchTypePublisher.set(MatchState.getMatchType().ordinal());
+      matchNumberPublisher.set(MatchState.getMatchNumber());
     }
 
     // Publish tag layout

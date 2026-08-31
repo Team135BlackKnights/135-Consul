@@ -1,11 +1,11 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
-import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
-import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.kinematics.MecanumDriveKinematics;
+import org.wpilib.math.kinematics.MecanumDriveWheelVelocities;
+import org.wpilib.math.util.Units;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
@@ -61,13 +61,13 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 
 		mecanum.updateSim(subPeriodSeconds);
 		// should do the actual motion calculations
-		final ChassisSpeeds mecanumTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(mecanumIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
+		final ChassisVelocities mecanumTheoreticalSpeeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(kinematics
+		.toChassisVelocities(mecanumIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				mecanumTheoreticalSpeeds);
-		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
-		final MecanumDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
-				.toWheelSpeeds(instantVelocityRobotRelative);
+		final ChassisVelocities instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
+		final MecanumDriveWheelVelocities actualModuleFloorSpeeds = kinematics
+				.toWheelVelocities(instantVelocityRobotRelative);
 		gyroSim.updateSimulationSubTick(angularVelocity);
 		updateMecanumSimulationResults(mecanum, mecanumIOSim, actualModuleFloorSpeeds,
 				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
@@ -78,18 +78,18 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	}
 
 	private static void updateMecanumSimulationResults(Mecanum mecanum, MecanumIOSim mecanumIOSim,
-			MecanumDriveWheelSpeeds speeds, double robotMaxVelocity,
+			MecanumDriveWheelVelocities speeds, double robotMaxVelocity,
 			int simulationIteration, double periodSeconds,
-			ChassisSpeeds instantSpeed) {
+			ChassisVelocities instantSpeed) {
 		double[] freeWheelSpeeds = { mecanum.getFrontLeftVelocityMetersPerSec(),
 				mecanum.getFrontRightVelocityMetersPerSec(),
 				mecanum.getBackLeftVelocityMetersPerSec(),
 				mecanum.getBackRightVelocityMetersPerSec()
 		};
 		double[] degreeAngles = new double[4];
-		double[] physicsAccurateWheelSpeeds = { speeds.frontLeftMetersPerSecond,
-				speeds.frontRightMetersPerSecond, speeds.rearLeftMetersPerSecond,
-				speeds.rearRightMetersPerSecond
+		double[] physicsAccurateWheelSpeeds = { speeds.frontLeft,
+				speeds.frontRight, speeds.rearLeft,
+				speeds.rearRight
 		};
 		final MecanumDrivePhysicsSimResults results = mecanumIOSim.mecanumDrivePhysicsSimResults;
 		// Convert mecanum array into wheel speeds (the loop should always iterate 4
@@ -99,10 +99,10 @@ public class MecanumDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 					+ i * 90) % 360;
 			results.driveWheelFinalVelocityRevolutionsPerSec[i] = getActualDriveMotorRotterSpeedRevPerSec(
 					physicsAccurateWheelSpeeds[i], freeWheelSpeeds[i]);
-			if ((Math.sqrt(Math.pow(instantSpeed.vxMetersPerSecond, 2)
-					+ Math.pow(instantSpeed.vyMetersPerSecond, 2)) > 0.1)
+			if ((Math.sqrt(Math.pow(instantSpeed.vx, 2)
+					+ Math.pow(instantSpeed.vy, 2)) > 0.1)
 					|| (Math.sqrt(
-							Math.pow(instantSpeed.omegaRadiansPerSecond, 2)) > 0.05)) {
+							Math.pow(instantSpeed.omega, 2)) > 0.05)) {
 				results.negateFF[i] = false;
 			} else {
 				results.negateFF[i] = true;

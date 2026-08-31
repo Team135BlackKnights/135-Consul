@@ -1,8 +1,8 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
-import edu.wpi.first.units.measure.*;
+import org.wpilib.units.measure.*;
 
 /**
  *

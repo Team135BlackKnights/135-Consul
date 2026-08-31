@@ -18,31 +18,19 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import com.therekrab.autopilot.APTarget;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.system.Filesystem;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.RobotContainer;
-import frc.robot.commands.drive.AutoPilotAlign;
 import frc.robot.commands.drive.DriveAndAimToRotation;
 import frc.robot.commands.drive.DriveToLine;
 import frc.robot.subsystems.drive.DrivetrainS;
 import java.lang.Double;
 public class PathFinder {
-	public static Command goToAutoPilotPose(LocalADStarAK adStar, APTarget target, DrivetrainS drive,
-			Supplier<PathConstraints> constraints, double beelineMeters, double tolerance) {
-		return new AutoPilotAlign(adStar, target, drive, 2).until(() -> {
-			return drive.getPose().getTranslation().getDistance(target.getReference().getTranslation()) < beelineMeters;
-		}).andThen(
-				new DriveAndAimToRotation(drive, target.getReference(), constraints, (Supplier<Double>)() -> tolerance)).until(
-						() -> drive.getPose().getTranslation()
-								.getDistance(target.getReference().getTranslation()) < tolerance);
-	}
-
 	/**
 	 * Goes to a given pose with the speed constraints, and will ALWAYS end
 	 * facing the given degree.

@@ -1,9 +1,9 @@
 package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.AutoLog;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform3d;
 
 public interface VisionIO {
   @AutoLog

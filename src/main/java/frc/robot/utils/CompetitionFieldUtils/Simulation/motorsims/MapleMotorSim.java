@@ -1,16 +1,16 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation.motorsims;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
-import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.wpilib.units.measure.*;
+import org.wpilib.simulation.DCMotorSim;
 
 /**
  *
  *
- * <h1>{@link edu.wpi.first.wpilibj.simulation.DCMotorSim} with a bit of extra spice.</h1>
+ * <h1>{@link org.wpilib.simulation.DCMotorSim} with a bit of extra spice.</h1>
  *
- * <p>This class extends the functionality of the original {@link edu.wpi.first.wpilibj.simulation.DCMotorSim} and
+ * <p>This class extends the functionality of the original {@link org.wpilib.simulation.DCMotorSim} and
  * models the following aspects in addition:
  *
  * <ul>
@@ -49,7 +49,7 @@ public class MapleMotorSim {
      *
      * <h2>Updates the simulation.</h2>
      *
-     * <p>This is equivalent to{@link edu.wpi.first.wpilibj.simulation.DCMotorSim#update(double)}.
+     * <p>This is equivalent to{@link org.wpilib.simulation.DCMotorSim#update(double)}.
      */
     public void update(Time dt) {
         this.appliedVoltage = controller.updateControlSignal(
@@ -81,7 +81,7 @@ public class MapleMotorSim {
      *
      * <h2>Obtains the <strong>final</strong> position of the mechanism.</h2>
      *
-     * <p>This is equivalent to {@link edu.wpi.first.wpilibj.simulation.DCMotorSim#getAngularPosition()}.
+     * <p>This is equivalent to {@link org.wpilib.simulation.DCMotorSim#getAngularPosition()}.
      *
      * @return the angular position of the motor, continuous
      */
@@ -105,7 +105,7 @@ public class MapleMotorSim {
      *
      * <h2>Obtains the <strong>final</strong> velocity of the mechanism.</h2>
      *
-     * <p>This is equivalent to {@link edu.wpi.first.wpilibj.simulation.DCMotorSim#getAngularVelocity()}.
+     * <p>This is equivalent to {@link org.wpilib.simulation.DCMotorSim#getAngularVelocity()}.
      *
      * @return the final angular velocity of the rotter
      */

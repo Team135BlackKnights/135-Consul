@@ -31,25 +31,23 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FlippingUtil;
-import au.grapplerobotics.CanBridge;
-import edu.wpi.first.math.MathShared;
-import edu.wpi.first.math.MathSharedStore;
-import edu.wpi.first.math.MathUsageId;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.net.PortForwarder;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.IterativeRobotBase;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Threads;
-import edu.wpi.first.wpilibj.Watchdog;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import org.wpilib.math.util.MathShared;
+import org.wpilib.math.util.MathSharedStore;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.trajectory.Trajectory;
+import org.wpilib.math.util.Units;
+import org.wpilib.net.PortForwarder;
+import org.wpilib.driverstation.*;
+import org.wpilib.framework.IterativeRobotBase;
+import org.wpilib.system.RobotController;
+import org.wpilib.system.Threads;
+import org.wpilib.system.Watchdog;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command2.Subsystem;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LogTimingReceiver;
@@ -87,23 +85,19 @@ public class Robot extends LoggedRobot {
 	private double lastMatchTime = 0, previousTime = Logger.getTimestamp(), accumulatedCharge = 0;
 	@SuppressWarnings("unused")
 	private static final List<PeriodicFunction> periodicFunctions = new ArrayList<>();
-	public static final CANBus rioCanBus = CANBus.roboRIO();
+	public static final CANBus rioCanBus = CANBus.systemcore(0);
 	public static Pose3d elevatorPose = new Pose3d();
 	public static Pose3d armPose = new Pose3d();
 	public static Pose3d algaePose = new Pose3d();
 	private boolean autoHasStarted = false, hasCalculatedAuto = false;
 	private String oldAutoString = "";
 
-	public Robot() {
-		CanBridge.runTCP();
-	}
-
 	/**
 	 * This function is run when the robot is first started up and should be used
 	 * for any initialization code.
 	 */
-	@Override
-	public void robotInit() {
+	public Robot() {
+		// Grapple's CAN bridge is disabled until libgrapplefrc publishes a 2027 build.
 		PortForwarder.add(5800, "10.1.35.11", 5800);
 		PortForwarder.add(5800, "10.1.35.12", 5800);
 		if (!Constants.isCompetition) {
@@ -198,7 +192,7 @@ public class Robot extends LoggedRobot {
 			Watchdog watchdog = (Watchdog) watchdogField.get(this);
 			watchdog.setTimeout(loopOverrunWarningTimeout);
 		} catch (Exception e) {
-			DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
+			DriverStationErrors.reportWarning("Failed to disable loop overrun warnings.", false);
 		}
 		var mathShared = MathSharedStore.getMathShared();
 		MathSharedStore.setMathShared(
@@ -213,8 +207,8 @@ public class Robot extends LoggedRobot {
 					}
 
 					@Override
-					public void reportUsage(MathUsageId id, int count) {
-						mathShared.reportUsage(id, count);
+					public void reportUsage(String id, String detail) {
+						mathShared.reportUsage(id, detail);
 					}
 
 					@Override
@@ -272,7 +266,7 @@ public class Robot extends LoggedRobot {
 		if (System.currentTimeMillis() % 10000 < 20) {
 			System.gc();
 		}
-		Threads.setCurrentThreadPriority(true, 99); // Java magic to speed up loops.
+		Threads.setCurrentThreadPriority(99); // Java magic to speed up loops.
 
 		long currentTime = System.currentTimeMillis();
 
@@ -296,7 +290,7 @@ public class Robot extends LoggedRobot {
 			Logger.recordOutput("SystemStatus/AccumulatedCharge", accumulatedCharge);
 		}
 		// Record the current accumated charge, so we can set it to that on next boot.
-		Logger.recordOutput("FMS/isFMSAttached", DriverStation.isFMSAttached());
+		Logger.recordOutput("FMS/isFMSAttached", RobotState.isFMSAttached());
 		LoggableTunedNumber.ifChanged(hashCode(), () -> {
 			DriveConstants.pathConstraints = new PathConstraints(
 					DriveConstants.pathConstraints.maxVelocityMPS(),
@@ -314,8 +308,8 @@ public class Robot extends LoggedRobot {
 		// Logger.recordOutput("SystemStatus/Periodic/OrangePiMS",
 		// Math.abs(dataStartTime - System.currentTimeMillis()));
 		Logger.recordOutput("MatchState", Constants.currentMatchState.name());
-		isRed = DriverStation.getAlliance().isPresent()
-				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		isRed = MatchState.getAlliance().isPresent()
+				? MatchState.getAlliance().get() == Alliance.RED
 				: false;
 		// Runs the Scheduler. This is responsible for polling buttons, adding
 		// newly-scheduled
@@ -331,7 +325,7 @@ public class Robot extends LoggedRobot {
 		}
 		Logger.recordOutput("SystemStatus/MemoryTotal", Runtime.getRuntime().totalMemory());
 		Logger.recordOutput("SystemStatus/MemoryFree", Runtime.getRuntime().freeMemory());
-		matchTime = DriverStation.getMatchTime();
+		matchTime = MatchState.getMatchTime();
 		Logger.recordOutput("MatchTime", matchTime);
 
 		double batteryVoltage = (Constants.currentMode == Constants.Mode.SIM)
@@ -345,7 +339,7 @@ public class Robot extends LoggedRobot {
 		double runtimeMS = (System.currentTimeMillis() - currentTime);
 		// long to double for the recordOutput
 		Logger.recordOutput("SystemStatus/RobotPeriodicMS", runtimeMS);
-		Threads.setCurrentThreadPriority(false, 10); // Return to normal thread priority (so when next loop comes, max
+		Threads.setCurrentThreadPriority(10); // Return to normal thread priority (so when next loop comes, max
 
 	}
 
@@ -358,8 +352,8 @@ public class Robot extends LoggedRobot {
 	@Override
 	public void disabledInit() {
 		// make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		isRed = MatchState.getAlliance().isPresent()
+				? MatchState.getAlliance().get() == Alliance.RED
 				: false;
 		isPracticeDSMode = false;
 		if (Constants.currentMatchState == FRCMatchState.ENDGAME) {
@@ -377,8 +371,8 @@ public class Robot extends LoggedRobot {
 
 	@Override
 	public void disabledPeriodic() {
-		isRed = DriverStation.getAlliance().isPresent()
-				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		isRed = MatchState.getAlliance().isPresent()
+				? MatchState.getAlliance().get() == Alliance.RED
 				: false;
 		if (!autoHasStarted) {
 			String[] auto = PosePlotterUtil.getAutoString().split("_");
@@ -428,8 +422,8 @@ public class Robot extends LoggedRobot {
 	@Override
 	public void autonomousInit() {
 		// make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		isRed = MatchState.getAlliance().isPresent()
+				? MatchState.getAlliance().get() == Alliance.RED
 				: false;
 		Elastic.selectTab("Autonomous");
 		autoHasStarted = true;
@@ -495,8 +489,8 @@ public class Robot extends LoggedRobot {
 	@Override
 	public void teleopInit() {
 		// make sure we are on the correct side
-		isRed = DriverStation.getAlliance().isPresent()
-				? DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+		isRed = MatchState.getAlliance().isPresent()
+				? MatchState.getAlliance().get() == Alliance.RED
 				: false;
 
 		autoHasStarted = true;
@@ -530,7 +524,7 @@ public class Robot extends LoggedRobot {
 		 * Based on this, endgame should initialize at 115 seconds and end at 135
 		 * seconds.
 		 */
-		matchTime = DriverStation.getMatchTime();
+		matchTime = MatchState.getMatchTime();
 		if (RobotContainer.angleOverrider.isPresent()) {
 			Logger.recordOutput("Odometry/AimGoal",
 					new Pose2d(RobotContainer.drivetrainS.getPose().getTranslation(),
@@ -539,7 +533,7 @@ public class Robot extends LoggedRobot {
 			Logger.recordOutput("Odometry/AimGoal",
 					RobotContainer.drivetrainS.getPose());
 		}
-		if (DriverStation.isFMSAttached() || isPracticeDSMode) {
+		if (RobotState.isFMSAttached() || isPracticeDSMode) {
 			if (matchTime > 30) {
 				Constants.currentMatchState = FRCMatchState.TELEOP;
 			} else if (matchTime == 30) {
@@ -572,7 +566,7 @@ public class Robot extends LoggedRobot {
 	}
 
 	@Override
-	public void testInit() {
+	public void utilityInit() {
 		Constants.currentMatchState = FRCMatchState.TESTINIT;
 		Elastic.selectTab("Testing");
 		for (Subsystem subsys : RobotContainer.getAllSubsystems()) {
@@ -587,7 +581,7 @@ public class Robot extends LoggedRobot {
 
 	/** This function is called periodically during test mode. */
 	@Override
-	public void testPeriodic() {
+	public void utilityPeriodic() {
 		Constants.currentMatchState = FRCMatchState.TEST;
 		long statusCalls = System.currentTimeMillis();
 		CANBusStatus rioCanBusStatus = rioCanBus.getStatus();

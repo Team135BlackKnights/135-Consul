@@ -1,6 +1,6 @@
 package frc.robot.utils.robotToggles;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.wpilibj.DigitalInput;
+import org.wpilib.hardware.discrete.DigitalInput;
 
 public class TogglesIOHardware implements TogglesIO {
     private final DigitalInput neutralModeSwitch;

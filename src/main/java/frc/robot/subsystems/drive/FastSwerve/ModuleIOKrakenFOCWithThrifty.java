@@ -10,15 +10,15 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.RobotController;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
+import org.wpilib.hardware.discrete.AnalogInput;
+import org.wpilib.system.RobotController;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -78,8 +78,8 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		switch (index) {
 			case 0:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.rioCanBus);
 
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
@@ -96,8 +96,8 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				break;
 			case 1:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.driveCanBus);
@@ -114,8 +114,8 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				break;
 			case 2:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.driveCanBus);
@@ -132,8 +132,8 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				break;
 			case 3:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.driveCanBus);
@@ -197,7 +197,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				.registerSignalInput(driveTalon.getPosition());
 		turnPositionQueue = OdometryThread
 				.registerInput(() -> {
-					double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+					double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage3V3();
 					if (isTurnSensorInverted) {
 						absolutePositionPercent = 1 - absolutePositionPercent;
 					}
@@ -223,7 +223,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 				turnTorqueCurrent);
 		// Reset turn position to absolute encoder position
 		// get absolute position from analog encoder
-		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage3V3();
 		if (isTurnSensorInverted) {
 			absolutePositionPercent = 1 - absolutePositionPercent;
 		}
@@ -255,7 +255,7 @@ public class ModuleIOKrakenFOCWithThrifty implements ModuleIO {
 		inputs.driveTorqueCurrentAmps = driveTorqueCurrent.getValueAsDouble();
 		inputs.driveMotorTemp = driveTemp.getValueAsDouble();
 		// get absolute position from analog encoder
-		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
+		double absolutePositionPercent = turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage3V3();
 		if (isTurnSensorInverted) {
 			absolutePositionPercent = 1 - absolutePositionPercent;
 		}

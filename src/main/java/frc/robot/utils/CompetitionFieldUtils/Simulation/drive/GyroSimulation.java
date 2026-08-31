@@ -1,6 +1,6 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation.drive;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation2d;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 import frc.robot.utils.maths.CommonMath;
 

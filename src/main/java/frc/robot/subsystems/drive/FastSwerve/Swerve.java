@@ -1,30 +1,30 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.*;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.linalg.Vector;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.interpolation.TimeInterpolatableBuffer;
+import org.wpilib.math.kinematics.*;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N2;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.util.sendable.Sendable;
+import org.wpilib.util.sendable.SendableBuilder;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Timer;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
@@ -59,7 +59,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
-import com.therekrab.autopilot.Autopilot;
 
 public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private static final LoggableTunedNumber coastWaitTime = new LoggableTunedNumber(
@@ -102,16 +101,16 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@AutoLogOutput(key = "Drive/CoastRequest")
 	private CoastRequest coastRequest = CoastRequest.AUTOMATIC;
 	private boolean lastEnabled = false;
-	private ChassisSpeeds desiredSpeeds = new ChassisSpeeds();
+	private ChassisVelocities desiredSpeeds = new ChassisVelocities();
 	private static final double poseBufferSizeSeconds = 2.0;
 	private static final double txTyObservationStaleSecs = .3;
 	private Pose2d odometryPose = new Pose2d();
 	private Pose2d estimatedPose = new Pose2d();
 	private SwerveSetpoint currentSetpoint = new SwerveSetpoint(
-			new ChassisSpeeds(),
-			new SwerveModuleState[] { new SwerveModuleState(),
-					new SwerveModuleState(), new SwerveModuleState(),
-					new SwerveModuleState()
+			new ChassisVelocities(),
+			new SwerveModuleVelocity[] { new SwerveModuleVelocity(),
+					new SwerveModuleVelocity(), new SwerveModuleVelocity(),
+					new SwerveModuleVelocity()
 			},
 			new boolean[] { false, false, false, false
 			});
@@ -154,7 +153,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	};
 	private final OdometryThread odometryThread;
 	private Feedforwards pathPlannerNM = new Feedforwards(4);
-	public static final Autopilot autopilot = new Autopilot(DriveConstants.AutopilotConstants.kFastProfile);
 	private double characterizationVelocity = 0.0;
 	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
 
@@ -251,11 +249,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			twist = new Twist2d(twist.dx, twist.dy, twist.dtheta);
 		}
 		// Add twist to odometry pose
-		odometryPose = odometryPose.exp(twist);
+		odometryPose = odometryPose.plus(twist.exp());
 		// Add pose to buffer at timestamp
 		poseBuffer.addSample(observation.timestamp(), odometryPose);
 		// Calculate diff from last odometry pose and add onto pose estimate
-		estimatedPose = estimatedPose.exp(twist);
+		estimatedPose = estimatedPose.plus(twist.exp());
 	}
 
 	public void addVisionObservation(VisionObservation observation) {
@@ -329,28 +327,28 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public boolean[] calculateSkidding() {
-		SwerveModuleState[] moduleStates = getModuleStates();
-		ChassisSpeeds currentChassisSpeeds = getChassisSpeeds();
-		// Step 1: Create a measured ChassisSpeeds object with solely the rotation
+		SwerveModuleVelocity[] moduleStates = getModuleStates();
+		ChassisVelocities currentChassisSpeeds = getChassisSpeeds();
+		// Step 1: Create a measured ChassisVelocities object with solely the rotation
 		// component
-		ChassisSpeeds rotationOnlySpeeds = new ChassisSpeeds(0.0, 0.0,
-				currentChassisSpeeds.omegaRadiansPerSecond + .05);
+		ChassisVelocities rotationOnlySpeeds = new ChassisVelocities(0.0, 0.0,
+				currentChassisSpeeds.omega + .05);
 		double[] xComponentList = new double[4];
 		double[] yComponentList = new double[4];
 		// Step 2: Convert it into module states with kinematics
-		SwerveModuleState[] rotationalStates = kinematics
-				.toSwerveModuleStates(rotationOnlySpeeds);
+		SwerveModuleVelocity[] rotationalStates = kinematics
+				.toSwerveModuleVelocities(rotationOnlySpeeds);
 		// Step 3: Subtract the rotational states from the module states to get the
 		// translational vectors and calculate the magnitudes.
 		// These should all be the same direction and magnitude if there is no skid.
 		for (int i = 0; i < moduleStates.length; i++) {
-			double deltaX = moduleStates[i].speedMetersPerSecond
+			double deltaX = moduleStates[i].velocity
 					* Math.cos(moduleStates[i].angle.getRadians())
-					- rotationalStates[i].speedMetersPerSecond
+					- rotationalStates[i].velocity
 							* Math.cos(rotationalStates[i].angle.getRadians());
-			double deltaY = moduleStates[i].speedMetersPerSecond
+			double deltaY = moduleStates[i].velocity
 					* Math.sin(moduleStates[i].angle.getRadians())
-					- rotationalStates[i].speedMetersPerSecond
+					- rotationalStates[i].velocity
 							* Math.sin(rotationalStates[i].angle.getRadians());
 			xComponentList[i] = deltaX;
 			yComponentList[i] = deltaY;
@@ -401,14 +399,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	/**
 	 * Get the current pose of the robot with front being whatever front has been
 	 * set to
-	 * 
+	 *
 	 * @return a VISUAL ONLY output of the robot pose
 	 * @see {@link #getPose() getPose} for the geometrically accurate pose
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
 	@Override
 	public Pose2d getLookAheadPose() {
-		return estimatedPose.exp(getChassisSpeeds().toTwist2d(lookAheadTime.get()));
+		return estimatedPose.plus(getChassisSpeeds().toTwist2d(lookAheadTime.get()).exp());
 		/*
 		 * return estimatedPose.plus(new Transform2d(new Translation2d(),
 		 * DriveConstants.TrainConstants.robotOffsetAngleDirection));
@@ -473,8 +471,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			if (lastPositions != null) {
 				double dt = odometryTimestampInputs.measurementTimeStamps[i] - lastTime;
 				for (int j = 0; j < modules.length; j++) {
-					double velocity = (wheelPositions[j].distanceMeters
-							- lastPositions[j].distanceMeters) / dt;
+					double velocity = (wheelPositions[j].distance
+							- lastPositions[j].distance) / dt;
 					double omega = wheelPositions[j].angle
 							.minus(lastPositions[j].angle).getRadians() / dt;
 					// Check if delta is too large
@@ -497,10 +495,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 		}
 		// Update current velocities use gyro when possible
-		ChassisSpeeds previousSpeeds = getChassisSpeeds();
-		previousSpeeds.omegaRadiansPerSecond = gyroInputs.connected
+		ChassisVelocities previousSpeeds = getChassisSpeeds();
+		previousSpeeds.omega = gyroInputs.connected
 				? gyroInputs.yawVelocityRadPerSec
-				: previousSpeeds.omegaRadiansPerSecond;
+				: previousSpeeds.omega;
 		addVelocityData(GeomUtil.toTwist2d(previousSpeeds));
 		// Update brake mode
 		// Reset movement timer if moved
@@ -510,14 +508,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 								.get())) {
 			lastMovementTimer.reset();
 		}
-		if (DriverStation.isEnabled() && !lastEnabled) {
+		if (RobotState.isEnabled() && !lastEnabled) {
 			coastRequest = CoastRequest.AUTOMATIC;
 		}
-		lastEnabled = DriverStation.isEnabled();
+		lastEnabled = RobotState.isEnabled();
 		// debug error
 		switch (coastRequest) {
 			case AUTOMATIC -> {
-				if (DriverStation.isEnabled()) {
+				if (RobotState.isEnabled()) {
 					setBrakeMode(true);
 				} else if (lastMovementTimer.hasElapsed(coastWaitTime.get())) {
 					setBrakeMode(false);
@@ -538,7 +536,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				break;
 			}
 			case WHEEL_RADIUS_CHARACTERIZATION -> {
-				desiredSpeeds = new ChassisSpeeds(0, 0, characterizationVelocity);
+				desiredSpeeds = new ChassisVelocities(0, 0, characterizationVelocity);
 				break;
 			}
 			default -> {
@@ -581,8 +579,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		if (!modulesOrienting && currentDriveMode != DriveMode.MODULE_CHARACTERIZATION) {
 			// Run robot at desiredSpeeds
 			// Generate feasible next setpoint
-			SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
-			SwerveModuleState[] optimizedSetpointTorques = new SwerveModuleState[4];
+			SwerveModuleVelocity[] optimizedSetpointStates = new SwerveModuleVelocity[4];
+			SwerveModuleVelocity[] optimizedSetpointTorques = new SwerveModuleVelocity[4];
 			currentSetpoint = setpointGenerator.generateSetpoint(
 					currentModuleLimits, currentSetpoint, desiredSpeeds, .02);
 			//optimizedSetpointTorques = wheelForceCalculator.calculate(.02, previousSpeeds, desiredSpeeds);
@@ -599,11 +597,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 						pathPlannerNM.y_newtons[i]
 					);
 					double wheelTorque = wheelForces.dot(wheelDirecton) * DriveConstants.TrainConstants.kWheelDiameter.get()/2;
-					optimizedSetpointTorques[i] = new SwerveModuleState(wheelTorque, 
+					optimizedSetpointTorques[i] = new SwerveModuleVelocity(wheelTorque,
 						optimizedSetpointStates[i].angle);
 				} else {
 					optimizedSetpointTorques[i] =
-              		new SwerveModuleState(0.0, optimizedSetpointStates[i].angle);
+						new SwerveModuleVelocity(0.0, optimizedSetpointStates[i].angle);
 				}
 
 				modules[i].runSetpoint(optimizedSetpointStates[i],
@@ -614,7 +612,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			Logger.recordOutput("Drive/SwerveStates/Torques",
 					optimizedSetpointTorques);
 		}
-		SwerveModuleState[] measuredStates = getModuleStates();
+		SwerveModuleVelocity[] measuredStates = getModuleStates();
 		Logger.recordOutput("Drive/SwerveStates/Measured",
 				measuredStates);
 
@@ -630,7 +628,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
 			String name = entry.getKey();
 			TxTyPoseRecord record = entry.getValue();
-			double age = Timer.getFPGATimestamp() - record.timestamp;
+			double age = Timer.getTimestamp() - record.timestamp;
 			boolean isStale = age > txTyObservationStaleSecs;
 			Logger.recordOutput("Vision/" + name + "/Age", age);
 			Logger.recordOutput("Vision/" + name + "/IsStale", isStale);
@@ -643,16 +641,16 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
 			}
 		}
-		Logger.recordOutput("RobotState/AheadPose", getLookAheadPose().exp(getChassisSpeeds().toTwist2d(.05)));
+		Logger.recordOutput("RobotState/AheadPose", getLookAheadPose().plus(getChassisSpeeds().toTwist2d(.05).exp()));
 		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
 	}
 
 	@Override
-	public void setChassisSpeeds(ChassisSpeeds speeds) {
+	public void setChassisSpeeds(ChassisVelocities speeds) {
 		currentDriveMode = DriveMode.TELEOP;
-		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
-				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
-		// desiredSpeeds = ChassisSpeeds.discretize(desiredSpeeds, 0.02);
+		desiredSpeeds = new ChassisVelocities(speeds.vx,
+				speeds.vy, speeds.omega);
+		// desiredSpeeds = ChassisVelocities.discretize(desiredSpeeds, 0.02);
 		for (int i = 0; i < 4; i++) {
 			pathPlannerNM.x_newtons[i] = 0;
 			pathPlannerNM.y_newtons[i] = 0;
@@ -660,10 +658,10 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	@Override
-	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+	public void setPathplannerChassisSpeeds(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
-		desiredSpeeds = new ChassisSpeeds(speeds.vxMetersPerSecond,
-				speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+		desiredSpeeds = new ChassisVelocities(speeds.vx,
+				speeds.vy, speeds.omega);
 		double[] robotRelativeForcesXNewtons = feedforwards.robotRelativeForcesXNewtons();
 		double[] robotRelativeForcesYNewtons = feedforwards.robotRelativeForcesYNewtons();
 		for (int i = 0; i < 4; i++) {
@@ -689,9 +687,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 * Returns the module states (turn angles and drive velocities) for all of
 	 * the modules.
 	 */
-	private SwerveModuleState[] getModuleStates() {
+	private SwerveModuleVelocity[] getModuleStates() {
 		return Arrays.stream(modules).map(Module::getState)
-				.toArray(SwerveModuleState[]::new);
+				.toArray(SwerveModuleVelocity[]::new);
 	}
 
 	/**
@@ -700,8 +698,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 */
 	@AutoLogOutput(key = "Drive/MeasuredSpeeds")
 	@Override
-	public ChassisSpeeds getChassisSpeeds() {
-		return kinematics.toChassisSpeeds(getModuleStates());
+	public ChassisVelocities getChassisSpeeds() {
+		return kinematics.toChassisVelocities(getModuleStates());
 	}
 
 	@Override
@@ -816,12 +814,12 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	protected Command systemCheckCommand() {
 		return Commands
-				.sequence(run(() -> setChassisSpeeds(new ChassisSpeeds(1, 0, 0)))
+				.sequence(run(() -> setChassisSpeeds(new ChassisVelocities(1, 0, 0)))
 						.withTimeout(1.0), runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
 								// Retrieve the corresponding REVSwerveModule from the hashmap
 								// Get the name of the current ModulePosition
-								SwerveModuleState moduleState = modules[i].getState();
+								SwerveModuleVelocity moduleState = modules[i].getState();
 								String name = "";
 								if (i == 0)
 									name = "Front Left";
@@ -831,13 +829,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 									name = "Back Left";
 								if (i == 3)
 									name = "Back Right";
-								if (Math.abs(moduleState.speedMetersPerSecond) < .8
+								if (Math.abs(moduleState.velocity) < .8
 										|| Math.abs(
-												moduleState.speedMetersPerSecond) > 1.2) {
+												moduleState.velocity) > 1.2) {
 									addFault(
 											"[System Check] Drive motor encoder velocity too slow (wanted 1) for "
 													+ name
-													+ moduleState.speedMetersPerSecond,
+													+ moduleState.velocity,
 											false, true);
 								}
 								// angle could be 0, 180, or mod that
@@ -850,11 +848,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 1, 0)))
+						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 1, 0)))
 								.withTimeout(1.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
-								SwerveModuleState moduleState = modules[i].getState();
+								SwerveModuleVelocity moduleState = modules[i].getState();
 								String name = "";
 								if (i == 0)
 									name = "Front Left";
@@ -864,13 +862,13 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 									name = "Back Left";
 								if (i == 3)
 									name = "Back Right";
-								if (Math.abs(moduleState.speedMetersPerSecond) < .8
+								if (Math.abs(moduleState.velocity) < .8
 										|| Math.abs(
-												moduleState.speedMetersPerSecond) > 1.2) {
+												moduleState.velocity) > 1.2) {
 									addFault(
 											"[System Check] Drive motor encoder velocity too slow (wanted 1) for "
 													+ name
-													+ moduleState.speedMetersPerSecond,
+													+ moduleState.velocity,
 											false, true);
 								}
 								// angle could be 0, 180, or mod that
@@ -883,11 +881,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, -2)))
+						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, -2)))
 								.withTimeout(2.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
-								SwerveModuleState moduleState = modules[i].getState();
+								SwerveModuleVelocity moduleState = modules[i].getState();
 								double angle = moduleState.angle.getDegrees();
 
 								String[] moduleNames = { "Front Left", "Front Right", "Back Left", "Back Right" };
@@ -913,11 +911,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 2)))
+						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 2)))
 								.withTimeout(2.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
-								SwerveModuleState moduleState = modules[i].getState();
+								SwerveModuleVelocity moduleState = modules[i].getState();
 								double angle = moduleState.angle.getDegrees();
 
 								String[] moduleNames = { "Front Left", "Front Right", "Back Left", "Back Right" };
@@ -945,7 +943,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 							}
 						}))
 				.until(() -> !getFaults().isEmpty()).andThen(
-						runOnce(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0))));
+						runOnce(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 0))));
 	}
 
 	private boolean isWithinTolerance(double value, double target, double tolerance) {
@@ -989,14 +987,14 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	public Command orientModules(Rotation2d[] orientations) {
 		return run(() -> {
-			SwerveModuleState[] states = new SwerveModuleState[4];
+			SwerveModuleVelocity[] states = new SwerveModuleVelocity[4];
 			for (int i = 0; i < orientations.length; i++) {
 				modules[i].runSetpoint(
-						new SwerveModuleState(0.0, orientations[i]),
-						new SwerveModuleState(0.0,modules[i].getAngle())); // zero feedforwards since we're not moving
-				states[i] = new SwerveModuleState(0.0, modules[i].getAngle());
+						new SwerveModuleVelocity(0.0, orientations[i]),
+						new SwerveModuleVelocity(0.0,modules[i].getAngle())); // zero feedforwards since we're not moving
+				states[i] = new SwerveModuleVelocity(0.0, modules[i].getAngle());
 			}
-			currentSetpoint = new SwerveSetpoint(new ChassisSpeeds(), states, new boolean[4]);
+			currentSetpoint = new SwerveSetpoint(new ChassisVelocities(), states, new boolean[4]);
 		})
 				.until(
 						() -> Arrays.stream(modules)
@@ -1145,7 +1143,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	/**
 	 * Get the current pose of the robot with front being the GEOMETRY front
-	 * 
+	 *
 	 * @return an INTERNAL ONLY output of the robot pose (use this for any
 	 *         driving/turning calculations)
 	 * @see {@link #getLookAheadPose() getLookAheadPose} for the visually
@@ -1158,7 +1156,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void stopModules() {
-		setChassisSpeeds(new ChassisSpeeds());
+		setChassisSpeeds(new ChassisVelocities());
 	}
 
 	@Override

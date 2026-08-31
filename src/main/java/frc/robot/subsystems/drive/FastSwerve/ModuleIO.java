@@ -1,6 +1,6 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation2d;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 import java.util.ArrayList;

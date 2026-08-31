@@ -1,8 +1,8 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.*;
+import org.wpilib.math.util.Units;
 import frc.robot.RobotContainer;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
@@ -567,7 +567,7 @@ public final class Reefscape2025FieldObjects {
 			momentumAngle = startingPose.getRotation().getZ();
 			momentumMagnitude = vector.getNorm();
 			currentPose = new Pose3d(currentPose.getTranslation().plus(vector),
-					currentPose.getRotation().plus(new Rotation3d(0, -updatedPitch * deltaTSeconds, 0)));
+					currentPose.getRotation().rotateBy(new Rotation3d(0, -updatedPitch * deltaTSeconds, 0)));
 			return currentPose;
 		}
 

@@ -5,15 +5,15 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.util.Units;
+import org.wpilib.command2.Command;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -102,7 +102,7 @@ public class DriveAndAimAtPose extends Command {
 		double currentDistance = currentPose.getTranslation()
 				.getDistance(poseSupplier.get());
 		//how fast should we be moving relative to distance? use circles based off relative distances to figure that out. 
-		double ffScaler = MathUtil.clamp((currentDistance - ffMinRadius.get())
+		double ffScaler = frc.robot.utils.maths.CommonMath.clamp((currentDistance - ffMinRadius.get())
 				/ (ffMaxRadius.get() - ffMinRadius.get()), 0.0, 1.0);
 		driveErrorAbs = currentDistance;
 		driveController.reset(lastSetpointTranslation.getDistance(targetPose),
@@ -135,7 +135,7 @@ public class DriveAndAimAtPose extends Command {
 						.transformBy(GeomUtil
 								.translationToTransform(driveVelocityScalar, 0.0))
 						.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
-		ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(driveVelocity.getX(),
+		ChassisVelocities speeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(driveVelocity.getX(),
 				driveVelocity.getY(), thetaVelocity, currentPose.getRotation());
 		drive.setChassisSpeeds(speeds); //assert that we are relative to the current pose
 		// Log data for debugging
