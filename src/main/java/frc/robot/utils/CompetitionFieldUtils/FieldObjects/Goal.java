@@ -1,12 +1,12 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
-import static edu.wpi.first.units.Units.Degrees;
+import static org.wpilib.units.Units.Degrees;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.units.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation.Simulatable;
 
@@ -94,8 +94,8 @@ public abstract class Goal implements Simulatable {
         return gamePiece -> {
             // Call our values just once.
             Rotation3d actualRotation = gamePiece.getPose3d().getRotation();
-            Rotation3d normalDiff = actualRotation.minus(expectedAngle);
-            Rotation3d flippedDiff = flipRotation(actualRotation).minus(expectedAngle);
+            Rotation3d normalDiff = actualRotation.relativeTo(expectedAngle);
+            Rotation3d flippedDiff = flipRotation(actualRotation).relativeTo(expectedAngle);
 
             double normalAngleDegrees = new Rotation3d(
                             Degrees.of(0), normalDiff.getMeasureY(), normalDiff.getMeasureZ())

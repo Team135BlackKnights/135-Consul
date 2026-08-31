@@ -1,20 +1,20 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.system.Timer;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.maths.GeometryConvertor;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,7 +121,7 @@ public abstract class GamePieceInSimulation extends Body
 			double mass,
 			Translation2d robotPosition,
 			Translation2d shooterPositionOnRobot,
-			ChassisSpeeds chassisSpeedsFieldRelative,
+			ChassisVelocities chassisSpeedsFieldRelative,
 			Rotation2d shooterFacing,
 			Distance initialHeight,
 			LinearVelocity launchingSpeed,
@@ -142,15 +142,15 @@ public abstract class GamePieceInSimulation extends Body
 
 	private static Translation2d calculateInitialProjectileVelocityMPS(
 			Translation2d shooterPositionOnRobot,
-			ChassisSpeeds chassisSpeeds,
+			ChassisVelocities chassisSpeeds,
 			Rotation2d chassisFacing,
 			double groundSpeedMPS) {
-		final Translation2d chassisTranslationalVelocity = new Translation2d(chassisSpeeds.vxMetersPerSecond,
-				chassisSpeeds.vyMetersPerSecond),
+		final Translation2d chassisTranslationalVelocity = new Translation2d(chassisSpeeds.vx,
+				chassisSpeeds.vy),
 				shooterGroundVelocityDueToChassisRotation = shooterPositionOnRobot
 						.rotateBy(chassisFacing)
 						.rotateBy(Rotation2d.fromDegrees(90))
-						.times(chassisSpeeds.omegaRadiansPerSecond),
+						.times(chassisSpeeds.omega),
 				shooterGroundVelocity = chassisTranslationalVelocity.plus(shooterGroundVelocityDueToChassisRotation);
 
 		return shooterGroundVelocity.plus(new Translation2d(groundSpeedMPS, chassisFacing));

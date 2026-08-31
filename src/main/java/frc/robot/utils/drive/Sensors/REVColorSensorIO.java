@@ -6,7 +6,7 @@ import com.revrobotics.ColorSensorV3;
 import com.revrobotics.ColorSensorV3.ProximitySensorMeasurementRate;
 import com.revrobotics.ColorSensorV3.ProximitySensorResolution;
 
-import edu.wpi.first.wpilibj.I2C.Port;
+import org.wpilib.hardware.bus.I2C.Port;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SelfCheckingREVColorSensor;
 

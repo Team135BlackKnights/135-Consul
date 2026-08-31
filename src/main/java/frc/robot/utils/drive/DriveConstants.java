@@ -1,14 +1,10 @@
 package frc.robot.utils.drive;
 
 import org.littletonrobotics.junction.AutoLogOutput;
-import static edu.wpi.first.units.Units.Centimeters;
-import static edu.wpi.first.units.Units.Degrees;
-
 import java.io.IOException;
 import java.nio.file.Path;
 
 import com.ctre.phoenix6.CANBus;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -16,17 +12,18 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
+import io.avaje.jsonb.Jsonb;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Filesystem;
+import org.wpilib.vision.apriltag.AprilTagFieldLayout;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.Filesystem;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.Mode;
@@ -39,13 +36,13 @@ import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModul
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import com.therekrab.autopilot.APConstraints;
-import com.therekrab.autopilot.APProfile;
 public class DriveConstants {
 	// YEARLYUPDATE:  Change these to the drivetrain being used. Duh -N
 	// If true, tank/mecanum use their native PIDs. If false, tank/mech output their
 	// voltages directly
 	public static final boolean enablePID = true;
+	public static final int rioCanBusId = 0;
+	public static final CANBus rioCanBus = CANBus.systemcore(rioCanBusId);
 	public static final MotorVendor robotMotorController = MotorVendor.CTRE_ON_CANIVORE;
 	public static final CANBus driveCanBus = new CANBus("drivetrain"); // Leave null if CTRE_ON_RIO
 	public static final DriveTrainType driveType = DriveTrainType.SWERVE;
@@ -211,33 +208,16 @@ public class DriveConstants {
 			DriveConstants.kMaxSpeedMetersPerSecond,
 			maxTranslationalAcceleration.get(), DriveConstants.kMaxTurningSpeedRadPerSec);
 	public static ModuleLimits moduleLimitsHigh = new ModuleLimits(
-			getDriveTrainMotors(1).freeSpeedRadPerSec / TrainConstants.kDriveMotorGearRatioHigh
+			getDriveTrainMotors(1).freeSpeed / TrainConstants.kDriveMotorGearRatioHigh
 					* TrainConstants.kWheelDiameter.get() / 2,
 			Math.min(
-					getDriveTrainMotors(1).getTorque(getDriveTrainMotors(1).stallCurrentAmps)
+					getDriveTrainMotors(1).getTorque(getDriveTrainMotors(1).stallCurrent)
 							* TrainConstants.kDriveMotorGearRatioHigh / (TrainConstants.kWheelDiameter.get() / 2),
 					9.8 * TrainConstants.weight / 4 * WHEEL_GRIP.VEX_GRIP_V2.cof) * 4 / TrainConstants.weight,
-			getDriveTrainMotors(1).freeSpeedRadPerSec / TrainConstants.kDriveMotorGearRatioHigh
+			getDriveTrainMotors(1).freeSpeed / TrainConstants.kDriveMotorGearRatioHigh
 					* TrainConstants.kWheelDiameter.get() / 2
 					/ new Translation2d(kChassisLength / 2, kChassisWidth / 2).getNorm());
-	public static class AutopilotConstants {
-			public static final APConstraints kTightAutopilotAPConstraints =
-			new APConstraints().withVelocity(kMaxSpeedMetersPerSecond).withAcceleration(maxTranslationalAcceleration.get()).withJerk(10);
-
-			public static final APProfile kTightProfile =
-			new APProfile(kTightAutopilotAPConstraints)
-				.withErrorXY(Centimeters.of(1))
-				.withErrorTheta(Degrees.of(1))
-				.withBeelineRadius(Centimeters.of(10));
-			public static final APConstraints kFastAPConstraints =
-			new APConstraints().withVelocity(kMaxSpeedMetersPerSecond).withAcceleration(maxTranslationalAcceleration.get()*2).withJerk(maxTranslationalAcceleration.get()*2);
-
-			public static final APProfile kFastProfile =
-			new APProfile(kFastAPConstraints)
-				.withErrorXY(Centimeters.of(5))
-				.withErrorTheta(Degrees.of(5))
-				.withBeelineRadius(Centimeters.of(50));
-	}
+	// AutoPilot constants are disabled until a 2027-compatible vendordep is published.
 	public static class TrainConstants {
 
 		/**
@@ -260,7 +240,7 @@ public class DriveConstants {
 		public static final double kMaxAngularSpeedRadiansPerSecond = 2 * DriveConstants.kMaxSpeedMetersPerSecond
 				/ (kWheelDiameter.get()),
 				kDriveMotorGearRatioLow = 6.75, kDriveMotorGearRatioHigh = 3, kTurningMotorGearRatio = 25,
-				kT = 1.0 / getDriveTrainMotors(1).KtNMPerAmp,
+				kT = 1.0 / getDriveTrainMotors(1).Kt,
 				moi = 2.8732, // kg m^2, moment of inertia of the robot
 				weight = Units.lbsToKilograms(56); // test chassis
 		public static final MotorConstantContainer pathplannerTranslationConstantContainer = new MotorConstantContainer(
@@ -281,7 +261,7 @@ public class DriveConstants {
 					getDriveTrainMotors(2, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 2);
 			mainConfig = new RobotConfig(TrainConstants.weight, TrainConstants.moi, mainModuleConfig, kChassisWidth);
 			mainController = new PPLTVController(VecBuilder.fill(0.0625, 0.125, 2.0), VecBuilder.fill(1.0, 2.0),
-					.02, kMaxSpeedMetersPerSecond);
+					.02);
 		} else {
 			mainModuleConfig = new ModuleConfig(TrainConstants.kWheelDiameter.get() / 2, kMaxSpeedMetersPerSecond, 1.25,
 					getDriveTrainMotors(1, TrainConstants.kDriveMotorGearRatioLow), kMaxDriveCurrent, 1);
@@ -373,7 +353,7 @@ public static final boolean bumperDetection = false;
                           fieldType.getJsonFolder(),
                           name + ".json");
               layout = new AprilTagFieldLayout(p);
-              layoutString = new ObjectMapper().writeValueAsString(layout);
+              layoutString = Jsonb.instance().toJson(layout);
             } catch (IOException e) {
               throw new RuntimeException(e);
             }

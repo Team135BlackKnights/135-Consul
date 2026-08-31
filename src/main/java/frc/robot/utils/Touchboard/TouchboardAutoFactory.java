@@ -1,8 +1,8 @@
 package frc.robot.utils.Touchboard;
 
-import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.*;
+import org.wpilib.math.geometry.*;
+import org.wpilib.math.util.Units;
+import org.wpilib.command2.*;
 
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.GeomUtil;
@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
-
-import com.therekrab.autopilot.APTarget;
 
 public class TouchboardAutoFactory {
     private final LocalADStarAK pathFinder;
@@ -281,28 +279,19 @@ public class TouchboardAutoFactory {
 
     private Command goToNoHardLineup(Pose2d targetPoseBlue, double vel, Rotation2d entryAngle, double endDistMeters) {
         return Commands.defer(
-                () -> PathFinder.goToAutoPilotPoseNoHardLineup(
-                        pathFinder,
-                        new APTarget(GeomUtil.apply(targetPoseBlue, false))
-                                .withVelocity(vel)
-                                .withEntryAngle(entryAngle),
-                        drivetrainS,
+                () -> PathFinder.goToPose(
+                        GeomUtil.apply(targetPoseBlue, false),
                         () -> DriveConstants.pathConstraints,
-                        endDistMeters),
+                        drivetrainS, true, vel, endDistMeters, endDistMeters),
                 Set.of(drivetrainS));
     }
 
     private Command goToHardLineup(Pose2d targetPoseBlue, double vel, Rotation2d entryAngle, double endDistMeters) {
         return Commands.defer(
-                () -> PathFinder.goToAutoPilotPose(
-                        pathFinder,
-                        new APTarget(GeomUtil.apply(targetPoseBlue, false))
-                                .withVelocity(vel)
-                                .withEntryAngle(entryAngle),
-                        drivetrainS,
+                () -> PathFinder.goToPose(
+                        GeomUtil.apply(targetPoseBlue, false),
                         () -> DriveConstants.pathConstraints,
-                        1,
-                        endDistMeters),
+                        drivetrainS, false, vel, Math.max(1, endDistMeters), endDistMeters),
                 Set.of(drivetrainS));
     }
 

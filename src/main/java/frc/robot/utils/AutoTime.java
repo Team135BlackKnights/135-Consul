@@ -1,5 +1,5 @@
 package frc.robot.utils;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.system.Timer;
 
 public final class AutoTime {
   private AutoTime() {}

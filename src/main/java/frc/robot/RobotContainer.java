@@ -38,7 +38,6 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.PathFinder;
 import frc.robot.utils.drive.Sensors.GyroIO;
-import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
 
@@ -68,24 +67,24 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import com.therekrab.autopilot.APTarget;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.DifferentialDriveKinematics;
+import org.wpilib.math.kinematics.MecanumDriveKinematics;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Filesystem;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.InstantCommand;
+import org.wpilib.command2.button.JoystickButton;
+import org.wpilib.driverstation.NiDsXboxController;
+import org.wpilib.command2.button.Trigger;
 import frc.robot.Constants.TuningConstants;
 
 
@@ -114,43 +113,43 @@ public class RobotContainer {
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
 	// [Map<String,>,]
 	public static TouchboardAutoFactory touchboardAutoFactory;
-	public static CommandXboxController driveController = new CommandXboxController(0);
-	public static CommandXboxController manipController = new CommandXboxController(1);
+	public static NiDsXboxController driveController = new NiDsXboxController(0);
+	public static NiDsXboxController manipController = new NiDsXboxController(1);
 	public static DriverStationHID dsHIDHandler = new DriverStationHID(2);
-	public static CommandXboxController testingController = new CommandXboxController(5);
+	public static NiDsXboxController testingController = new NiDsXboxController(5);
 	public static Optional<Rotation2d> angleOverrider = Optional.empty();
 	public static double angularSpeed = 0;
 	public static double xSpeed = 0;
 	public static double ySpeed = 0;
 	@AutoLogOutput(key = "SuperStructure/ScorePosition")
-	static Trigger xButtonDrive = driveController.x(),
-			yButtonDrive = driveController.y(), // used for Aim/Drive to pose
-			bButtonDrive = driveController.b(),
-			bButtonManip = manipController.b(),
-			aButtonDrive = driveController.a(),
-			aButtonManip = manipController.a(),
-			xButtonManip = manipController.x(),
-			yButtonManip = manipController.y(),
-			aButtonTest = testingController.a(),
-			bButtonTest = testingController.b(),
-			xButtonTest = testingController.x(),
-			yButtonTest = testingController.y(),
-			leftBumperTest = testingController.leftBumper(),
-			rightBumperTest = testingController.rightBumper(),
-			selectButtonTest = testingController.back(),
-			selectButtonManip = manipController.back(),
-			startButtonTest = testingController.start(),
-			startButtonDrive = driveController.start(),
-			startButtonManip = manipController.start(),
-			leftBumperManip = manipController.leftBumper(),
-			leftBumperDrive = driveController.leftBumper(),
-			rightBumperManip = manipController.rightBumper(),
-			rightBumperDrive = driveController.rightBumper(),
-			leftStickDrive = driveController.leftStick(),
-			rightStickDrive = driveController.rightStick();
-	static Trigger driverPOVRight = driveController.povRight();
-	static Trigger testDPadUp = testingController.povUp();
-	static Trigger testDPadDown = testingController.povDown();
+	static JoystickButton xButtonDrive = new JoystickButton(driveController, 3),
+			yButtonDrive = new JoystickButton(driveController, 4), // used for Aim/Drive to pose
+			bButtonDrive = new JoystickButton(driveController, 2),
+			bButtonManip = new JoystickButton(manipController, 2),
+			aButtonDrive = new JoystickButton(driveController, 1),
+			aButtonManip = new JoystickButton(manipController, 1),
+			xButtonManip = new JoystickButton(manipController, 3),
+			yButtonManip = new JoystickButton(manipController, 4),
+			aButtonTest = new JoystickButton(testingController, 1),
+			bButtonTest = new JoystickButton(testingController, 2),
+			xButtonTest = new JoystickButton(testingController, 3),
+			yButtonTest = new JoystickButton(testingController, 4),
+			leftBumperTest = new JoystickButton(testingController, 5),
+			rightBumperTest = new JoystickButton(testingController, 6),
+			selectButtonTest = new JoystickButton(testingController, 7),
+			selectButtonManip = new JoystickButton(manipController, 7),
+			startButtonTest = new JoystickButton(testingController, 8),
+			startButtonDrive = new JoystickButton(driveController, 8),
+			startButtonManip = new JoystickButton(manipController, 8),
+			leftBumperManip = new JoystickButton(manipController, 5),
+			leftBumperDrive = new JoystickButton(driveController, 5),
+			rightBumperManip = new JoystickButton(manipController, 6),
+			rightBumperDrive = new JoystickButton(driveController, 6),
+			leftStickDrive = new JoystickButton(driveController, 9),
+			rightStickDrive = new JoystickButton(driveController, 10);
+	static Trigger driverPOVRight = new Trigger(() -> driveController.getPOV() == POVDirection.RIGHT);
+	static Trigger testDPadUp = new Trigger(() -> testingController.getPOV() == POVDirection.UP);
+	static Trigger testDPadDown = new Trigger(() -> testingController.getPOV() == POVDirection.DOWN);
 	static Trigger manipRightTrigger = new Trigger(
 			() -> (manipController.getRightTriggerAxis() > .25 && manipController.getRightTriggerAxis() < .75));
 	static Trigger manipRightTriggerFull = new Trigger(() -> (manipController.getRightTriggerAxis() > .75));
@@ -160,13 +159,13 @@ public class RobotContainer {
 	static Trigger manipLeftTrigger = new Trigger(
 			() -> (manipController.getLeftTriggerAxis() > .25 && manipController.getLeftTriggerAxis() < .75));
 	static Trigger manipLeftTriggerFull = new Trigger(() -> (manipController.getLeftTriggerAxis() > .75));
-	static Trigger manipPOVUp = manipController.povUp();
-	static Trigger driverPOVUp = driveController.povUp();
-	static Trigger driverPOVDown = driveController.povDown();
-	static Trigger driverPOVLeft = driveController.povLeft();
-	static Trigger manipPOVRight = manipController.povRight();
-	static Trigger manipPOVDown = manipController.povDown();
-	static Trigger manipPOVLeft = manipController.povLeft();
+	static Trigger manipPOVUp = new Trigger(() -> manipController.getPOV() == POVDirection.UP);
+	static Trigger driverPOVUp = new Trigger(() -> driveController.getPOV() == POVDirection.UP);
+	static Trigger driverPOVDown = new Trigger(() -> driveController.getPOV() == POVDirection.DOWN);
+	static Trigger driverPOVLeft = new Trigger(() -> driveController.getPOV() == POVDirection.LEFT);
+	static Trigger manipPOVRight = new Trigger(() -> manipController.getPOV() == POVDirection.RIGHT);
+	static Trigger manipPOVDown = new Trigger(() -> manipController.getPOV() == POVDirection.DOWN);
+	static Trigger manipPOVLeft = new Trigger(() -> manipController.getPOV() == POVDirection.LEFT);
 	static Trigger BranchOneScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch1Button());
 	static Trigger BranchTwoScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch2Button());
 	static Trigger BranchThreeScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch3Button());
@@ -269,6 +268,13 @@ public class RobotContainer {
 	 * The container for the robot. Contains subsystems, OI devices, and
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
+	private static GyroIO disabledNavX() {
+		DriverStationErrors.reportWarning(
+				"Studica navX support is disabled until a 2027-compatible vendordep is published.",
+				false);
+		return new GyroIO() {};
+	}
+
 	public RobotContainer() {
 		/*
 		 * These example states were originally used in 2025, retrofit to be an example
@@ -276,7 +282,7 @@ public class RobotContainer {
 		 * essentially each one of these choosers corresponds to a macro segment which
 		 * then returns a series of commands
 		 */
-		DriverStation.silenceJoystickConnectionWarning(true);
+		// Joystick connection warning suppression is no longer a public 2027 API.
 		// We check to see what drivetrain type we have here, and create the correct
 		// drivetrain system based on that.
 		// If we get something wacky, throw an error
@@ -317,7 +323,7 @@ public class RobotContainer {
 										switch (DriveConstants.swerveModuleType) {
 											case SHIFTING_THIFTYSWERVE:
 												// ignore encoder type, assume cancoder
-												drivetrainS = new Swerve(new GyroIONavX(),
+												drivetrainS = new Swerve(disabledNavX(),
 														new ModuleIOKrakenFOCShifting(0),
 														new ModuleIOKrakenFOCShifting(1),
 														new ModuleIOKrakenFOCShifting(2),
@@ -326,13 +332,13 @@ public class RobotContainer {
 											case THRIFTYSWERVE:
 											case SDSMK4I:
 												if (DriveConstants.useThriftyEncoder) {
-													drivetrainS = new Swerve(new GyroIONavX(),
+													drivetrainS = new Swerve(disabledNavX(),
 															new ModuleIOKrakenFOCWithThrifty(0),
 															new ModuleIOKrakenFOCWithThrifty(1),
 															new ModuleIOKrakenFOCWithThrifty(2),
 															new ModuleIOKrakenFOCWithThrifty(3));
 												} else {
-													drivetrainS = new Swerve(new GyroIONavX(),
+													drivetrainS = new Swerve(disabledNavX(),
 															new ModuleIOKrakenFOC(0),
 															new ModuleIOKrakenFOC(1),
 															new ModuleIOKrakenFOC(2),
@@ -368,7 +374,7 @@ public class RobotContainer {
 							case VORTEX_SPARK_FLEX:
 								switch (DriveConstants.gyroType) {
 									case NAVX:
-										drivetrainS = new Swerve(new GyroIONavX(),
+										drivetrainS = new Swerve(disabledNavX(),
 												new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
 												new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
 										break;
@@ -393,7 +399,7 @@ public class RobotContainer {
 												new TankIOTalonFX(new GyroIOPigeon2()));
 										break;
 									case NAVX:
-										drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
+										drivetrainS = new Tank(new TankIOTalonFX(disabledNavX()));
 										break;
 								}
 								break;
@@ -406,7 +412,7 @@ public class RobotContainer {
 												new TankIOSparkBase(new GyroIOPigeon2()));
 										break;
 									case NAVX:
-										drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
+										drivetrainS = new Tank(new TankIOSparkBase(disabledNavX()));
 										break;
 								}
 								break;
@@ -424,7 +430,7 @@ public class RobotContainer {
 										break;
 									case NAVX:
 										drivetrainS = new Mecanum(
-												new MecanumIOTalonFX(new GyroIONavX()));
+												new MecanumIOTalonFX(disabledNavX()));
 										break;
 								}
 								break;
@@ -438,7 +444,7 @@ public class RobotContainer {
 										break;
 									case NAVX:
 										drivetrainS = new Mecanum(
-												new MecanumIOSparkBase(new GyroIONavX()));
+												new MecanumIOSparkBase(disabledNavX()));
 										break;
 								}
 								break;
@@ -575,7 +581,10 @@ public class RobotContainer {
 
 		// Make sure to watch your flipped poses. Our custom DriveToPose and all of
 		// those do NOT auto flip for red.
-		precalculateAllStartAndEndChoreos();
+		// PathPlanner 2027 SystemCore alpha-3 only accepts Choreo trajectory format
+		// version 1. Keep the 2026 v2/v3 trajectories in deploy for later conversion,
+		// but do not load them until a compatible Choreo/PathPlanner release exists.
+		// precalculateAllStartAndEndChoreos();
 
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
@@ -585,7 +594,7 @@ public class RobotContainer {
 				new Pose2d(15.0, 4.0, Rotation2d.k180deg),
 				new PathConstraints(8, 11, 4, 4),
 				() -> new Pose2d(1.5, 4, Rotation2d.kZero),
-				ChassisSpeeds::new,
+				ChassisVelocities::new,
 				(speeds, feedforwards) -> {
 				},
 				new PPHolonomicDriveController(
@@ -606,7 +615,9 @@ public class RobotContainer {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
-		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
+		// Avoid scanning legacy .auto files that reference unsupported 2026 Choreo
+		// trajectories. Feature branches can add compatible autos to this chooser.
+		autoChooser = new LoggedDashboardChooser<>("Auto Routine");
 		autoChooser.addDefaultOption("DynamicPathing",
 				Commands.defer(() -> PosePlotterUtil.getAuto(), Set.of(drivetrainS)));
 		if (drivetrainS instanceof Swerve) {
@@ -700,8 +711,7 @@ public class RobotContainer {
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
-		bButtonDrive.whileTrue(PathFinder.goToAutoPilotPose(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,() -> DriveConstants.pathConstraints, 1, .02)
-		);
+		// AutoPilot binding is disabled until a 2027-compatible vendordep is published.
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,

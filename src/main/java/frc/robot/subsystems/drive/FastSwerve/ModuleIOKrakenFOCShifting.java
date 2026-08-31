@@ -12,15 +12,15 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
+import org.wpilib.hardware.pneumatic.DoubleSolenoid;
+import org.wpilib.hardware.pneumatic.PneumaticsModuleType;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -82,17 +82,16 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 		switch (index) {
 			case 0:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kFrontLeftAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kFrontLeftAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.driveCanBus);
 					turnAbsoluteEncoder = new CANcoder(
 							DriveConstants.kFrontLeftAbsEncoderPort, DriveConstants.driveCanBus);
 				}
-				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kFrontLeftShifterForward,
+				shifter = new DoubleSolenoid(DriveConstants.rioCanBusId, PneumaticsModuleType.REV_PH, DriveConstants.kFrontLeftShifterForward,
 						DriveConstants.kFrontLeftShifterReverse);
 				driveName = "FrontLeftDrive";
 				turnName = "FrontLeftTurn";
@@ -103,17 +102,16 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 				break;
 			case 1:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kFrontRightAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kFrontRightAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.driveCanBus);
 					turnAbsoluteEncoder = new CANcoder(
 							DriveConstants.kFrontRightAbsEncoderPort, DriveConstants.driveCanBus);
 				}
-				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kFrontRightShifterForward,
+				shifter = new DoubleSolenoid(DriveConstants.rioCanBusId, PneumaticsModuleType.REV_PH, DriveConstants.kFrontRightShifterForward,
 						DriveConstants.kFrontRightShifterReverse);
 				driveName = "FrontRightDrive";
 				turnName = "FrontRightTurn";
@@ -124,17 +122,16 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 				break;
 			case 2:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kBackLeftAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.driveCanBus);
 					turnAbsoluteEncoder = new CANcoder(
 							DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.driveCanBus);
 				}
-				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kBackLeftShifterForward,
+				shifter = new DoubleSolenoid(DriveConstants.rioCanBusId, PneumaticsModuleType.REV_PH, DriveConstants.kBackLeftShifterForward,
 						DriveConstants.kBackLeftShifterReverse);
 				driveName = "BackLeftDrive";
 				turnName = "BackLeftTurn";
@@ -145,17 +142,16 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 				break;
 			case 3:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kBackRightAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kBackRightAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.driveCanBus);
 					turnAbsoluteEncoder = new CANcoder(
 							DriveConstants.kBackRightAbsEncoderPort, DriveConstants.driveCanBus);
 				}
-				shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kBackRightShifterForward,
+				shifter = new DoubleSolenoid(DriveConstants.rioCanBusId, PneumaticsModuleType.REV_PH, DriveConstants.kBackRightShifterForward,
 						DriveConstants.kBackRightShifterReverse);
 				driveName = "BackRightDrive";
 				turnName = "BackRightTurn";
@@ -253,14 +249,14 @@ public class ModuleIOKrakenFOCShifting implements ModuleIO {
 		// In a new thread, set the shifter to the desired gear ratio for a quarter
 		// second to ensure it is set
 		new Thread(() -> {
-			shifter.set(lowGear ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse);
+			shifter.set(lowGear ? DoubleSolenoid.Value.FORWARD : DoubleSolenoid.Value.REVERSE);
 			try {
 				Thread.sleep((long) DriveConstants.TrainConstants.extendTime.get()); // wait for the solenoid to get
 																						// shifted, tune this
 				driveTalonConfig.Feedback.SensorToMechanismRatio = lowGear
 						? DriveConstants.TrainConstants.kDriveMotorGearRatioLow
 						: DriveConstants.TrainConstants.kDriveMotorGearRatioHigh;
-				shifter.set(DoubleSolenoid.Value.kOff);
+				shifter.set(DoubleSolenoid.Value.OFF);
 				for (int i = 0; i < 4; i++) {
 					boolean error = driveTalon.getConfigurator().apply(driveTalonConfig,
 							0.1) == StatusCode.OK;

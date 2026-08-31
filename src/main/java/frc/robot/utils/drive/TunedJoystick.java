@@ -3,7 +3,7 @@ import java.util.function.Function;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.wpilibj.XboxController;
+import org.wpilib.driverstation.NiDsXboxController;
 
 /**
  * Utility class for scaling and tuning joystick values from a controller.
@@ -11,10 +11,10 @@ import edu.wpi.first.wpilibj.XboxController;
 public final class TunedJoystick {
 
     private double deadzone;
-    private XboxController cntrllr;
+    private NiDsXboxController cntrllr;
     private Function<Double, Double> responseCurve;
     
-    public TunedJoystick(XboxController c) {
+    public TunedJoystick(NiDsXboxController c) {
         this.cntrllr = c;
         this.responseCurve = ResponseCurve.LINEAR; // Default to linear
         this.deadzone = 0.1d; 

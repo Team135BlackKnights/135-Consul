@@ -1,17 +1,17 @@
 package frc.robot.subsystems.drive;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Subsystem;
 import frc.robot.subsystems.SubsystemChecker.SystemStatus;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
 import frc.robot.subsystems.drive.FastSwerve.Swerve.TxTyObservation;
@@ -32,7 +32,7 @@ public interface DrivetrainS extends Subsystem {
 	 */
 	public static Field2d robotField = new Field2d();
 
-	void setChassisSpeeds(ChassisSpeeds speeds);
+	void setChassisVelocities(ChassisVelocities speeds);
 	/**
 	 * Swerve Only. Set the angles of the modules
 	 */
@@ -40,13 +40,13 @@ public interface DrivetrainS extends Subsystem {
 		throw new UnsupportedOperationException("Unimplemented method 'orientModules'");
 	}
 	/**
-	 * @return the ChassisSpeeds of the drivetrain
+	 * @return the ChassisVelocities of the drivetrain
 	 */
-	ChassisSpeeds getChassisSpeeds();
+	ChassisVelocities getChassisVelocities();
 	/**
-	 * @return the ChassisSpeeds of the drivetrain in field relative
+	 * @return the ChassisVelocities of the drivetrain in field relative
 	 */
-	ChassisSpeeds getFieldChassisSpeeds();
+	ChassisVelocities getFieldChassisVelocities();
 	/**
 	 * Reset the drivetrain's odometry to a particular pose
 	 * 
@@ -168,7 +168,7 @@ public interface DrivetrainS extends Subsystem {
 	 void runCharacterization(double velocity);
 	 void endCharacterization();
 	double getCharacterizationVelocity();
-	void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards);
+	void setPathplannerChassisVelocities(ChassisVelocities speeds, DriveFeedforwards feedforwards);
 
 	 double[] getWheelRadiusCharacterizationPosition();
 

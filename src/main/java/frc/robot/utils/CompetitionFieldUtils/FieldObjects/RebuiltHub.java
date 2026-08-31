@@ -1,11 +1,11 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.Inches;
+import static org.wpilib.units.Units.MetersPerSecond;
 
-import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
+import org.wpilib.math.geometry.*;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StructPublisher;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.Rebuilt2026FieldSimulation;
 

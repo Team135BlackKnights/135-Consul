@@ -5,19 +5,15 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkBase;
-import com.studica.frc.AHRS;
-
-import au.grapplerobotics.LaserCan;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.motorcontrol.PWMMotorController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.system.Timer;
+import org.wpilib.hardware.motor.PWMMotorController;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.utils.selfCheck.*;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
-import frc.robot.utils.selfCheck.drive.SelfCheckingNavX2;
 import frc.robot.utils.selfCheck.drive.SelfCheckingPWMMotor;
 import frc.robot.utils.selfCheck.drive.SelfCheckingPigeon2;
 import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
@@ -191,20 +187,12 @@ public abstract class SubsystemChecker extends SubsystemBase {
 		hardware.add(new SelfCheckingSparkBase(label, sparkBase));
 	}
 
-	public void registerHardware(String label, AHRS navX) {
-		hardware.add(new SelfCheckingNavX2(label, navX));
-	}
-
 	public void registerHardware(String label, Pigeon2 pigeon2) {
 		hardware.add(new SelfCheckingPigeon2(label, pigeon2));
 	}
 
 	public void registerHardware(String label, CANcoder canCoder) {
 		hardware.add(new SelfCheckingCANCoder(label, canCoder));
-	}
-
-	public void registerHardware(String label, LaserCan laserCan) {
-		hardware.add(new SelfCheckingLaserCAN(label, laserCan));
 	}
 
 	public void registerAllHardware(List<SelfChecking> selfCheckingDevices) {

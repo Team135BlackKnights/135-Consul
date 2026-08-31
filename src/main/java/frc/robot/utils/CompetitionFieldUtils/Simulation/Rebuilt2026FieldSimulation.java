@@ -1,19 +1,19 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.driverstation.*;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.system.Timer;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Rebuilt2026FieldObjects.FuelOnFieldSimulated;
 import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Rebuilt2026FieldObjects.RebuiltFuelOnFly;
@@ -100,10 +100,10 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
 	}
 
 	public void simulateTurretShotsIfReady() {
-		if (!DriverStation.isEnabled()) {
+		if (!RobotState.isEnabled()) {
 			return;
 		}
-		final double nowSec = Timer.getFPGATimestamp();
+		final double nowSec = Timer.getTimestamp();
 		if (nowSec - lastTurretShotTimestampSec < simShotCooldownSec.get()) {
 			return;
 		}
@@ -155,7 +155,7 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
 		final double hoodRawRad = turret.hoodAngle();
 		double hoodPitchRad =
 				(hoodRawRad * simHoodToPitchScale.get()) + Math.toRadians(simHoodToPitchOffsetDeg.get());
-		hoodPitchRad = MathUtil.clamp(hoodPitchRad, Math.toRadians(1.0), Math.toRadians(85.0));
+		hoodPitchRad = frc.robot.utils.maths.CommonMath.clamp(hoodPitchRad, Math.toRadians(1.0), Math.toRadians(85.0));
 
 		final double flywheelRpm = turret.getCharFlywheelRPM();
 		final double launchSpeedMps = Math.max(0.1, flywheelRpm * simBallSpeedMetersPerSecPerRPM.get());
@@ -168,13 +168,13 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
 		final Translation2d launchPosition = robotPose.getTranslation().plus(muzzleOffsetRobot.rotateBy(robotHeading));
 		final double launchHeightMeters = simMuzzleHeightMeters.get() + simMuzzleForwardMeters.get() * Math.sin(hoodPitchRad);
 
-		final ChassisSpeeds fieldChassisSpeeds = RobotContainer.drivetrainS.getFieldChassisSpeeds();
+		final ChassisVelocities fieldChassisVelocities = RobotContainer.drivetrainS.getFieldChassisVelocities();
 		final Translation2d chassisLinearVelocity = new Translation2d(
-				fieldChassisSpeeds.vxMetersPerSecond,
-				fieldChassisSpeeds.vyMetersPerSecond);
+				fieldChassisVelocities.vx,
+				fieldChassisVelocities.vy);
 		final Translation2d chassisRotationalVelocityAtMuzzle = muzzleOffsetRobot.rotateBy(robotHeading)
 				.rotateBy(Rotation2d.fromDegrees(90.0))
-				.times(fieldChassisSpeeds.omegaRadiansPerSecond);
+				.times(fieldChassisVelocities.omega);
 		final Translation2d chassisVelocityAtMuzzle =
 				chassisLinearVelocity.plus(chassisRotationalVelocityAtMuzzle);
 		final Translation2d totalHorizontalVelocity = chassisVelocityAtMuzzle
@@ -183,7 +183,7 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
 		RebuiltFuelOnFly shot = new RebuiltFuelOnFly(
 				launchPosition,
 				new Translation2d(),
-				new ChassisSpeeds(chassisVelocityAtMuzzle.getX(), chassisVelocityAtMuzzle.getY(), 0.0),
+				new ChassisVelocities(chassisVelocityAtMuzzle.getX(), chassisVelocityAtMuzzle.getY(), 0.0),
 				shotHeading,
 				Meters.of(launchHeightMeters),
 				MetersPerSecond.of(launchSpeedMps),
@@ -331,7 +331,7 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
 		RebuiltFuelOnFly fuelOnFly = new RebuiltFuelOnFly(
 				piecePose.plus(new Translation2d(randomInRange(xVariance), randomInRange(yVariance))),
 				new Translation2d(),
-				new ChassisSpeeds(),
+				new ChassisVelocities(),
 				yaw.plus(Rotation2d.fromDegrees(randomInRange(yawVariance))),
 				height,
 				speed.plus(MetersPerSecond.of(randomInRange(speedVariance))),
@@ -352,8 +352,8 @@ public class Rebuilt2026FieldSimulation extends CompetitionFieldSimulation {
             }
         }
 
-        boolean isOnBlue = !DriverStation.getAlliance().isEmpty()
-                && DriverStation.getAlliance().get() == Alliance.Blue;
+        boolean isOnBlue = !MatchState.getAlliance().isEmpty()
+                && MatchState.getAlliance().get() == Alliance.BLUE;
 
         if (isOnBlue || !isInEfficiencyMode) {
             for (int x = 0; x < 4; x++) {

@@ -1,10 +1,10 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.DifferentialDriveKinematics;
+import org.wpilib.math.kinematics.DifferentialDriveWheelVelocities;
+import org.wpilib.math.util.Units;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.subsystems.drive.Tank.Tank;
@@ -56,26 +56,26 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 	}
 
 	@Override
-	public void setRobotSpeeds(ChassisSpeeds givenSpeeds) {
-		ChassisSpeeds adjustedSpeeds = new ChassisSpeeds(
-				givenSpeeds.vxMetersPerSecond, 0,
-				givenSpeeds.omegaRadiansPerSecond);
+	public void setRobotSpeeds(ChassisVelocities givenSpeeds) {
+		ChassisVelocities adjustedSpeeds = new ChassisVelocities(
+				givenSpeeds.vx, 0,
+				givenSpeeds.omega);
 		super.setLinearVelocity(
 				GeometryConvertor.toDyn4jLinearVelocity(adjustedSpeeds));
-		super.setAngularVelocity(adjustedSpeeds.omegaRadiansPerSecond);
+		super.setAngularVelocity(adjustedSpeeds.omega);
 	}
 	@Override
 	public void simulationSubTick(){
 		tank.updateSim(subPeriodSeconds);
 		//should do the actual motion calculations
 		
-		final ChassisSpeeds tankTheoreticalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(kinematics
-		.toChassisSpeeds(tankIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
+		final ChassisVelocities tankTheoreticalSpeeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(kinematics
+		.toChassisVelocities(tankIOSim.getWheelSpeeds()),getObjectOnFieldPose2d().getRotation().unaryMinus());
 		super.simulateChassisBehaviorWithFieldRelativeSpeeds(
 				tankTheoreticalSpeeds);
-		final ChassisSpeeds instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
-		final DifferentialDriveWheelSpeeds actualModuleFloorSpeeds = kinematics
-				.toWheelSpeeds(instantVelocityRobotRelative);
+		final ChassisVelocities instantVelocityRobotRelative = getMeasuredChassisSpeedsRobotRelative();
+		final DifferentialDriveWheelVelocities actualModuleFloorSpeeds = kinematics
+				.toWheelVelocities(instantVelocityRobotRelative);
 		gyroSim.updateSimulationSubTick(super.getAngularVelocity());
 		updateTankSimulationResults(tank, tankIOSim, actualModuleFloorSpeeds,
 				profile.maxLinearVelocity, iterationNum, subPeriodSeconds,
@@ -83,15 +83,15 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 				
 	}
 	private static void updateTankSimulationResults(Tank tank,
-			TankIOSim tankIOSim, DifferentialDriveWheelSpeeds speeds,
+			TankIOSim tankIOSim, DifferentialDriveWheelVelocities speeds,
 			double robotMaxVelocity, int simulationIteration, double periodSeconds,
-			ChassisSpeeds instantSpeed) {
+			ChassisVelocities instantSpeed) {
 		double[] freeWheelSpeeds = { tank.getLeftVelocityMetersPerSec(),
 				tank.getRightVelocityMetersPerSec()
 		};
 		double[] degreeAngles = new double[2];
-		double[] physicsAccurateWheelSpeeds = { speeds.leftMetersPerSecond,
-				speeds.rightMetersPerSecond
+		double[] physicsAccurateWheelSpeeds = { speeds.left,
+				speeds.right
 		};
 		final TankDrivePhysicsSimResults results = tankIOSim.tankDrivePhysicsSimResults;
 		//Convert mecanum array into wheel speeds (the loop should always iterate 4 times)
@@ -99,10 +99,10 @@ public class TankDriveSimulation extends SimplifiedHolonomicDriveSimulation {
 			degreeAngles[i] = 0;
 			results.driveWheelFinalVelocityRevolutionsPerSec[i] = getActualDriveMotorRotterSpeedRevPerSec(
 					physicsAccurateWheelSpeeds[i], freeWheelSpeeds[i]);
-			if ((Math.sqrt(Math.pow(instantSpeed.vxMetersPerSecond, 2)
-					+ Math.pow(instantSpeed.vyMetersPerSecond, 2)) > 0.1)
+			if ((Math.sqrt(Math.pow(instantSpeed.vx, 2)
+					+ Math.pow(instantSpeed.vy, 2)) > 0.1)
 					|| (Math.sqrt(
-							Math.pow(instantSpeed.omegaRadiansPerSecond, 2)) > 0.05)) {
+							Math.pow(instantSpeed.omega, 2)) > 0.05)) {
 				results.negateFF[i] = false;
 			} else {
 				results.negateFF[i] = true;

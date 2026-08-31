@@ -7,15 +7,15 @@ import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.path.PathConstraints;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.util.Units;
+import org.wpilib.command2.Command;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -137,9 +137,9 @@ public class DriveToTranslation extends Command {
 		// Reset all controllers
 		running = true;
 		var currentPose = currentPoseSupplier.get();
-		ChassisSpeeds fieldVelocity = drive.getFieldChassisSpeeds();
+		ChassisVelocities fieldVelocity = drive.getFieldChassisVelocities();
 		Translation2d fieldVelocityTranslation = new Translation2d(
-				fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
+				fieldVelocity.vx, fieldVelocity.vy);
 		driveController.reset(
 				currentPose.getTranslation()
 						.getDistance(poseSupplier.get()),
@@ -181,14 +181,14 @@ public class DriveToTranslation extends Command {
 		// Get current and target pose
 		var currentPose = currentPoseSupplier.get();
 		//look ahwead
-		//currentPose = currentPose.exp(drive.getChassisSpeeds().toTwist2d(.3));
+		//currentPose = currentPose.exp(drive.getChassisVelocities().toTwist2d(.3));
 		var targetPose = poseSupplier.get();
 		// Calculate drive speed
 		double currentDistance = currentPose.getTranslation()
 				.getDistance(poseSupplier.get());
 		// how fast should we be moving relative to distance? use circles based off
 		// relative distances to figure that out.
-		double ffScaler = MathUtil.clamp((currentDistance - ffMinRadius.get())
+		double ffScaler = frc.robot.utils.maths.CommonMath.clamp((currentDistance - ffMinRadius.get())
 				/ (ffMaxRadius.get() - ffMinRadius.get()), 0.0, 1.0);
 		driveErrorAbs = currentDistance;
 		driveController.reset(
@@ -220,11 +220,11 @@ public class DriveToTranslation extends Command {
 			driveVelocity = driveVelocity.interpolate(linearFF.get().times(DriveConstants.kMaxSpeedMetersPerSecond),
 					linearS);
 		}
-		ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+		ChassisVelocities chassisSpeeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
 				currentPose.getRotation());
 		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
-		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
+		drive.setChassisVelocities(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
 		Logger.recordOutput("Drive/DriveToPose/DistanceError", currentDistance);
 		Logger.recordOutput("Drive/DriveToPose/DistanceSetpoint",

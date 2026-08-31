@@ -1,14 +1,13 @@
 package frc.robot.utils.Touchboard;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringSubscriber;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StringSubscriber;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -21,9 +20,7 @@ public class PosePlotterUtil {
   private static final StringSubscriber sub =
       datatable.getStringTopic("posePlotterFinalString").subscribe(fallback);
 
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper()
-          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  private static final Gson GSON = new Gson();
 
   private static Command storedAuto = Commands.none();
 
@@ -51,7 +48,7 @@ public class PosePlotterUtil {
       return Optional.empty();
     }
     try {
-      return Optional.of(MAPPER.readValue(norm, TouchboardAutoPlan.class));
+      return Optional.of(GSON.fromJson(norm, TouchboardAutoPlan.class));
     } catch (Exception e) {
       System.err.println("[PosePlotterUtil] Failed to parse JSON plan: " + e.getMessage());
       return Optional.empty();

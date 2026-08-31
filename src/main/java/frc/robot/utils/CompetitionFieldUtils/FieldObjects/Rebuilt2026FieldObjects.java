@@ -1,17 +1,17 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearVelocity;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.*;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.LinearVelocity;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.GeometryConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.CompetitionFieldUtils.FieldConstants.Fuel;
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
 import org.dyn4j.geometry.Geometry;
 import org.littletonrobotics.junction.Logger;
@@ -228,7 +228,7 @@ public final class Rebuilt2026FieldObjects {
 		public RebuiltFuelOnFly(
             Translation2d robotPosition,
             Translation2d shooterPositionOnRobot,
-            ChassisSpeeds chassisSpeedsFieldRelative,
+            ChassisVelocities chassisSpeedsFieldRelative,
             Rotation2d shooterFacing,
             Distance initialHeight,
             LinearVelocity launchingSpeed,

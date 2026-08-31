@@ -5,9 +5,9 @@ import java.util.function.Function;
 import org.littletonrobotics.junction.Logger;
 
 
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.driverstation.*;
+import org.wpilib.command2.Command;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
@@ -28,7 +28,7 @@ import frc.robot.utils.drive.TunedJoystick.ResponseCurve;
  * it into a txt file and upload it to smth
  */
 public class DrivetrainC extends Command {
-	public ChassisSpeeds chassisSpeeds;
+	public ChassisVelocities chassisSpeeds;
 	private final DrivetrainS drivetrainS;
 	private final TunedJoystick controller;
 	static final LoggableTunedNumber translationalResponseCurve = new LoggableTunedNumber(
@@ -57,7 +57,7 @@ public class DrivetrainC extends Command {
 
 	public DrivetrainC(DrivetrainS drivetrainS) {
 		this.drivetrainS = drivetrainS;
-		controller = new TunedJoystick(RobotContainer.driveController.getHID());
+		controller = new TunedJoystick(RobotContainer.driveController);
 		controller.setDeadzone(deadzone.get());
 		addRequirements(drivetrainS);
 
@@ -120,7 +120,7 @@ public class DrivetrainC extends Command {
 				turningSpeed = RobotContainer.angularSpeed;
 			}
 
-			// Convert ChassisSpeeds into the ChassisSpeeds type
+			// Convert ChassisVelocities into the ChassisVelocities type
 			if (DriveConstants.fieldOriented) {
 				if (RobotContainer.withinLineTolerance) {
 					if (RobotContainer.drivetrainS.getLookAheadPose().getY() >= FieldConstants.FIELD_HEIGHT / 2) {
@@ -128,13 +128,13 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(-xVal + RobotContainer.xSpeed,
 									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(xVal + RobotContainer.xSpeed,
 									yVal + RobotContainer.ySpeed, 0);
 						}
 
@@ -143,13 +143,13 @@ public class DrivetrainC extends Command {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(-xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(-xVal + RobotContainer.xSpeed,
 									-yVal + RobotContainer.ySpeed, 0);
 						} else {
 							double xVal = ySpeed * Math.cos(Math.PI / 2);
 							double yVal = ySpeed * Math.sin(Math.PI / 2);
 							xVal += xSpeed;
-							chassisSpeeds = new ChassisSpeeds(xVal + RobotContainer.xSpeed,
+							chassisSpeeds = new ChassisVelocities(xVal + RobotContainer.xSpeed,
 									yVal + RobotContainer.ySpeed, 0);
 						}
 					}
@@ -160,14 +160,14 @@ public class DrivetrainC extends Command {
 					if (RobotContainer.ySpeed != 0) {
 						ySpeed = RobotContainer.ySpeed + ySpeed;
 					}
-					chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed,
+					chassisSpeeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(xSpeed, ySpeed,
 							turningSpeed, drivetrainS.getRotation2d());
 				}
 			} else {
-				chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, turningSpeed);
+				chassisSpeeds = new ChassisVelocities(xSpeed, ySpeed, turningSpeed);
 			}
 			if (DriveConstants.driveType == DriveConstants.DriveTrainType.TANK) {
-				chassisSpeeds.vyMetersPerSecond = 0;
+				chassisSpeeds.vy = 0;
 			}
 			// set modules to proper speeds
 
@@ -175,7 +175,7 @@ public class DrivetrainC extends Command {
 				Logger.recordOutput("Controller/SetTurn", turningSpeed);
 				Logger.recordOutput("Controller/SetX", xSpeed);
 				Logger.recordOutput("Controller/SetY", ySpeed);
-				drivetrainS.setChassisSpeeds(new ChassisSpeeds(0, 0, 0));// for odom
+				drivetrainS.setChassisVelocities(new ChassisVelocities(0, 0, 0));// for odom
 				drivetrainS.stopModules();
 				} else {
 					// Deal with opposing robots.
@@ -200,23 +200,23 @@ public class DrivetrainC extends Command {
 								Translation2d robotRelativeFuel = robotToFuel.rotateBy(robotRot.unaryMinus());
 								double rx = robotRelativeFuel.getX() / dist;
 
-								double driverVx = chassisSpeeds.vxMetersPerSecond;
+								double driverVx = chassisSpeeds.vx;
 								double driverMag = Math.hypot(
-										chassisSpeeds.vxMetersPerSecond,
-										chassisSpeeds.vyMetersPerSecond);
+										chassisSpeeds.vx,
+										chassisSpeeds.vy);
 								double desiredVx = Math.signum(rx) * driverMag;
 
 								double k = autoIntakeAssistPercentage.get();
-								double correctedVx = MathUtil.interpolate(driverVx, desiredVx, k);
+								double correctedVx = MathUtil.lerp(driverVx, desiredVx, k);
 
-								ChassisSpeeds assistedSpeeds = new ChassisSpeeds(
+								ChassisVelocities assistedSpeeds = new ChassisVelocities(
 										correctedVx,
-										chassisSpeeds.vyMetersPerSecond,
-										chassisSpeeds.omegaRadiansPerSecond);
+										chassisSpeeds.vy,
+										chassisSpeeds.omega);
 								Translation3d fieldRelativeVelocity3d = new Translation3d(
-										assistedSpeeds.vxMetersPerSecond,
-										assistedSpeeds.vyMetersPerSecond,
-										0.0).rotateBy(new edu.wpi.first.math.geometry.Rotation3d(0.0, 0.0, robotRot.getRadians()));
+										assistedSpeeds.vx,
+										assistedSpeeds.vy,
+										0.0).rotateBy(new org.wpilib.math.geometry.Rotation3d(0.0, 0.0, robotRot.getRadians()));
 								Translation2d limitedFieldVelocity = GeomUtil.limitVelocityTowardFieldEdge(
 										fieldRelativeVelocity3d.toTranslation2d(),
 										ourPose.getTranslation(),
@@ -225,10 +225,10 @@ public class DrivetrainC extends Command {
 										autoIntakeWallMaxApproachSpeedMetersPerSec.get());
 								Translation2d limitedRobotVelocity = limitedFieldVelocity.rotateBy(robotRot.unaryMinus());
 
-								chassisSpeeds = new ChassisSpeeds(
+								chassisSpeeds = new ChassisVelocities(
 										limitedRobotVelocity.getX(),
 										limitedRobotVelocity.getY(),
-										assistedSpeeds.omegaRadiansPerSecond);
+										assistedSpeeds.omega);
 							}
 							Logger.recordOutput("Drive/AutoIntakeAssist/FuelTarget",
 									new Pose2d(fuelTarget, ourPose.getRotation()));
@@ -249,7 +249,7 @@ public class DrivetrainC extends Command {
 				}
 				Logger.recordOutput("Controller/SetX", xSpeed);
 				Logger.recordOutput("Controller/SetY", ySpeed);
-				drivetrainS.setChassisSpeeds(chassisSpeeds);
+				drivetrainS.setChassisVelocities(chassisSpeeds);
 			}
 		}
 
@@ -258,8 +258,8 @@ public class DrivetrainC extends Command {
 			return;
 		}
 
-		boolean shouldLimitAccel = DriverStation.isTeleopEnabled()
-				&& RobotContainer.driveController.getHID().getRightTriggerAxis() >= SHOOT_TRIGGER_FULL_THRESHOLD;
+		boolean shouldLimitAccel = RobotState.isTeleopEnabled()
+				&& RobotContainer.driveController.getRightTriggerAxis() >= SHOOT_TRIGGER_FULL_THRESHOLD;
 		ModuleLimits desiredLimits = shouldLimitAccel
 				? new ModuleLimits(
 						DriveConstants.moduleLimitsLow.maxDriveVelocity(),
