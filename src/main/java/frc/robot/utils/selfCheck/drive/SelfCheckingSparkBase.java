@@ -64,8 +64,8 @@ public class SelfCheckingSparkBase implements SelfChecking {
 	 */
 	private List<SubsystemFault> getActiveFaults() {
 		List<SubsystemFault> activeFaults = new ArrayList<>();
-		activeFaults.addAll(convertFaultsToSubsysFaults(sparkBase.getFaults(), false));
-		activeFaults.addAll(convertFaultsToSubsysFaults(sparkBase.getStickyFaults(), true));
+		activeFaults.addAll(convertFaultsToSubsysFaults(sparkBase.getFaults().get(), false));
+		activeFaults.addAll(convertFaultsToSubsysFaults(sparkBase.getStickyFaults().get(), true));
 		return activeFaults;
 	}
 
@@ -108,8 +108,8 @@ public class SelfCheckingSparkBase implements SelfChecking {
 
 	private List<SubsystemFault> getActiveWarnings() {
 		List<SubsystemFault> activeWarnings = new ArrayList<>();
-		activeWarnings.addAll(convertWarningToSubsystemWarning(sparkBase.getWarnings(), false));
-		activeWarnings.addAll(convertWarningToSubsystemWarning(sparkBase.getStickyWarnings(), true));
+		activeWarnings.addAll(convertWarningToSubsystemWarning(sparkBase.getWarnings().get(), false));
+		activeWarnings.addAll(convertWarningToSubsystemWarning(sparkBase.getStickyWarnings().get(), true));
 		return activeWarnings;
 	}
 
@@ -121,10 +121,10 @@ public class SelfCheckingSparkBase implements SelfChecking {
 			faults.add(new SubsystemFault(String
 					.format("[%s]: failed to get last error, REVLIBError %s", label, errorName)));
 		}
-		if (sparkBase.hasActiveFault() || sparkBase.hasStickyFault()) {
+		if (sparkBase.hasActiveFault().get() || sparkBase.hasStickyFault().get()) {
 			faults.addAll(getActiveFaults());
 		}
-		if (sparkBase.hasActiveWarning() || sparkBase.hasStickyWarning()) {
+		if (sparkBase.hasActiveWarning().get() || sparkBase.hasStickyWarning().get()) {
 			faults.addAll(getActiveWarnings());
 		}
 		// Clear the sticky faults / warnings ON the motor

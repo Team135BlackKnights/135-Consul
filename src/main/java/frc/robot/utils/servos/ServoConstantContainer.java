@@ -1,15 +1,15 @@
 package frc.robot.utils.servos;
 
-import edu.wpi.first.math.system.plant.DCMotor;
+import org.wpilib.math.system.DCMotor;
 
 /**
- * Contains the PWM Port IDs 
+ * Contains the PWM Port IDs
  */
 public class ServoConstantContainer {
-	public static final int 
+	public static final int
 	leftServoPWMPort = 1,
 	rightServoPWMPort = 2;
-	public static double 
+	public static double
 	leftLowerServoBound = -90, leftUpperServoBound = 90,
 	rightLowerServoBound = -180, rightUpperServoBound = 180;
 	public class ServoMotorConstants{
@@ -28,14 +28,14 @@ public class ServoConstantContainer {
 
 	public enum ServoType {
 		REVSmartServo(428.571429);
-	
+
 		public final double maxDegreesPerSec;
-	
+
 		private ServoType(double maxDegreesPerSec) {
 			this.maxDegreesPerSec = maxDegreesPerSec;
 		}
 	}
-	
+
 
 	public enum ServoNames {leftServo, rightServo}
 }

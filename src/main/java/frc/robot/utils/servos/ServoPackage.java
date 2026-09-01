@@ -1,19 +1,24 @@
 package frc.robot.utils.servos;
 
-import edu.wpi.first.wpilibj.Servo;
+import org.wpilib.hardware.discrete.PWM;
 import frc.robot.Constants;
 import frc.robot.utils.servos.ServoConstantContainer.ServoType;
 import frc.robot.utils.servos.ServoConstantContainer.SimServoMode;
 
 public class ServoPackage {
-	private Servo servo;
+	private static final int MINIMUM_PULSE_MICROSECONDS = 600;
+	private static final int MAXIMUM_PULSE_MICROSECONDS = 2400;
+	private static final int CENTER_PULSE_MICROSECONDS =
+			(MINIMUM_PULSE_MICROSECONDS + MAXIMUM_PULSE_MICROSECONDS) / 2;
+
+	private PWM servo;
 	private ServoSim servoSim;
 	private double lowerBound, upperBound;
 	private final SimServoMode servoMode;
 	private final double maxDegreesPerSec;
 	/**
 	 * Constructs a Servo Package (pairing of servo and servoSim)
-	 * 
+	 *
 	 * @param servoPWMPort           The PWM port id of the servo
 	 * @param servoMode              The mode that the servo is in (in range, or
 	 *                                  continuous)
@@ -32,15 +37,16 @@ public class ServoPackage {
 			ServoType servoType, double initialPositionDegrees, double dtSeconds,
 			double lowerBound, double upperBound) {
 		this.servoMode = servoMode;
+		this.lowerBound = lowerBound;
+		this.upperBound = upperBound;
 		switch (Constants.currentMode) {
 		case REAL:
-			servo = new Servo(servoPWMPort);
+			servo = new PWM(servoPWMPort);
+			servo.setOutputPeriod(20);
 			break;
 		default:
 			servoSim = new ServoSim(servoMode, servoType, initialPositionDegrees,
 					dtSeconds);
-			this.lowerBound = lowerBound;
-			this.upperBound = upperBound;
 			servoSim.setSimBounds(lowerBound, upperBound);
 			break;
 		}
@@ -48,8 +54,8 @@ public class ServoPackage {
 	}
 
 	/**
-	 * Set the servo to a specified angle. Only works in INRANGE mode. 
-	 * 
+	 * Set the servo to a specified angle. Only works in INRANGE mode.
+	 *
 	 * @param degrees the desired angle (in degrees)
 	 */
 	public void setServoDegrees(double degrees) {
@@ -57,7 +63,7 @@ public class ServoPackage {
 			switch (Constants.currentMode) {
 			case REAL:
 				double percent = degrees / (upperBound - lowerBound);
-				servo.setPosition(percent);
+				setHardwarePosition(percent);
 				break;
 			default:
 				servoSim.set(degrees);
@@ -73,7 +79,7 @@ public class ServoPackage {
 	 * Sets the servo to a certain percent. If it's continuous, sets a POSITION
 	 * from 0 to 1, where 0 is maximum left and 1 is maximum right If it's in
 	 * range, set it to a constant PERCENTAGE of the max velocity
-	 * 
+	 *
 	 * @param percent the percent to set the servo to (-1 to 1) if the servo is
 	 *                   continuous, the position to be set to from (0 to 1.0) if
 	 *                   it is in range mode
@@ -81,7 +87,7 @@ public class ServoPackage {
 	public void setServoPercent(double percent) {
 		switch (Constants.currentMode) {
 		case REAL:
-			servo.set(percent);
+			setHardwarePosition(percent);
 			break;
 		default:
 			servoSim.set(percent);
@@ -95,7 +101,7 @@ public class ServoPackage {
 	public double getServoDegrees() {
 		switch (Constants.currentMode) {
 		case REAL:
-			return lowerBound + servo.getPosition() * (upperBound - lowerBound);
+			return lowerBound + getHardwarePosition() * (upperBound - lowerBound);
 		default:
 			return servoSim.getAngularPositionDegrees();
 		}
@@ -107,12 +113,12 @@ public class ServoPackage {
 	public double getServoVelocityDegreesPerSec(){
 		switch (Constants.currentMode) {
 		case REAL:
-			return lowerBound + servo.getSpeed() * servoSim.getMaxDegreesPerSec();
+			return getHardwareSpeed() * maxDegreesPerSec;
 		default:
 			return servoSim.getAngularVelocityDegreesPerSec();
 		}
 	}
-	
+
 	/**
 	 * Sets the servo to a certain velocity in degrees per second. If it's in continuous mode
 	 * @param degreesPerSec
@@ -121,7 +127,7 @@ public class ServoPackage {
 		if (this.servoMode == SimServoMode.CONTINUOUS) {
 			switch (Constants.currentMode) {
 				case REAL:
-					servo.setSpeed(degreesPerSec / servoSim.getMaxDegreesPerSec());
+					setHardwareSpeed(degreesPerSec / maxDegreesPerSec);
 					break;
 				default:
 					servoSim.set(degreesPerSec);
@@ -139,7 +145,7 @@ public class ServoPackage {
 	public double getServoPercent(){
 		switch (Constants.currentMode) {
 		case REAL:
-			return servo.get();
+			return getHardwarePosition();
 		default:
 			return servoSim.getAngularPositionDegrees() / (upperBound - lowerBound);
 		}
@@ -151,7 +157,7 @@ public class ServoPackage {
 	public double getServoSpeedPercent(){
 		switch (Constants.currentMode) {
 		case REAL:
-			return servo.getSpeed();
+			return getHardwareSpeed();
 		default:
 			return servoSim.getAngularVelocityDegreesPerSec() / servoSim.getMaxDegreesPerSec();
 		}
@@ -171,7 +177,7 @@ public class ServoPackage {
 		}
 	}
 	/**
-	 * Returns the lower bound of the servo in degrees. 
+	 * Returns the lower bound of the servo in degrees.
 	 * If the servo is in continuous mode, this returns -1 for both values
 	 * @return
 	 */
@@ -182,7 +188,7 @@ public class ServoPackage {
 		return lowerBound;
 	}
 		/**
-	 * Returns the upper bound of the servo in degrees. 
+	 * Returns the upper bound of the servo in degrees.
 	 * If the servo is in continuous mode, this returns -1 for both values
 	 * @return
 	 */
@@ -206,5 +212,29 @@ public class ServoPackage {
     public double getServoMaxVelocityDegreesPerSec() {
        return maxDegreesPerSec;
         }
-	
+
+	private void setHardwarePosition(double position) {
+		double clampedPosition = Math.max(0.0, Math.min(1.0, position));
+		servo.setPulseTimeMicroseconds((int) Math.round(
+				MINIMUM_PULSE_MICROSECONDS
+						+ clampedPosition * (MAXIMUM_PULSE_MICROSECONDS - MINIMUM_PULSE_MICROSECONDS)));
+	}
+
+	private double getHardwarePosition() {
+		return (servo.getPulseTimeMicroseconds() - MINIMUM_PULSE_MICROSECONDS)
+				/ (double) (MAXIMUM_PULSE_MICROSECONDS - MINIMUM_PULSE_MICROSECONDS);
+	}
+
+	private void setHardwareSpeed(double speed) {
+		double clampedSpeed = Math.max(-1.0, Math.min(1.0, speed));
+		servo.setPulseTimeMicroseconds((int) Math.round(
+				CENTER_PULSE_MICROSECONDS
+						+ clampedSpeed * (MAXIMUM_PULSE_MICROSECONDS - CENTER_PULSE_MICROSECONDS)));
+	}
+
+	private double getHardwareSpeed() {
+		return (servo.getPulseTimeMicroseconds() - CENTER_PULSE_MICROSECONDS)
+				/ (double) (MAXIMUM_PULSE_MICROSECONDS - CENTER_PULSE_MICROSECONDS);
+	}
+
 }

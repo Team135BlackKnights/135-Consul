@@ -1,7 +1,7 @@
 package frc.robot.utils.CompetitionFieldUtils.FieldObjects;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.*;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.*;
 import frc.robot.utils.CompetitionFieldUtils.CompField;
 
 /**
@@ -23,6 +23,8 @@ public interface GamePieceOnFieldDisplay
 	 * @return the height of the game piece when standing from ground, in meters
 	 */
 	double getGamePieceHeight();
+	String getType();
+    boolean isGrounded();
 
 	/**
 	 * Checks if the game piece is in the score zone.

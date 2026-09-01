@@ -16,7 +16,7 @@ public class ServoSim {
 
 	/**
 	 * Creates a new servo simulation
-	 * 
+	 *
 	 * @param runMode                How the servo is running (continuously or in
 	 *                                  range)
 	 * @param type                   the type of servo (REVSmartServo is the only
@@ -36,7 +36,7 @@ public class ServoSim {
 
 	/**
 	 * Set the bounds of a simulated servo in Degrees. This must be called
-	 * 
+	 *
 	 * @param leftBound  The leftmost position the servo can go to (in Degrees)
 	 * @param rightBound The rightmost position the servo can go to (in Degrees)
 	 */
@@ -52,7 +52,7 @@ public class ServoSim {
 	 * Sets the servo to a certain percent. If it's continuous, sets a POSITION
 	 * from 0 to 1, where 0 is maximum left and 1 is maximum right If it's in
 	 * range, set it to a constant PERCENTAGE of the max velocity
-	 * 
+	 *
 	 * @param percent the percent to set the servo to (-1 to 1) if the servo is
 	 *                   continuous, the position to be set to from (0 to 1.0) if
 	 *                   it is in range mode
@@ -81,7 +81,7 @@ public class ServoSim {
 	/**
 	 * Sets the angle of the servo. ONLY WORKS IN INRANGE MODE, will do nothing
 	 * in continuous mode
-	 * 
+	 *
 	 * @param degrees
 	 */
 	public void setAngle(double degrees) {

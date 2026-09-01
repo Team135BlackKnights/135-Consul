@@ -14,19 +14,18 @@ public interface ServoIO {
         public double velocityDegreesPerSecond = 0;
     }
     public default void updateInputs(ServoIOInputs inputs) {
-        
+
     }
     public default void setDegrees(double degrees) {
-        
+
     }
     public default void setPercent(double percent) {
-        
+
     }
     public default void setVelocity(double percent) {
-        
+
     }
     public default void setVelocityDegrees(double degrees) {
-        
+
     }
 }
-

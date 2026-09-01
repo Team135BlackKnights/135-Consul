@@ -25,10 +25,10 @@
 package frc.robot.utils.CompetitionFieldUtils.Simulation.drive;
 
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.simulation.DCMotorSim;
+import org.wpilib.simulation.RoboRioSim;
 
 /**
  *
@@ -215,7 +215,7 @@ public class BrushlessMotorSim {
   private double getCurrentFrictionTorque() {
     final double kFriction = 3.0,
         percentAngularVelocity =
-            Math.abs(angularVelocityRadPerSec) * gearRatio / motor.freeSpeedRadPerSec,
+            Math.abs(angularVelocityRadPerSec) * gearRatio / motor.freeSpeed,
         currentFrictionTorqueMagnitude =
             Math.min(percentAngularVelocity * kFriction * frictionTorque, frictionTorque);
     return Math.copySign(currentFrictionTorqueMagnitude, -angularVelocityRadPerSec);
@@ -261,7 +261,7 @@ public class BrushlessMotorSim {
     if (Math.abs(limitedVoltage) > Math.abs(requestedOutputVoltage))
       limitedVoltage = requestedOutputVoltage;
 
-    return MathUtil.clamp(limitedVoltage, -12, 12); //DO NOT use RoboRioSim.getVInVoltage() here, since voltage is being set from this, we can't since it'd flicker!
+    return frc.robot.utils.maths.CommonMath.clamp(limitedVoltage, -12, 12); //DO NOT use RoboRioSim.getVInVoltage() here, since voltage is being set from this, we can't since it'd flicker!
   }
 
   /**

@@ -23,7 +23,7 @@ public class ServoPackageIO implements ServoIO {
     public void setDegrees(double degrees) {
         if (servoMode == SimServoMode.INRANGE) {
             servoPackage.setServoDegrees(degrees);
-        }      
+        }
     }
     public  void setPercent(double percent) {
         if (servoMode == SimServoMode.INRANGE) {

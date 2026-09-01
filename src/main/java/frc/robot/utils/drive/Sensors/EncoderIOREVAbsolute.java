@@ -12,7 +12,7 @@ import java.util.List;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.util.Units;
 
 /**
  * This class is used to interface with a REV Absolute Encoder. This would be
@@ -48,9 +48,9 @@ public class EncoderIOREVAbsolute implements EncoderIO {
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        inputs.absolutePositionRadians = (Units.rotationsToRadians(encoder.getPosition() - encoderOffsetRotations)
+        inputs.absolutePositionRadians = (Units.rotationsToRadians(encoder.getPosition().get() - encoderOffsetRotations)
                 / conversionFactor) * (isInverted ? -1 : 1);
-        inputs.angularVelocityRadPerSec = (Units.rotationsToRadians(encoder.getVelocity())
+        inputs.angularVelocityRadPerSec = (Units.rotationsToRadians(encoder.getVelocity().get())
                 / conversionFactor) * (isInverted ? -1 : 1);
         inputs.relativePositionRadians = 0; // Not supported by REV SparkMax on breakout.
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();

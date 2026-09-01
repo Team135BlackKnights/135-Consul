@@ -11,12 +11,12 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 
-import edu.wpi.first.math.filter.LinearFilter;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearAcceleration;
+import org.wpilib.math.filter.LinearFilter;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearAcceleration;
 import frc.robot.utils.selfCheck.drive.SelfCheckingPigeon2;
 import frc.robot.subsystems.drive.FastSwerve.OdometryThread;
 import frc.robot.utils.drive.DriveConstants;
@@ -46,7 +46,7 @@ public class GyroIOPigeon2 implements GyroIO {
 
 	public GyroIOPigeon2() {
 		if (DriveConstants.driveCanBus == null) {
-			pigeon = new Pigeon2(DriveConstants.kGyroPort);
+			pigeon = new Pigeon2(DriveConstants.kGyroPort, DriveConstants.rioCanBus);
 		} else {
 			pigeon = new Pigeon2(DriveConstants.kGyroPort, DriveConstants.driveCanBus);
 		}

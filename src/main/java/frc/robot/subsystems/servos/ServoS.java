@@ -14,9 +14,9 @@ import java.util.HashMap;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.smartdashboard.SmartDashboard;
 
 public class ServoS extends SubsystemChecker {
 	private ServoPackage[] servoPackages = {
@@ -32,7 +32,7 @@ public class ServoS extends SubsystemChecker {
 
 	/**
 	 * Set the servo to a specified angle
-	 * 
+	 *
 	 * @param degrees the desired angle (in degrees)
 	 */
 	public void setServoDegrees(double degrees, ServoNames servoName) {
@@ -50,7 +50,7 @@ public class ServoS extends SubsystemChecker {
 	 * Sets the servo to a certain percent. If it's continuous, sets a POSITION
 	 * from 0 to 1, where 0 is maximum left and 1 is maximum right If it's in
 	 * range, set it to a constant PERCENTAGE of the max velocity
-	 * 
+	 *
 	 * @param percent the percent to set the servo to (-1 to 1) if the servo is
 	 *                   continuous, the position to be set to from (0 to 1.0) if
 	 *                   it is in range mode
@@ -90,12 +90,12 @@ public class ServoS extends SubsystemChecker {
 	}
 
 	@Override
-	public List<ParentDevice> getOrchestraDevices() { 
+	public List<ParentDevice> getOrchestraDevices() {
 		return Collections.emptyList();
 	 }
 
 	@Override
-	protected Command systemCheckCommand() { 
+	protected Command systemCheckCommand() {
 		return Commands.sequence(run(() -> {
 			setServoDegrees(45, ServoNames.leftServo);
 			setServoDegrees(-60, ServoNames.rightServo);

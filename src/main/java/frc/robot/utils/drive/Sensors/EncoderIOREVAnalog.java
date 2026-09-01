@@ -12,8 +12,8 @@ import java.util.List;
 import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotController;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.RobotController;
 
 /**
  * Interfaces with a REV Analog Encoder.
@@ -75,8 +75,8 @@ public class EncoderIOREVAnalog implements EncoderIO {
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        inputs.absolutePositionRadians = getAbsoluteEncoderRad(encoder.getVoltage());
-        inputs.angularVelocityRadPerSec = getAbsoluteEncoderRad(encoder.getVelocity());
+        inputs.absolutePositionRadians = getAbsoluteEncoderRad(encoder.getVoltage().get());
+        inputs.angularVelocityRadPerSec = getAbsoluteEncoderRad(encoder.getVelocity().get());
         inputs.relativePositionRadians = 0; // Not supported by REV SparkMax on breakout.
         inputs.timestampSeconds = TimeUtil.getRealTimeSeconds();
         inputs.encoderType = EncoderType.REV_ANALOG;

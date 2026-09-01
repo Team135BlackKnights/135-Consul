@@ -1,7 +1,7 @@
 package frc.robot.subsystems.drive.FastSwerve;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.RobotController;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.system.RobotController;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
@@ -22,15 +22,15 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.ControlType;
+import com.revrobotics.ResetMode;
+import com.revrobotics.PersistMode;
 
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
-import edu.wpi.first.math.MathUtil;
+import org.wpilib.math.util.MathUtil;
 
-import edu.wpi.first.math.filter.Debouncer;
+import org.wpilib.math.filter.Debouncer;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -71,16 +71,16 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 zeroRotation = new Rotation2d(DriveConstants.kFrontLeftAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kFrontLeftDriveReversed;
@@ -92,16 +92,16 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 zeroRotation = new Rotation2d(DriveConstants.kFrontRightAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kFrontRightDriveReversed;
@@ -113,16 +113,16 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 zeroRotation = new Rotation2d(DriveConstants.kBackLeftAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kBackLeftDriveReversed;
@@ -136,16 +136,16 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 zeroRotation = new Rotation2d(DriveConstants.kBackRightAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
                                         case NEO_SPARK_MAX -> new SparkFlex(
-                                                        DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
                                         case VORTEX_SPARK_FLEX -> new SparkMax(
-                                                        DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kBackRightDriveReversed;
@@ -230,41 +230,45 @@ public class ModuleIOSparkBase implements ModuleIO {
                                                 PersistMode.kPersistParameters));
 
                 // Create odometry queues
-                drivePositionQueue = OdometryThread.registerInput(driveEncoder::getPosition);
-                turnPositionQueue = OdometryThread.registerInput(turnEncoder::getPosition);
+                drivePositionQueue = OdometryThread.registerInput(() -> driveEncoder.getPosition().get());
+                turnPositionQueue = OdometryThread.registerInput(() -> turnEncoder.getPosition().get());
         }
 
         @Override
         public void updateInputs(ModuleIOInputs inputs) {
                 // Update drive inputs
                 sparkStickyFault = false;
-                ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionRads = value);
-                ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveVelocityRadsPerSec = value);
+                ifOk(driveSpark, () -> driveEncoder.getPosition().get(), (value) -> inputs.drivePositionRads = value);
+                ifOk(driveSpark, () -> driveEncoder.getVelocity().get(), (value) -> inputs.driveVelocityRadsPerSec = value);
                 ifOk(
                                 driveSpark,
-                                new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
+                                new DoubleSupplier[] { () -> driveSpark.getAppliedOutput().get(),
+                                                () -> driveSpark.getBusVoltage().get() },
                                 (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
-                ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveSupplyCurrentAmps = value);
+                ifOk(driveSpark, () -> driveSpark.getOutputCurrent().get(),
+                                (value) -> inputs.driveSupplyCurrentAmps = value);
                 inputs.driveMotorConnected = driveConnectedDebounce.calculate(!sparkStickyFault);
 
                 // Update turn inputs
                 sparkStickyFault = false;
                 ifOk(
                                 turnSpark,
-                                turnEncoder::getPosition,
+                                () -> turnEncoder.getPosition().get(),
                                 (value) -> {
                                         inputs.turnPosition = new Rotation2d(value).div(RobotController.getVoltage3V3())
                                                         .minus(zeroRotation);
                                         inputs.turnAbsolutePosition = new Rotation2d(value)
                                                         .div(RobotController.getVoltage3V3());
                                 });
-                ifOk(turnSpark, turnEncoder::getVelocity,
+                ifOk(turnSpark, () -> turnEncoder.getVelocity().get(),
                                 (value) -> inputs.turnVelocityRadsPerSec = value / RobotController.getVoltage3V3());
                 ifOk(
                                 turnSpark,
-                                new DoubleSupplier[] { turnSpark::getAppliedOutput, turnSpark::getBusVoltage },
+                                new DoubleSupplier[] { () -> turnSpark.getAppliedOutput().get(),
+                                                () -> turnSpark.getBusVoltage().get() },
                                 (values) -> inputs.turnAppliedVolts = values[0] * values[1]);
-                ifOk(turnSpark, turnSpark::getOutputCurrent, (value) -> inputs.turnSupplyCurrentAmps = value);
+                ifOk(turnSpark, () -> turnSpark.getOutputCurrent().get(),
+                                (value) -> inputs.turnSupplyCurrentAmps = value);
                 inputs.turnMotorConnected = turnConnectedDebounce.calculate(!sparkStickyFault);
 
                 // Update odometry inputs
@@ -304,10 +308,10 @@ public class ModuleIOSparkBase implements ModuleIO {
                 /*
                  * double volts = turnPidController
                  * .calculate(MathUtil.inputModulus(
-                 * turnEncoder.getPosition() / RobotController.getVoltage3V3()
+                 * turnEncoder.getPosition().get() / RobotController.getVoltage3V3()
                  * - zeroRotation.getRadians(),
                  * -Math.PI, Math.PI), MathUtil.inputModulus(rotation, -Math.PI,Math.PI))
-                 * + turnFF.calculate(turnEncoder.getVelocity() /
+                 * + turnFF.calculate(turnEncoder.getVelocity().get() /
                  * RobotController.getVoltage3V3());
                  */
                 double pos = MathUtil.inputModulus(

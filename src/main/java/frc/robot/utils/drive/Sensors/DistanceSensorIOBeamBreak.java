@@ -4,9 +4,7 @@ package frc.robot.utils.drive.Sensors;
 import java.util.ArrayList;
 import java.util.List;
 
-import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
-import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
-import edu.wpi.first.wpilibj.DigitalInput;
+import org.wpilib.hardware.discrete.DigitalInput;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 public class DistanceSensorIOBeamBreak implements DistanceSensorIO {
@@ -20,14 +18,6 @@ public class DistanceSensorIOBeamBreak implements DistanceSensorIO {
 	public void updateInputs(DistanceSensorIOInputs inputs) {
 		inputs.statusCode = 1;
 		inputs.distanceMeters = beamBreak.get() ? 9999 : 0;
-	}
-	@Override
-	public void setRegionOfInterest(RegionOfInterest interest){
-		// Do nothing
-	}
-	@Override
-	public void setTimingBudget(TimingBudget budgetMS){
-		// Do nothing
 	}
 	@Override
 	public List<SelfChecking> getSelfCheckingHardware() {

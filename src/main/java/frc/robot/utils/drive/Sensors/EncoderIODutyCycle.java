@@ -10,8 +10,8 @@ import frc.robot.utils.selfCheck.SelfChecking;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import org.wpilib.math.util.Units;
+import org.wpilib.hardware.rotation.DutyCycleEncoder;
 
 /**
  * This class is used to interface with a duty cycle encoder. An example would
