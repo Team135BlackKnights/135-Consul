@@ -6,7 +6,6 @@ package frc.robot.subsystems.drive.Tank;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -14,24 +13,22 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.controller.SimpleMotorFeedforward;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.interpolation.TimeInterpolatableBuffer;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.DifferentialDriveKinematics;
+import org.wpilib.math.kinematics.DifferentialDriveWheelPositions;
+import org.wpilib.math.kinematics.DifferentialDriveWheelVelocities;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.Robot;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -53,12 +50,12 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 			TRACK_WIDTH);
 	private final SimpleMotorFeedforward feedforward = DriveConstants.overallDriveMotorConstantContainer
 			.getFeedforward();
-	private record NextMotorOutput(DifferentialDriveWheelSpeeds wheelSpeeds, double[] voltages) {
+	private record NextMotorOutput(DifferentialDriveWheelVelocities wheelSpeeds, double[] voltages) {
 			}
 			public enum DriveMode {
 				NORMAL, WHEEL_RADIUS_CHARACTERIZATION, SPEED_CHARACTERIZATION
 			}
-	private NextMotorOutput nextMotorOutput = new NextMotorOutput(new DifferentialDriveWheelSpeeds(), new double[2]);
+	private NextMotorOutput nextMotorOutput = new NextMotorOutput(new DifferentialDriveWheelVelocities(), new double[2]);
 	private double characterizationVelocity = 0.0;
 	private DriveMode currentDriveMode = DriveMode.NORMAL;
 
@@ -91,15 +88,15 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 		this.io = io;
 		// Configure AutoBuilder for PathPlanner
 		AutoBuilder.configure(this::getPose, this::resetPose,
-				this::getChassisSpeeds, this::setPathplannerChassisSpeeds, DriveConstants.mainController,
+				this::getChassisVelocities, this::setPathplannerChassisVelocities, DriveConstants.mainController,
 				DriveConstants.mainConfig, () -> Robot.isRed, this);
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
-			Logger.recordOutput("Odometry/Trajectory",
+			Logger.recordOutput("RobotState/Trajectory",
 					activePath.toArray(new Pose2d[activePath.size()]));
 		});
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
-			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+			Logger.recordOutput("RobotState/TrajectorySetpoint", targetPose);
 		});
 		for (int i = 0; i < 3; ++i) {
 			qStdDevs.set(i, 0, Math.pow(
@@ -126,72 +123,16 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 			lastGyroAngle = observation.gyroAngle();
 		}
 		// Add twist to odometry pose
-		odometryPose = odometryPose.exp(twist);
+		odometryPose = odometryPose.plus(twist.exp());
 		// Add pose to buffer at timestamp
 		poseBuffer.addSample(observation.timestamp(), odometryPose);
 		// Calculate diff from last odometry pose and add onto pose estimate
-		estimatedPose = estimatedPose.exp(twist);
-	}
-
-	public void addVisionObservation(VisionObservation observation) {
-		// If measurement is old enough to be outside the pose buffer's timespan, skip.
-		try {
-			if (poseBuffer.getInternalBuffer().lastKey()
-					- poseBufferSizeSeconds > observation.timestamp()) {
-				return;
-			}
-		} catch (NoSuchElementException ex) {
-			return;
-		}
-		// Get odometry based pose at timestamp
-		var sample = poseBuffer.getSample(observation.timestamp());
-		if (sample.isEmpty()) {
-			// exit if not there
-			return;
-		}
-		// sample --> odometryPose transform and backwards of that
-		var sampleToOdometryTransform = new Transform2d(sample.get(),
-				odometryPose);
-		var odometryToSampleTransform = new Transform2d(odometryPose,
-				sample.get());
-		// get old estimate by applying odometryToSample Transform
-		Pose2d estimateAtTime = estimatedPose.plus(odometryToSampleTransform);
-		// Calculate 3 x 3 vision matrix
-		var r = new double[3];
-		for (int i = 0; i < 3; ++i) {
-			r[i] = observation.stdDevs().get(i, 0)
-					* observation.stdDevs().get(i, 0);
-		}
-		// Solve for closed form Kalman gain for continuous Kalman filter with A = 0
-		// and C = I. See wpimath/algorithms.md.
-		Matrix<N3, N3> visionK = new Matrix<>(Nat.N3(), Nat.N3());
-		for (int row = 0; row < 3; ++row) {
-			double stdDev = qStdDevs.get(row, 0);
-			if (stdDev == 0.0) {
-				visionK.set(row, row, 0.0);
-			} else {
-				visionK.set(row, row,
-						stdDev / (stdDev + Math.sqrt(stdDev * r[row])));
-			}
-		}
-		// difference between estimate and vision pose
-		Transform2d transform = new Transform2d(estimateAtTime,
-				observation.visionPose());
-		// scale transform by visionK
-		var kTimesTransform = visionK.times(VecBuilder.fill(transform.getX(),
-				transform.getY(), transform.getRotation().getRadians()));
-		Transform2d scaledTransform = new Transform2d(kTimesTransform.get(0, 0),
-				kTimesTransform.get(1, 0),
-				Rotation2d.fromRadians(kTimesTransform.get(2, 0)));
-		// Recalculate current estimate by applying scaled transform to old estimate
-		// then replaying odometry data
-		estimatedPose = estimateAtTime.plus(scaledTransform)
-				.plus(sampleToOdometryTransform);
+		estimatedPose = estimatedPose.plus(twist.exp());
 	}
 
 	@Override
-	public ChassisSpeeds getChassisSpeeds() {
-		return kinematics.toChassisSpeeds(new DifferentialDriveWheelSpeeds(
+	public ChassisVelocities getChassisVelocities() {
+		return kinematics.toChassisVelocities(new DifferentialDriveWheelVelocities(
 				getLeftVelocityMetersPerSec(), getRightVelocityMetersPerSec()));
 	}
 
@@ -201,27 +142,27 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 
 	@Override
-	public void setChassisSpeeds(ChassisSpeeds speeds) {
+	public void setChassisVelocities(ChassisVelocities speeds) {
 		currentDriveMode = DriveMode.NORMAL;
-		DifferentialDriveWheelSpeeds wheelSpeeds = kinematics
-				.toWheelSpeeds(speeds);
+		DifferentialDriveWheelVelocities wheelSpeeds = kinematics
+				.toWheelVelocities(speeds);
 		driveVelocity(wheelSpeeds,false);
 	}
 
 	@Override
-	public void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+	public void setPathplannerChassisVelocities(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.NORMAL;
-		DifferentialDriveWheelSpeeds wheelSpeeds = kinematics
-				.toWheelSpeeds(speeds);
-		double leftFeedForwardVolts = ((wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS)
-						/ DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt);
+		DifferentialDriveWheelVelocities wheelSpeeds = kinematics
+				.toWheelVelocities(speeds);
+		double leftFeedForwardVolts = ((wheelSpeeds.left / WHEEL_RADIUS)
+						/ DriveConstants.getDriveTrainMotors(1).Kv);
 
-		double rightFeedForwardVolts = ((wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS)
-						/ DriveConstants.getDriveTrainMotors(1).KvRadPerSecPerVolt);
+		double rightFeedForwardVolts = ((wheelSpeeds.left / WHEEL_RADIUS)
+						/ DriveConstants.getDriveTrainMotors(1).Kv);
 		double leftResistanceVoltage = feedforwards.torqueCurrentsAmps()[0]
-				* DriveConstants.getDriveTrainMotors(1).rOhms;
+				* DriveConstants.getDriveTrainMotors(1).R;
 		double rightResistanceVoltage = feedforwards.torqueCurrentsAmps()[2]
-				* DriveConstants.getDriveTrainMotors(1).rOhms;
+				* DriveConstants.getDriveTrainMotors(1).R;
 		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{leftFeedForwardVolts + leftResistanceVoltage, rightFeedForwardVolts + rightResistanceVoltage});
 	}
 
@@ -232,50 +173,50 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void periodic() {
-		long timestamp = System.currentTimeMillis();
+		long timestampNs = System.nanoTime();
 		io.updateInputs(inputs);
 		Logger.processInputs("Drive", inputs);
-		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
-		timestamp = System.currentTimeMillis();
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", (System.nanoTime() - timestampNs) / 1.0e6);
+		timestampNs = System.nanoTime();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
 			resetPose(estimatedPose);
 			debounce = 0;
 		}
-		ChassisSpeeds m_ChassisSpeeds = getChassisSpeeds();
+		ChassisVelocities m_ChassisVelocities = getChassisVelocities();
 		if (inputs.gyroConnected) {
 			// Use the real gyro angle
 			rawGyroRotation = inputs.gyroYaw;
 		} else {
 			rawGyroRotation = rawGyroRotation.plus(
-					new Rotation2d(m_ChassisSpeeds.omegaRadiansPerSecond * .02));
+					new Rotation2d(m_ChassisVelocities.omega * .02));
 		}
 		Translation2d linearFieldVelocity = new Translation2d(
-				m_ChassisSpeeds.vxMetersPerSecond,
-				m_ChassisSpeeds.vyMetersPerSecond).rotateBy(getRotation2d());
+				m_ChassisVelocities.vx,
+				m_ChassisVelocities.vy).rotateBy(getRotation2d());
 		fieldVelocity = new Twist2d(linearFieldVelocity.getX(),
-				linearFieldVelocity.getY(), m_ChassisSpeeds.omegaRadiansPerSecond);
+				linearFieldVelocity.getY(), m_ChassisVelocities.omega);
 		addOdometryObservation(
 				new OdometryObservation(wheelPositions.getPositions(),
 						rawGyroRotation, wheelPositions.getTimestamp()));
 		collisionDetected = collisionDetected();
 		switch (currentDriveMode) {
 			case WHEEL_RADIUS_CHARACTERIZATION:
-				ChassisSpeeds speeds = new ChassisSpeeds(0, 0, characterizationVelocity);
-				driveVelocity(kinematics.toWheelSpeeds(speeds), true);
+				ChassisVelocities speeds = new ChassisVelocities(0, 0, characterizationVelocity);
+				driveVelocity(kinematics.toWheelVelocities(speeds), true);
 				break;
 			case SPEED_CHARACTERIZATION:
 				driveVolts(characterizationVelocity, characterizationVelocity);
 				break;
 			case NORMAL:
-				io.setVelocity(nextMotorOutput.wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS,
-						nextMotorOutput.wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS,
+				io.setVelocity(nextMotorOutput.wheelSpeeds.left / WHEEL_RADIUS,
+						nextMotorOutput.wheelSpeeds.right / WHEEL_RADIUS,
 						nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
 				break;
 		}
 		DrivetrainS.super.periodic();
-		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (System.nanoTime() - timestampNs) / 1.0e6);
 
 	}
 
@@ -285,11 +226,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 
 	/** Run closed loop at the specified voltage. */
-	public void driveVelocity(DifferentialDriveWheelSpeeds wheelSpeeds, boolean setSpeeds) {
-		double leftRadPerSec = wheelSpeeds.leftMetersPerSecond / WHEEL_RADIUS;
-		double rightRadsPerSec = wheelSpeeds.rightMetersPerSecond / WHEEL_RADIUS;
-		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculateWithVelocities(getLeftVelocityMetersPerSec() / WHEEL_RADIUS, leftRadPerSec),
-			feedforward.calculateWithVelocities(getRightVelocityMetersPerSec() / WHEEL_RADIUS, rightRadsPerSec)});
+	public void driveVelocity(DifferentialDriveWheelVelocities wheelSpeeds, boolean setSpeeds) {
+		double leftRadPerSec = wheelSpeeds.left / WHEEL_RADIUS;
+		double rightRadsPerSec = wheelSpeeds.right / WHEEL_RADIUS;
+		nextMotorOutput = new NextMotorOutput(wheelSpeeds, new double[]{feedforward.calculate(getLeftVelocityMetersPerSec() / WHEEL_RADIUS, leftRadPerSec),
+			feedforward.calculate(getRightVelocityMetersPerSec() / WHEEL_RADIUS, rightRadsPerSec)});
 		if (setSpeeds)
 			io.setVelocity(leftRadPerSec, rightRadsPerSec,
 					nextMotorOutput.voltages[0], nextMotorOutput.voltages[1]);
@@ -298,7 +239,7 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	/** Stops the drive. */
 	@Override
 	public void stopModules() {
-		driveVelocity(new DifferentialDriveWheelSpeeds(),true);
+		driveVelocity(new DifferentialDriveWheelVelocities(),true);
 	}
 
 	/** Returns the current odometry pose in meters. */
@@ -309,7 +250,11 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	}
 	@Override
 	public Pose2d getLookAheadPose() {
-		return estimatedPose.exp(getChassisSpeeds().toTwist2d(.02));
+		return estimatedPose.plus(getChassisVelocities().toTwist2d(.02).exp());
+	}
+		@Override
+	public ChassisVelocities getFieldChassisVelocities(){
+		return frc.robot.utils.drive.ChassisVelocityUtil.fromRobotRelative(getChassisVelocities(), getRotation2d());
 	}
 
 	/** Resets the current odometry pose. */
@@ -348,8 +293,8 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	@Override
 	@AutoLogOutput(key = "RobotState/Velocity")
 	public double getCharacterizationVelocity() {
-		ChassisSpeeds chassisSpeeds = getChassisSpeeds();
-		return Math.sqrt(Math.pow(chassisSpeeds.vxMetersPerSecond, 2) + Math.pow(chassisSpeeds.vyMetersPerSecond, 2) + Math.pow(getChassisSpeeds().omegaRadiansPerSecond * WHEEL_RADIUS, 2));
+		ChassisVelocities chassisSpeeds = getChassisVelocities();
+		return Math.sqrt(Math.pow(chassisSpeeds.vx, 2) + Math.pow(chassisSpeeds.vy, 2) + Math.pow(getChassisVelocities().omega * WHEEL_RADIUS, 2));
 	}
 	@Override 
 	public double[] getWheelRadiusCharacterizationPosition(){
@@ -415,27 +360,26 @@ public class Tank extends SubsystemChecker implements DrivetrainS {
 	@Override
 	protected Command systemCheckCommand() {
 		return Commands.sequence(
-				run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0.5)))
+				run(() -> setChassisVelocities(new ChassisVelocities(0, 0, 0.5)))
 						.withTimeout(2.0),
-				run(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, -0.5)))
+				run(() -> setChassisVelocities(new ChassisVelocities(0, 0, -0.5)))
 						.withTimeout(2.0),
-				run(() -> setChassisSpeeds(new ChassisSpeeds(1, 0, 0)))
+				run(() -> setChassisVelocities(new ChassisVelocities(1, 0, 0)))
 						.withTimeout(1.0),
 				runOnce(() -> {
-					if (getChassisSpeeds().vxMetersPerSecond > 1.2
-							|| getChassisSpeeds().vxMetersPerSecond < .8) {
+					if (getChassisVelocities().vx > 1.2
+							|| getChassisVelocities().vx < .8) {
 						addFault(
 								"[System Check] Forward speed did not reah target speed in time.",
 								false, true);
 					}
 				})).until(() -> !getFaults().isEmpty()).andThen(
-						runOnce(() -> setChassisSpeeds(new ChassisSpeeds(0, 0, 0))));
+						runOnce(() -> setChassisVelocities(new ChassisVelocities(0, 0, 0))));
 	}
 
 	@Override
 	public void newVisionMeasurement(Pose2d pose, double timestamp,
 			Matrix<N3, N1> estStdDevs) {
-		addVisionObservation(new VisionObservation(pose, timestamp, estStdDevs));
 	}
 
 	@Override

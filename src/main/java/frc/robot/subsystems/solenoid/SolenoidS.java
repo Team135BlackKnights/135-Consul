@@ -1,13 +1,14 @@
 package frc.robot.subsystems.solenoid;
 
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.command2.InstantCommand;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command2.SubsystemBase;
 import frc.robot.utils.solenoid.SolenoidConstants;
-import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import org.wpilib.hardware.pneumatic.Solenoid;
+import org.wpilib.system.Timer;
+import org.wpilib.hardware.pneumatic.DoubleSolenoid.Value;
+import org.wpilib.hardware.pneumatic.DoubleSolenoid;
+import org.wpilib.hardware.pneumatic.PneumaticsModuleType;
 
 public class SolenoidS extends SubsystemBase { //nothing to check
 	public static Solenoid singleSolenoid;
@@ -21,9 +22,9 @@ public class SolenoidS extends SubsystemBase { //nothing to check
 	 * single-action and a double-action solenoid. Also works in sim
 	 */
 	public SolenoidS() {
-		singleSolenoid = new Solenoid(PneumaticsModuleType.REVPH,
+		singleSolenoid = new Solenoid(0, PneumaticsModuleType.REV_PH,
 				SolenoidConstants.singleActingSolenoidChannel);
-		doubleSolenoid = new DoubleSolenoid(PneumaticsModuleType.REVPH,
+		doubleSolenoid = new DoubleSolenoid(0, PneumaticsModuleType.REV_PH,
 				SolenoidConstants.doubleActingSolenoidChannelForward,
 				SolenoidConstants.doubleActingSolenoidChannelBackward);
 		singleSolenoid.setPulseDuration(oscillationTime);
@@ -55,18 +56,18 @@ public class SolenoidS extends SubsystemBase { //nothing to check
 		pulseDouble = true;
 	}
 	/**
-	 * 
+	 *
 	 * @return the value of the solenoid (Either Value.kFoward, Value.kReverse, Value.kOff)
 	 */
 	public static DoubleSolenoid.Value getDoubleSolenoidState(){
 		return doubleSolenoid.get();
 	}
 	public void goToValue(double heightInTime,boolean isDouble){
-		new InstantCommand(() -> {
+		CommandScheduler.getInstance().schedule(new InstantCommand(() -> {
 			Timer timer = new Timer();
 			while (timer.get() < heightInTime){
 				if (isDouble){
-					doubleSolenoid.set(Value.kForward);
+					doubleSolenoid.set(Value.FORWARD);
 				}else{
 					singleSolenoid.set(true);
 				}
@@ -76,7 +77,7 @@ public class SolenoidS extends SubsystemBase { //nothing to check
 			}else{
 				SolenoidS.pulseSingle = true;
 			}
-		}, this).schedule();
+		}, this));
 	}
 	public void stopSinglePulse(){
 		pulseSingle = false;
@@ -86,7 +87,7 @@ public class SolenoidS extends SubsystemBase { //nothing to check
 	}
 	@Override
 	public void periodic(){
-		double currentTime = Timer.getFPGATimestamp();
+		double currentTime = Timer.getTimestamp();
 		if (currentTime - lastSingle > oscillationTime && pulseSingle){
 			lastSingle = currentTime;
 			singleSolenoid.startPulse();

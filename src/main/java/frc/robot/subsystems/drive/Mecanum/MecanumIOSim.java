@@ -9,11 +9,11 @@ import java.util.Arrays;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.kinematics.MecanumDriveWheelVelocities;
+import org.wpilib.math.system.Models;
+import org.wpilib.simulation.DCMotorSim;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
@@ -45,13 +45,13 @@ public class MecanumIOSim implements MecanumIO {
 
 	public MecanumIOSim(GyroIO gyroSim) {
 		gyro = gyroSim;
-		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+		frontLeft = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01,
 				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
-		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+		backLeft = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01,
 				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
-		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+		frontRight = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01,
 				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
-		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01,
+		backRight = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01,
 				DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1, .1);
 	}
 
@@ -68,20 +68,20 @@ public class MecanumIOSim implements MecanumIO {
 		gyro.updateInputs(gyroInputs);
 		Logger.processInputs("Gyro", gyroInputs);
 		if (closedLoop) {
-			frontLeftAppliedVolts = MathUtil.clamp(
-					frontLeftPID.calculate(frontLeft.getAngularVelocityRadPerSec())
+			frontLeftAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(
+					frontLeftPID.calculate(frontLeft.getAngularVelocity())
 							+ frontLeftFFVolts,
 					-12.0, 12.0);
-			frontRightAppliedVolts = MathUtil.clamp(
-					frontRightPID.calculate(frontRight.getAngularVelocityRadPerSec())
+			frontRightAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(
+					frontRightPID.calculate(frontRight.getAngularVelocity())
 							+ frontRightFFVolts,
 					-12.0, 12.0);
-			backLeftAppliedVolts = MathUtil.clamp(
-					backLeftPID.calculate(backLeft.getAngularVelocityRadPerSec())
+			backLeftAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(
+					backLeftPID.calculate(backLeft.getAngularVelocity())
 							+ backLeftFFVolts,
 					-12.0, 12.0);
-			backRightAppliedVolts = MathUtil.clamp(
-					backRightPID.calculate(backRight.getAngularVelocityRadPerSec())
+			backRightAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(
+					backRightPID.calculate(backRight.getAngularVelocity())
 							+ backRightFFVolts,
 					-12.0, 12.0);
 			frontLeft.setInputVoltage(frontLeftAppliedVolts);
@@ -91,10 +91,10 @@ public class MecanumIOSim implements MecanumIO {
 		}
 		// Update gyro simulation (you might want to base this on your robot's movement)
 		// Pigeon2SimState simState = pigeon.getSimState();
-		// double angularVelocity = (frontLeft.getAngularVelocityRadPerSec() -
-		// frontRight.getAngularVelocityRadPerSec()
-		// + backLeft.getAngularVelocityRadPerSec() -
-		// backRight.getAngularVelocityRadPerSec()) / 4.0;
+		// double angularVelocity = (frontLeft.getAngularVelocity() -
+		// frontRight.getAngularVelocity()
+		// + backLeft.getAngularVelocity() -
+		// backRight.getAngularVelocity()) / 4.0;
 		// simState.addYaw(Units.radiansToDegrees(angularVelocity));
 		inputs.leftFrontPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[0]
 				* 2 * Math.PI * 4;
@@ -106,8 +106,8 @@ public class MecanumIOSim implements MecanumIO {
 		inputs.leftBackVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[2]
 				* 2 * Math.PI * 4;
 		inputs.leftBackAppliedVolts = backLeftAppliedVolts;
-		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDrawAmps(),
-				backLeft.getCurrentDrawAmps()
+		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDraw(),
+				backLeft.getCurrentDraw()
 		};
 		inputs.rightFrontPositionRad = mecanumDrivePhysicsSimResults.driveWheelFinalRevolutions[1]
 				* 2 * Math.PI * 4;
@@ -119,8 +119,8 @@ public class MecanumIOSim implements MecanumIO {
 		inputs.rightBackVelocityRadPerSec = mecanumDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[3]
 				* 2 * Math.PI * 4;
 		inputs.rightBackAppliedVolts = backRightAppliedVolts;
-		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDrawAmps(),
-				backRight.getCurrentDrawAmps()
+		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDraw(),
+				backRight.getCurrentDraw()
 		};
 		inputs.gyroConnected = gyroInputs.connected;
 		inputs.gyroYaw = gyroInputs.yawPosition;
@@ -131,10 +131,10 @@ public class MecanumIOSim implements MecanumIO {
 	public void setVoltage(double frontLeftVolts, double frontRightVolts,
 			double backLeftVolts, double backRightVolts) {
 		closedLoop = false;
-		frontLeftAppliedVolts = MathUtil.clamp(frontLeftVolts, -12.0, 12.0);
-		frontRightAppliedVolts = MathUtil.clamp(frontRightVolts, -12.0, 12.0);
-		backLeftAppliedVolts = MathUtil.clamp(backLeftVolts, -12.0, 12.0);
-		backRightAppliedVolts = MathUtil.clamp(backRightVolts, -12.0, 12.0);
+		frontLeftAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(frontLeftVolts, -12.0, 12.0);
+		frontRightAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(frontRightVolts, -12.0, 12.0);
+		backLeftAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(backLeftVolts, -12.0, 12.0);
+		backRightAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(backRightVolts, -12.0, 12.0);
 		frontLeft.setInputVoltage(frontLeftVolts);
 		frontRight.setInputVoltage(frontRightVolts);
 		backLeft.setInputVoltage(backLeftVolts);
@@ -158,12 +158,12 @@ public class MecanumIOSim implements MecanumIO {
 		this.backRightFFVolts = backRightFFVolts;
 	}
 
-	public MecanumDriveWheelSpeeds getWheelSpeeds() {
-		return new MecanumDriveWheelSpeeds(
-				frontLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
-				frontRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
-				backLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS,
-				backRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS);
+	public MecanumDriveWheelVelocities getWheelSpeeds() {
+		return new MecanumDriveWheelVelocities(
+				frontLeft.getAngularVelocity() * WHEEL_RADIUS,
+				frontRight.getAngularVelocity() * WHEEL_RADIUS,
+				backLeft.getAngularVelocity() * WHEEL_RADIUS,
+				backRight.getAngularVelocity() * WHEEL_RADIUS);
 	}
 
 	public static class MecanumDrivePhysicsSimResults {

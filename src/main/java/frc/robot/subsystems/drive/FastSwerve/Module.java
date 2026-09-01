@@ -2,10 +2,10 @@ package frc.robot.subsystems.drive.FastSwerve;
 
 import java.util.List;
 
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import org.wpilib.math.controller.SimpleMotorFeedforward;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
@@ -61,7 +61,7 @@ public class Module {
 					.getKv(), TuningConstants.isTuningDrivetrain);
 	private static final LoggableTunedNumber turnDeadband = new LoggableTunedNumber("Drive/Module/TurnDeadband",
 			DriveConstants.TURN_DEADBAND_AMPS, TuningConstants.isTuningDrivetrain);
-	private SwerveModuleState setpointState = new SwerveModuleState();
+	private SwerveModuleVelocity setpointState = new SwerveModuleVelocity();
 	private final int index;
 	private final ModuleIO io;
 	private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
@@ -122,14 +122,14 @@ public class Module {
 		io.shift(lowGear);
 	}
 
-	/** Runs to {@link SwerveModuleState} */
-	public void runSetpoint(SwerveModuleState setpoint, SwerveModuleState wheelNM) {
+	/** Runs to {@link SwerveModuleVelocity} */
+	public void runSetpoint(SwerveModuleVelocity setpoint, SwerveModuleVelocity wheelNM) {
     setpointState = setpoint;
-    Logger.recordOutput("Drive/SwerveSetpoint", setpointState.speedMetersPerSecond);
+    Logger.recordOutput("Drive/SwerveSetpoint", setpointState.velocity);
 
-    double setpointWheelAngularVel = setpoint.speedMetersPerSecond / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
+    double setpointWheelAngularVel = setpoint.velocity / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
     double currentWheelAngularVel = getVelocityMetersPerSec() / (DriveConstants.TrainConstants.kWheelDiameter.get() / 2.0);
-	double motorTorqueNm = wheelNM.speedMetersPerSecond;
+	double motorTorqueNm = wheelNM.velocity;
     // Now use vendor-specific conversions as before:
     if ((DriveConstants.robotMotorController == MotorVendor.CTRE_ON_CANIVORE
             || DriveConstants.robotMotorController == MotorVendor.CTRE_ON_RIO)
@@ -140,20 +140,20 @@ public class Module {
             io.runDriveVelocitySetpoint(
                     setpointWheelAngularVel,
                     ff.calculate(currentWheelAngularVel)
-            + ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp));
+            + ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).Kt));
         } else {
             io.runDriveVelocitySetpoint(
                     setpointWheelAngularVel,
-                    (inputs.negateFF ? 0 : 1) * ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).KtNMPerAmp)
+                    (inputs.negateFF ? 0 : 1) * ((motorTorqueNm / DriveConstants.TrainConstants.kDriveMotorGearRatioHigh) * DriveConstants.getDriveTrainMotors(1,DriveConstants.TrainConstants.kDriveMotorGearRatioHigh).Kt)
                             + ff.calculate(currentWheelAngularVel));
         }
 
     } else {
-        double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(1).getVoltage(motorTorqueNm, setpointWheelAngularVel);
+        double wheelTorqueVolts = DriveConstants.getDriveTrainMotors(2).getVoltage(motorTorqueNm, setpointWheelAngularVel);
         Logger.recordOutput("Drive/" + name + "/wheelTorqueVolts", wheelTorqueVolts);
         io.runDriveVelocitySetpoint(
                 setpointWheelAngularVel,
-                (inputs.negateFF ? 0 : 1) * ff.calculateWithVelocities(currentWheelAngularVel, setpointWheelAngularVel)
+                (inputs.negateFF ? 0 : 1) * ff.calculate(currentWheelAngularVel, setpointWheelAngularVel)
                         + (wheelTorqueVolts));
     }
 
@@ -244,9 +244,9 @@ public class Module {
 		return new SwerveModulePosition(getPositionMeters(), getAngle());
 	}
 
-	/** Get current {@link SwerveModuleState} of module. */
-	public SwerveModuleState getState() {
-		return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
+	/** Get current {@link SwerveModuleVelocity} of module. */
+	public SwerveModuleVelocity getState() {
+		return new SwerveModuleVelocity(getVelocityMetersPerSec(), getAngle());
 	}
 
 	/** Get velocity of drive wheel for characterization */
@@ -268,7 +268,7 @@ public class Module {
 		return inputs.turnMotorTemp;
 	}
 
-	public SwerveModuleState getSetpointState() {
+	public SwerveModuleVelocity getSetpointState() {
 		return setpointState;
 	}
 

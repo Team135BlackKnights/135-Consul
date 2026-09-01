@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.RobotController;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.hardware.discrete.AnalogInput;
+import org.wpilib.system.RobotController;
 
 /**
  * This class is used to interface with a Thrifty Absolute Encoder. An example
@@ -46,7 +46,7 @@ public class EncoderIOThriftyAbsolute implements EncoderIO {
 
     @Override
     public void updateInputs(EncoderIOInputs inputs) {
-        double absolutePositionPercent = encoder.getVoltage() / RobotController.getVoltage5V();
+        double absolutePositionPercent = encoder.getVoltage() / RobotController.getVoltage3V3();
         if (isAbsoluteEncoderInverted) {
             absolutePositionPercent = 1 - absolutePositionPercent;
         }

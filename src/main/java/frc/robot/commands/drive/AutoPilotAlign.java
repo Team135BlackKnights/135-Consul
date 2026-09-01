@@ -2,24 +2,30 @@ package frc.robot.commands.drive;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.therekrab.autopilot.APTarget;
 import com.therekrab.autopilot.Autopilot.APResult;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.units.Units;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.command2.Command;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
+import frc.robot.utils.GeomUtil;
+import frc.robot.utils.LoggableTunedNumber;
+import frc.robot.utils.TriConsumer;
+import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.LocalADStarAK;
 
@@ -34,7 +40,7 @@ import frc.robot.utils.drive.LocalADStarAK;
  */
 public class AutoPilotAlign extends Command {
     private final LocalADStarAK adStar;
-    private final BiConsumer<PathConstraints, GoalEndState> pathConsumer;
+    private final TriConsumer<PathConstraints, GoalEndState, Pose2d> pathConsumer;
     private final APTarget m_finalTarget;
     private final GoalEndState goalEndState;
     private final DrivetrainS m_drivetrain;
@@ -42,7 +48,9 @@ public class AutoPilotAlign extends Command {
     private boolean isFinished = false;
     private AimToRotation thetaControllerCommand;
     private Rotation2d desiredRotation;
+    private boolean currentlyCloseToTrench = false;
 
+    private final static LoggableTunedNumber trenchCircleDistance = new LoggableTunedNumber("AutoPilot/TrenchCircleDistance", 2.0, TuningConstants.isTuningMacros);
     public AutoPilotAlign(LocalADStarAK adStar, APTarget finalTarget, DrivetrainS drivetrain, double lookaheadMeters) {
         this.adStar = adStar;
         this.pathConsumer = adStar.pathConsumer();
@@ -57,20 +65,22 @@ public class AutoPilotAlign extends Command {
     public void initialize() {
         isFinished = false;
         RobotContainer.userDrive = false;
+
         desiredRotation = m_drivetrain.getRotation2d();
         thetaControllerCommand = new AimToRotation(() -> desiredRotation, m_drivetrain, DriveConstants.pathConstraints);
         thetaControllerCommand.initialize();
+
+        // Set goal ONCE (unless the goal actually changes)
+        adStar.setGoalPosition(m_finalTarget.getReference().getTranslation());
     }
 
     @Override
     public void execute() {
         Pose2d robotPose = m_drivetrain.getLookAheadPose();
-        ChassisSpeeds currentRobotRelative = ChassisSpeeds.fromRobotRelativeSpeeds(m_drivetrain.getChassisSpeeds(),
-                robotPose.getRotation());
+        ChassisVelocities currentRobotRelative = m_drivetrain.getChassisVelocities();
         adStar.setStartPosition(robotPose.getTranslation());
-        adStar.setGoalPosition(m_finalTarget.getReference().getTranslation());
         // get path from supplier
-        pathConsumer.accept(DriveConstants.pathConstraints, goalEndState);
+        pathConsumer.accept(DriveConstants.pathConstraints, goalEndState, m_finalTarget.getReference());
         List<Pose2d> path = adStar.cachedPath;
 
         APTarget activeTarget;
@@ -86,36 +96,61 @@ public class AutoPilotAlign extends Command {
 
         Rotation2d maskedRot = activeTarget.getReference().getRotation();
         Translation2d fieldRelativeVel = new Translation2d(
-                currentRobotRelative.vxMetersPerSecond,
-                currentRobotRelative.vyMetersPerSecond)
+                currentRobotRelative.vx,
+                currentRobotRelative.vy)
                 .rotateBy(robotPose.getRotation());
         Translation2d maskedRobotRelativeVel = fieldRelativeVel.rotateBy(maskedRot.unaryMinus());
 
-        ChassisSpeeds maskedRobotRelative = new ChassisSpeeds(
+        ChassisVelocities maskedRobotRelative = new ChassisVelocities(
                 maskedRobotRelativeVel.getX(),
                 maskedRobotRelativeVel.getY(),
-                currentRobotRelative.omegaRadiansPerSecond);
+                currentRobotRelative.omega);
         Pose2d maskedPose = new Pose2d(
                 robotPose.getTranslation(),
                 maskedRot);
-        APResult out = Swerve.autopilot.calculate(maskedPose, maskedRobotRelative, activeTarget);
+        //if the robot pose is within a trench of 2 meters, we use the Tight profile, otherwise, we use the fast profile
+        if (closeToATrench() && !currentlyCloseToTrench)  {
+            ((Swerve)m_drivetrain).updateAutoProfile(DriveConstants.AutopilotConstants.kTightProfile);
+            System.out.println("Using tight profile");
+            currentlyCloseToTrench = true;
+        } else if (!closeToATrench() && currentlyCloseToTrench) {
+            ((Swerve)m_drivetrain).updateAutoProfile(DriveConstants.AutopilotConstants.kFastProfile);
+            currentlyCloseToTrench = false;
+        }
+        APResult out = ((Swerve)m_drivetrain).autopilot.calculate(maskedPose, maskedRobotRelative, activeTarget);
 
-        ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds(out.vx().baseUnitMagnitude(),
+        ChassisVelocities fieldRelativeSpeeds = new ChassisVelocities(out.vx().baseUnitMagnitude(),
                 out.vy().baseUnitMagnitude(), 0.0);
-        ChassisSpeeds robotRelativeFromField = ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds,
+        ChassisVelocities robotRelativeFromField = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(fieldRelativeSpeeds,
                 m_drivetrain.getRotation2d());
 
         desiredRotation = goalEndState.rotation();
         thetaControllerCommand.execute();
 
-        m_drivetrain
-                .setChassisSpeeds(robotRelativeFromField.plus(new ChassisSpeeds(0, 0, RobotContainer.angularSpeed)));
+        // System.out.println("Execution time: " + (endTime - startTime) + " ms");
 
-        if (Swerve.autopilot.atTarget(m_drivetrain.getPose(), m_finalTarget) && thetaControllerCommand.atGoal()) {
+        m_drivetrain
+                .setChassisVelocities(robotRelativeFromField.plus(new ChassisVelocities(0, 0, RobotContainer.angularSpeed)));
+        Logger.recordOutput("RobotState/ActiveAutopilotTarget", activeTarget.getReference());
+        Logger.recordOutput("RobotState/EndAutopilotTarget", m_finalTarget.getReference());
+        if (((Swerve)m_drivetrain).autopilot.atTarget(m_drivetrain.getPose(), m_finalTarget) && thetaControllerCommand.atGoal()) {
             isFinished = true;
         }
     }
-
+    private boolean closeToATrench() {
+        Pose2d robotPose = m_drivetrain.getPose();
+        Translation2d pos = robotPose.getTranslation();
+        // check if we're within 2 meters of either trench
+        Translation2d[] trenchCenters = {
+            FieldConstants.LeftTrench.openingCenter,
+            FieldConstants.RightTrench.openingCenter,
+            // opposite side, too
+            GeomUtil.apply(FieldConstants.LeftTrench.openingCenter, true),
+            GeomUtil.apply(FieldConstants.RightTrench.openingCenter,true)
+        }; 
+        double distanceThreshold = trenchCircleDistance.get();
+        return pos.getDistance(trenchCenters[0]) < distanceThreshold || pos.getDistance(trenchCenters[1]) < distanceThreshold || pos.getDistance(trenchCenters[2]) < distanceThreshold || pos.getDistance(trenchCenters[3]) < distanceThreshold;
+    }
     @Override
     public boolean isFinished() {
         return isFinished;
@@ -128,6 +163,7 @@ public class AutoPilotAlign extends Command {
         RobotContainer.angleOverrider = Optional.empty();
         RobotContainer.angularSpeed = 0;
         RobotContainer.userDrive = true;
+        Logger.recordOutput("RobotState/ActiveAutopilotTarget", new Pose2d(-50, -50, new Rotation2d()));
     }
 
     /**
@@ -160,8 +196,8 @@ public class AutoPilotAlign extends Command {
                 Rotation2d r1 = path.get(i).getRotation();
                 Rotation2d r2 = path.get(i + 1).getRotation();
                 Rotation2d interpRot = new Rotation2d(
-                        MathUtil.interpolate(r1.getCos(), r2.getCos(), t),
-                        MathUtil.interpolate(r1.getSin(), r2.getSin(), t));
+                        MathUtil.lerp(r1.getCos(), r2.getCos(), t),
+                        MathUtil.lerp(r1.getSin(), r2.getSin(), t));
                 return new Pose2d(interpTrans, interpRot);
             } else {
                 acc += seg;
