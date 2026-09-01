@@ -1,11 +1,11 @@
 package frc.robot.commands.drive;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.util.Units;
+import org.wpilib.command2.Command;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.subsystems.drive.DrivetrainS;
@@ -23,6 +23,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 public class AimToPose extends Command {
 	private final DrivetrainS drive;
 	private final Supplier<Pose2d> poseSupplier;
+	private final GeomUtil.ApproachDirection approachDirection;
 	private final ProfiledPIDController thetaController = new ProfiledPIDController(
 			0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), .02);
 	// Allow live updating via LoggableTunedNumbers
@@ -37,13 +38,19 @@ public class AimToPose extends Command {
 
 	/** Aims to the specified pose under full software control. */
 	public AimToPose(DrivetrainS drive, Pose2d pose) {
-		this(drive, () -> pose);
+		this(drive, () -> pose, GeomUtil.ApproachDirection.BACK);
 	}
 
 	/** Aims to the specified pose under full software control. */
 	public AimToPose(DrivetrainS drive, Supplier<Pose2d> poseSupplier) {
+		this(drive, poseSupplier, GeomUtil.ApproachDirection.BACK);
+	}
+
+	/** Aims to the specified pose under full software control using the requested approach direction. */
+	public AimToPose(DrivetrainS drive, Supplier<Pose2d> poseSupplier, GeomUtil.ApproachDirection approachDirection) {
 		this.drive = drive;
 		this.poseSupplier = poseSupplier;
+		this.approachDirection = approachDirection;
 		thetaController.enableContinuousInput(-Math.PI, Math.PI);
 	}
 
@@ -72,16 +79,17 @@ public class AimToPose extends Command {
 		double targetAngle = GeomUtil.closerAngleToZero(GeomUtil
 				.rotationFromCurrentToTarget(drive.getLookAheadPose().getTranslation(),
 						poseSupplier.get().getTranslation(),
-						GeomUtil.ApproachDirection.BACK));
-		Logger.recordOutput("CurretP", thetaController.getP());
+						approachDirection));// in deg
+		Rotation2d target = Rotation2d.fromDegrees(targetAngle);
+		Logger.recordOutput("Drive/HeadingController/CurrentP", thetaController.getP());
 		Rotation2d currentRotation = drive.getLookAheadPose().getRotation();
-		Logger.recordOutput("TargetAngle", targetAngle);
-		Logger.recordOutput("currentROtation", currentRotation);
-		RobotContainer.angleOverrider = Optional.of(new Rotation2d(targetAngle));
+		Logger.recordOutput("Drive/HeadingController/TargetAngle", target);
+		Logger.recordOutput("Drive/HeadingController/CurrentRotation", currentRotation);
+		RobotContainer.angleOverrider = Optional.of(target);
 		double thetaVelocity = thetaController.getSetpoint().velocity
 				+ thetaController.calculate(currentRotation.getRadians(),
-						targetAngle); //Go to target rotation using FF.
-		Logger.recordOutput("THETA", thetaVelocity);
+						target.getRadians()); //Go to target rotation using FF.
+		Logger.recordOutput("Drive/HeadingController/ThetaVelocity", thetaVelocity);
 		PPHolonomicDriveController.overrideRotationFeedback(() -> thetaVelocity);
 		RobotContainer.angularSpeed = thetaVelocity;
 		

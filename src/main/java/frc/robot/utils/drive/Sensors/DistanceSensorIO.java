@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
-import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 public interface DistanceSensorIO {
@@ -18,12 +16,6 @@ public interface DistanceSensorIO {
 	}
 
 	public default void updateInputs(DistanceSensorIOInputs inputs) {
-	}
-	public default void setRegionOfInterest(RegionOfInterest interest){
-
-	}
-	public default void setTimingBudget(TimingBudget budgetMS){
-		
 	}
 	public default void setDistance(int distanceMM) {
 	}

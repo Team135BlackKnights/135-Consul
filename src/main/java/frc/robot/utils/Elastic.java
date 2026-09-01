@@ -5,24 +5,23 @@
 
 package frc.robot.utils;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.PubSubOption;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.StringTopic;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.PubSubOption;
+import org.wpilib.networktables.StringPublisher;
+import org.wpilib.networktables.StringTopic;
 
 public final class Elastic {
   private static final StringTopic notificationTopic =
       NetworkTableInstance.getDefault().getStringTopic("/Elastic/RobotNotifications");
   private static final StringPublisher notificationPublisher =
-      notificationTopic.publish(PubSubOption.sendAll(true), PubSubOption.keepDuplicates(true));
+      notificationTopic.publish(PubSubOption.SEND_ALL, PubSubOption.KEEP_DUPLICATES);
   private static final StringTopic selectedTabTopic =
       NetworkTableInstance.getDefault().getStringTopic("/Elastic/SelectedTab");
   private static final StringPublisher selectedTabPublisher =
-      selectedTabTopic.publish(PubSubOption.keepDuplicates(true));
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+      selectedTabTopic.publish(PubSubOption.KEEP_DUPLICATES);
+  private static final Gson json = new Gson();
 
   /**
    * Sends an notification to the Elastic dashboard. The notification is serialized as a JSON string
@@ -31,11 +30,7 @@ public final class Elastic {
    * @param notification the {@link Notification} object containing notification details
    */
   public static void sendNotification(Notification notification) {
-    try {
-      notificationPublisher.set(objectMapper.writeValueAsString(notification));
-    } catch (JsonProcessingException e) {
-      e.printStackTrace();
-    }
+    notificationPublisher.set(json.toJson(notification));
   }
 
   /**
@@ -67,22 +62,22 @@ public final class Elastic {
    * notification is displayed on the dashboard.
    */
   public static class Notification {
-    @JsonProperty("level")
+    @SerializedName("level")
     private NotificationLevel level;
 
-    @JsonProperty("title")
+    @SerializedName("title")
     private String title;
 
-    @JsonProperty("description")
+    @SerializedName("description")
     private String description;
 
-    @JsonProperty("displayTime")
+    @SerializedName("displayTime")
     private int displayTimeMillis;
 
-    @JsonProperty("width")
+    @SerializedName("width")
     private double width;
 
-    @JsonProperty("height")
+    @SerializedName("height")
     private double height;
 
     /**

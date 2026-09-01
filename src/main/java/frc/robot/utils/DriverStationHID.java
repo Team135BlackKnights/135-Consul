@@ -1,14 +1,14 @@
 package frc.robot.utils;
 
 
-import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
-import edu.wpi.first.wpilibj.event.EventLoop;
+import org.wpilib.util.sendable.Sendable;
+import org.wpilib.util.sendable.SendableBuilder;
+import org.wpilib.driverstation.GenericHID;
+import org.wpilib.event.BooleanEvent;
+import org.wpilib.event.EventLoop;
 
 public class DriverStationHID extends GenericHID implements Sendable {
-    /** Represents a digital button on a XboxController. */
+    /** Represents a digital button on a NiDsXboxController. */
     public enum Button {
         /** Coral branch 1 */
         branch1Button(2), //23
@@ -98,7 +98,8 @@ public class DriverStationHID extends GenericHID implements Sendable {
                 ledStateValue += Math.pow(2, i);
             }
         }
-        super.setOutputs(currentLEDPattern.value+ledStateValue);
+        int outputValue = currentLEDPattern.value + ledStateValue;
+        super.setLeds((outputValue >> 16) & 0xff, (outputValue >> 8) & 0xff, outputValue & 0xff);
         
     }
 

@@ -1,6 +1,6 @@
 package frc.robot.utils.drive.Sensors;
 
-import static edu.wpi.first.units.Units.Millimeters;
+import static org.wpilib.units.Units.Millimeters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,8 +10,8 @@ import au.grapplerobotics.LaserCan;
 import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.DriverStation;
+import org.wpilib.units.Units;
+import org.wpilib.driverstation.*;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.SelfCheckingLaserCAN;
 
@@ -25,7 +25,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 		try {
 			laserCan.setTimingBudget(TimingBudget.TIMING_BUDGET_20MS);
 		} catch (ConfigurationFailedException e) {
-			DriverStation.reportError("CONFIG LASER CAN FAILED!!!",false);
+			DriverStationErrors.reportError("CONFIG LASER CAN FAILED!!!",false);
 		}
 		
 	}
@@ -34,7 +34,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 	public void updateInputs(DistanceSensorIOInputs inputs) {
 		Measurement measurement = laserCan.getMeasurement();
 		if (measurement != null) {
-			inputs.distanceMeters = Units.Meters
+			inputs.distance = Units.Meters
 					.convertFrom(measurement.distance_mm, Millimeters);
 			inputs.ambientLightLevel = measurement.ambient;
 			inputs.statusCode = measurement.status;
@@ -45,7 +45,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 		try {
 			laserCan.setRegionOfInterest(interest);
 		} catch (ConfigurationFailedException e) {
-			DriverStation.reportError("CONFIG LASER CAN FAILED!!!",false);
+			DriverStationErrors.reportError("CONFIG LASER CAN FAILED!!!",false);
 		}
 	}
 	@Override
@@ -53,7 +53,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 		try {
 			laserCan.setTimingBudget(budgetMS);
 		} catch (ConfigurationFailedException e) {
-			DriverStation.reportError("CONFIG LASER CAN FAILED!!!",false);
+			DriverStationErrors.reportError("CONFIG LASER CAN FAILED!!!",false);
 		}
 	}
 	@Override

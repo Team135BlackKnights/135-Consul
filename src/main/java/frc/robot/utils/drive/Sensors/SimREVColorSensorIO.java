@@ -2,19 +2,19 @@ package frc.robot.utils.drive.Sensors;
 
 import com.revrobotics.ColorSensorV3;
 
-import edu.wpi.first.hal.SimDouble;
-import edu.wpi.first.wpilibj.I2C.Port;
-import edu.wpi.first.wpilibj.simulation.SimDeviceSim;
-import edu.wpi.first.wpilibj.util.Color;
+import org.wpilib.hardware.hal.SimDouble;
+import org.wpilib.hardware.bus.I2C.Port;
+import org.wpilib.simulation.SimDeviceSim;
+import org.wpilib.util.Color;
 
 public class SimREVColorSensorIO implements ColorSensorIO {
 	private ColorSensorV3 REVColorSensor;
 	private SimDouble red, blue, green, IR, proximity;
 
 	public SimREVColorSensorIO(int can_id) {
-		this.REVColorSensor = new ColorSensorV3(Port.kMXP);
+		this.REVColorSensor = new ColorSensorV3(Port.PORT_1);
 		SimDeviceSim device = new SimDeviceSim("REV Color Sensor V3",
-				Port.kMXP.value, 0x52);
+				Port.PORT_1.value, 0x52);
 		this.red = device.getDouble("Red");
 		this.green = device.getDouble("Green");
 		this.blue = device.getDouble("Blue");

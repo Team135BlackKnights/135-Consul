@@ -1,20 +1,20 @@
 package frc.robot.utils.drive;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.numbers.N4;
-import static edu.wpi.first.math.Nat.N1;
-import static edu.wpi.first.math.Nat.N2;
-import static edu.wpi.first.math.Nat.N3;
-import static edu.wpi.first.math.Nat.N4;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N2;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.numbers.N4;
+import static org.wpilib.math.util.Nat.N1;
+import static org.wpilib.math.util.Nat.N2;
+import static org.wpilib.math.util.Nat.N3;
+import static org.wpilib.math.util.Nat.N4;
 public class SecondOrderKinematics {
 
 	private static final double EPS = 1E-9;
@@ -77,16 +77,16 @@ public class SecondOrderKinematics {
 	 * @param requestedSpeeds Requested chassis speeds
 	 * @return Corrected chassis speeds
 	 */
-	public static ChassisSpeeds correctForDynamics(ChassisSpeeds requestedSpeeds) {
+	public static ChassisVelocities correctForDynamics(ChassisVelocities requestedSpeeds) {
 	  Pose2d futureRobotPose = new Pose2d(
-		 requestedSpeeds.vxMetersPerSecond * .02,
-		 requestedSpeeds.vyMetersPerSecond * .02,
-		 Rotation2d.fromRadians(requestedSpeeds.omegaRadiansPerSecond * .02)
+		 requestedSpeeds.vx * .02,
+		 requestedSpeeds.vy * .02,
+		 Rotation2d.fromRadians(requestedSpeeds.omega * .02)
 	  );
  
 	  Twist2d twistForPose = log(futureRobotPose);
  
-	  ChassisSpeeds correctedSpeeds = new ChassisSpeeds(
+	  ChassisVelocities correctedSpeeds = new ChassisVelocities(
 		 twistForPose.dx / .02,
 		 twistForPose.dy / .02,
 		 twistForPose.dtheta / .02
@@ -103,18 +103,18 @@ public class SecondOrderKinematics {
 	  * @param controlCentricity Control centricity to use (field or robot centric)
 	  * @return Array of the speed direction of the swerve modules
 	  */
-	public SwerveModuleState[] toSwerveModuleStates(ChassisSpeeds desiredSpeed) {
+	public SwerveModuleVelocity[] toSwerveModuleVelocities(ChassisVelocities desiredSpeed) {
 	  Matrix<N3, N1> firstOrderInputMatrix = new Matrix<>(N3(),N1());
 	  Matrix<N2, N3> firstOrderMatrix = new Matrix<>(N2(),N3());
 	  Matrix<N4, N1> secondOrderInputMatrix = new Matrix<>(N4(),N1());
 	  Matrix<N2, N4> secondOrderMatrix = new Matrix<>(N2(),N4());
 	  Matrix<N2, N2> rotationMatrix = new Matrix<>(N2(),N2());
  
-	  firstOrderInputMatrix.set(0, 0, desiredSpeed.vxMetersPerSecond);
-	  firstOrderInputMatrix.set(1, 0, desiredSpeed.vyMetersPerSecond);
-	  firstOrderInputMatrix.set(2, 0, desiredSpeed.omegaRadiansPerSecond);
+	  firstOrderInputMatrix.set(0, 0, desiredSpeed.vx);
+	  firstOrderInputMatrix.set(1, 0, desiredSpeed.vy);
+	  firstOrderInputMatrix.set(2, 0, desiredSpeed.omega);
  
-	  secondOrderInputMatrix.set(2, 0, Math.pow(desiredSpeed.omegaRadiansPerSecond, 2));
+	  secondOrderInputMatrix.set(2, 0, Math.pow(desiredSpeed.omega, 2));
  
 	  firstOrderMatrix.set(0, 0, 1);
 	  firstOrderMatrix.set(1, 1, 1);
@@ -122,7 +122,7 @@ public class SecondOrderKinematics {
 	  secondOrderMatrix.set(0, 0, 1);
 	  secondOrderMatrix.set(1, 1, 1);
  
-	  SwerveModuleState[] swerveModuleStates = new SwerveModuleState[m_moduleLocations.length];
+	  SwerveModuleVelocity[] swerveModuleStates = new SwerveModuleVelocity[m_moduleLocations.length];
 	  double[] moduleTurnSpeeds = new double[m_moduleLocations.length];
  
 	  for (int i = 0; i < m_moduleLocations.length; i++) {
@@ -155,8 +155,8 @@ public class SecondOrderKinematics {
 		 Matrix<N2,N1> secondOrderOutput = rotationMatrix.times(secondOrderMatrix.times(secondOrderInputMatrix));
  
 		 // Correct module heading for control centricity
-		 swerveModuleStates[i] = new SwerveModuleState(moduleSpeed, Rotation2d.fromRadians(moduleHeading));
-		 moduleTurnSpeeds[i] = secondOrderOutput.get(1, 0) / moduleSpeed - desiredSpeed.omegaRadiansPerSecond;
+		 swerveModuleStates[i] = new SwerveModuleVelocity(moduleSpeed, Rotation2d.fromRadians(moduleHeading));
+		 moduleTurnSpeeds[i] = secondOrderOutput.get(1, 0) / moduleSpeed - desiredSpeed.omega;
 	  }
  
 	  return swerveModuleStates;

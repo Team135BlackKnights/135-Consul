@@ -2,8 +2,8 @@ package frc.robot.subsystems.simpleMechanisms.slamElevator.ExampleClimber;
 
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.Constants;
 import frc.robot.subsystems.simpleMechanisms.slamElevator.GenericSlamElevator;
 import frc.robot.utils.LoggableTunedNumber;

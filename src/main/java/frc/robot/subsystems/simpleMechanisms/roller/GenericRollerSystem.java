@@ -1,6 +1,6 @@
 package frc.robot.subsystems.simpleMechanisms.roller;
 
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.system.Timer;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.selfCheck.SelfChecking;
 

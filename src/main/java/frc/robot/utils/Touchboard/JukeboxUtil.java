@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.hardware.ParentDevice;
 
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.BooleanSubscriber;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringSubscriber;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.networktables.BooleanPublisher;
+import org.wpilib.networktables.BooleanSubscriber;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.StringSubscriber;
+import org.wpilib.command2.SubsystemBase;
 
 public class JukeboxUtil extends SubsystemBase {
   /** Creates a new JukeboxUtil. */
@@ -44,7 +44,7 @@ public class JukeboxUtil extends SubsystemBase {
   final BooleanPublisher nextSongPublisher;
 
   private Boolean prev = false;
-  private ArrayList<ParentDevice> devices;
+  private ArrayList<ParentDevice> devices = new ArrayList<>();
   final StringSubscriber currentMusicFileSubscriber;
 
   public JukeboxUtil() {
@@ -74,6 +74,8 @@ public class JukeboxUtil extends SubsystemBase {
     nextSongPublisher =  datatable.getBooleanTopic("goToNextSong").publish();
     nextSongSubscriber = datatable.getBooleanTopic("goToNextSong").subscribe(false);
 
+
+
   }
 
  
@@ -82,8 +84,9 @@ public class JukeboxUtil extends SubsystemBase {
   }
   private void setupOrchestra(){
     mOrchestra.clearInstruments();
+    System.out.print(devices.size());
     for (ParentDevice device : devices){
-      mOrchestra.addInstrument(device);
+      mOrchestra.addInstrument(device,0);
     }
   }
 

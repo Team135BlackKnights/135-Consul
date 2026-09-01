@@ -3,7 +3,7 @@ package frc.robot.commands;
 import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.hardware.ParentDevice;
 
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.command2.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 

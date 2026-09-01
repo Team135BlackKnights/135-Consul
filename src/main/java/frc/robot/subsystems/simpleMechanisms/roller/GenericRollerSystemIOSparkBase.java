@@ -7,13 +7,14 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.util.Units;
+import org.wpilib.math.util.Units;
+import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingSparkBase;
@@ -34,10 +35,10 @@ public abstract class GenericRollerSystemIOSparkBase implements GenericRollerSys
       int id, String name, int currentLimitAmps, boolean invert, boolean brake, double reduction) {
     this.reduction = reduction;
     if (SimpleMechanismConstants.Roller.motorType == MotorVendor.NEO_SPARK_MAX) {
-      motor = new SparkMax(id, SparkBase.MotorType.kBrushless);
+      motor = new SparkMax(DriveConstants.rioCanBusId, id, SparkBase.MotorType.kBrushless);
       config = new SparkMaxConfig();
     } else {
-      motor = new SparkFlex(id, SparkBase.MotorType.kBrushless);
+      motor = new SparkFlex(DriveConstants.rioCanBusId, id, SparkBase.MotorType.kBrushless);
       config = new SparkFlexConfig();
     }
     this.name = name;
@@ -48,11 +49,11 @@ public abstract class GenericRollerSystemIOSparkBase implements GenericRollerSys
   }
 
   public void updateInputs(GenericRollerSystemIOInputs inputs) {
-    inputs.positionRads = Units.rotationsToRadians(encoder.getPosition()) / reduction;
-    inputs.velocityRadsPerSec = Units.rotationsPerMinuteToRadiansPerSecond(encoder.getVelocity()) / reduction;
-    inputs.appliedVoltage = motor.getAppliedOutput() * motor.getBusVoltage();
-    inputs.supplyCurrentAmps = motor.getOutputCurrent();
-    inputs.tempCelsius = motor.getMotorTemperature();
+    inputs.positionRads = Units.rotationsToRadians(encoder.getPosition().get()) / reduction;
+    inputs.velocityRadsPerSec = Units.rotationsPerMinuteToRadiansPerSecond(encoder.getVelocity().get()) / reduction;
+    inputs.appliedVoltage = motor.getAppliedOutput().get() * motor.getBusVoltage().get();
+    inputs.supplyCurrentAmps = motor.getOutputCurrent().get();
+    inputs.tempCelsius = motor.getMotorTemperature().get();
   }
 
   @Override

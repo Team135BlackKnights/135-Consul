@@ -4,6 +4,7 @@
 package frc.robot.utils.drive.Sensors;
 
 import frc.robot.Constants.EncoderType;
+import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCANCoder;
@@ -18,9 +19,9 @@ import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
 
 /**
  * This class is used to interface with a CANCoder.
@@ -66,7 +67,7 @@ public class EncoderIOCANCoder implements EncoderIO {
 
     public EncoderIOCANCoder(int canID, String name, double conversionFactor, double encoderOffsetRotations,
             boolean isInverted) {
-        this.encoder = new CANcoder(canID);
+        this.encoder = new CANcoder(canID, DriveConstants.rioCanBus);
         MagnetSensorConfigs sensorConfig = new MagnetSensorConfigs().withMagnetOffset(encoderOffsetRotations)
                 .withSensorDirection(isInverted ? SensorDirectionValue.Clockwise_Positive
                         : SensorDirectionValue.CounterClockwise_Positive);

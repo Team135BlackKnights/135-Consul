@@ -1,9 +1,8 @@
 package frc.robot.subsystems.simpleMechanisms.slamElevator;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.simulation.ElevatorSim;
 
 public class GenericSlamElevatorIOSim implements GenericSlamElevatorIO {
   private final ElevatorSim sim;
@@ -35,21 +34,21 @@ public class GenericSlamElevatorIOSim implements GenericSlamElevatorIO {
 
   @Override
   public void updateInputs(GenericSlamElevatorIOInputs inputs) {
-    if (DriverStation.isDisabled()) {
+    if (!RobotState.isEnabled()) {
       stop();
     }
 
     sim.update(.02);
-    inputs.positionRads = sim.getPositionMeters() / drumRadiusMeters;
-    inputs.velocityRadsPerSec = sim.getVelocityMetersPerSecond();
+    inputs.positionRads = sim.getPosition() / drumRadiusMeters;
+    inputs.velocityRadsPerSec = sim.getVelocity();
     inputs.appliedVoltage = appliedVoltage;
-    inputs.supplyCurrentAmps = Math.abs(sim.getCurrentDrawAmps());
+    inputs.supplyCurrentAmps = Math.abs(sim.getCurrentDraw());
   }
 
   @Override
   public void runCurrent(double amps) {
-    appliedVoltage = currentController.calculate(sim.getCurrentDrawAmps(), amps);
-    appliedVoltage = MathUtil.clamp(appliedVoltage, -12.0, 12.0);
+    appliedVoltage = currentController.calculate(sim.getCurrentDraw(), amps);
+    appliedVoltage = Math.max(-12.0, Math.min(12.0, appliedVoltage));
     sim.setInputVoltage(appliedVoltage);
   }
 

@@ -3,17 +3,17 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.utils.Touchboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.wpilib.command2.SubsystemBase;
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.DoubleSubscriber;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.CommandScheduler;
 
 import java.util.function.Supplier;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Commands;
 
 public class AxisKnob extends SubsystemBase {
   /** Creates a new AxisKnob. */

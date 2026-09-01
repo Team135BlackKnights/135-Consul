@@ -12,13 +12,13 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingTalonFX;
@@ -78,10 +78,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 		switch (index) {
 			case 0:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kFrontLeftAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kFrontLeftAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kFrontLeftTurningPort, DriveConstants.driveCanBus);
@@ -97,10 +96,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				break;
 			case 1:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kFrontRightAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kFrontRightAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kFrontRightTurningPort, DriveConstants.driveCanBus);
@@ -117,10 +115,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				break;
 			case 2:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kBackLeftAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kBackLeftAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackLeftTurningPort, DriveConstants.driveCanBus);
@@ -137,10 +134,9 @@ public class ModuleIOKrakenFOC implements ModuleIO {
 				break;
 			case 3:
 				if (DriveConstants.driveCanBus == null) {
-					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort);
-					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort);
-					turnAbsoluteEncoder = new CANcoder(
-							DriveConstants.kBackRightAbsEncoderPort);
+					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.rioCanBus);
+					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.rioCanBus);
+					turnAbsoluteEncoder = new CANcoder(DriveConstants.kBackRightAbsEncoderPort, DriveConstants.rioCanBus);
 				} else {
 					driveTalon = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.driveCanBus);
 					turnTalon = new TalonFX(DriveConstants.kBackRightTurningPort, DriveConstants.driveCanBus);

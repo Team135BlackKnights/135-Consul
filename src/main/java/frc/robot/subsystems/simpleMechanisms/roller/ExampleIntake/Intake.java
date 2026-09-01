@@ -2,8 +2,8 @@ package frc.robot.subsystems.simpleMechanisms.roller.ExampleIntake;
 
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
 import frc.robot.utils.LoggableTunedNumber;
 import frc.robot.Constants;
 import frc.robot.subsystems.simpleMechanisms.roller.GenericRollerSystem;

@@ -1,6 +1,6 @@
 package frc.robot.utils.drive.Sensors;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.Arrays;

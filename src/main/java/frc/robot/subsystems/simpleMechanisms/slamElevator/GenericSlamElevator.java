@@ -1,7 +1,7 @@
 package frc.robot.subsystems.simpleMechanisms.slamElevator;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.system.Timer;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.utils.selfCheck.SelfChecking;
 
@@ -97,7 +97,7 @@ public abstract class GenericSlamElevator<G extends GenericSlamElevator.SlamElev
         Logger.processInputs(name, inputs);
 
         // Ensure brake mode is enabled
-        if (DriverStation.isEnabled()) {
+        if (RobotState.isEnabled()) {
             setBrakeMode(true);
         }
 
@@ -138,7 +138,7 @@ public abstract class GenericSlamElevator<G extends GenericSlamElevator.SlamElev
             }
         }
 
-        if (DriverStation.isDisabled()) {
+        if (!RobotState.isEnabled()) {
             // Reset
             io.stop();
             lastGoal = null;
