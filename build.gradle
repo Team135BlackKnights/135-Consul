@@ -6,7 +6,7 @@ plugins {
     id "io.freefair.lombok" version "9.4.0"
     id "com.google.protobuf" version "0.9.4"
 }
-def grpcVersion = '1.61.0' 
+def grpcVersion = '1.61.0'
 def protobufVersion = '3.25.1'
 protobuf {
     protoc {
@@ -126,7 +126,7 @@ dependencies {
     nativeRelease wpi.java.deps.wpilibJniRelease(wpi.platforms.desktop)
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
-    
+
     implementation group: 'junit', name: 'junit', version: '4.13.1' 
     implementation group: 'org.dyn4j', name: 'dyn4j', version: '5.0.2'
     implementation 'gov.nist.math:jama:1.0.3'

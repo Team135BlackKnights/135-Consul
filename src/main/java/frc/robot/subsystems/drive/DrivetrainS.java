@@ -32,7 +32,7 @@ public interface DrivetrainS extends Subsystem {
 	 */
 	public static Field2d robotField = new Field2d();
 
-	void setChassisSpeeds(ChassisVelocities speeds);
+	void setChassisVelocities(ChassisVelocities speeds);
 	/**
 	 * Swerve Only. Set the angles of the modules
 	 */
@@ -42,8 +42,11 @@ public interface DrivetrainS extends Subsystem {
 	/**
 	 * @return the ChassisVelocities of the drivetrain
 	 */
-	ChassisVelocities getChassisSpeeds();
-
+	ChassisVelocities getChassisVelocities();
+	/**
+	 * @return the ChassisVelocities of the drivetrain in field relative
+	 */
+	ChassisVelocities getFieldChassisVelocities();
 	/**
 	 * Reset the drivetrain's odometry to a particular pose
 	 * 
@@ -165,7 +168,7 @@ public interface DrivetrainS extends Subsystem {
 	 void runCharacterization(double velocity);
 	 void endCharacterization();
 	double getCharacterizationVelocity();
-	void setPathplannerChassisSpeeds(ChassisVelocities speeds, DriveFeedforwards feedforwards);
+	void setPathplannerChassisVelocities(ChassisVelocities speeds, DriveFeedforwards feedforwards);
 
 	 double[] getWheelRadiusCharacterizationPosition();
 

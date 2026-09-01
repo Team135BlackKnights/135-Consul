@@ -31,6 +31,8 @@ import frc.robot.commands.drive.DriveToLine;
 import frc.robot.subsystems.drive.DrivetrainS;
 import java.lang.Double;
 public class PathFinder {
+	// AutoPilot-specific helpers are disabled until a 2027-compatible vendordep is published.
+
 	/**
 	 * Goes to a given pose with the speed constraints, and will ALWAYS end
 	 * facing the given degree.

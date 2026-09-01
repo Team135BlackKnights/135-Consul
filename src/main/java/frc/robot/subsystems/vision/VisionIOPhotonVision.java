@@ -28,7 +28,7 @@ public class VisionIOPhotonVision implements VisionIO {
    */
   public VisionIOPhotonVision(Supplier<VisionConstants.AprilTagLayoutType> aprilTagLayoutSupplier,String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
-    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(), robotToCamera);
+    photonEstimator = new PhotonPoseEstimator(aprilTagLayoutSupplier.get().getLayout(),robotToCamera);
   }
 
   @Override
@@ -50,11 +50,11 @@ public class VisionIOPhotonVision implements VisionIO {
           if (visionResult.targetsUsed.size() > 1 && result.getMultiTagResult().isPresent()) {
             ambiguity = result.getMultiTagResult().get().estimatedPose.ambiguity;
           }else{
-            ambiguity = result.getBestTarget().poseAmbiguity; 
+            ambiguity = result.getBestTarget().poseAmbiguity;
           }
             // Calculate average tag distance
           double totalTagDistance = 0.0;
-          
+
           for (var target : visionResult.targetsUsed) {
             targetObservations.add(
             new TargetObservation(
@@ -63,7 +63,7 @@ public class VisionIOPhotonVision implements VisionIO {
                 target.getFiducialId(),
                 target.getBestCameraToTarget(),
                 TimeUtil.getRealTimeSeconds()));
-            totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();		  
+            totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
           }
 
           // Add tag IDs
@@ -80,7 +80,7 @@ public class VisionIOPhotonVision implements VisionIO {
           }
         }
     }
-    
+
 
     // Save pose observations to inputs object
     inputs.poseObservations = new PoseObservation[poseObservations.size()];

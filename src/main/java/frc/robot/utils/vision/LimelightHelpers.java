@@ -176,7 +176,7 @@ public class LimelightHelpers {
         {
             return toPose2D(targetPose_RobotSpace);
         }
-        
+
         @SerializedName("ta")
         public double ta;
 
@@ -194,7 +194,7 @@ public class LimelightHelpers {
 
         @SerializedName("ts")
         public double ts;
-        
+
         public LimelightTarget_Fiducial() {
             cameraPose_TargetSpace = new double[6];
             robotPose_FieldSpace = new double[6];
@@ -301,13 +301,13 @@ public class LimelightHelpers {
 
         @SerializedName("botpose_tagcount")
         public double botpose_tagcount;
-       
+
         @SerializedName("botpose_span")
         public double botpose_span;
-       
+
         @SerializedName("botpose_avgdist")
         public double botpose_avgdist;
-       
+
         @SerializedName("botpose_avgarea")
         public double botpose_avgarea;
 
@@ -317,11 +317,11 @@ public class LimelightHelpers {
         public Pose3d getBotPose3d() {
             return toPose3D(botpose);
         }
-    
+
         public Pose3d getBotPose3d_wpiRed() {
             return toPose3D(botpose_wpired);
         }
-    
+
         public Pose3d getBotPose3d_wpiBlue() {
             return toPose3D(botpose_wpiblue);
         }
@@ -329,11 +329,11 @@ public class LimelightHelpers {
         public Pose2d getBotPose2d() {
             return toPose2D(botpose);
         }
-    
+
         public Pose2d getBotPose2d_wpiRed() {
             return toPose2D(botpose_wpired);
         }
-    
+
         public Pose2d getBotPose2d_wpiBlue() {
             return toPose2D(botpose_wpiblue);
         }
@@ -370,7 +370,7 @@ public class LimelightHelpers {
     public static class LimelightResults {
         @SerializedName("Results")
         public Results targetingResults;
-        
+
         public String error;
 
         public LimelightResults() {
@@ -533,7 +533,7 @@ public class LimelightHelpers {
 
     /**
      * Switch to getBotPose
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -544,7 +544,7 @@ public class LimelightHelpers {
 
     /**
      * Switch to getBotPose_wpiRed
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -555,7 +555,7 @@ public class LimelightHelpers {
 
     /**
      * Switch to getBotPose_wpiBlue
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -650,7 +650,7 @@ public class LimelightHelpers {
     /**
      * Gets the Pose2d for easy use with Odometry vision pose estimator
      * (addVisionMeasurement)
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -663,7 +663,7 @@ public class LimelightHelpers {
     /**
      * Gets the Pose2d and timestamp for use with WPILib pose estimator (addVisionMeasurement) when you are on the BLUE
      * alliance
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -674,7 +674,7 @@ public class LimelightHelpers {
     /**
      * Gets the Pose2d for easy use with Odometry vision pose estimator
      * (addVisionMeasurement)
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -698,7 +698,7 @@ public class LimelightHelpers {
     /**
      * Gets the Pose2d for easy use with Odometry vision pose estimator
      * (addVisionMeasurement)
-     * 
+     *
      * @param limelightName
      * @return
      */
@@ -720,7 +720,7 @@ public class LimelightHelpers {
         setLimelightNTDouble(limelightName, "pipeline", pipelineIndex);
     }
 
-    
+
     public static void setPriorityTagID(String limelightName, int ID) {
         setLimelightNTDouble(limelightName, "priorityid", ID);
     }

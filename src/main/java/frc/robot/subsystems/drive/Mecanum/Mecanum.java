@@ -16,8 +16,8 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import org.wpilib.math.linalg.Matrix;
-import org.wpilib.math.util.Nat;
 import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.util.Nat;
 import org.wpilib.math.controller.SimpleMotorFeedforward;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
@@ -34,12 +34,14 @@ import org.wpilib.math.numbers.N3;
 import org.wpilib.command2.Command;
 import org.wpilib.command2.Commands;
 import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.Position;
 import frc.robot.utils.selfCheck.SelfChecking;
+import frc.robot.utils.vision.VisionConstants;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -96,7 +98,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		this.io = io;
 		// Configure AutoBuilder for PathPlanner
 		AutoBuilder.configure(this::getPose, this::resetPose,
-				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
+				this::getChassisVelocities, this::setPathplannerChassisVelocities,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
 				() -> Robot.isRed, this);
@@ -108,26 +110,30 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 		}
 		Pathfinding.setPathfinder(new LocalADStarAK());
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
-			Logger.recordOutput("Odometry/Trajectory",
+			Logger.recordOutput("RobotState/Trajectory",
 					activePath.toArray(new Pose2d[activePath.size()]));
 		});
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
-			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+			Logger.recordOutput("RobotState/TrajectorySetpoint", targetPose);
 		});
 		registerSelfCheckHardware();
 	}
 
 	@Override
-	public ChassisVelocities getChassisSpeeds() {
+	public ChassisVelocities getChassisVelocities() {
 		return kinematics.toChassisVelocities(
 				new MecanumDriveWheelVelocities(getFrontLeftVelocityMetersPerSec(),
 						getFrontRightVelocityMetersPerSec(),
 						getBackLeftVelocityMetersPerSec(),
 						getBackRightVelocityMetersPerSec()));
 	}
+	@Override
+	public ChassisVelocities getFieldChassisVelocities(){
+		return frc.robot.utils.drive.ChassisVelocityUtil.fromRobotRelative(getChassisVelocities(), getRotation2d());
+	}
 
 	@Override
-	public void setChassisSpeeds(ChassisVelocities speeds) {
+	public void setChassisVelocities(ChassisVelocities speeds) {
 		currentDriveMode = DriveMode.NORMAL;
 		pathplannerIndex = 0;
 		MecanumDriveWheelVelocities wheelSpeeds = kinematics.toWheelVelocities(speeds);
@@ -170,88 +176,70 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public void addVisionObservation(VisionObservation observation) {
-		// If measurement is old enough to be outside the pose buffer's timespan, skip.
 		try {
-			if (poseBuffer.getInternalBuffer().lastKey()
-					- poseBufferSizeSeconds > observation.timestamp()) {
+			if (poseBuffer.getInternalBuffer().lastKey() - poseBufferSizeSeconds > observation.timestamp()) {
 				return;
 			}
 		} catch (NoSuchElementException ex) {
 			return;
 		}
-		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
 		if (sample.isEmpty()) {
-			// exit if not there
 			return;
 		}
-		// sample --> odometryPose transform and backwards of that
-		var sampleToOdometryTransform = new Transform2d(sample.get(),
-				odometryPose);
-		var odometryToSampleTransform = new Transform2d(odometryPose,
-				sample.get());
-		// get old estimate by applying odometryToSample Transform
+		var sampleToOdometryTransform = new Transform2d(sample.get(), odometryPose);
+		var odometryToSampleTransform = new Transform2d(odometryPose, sample.get());
 		Pose2d estimateAtTime = estimatedPose.plus(odometryToSampleTransform);
-		// Calculate 3 x 3 vision matrix
 		var r = new double[3];
 		for (int i = 0; i < 3; ++i) {
-			r[i] = observation.stdDevs().get(i, 0)
-					* observation.stdDevs().get(i, 0);
+			r[i] = Math.pow(observation.stdDevs().get(i, 0), 2);
 		}
-		// Solve for closed form Kalman gain for continuous Kalman filter with A = 0
-		// and C = I. See wpimath/algorithms.md.
 		Matrix<N3, N3> visionK = new Matrix<>(Nat.N3(), Nat.N3());
 		for (int row = 0; row < 3; ++row) {
-			double stdDev = qStdDevs.get(row, 0);
-			if (stdDev == 0.0) {
-				visionK.set(row, row, 0.0);
-			} else {
-				visionK.set(row, row,
-						stdDev / (stdDev + Math.sqrt(stdDev * r[row])));
+			double variance = qStdDevs.get(row, 0);
+			if (row == 2 && RobotContainer.shouldReduceGyroYawTrust()) {
+				double scale = Math.max(1e-3,
+						Math.min(1.0, VisionConstants.shootingGyroYawTrustScale.get()));
+				variance /= scale;
 			}
+			visionK.set(row, row,
+					variance == 0.0 ? 0.0 : variance / (variance + Math.sqrt(variance * r[row])));
 		}
-		// difference between estimate and vision pose
-		Transform2d transform = new Transform2d(estimateAtTime,
-				observation.visionPose());
-		// scale transform by visionK
-		var kTimesTransform = visionK.times(VecBuilder.fill(transform.getX(),
-				transform.getY(), transform.getRotation().getRadians()));
-		Transform2d scaledTransform = new Transform2d(kTimesTransform.get(0, 0),
-				kTimesTransform.get(1, 0),
-				Rotation2d.fromRadians(kTimesTransform.get(2, 0)));
-		// Recalculate current estimate by applying scaled transform to old estimate
-		// then replaying odometry data
-		estimatedPose = estimateAtTime.plus(scaledTransform)
-				.plus(sampleToOdometryTransform);
+		Transform2d transform = new Transform2d(estimateAtTime, observation.visionPose());
+		var correction = visionK.times(VecBuilder.fill(
+				transform.getX(), transform.getY(), transform.getRotation().getRadians()));
+		Transform2d scaledTransform = new Transform2d(
+				correction.get(0, 0), correction.get(1, 0), Rotation2d.fromRadians(correction.get(2, 0)));
+		estimatedPose = estimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
 	}
 
 	@Override
 	public void periodic() {
-		long timestamp = System.currentTimeMillis();
+		long timestampNs = System.nanoTime();
 		io.updateInputs(inputs);
 		Logger.processInputs("Mecanum", inputs);
-		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", System.currentTimeMillis() - timestamp);
-		timestamp = System.currentTimeMillis();
+		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS", (System.nanoTime() - timestampNs) / 1.0e6);
+		timestampNs = System.nanoTime();
 		// Update odometry
 		wheelPositions = getPositionsWithTimestamp(getWheelPositions());
 		if (debounce == 1 && isConnected()) {
 			resetPose(getPose());
 			debounce = 0;
 		}
-		ChassisVelocities m_ChassisSpeeds = getChassisSpeeds();
-		Logger.recordOutput("Mecanum/ChassisVelocities", m_ChassisSpeeds);
+		ChassisVelocities m_ChassisVelocities = getChassisVelocities();
+		Logger.recordOutput("Mecanum/ChassisVelocities", m_ChassisVelocities);
 		if (inputs.gyroConnected) {
 			// Use the real gyro angle
 			rawGyroRotation = inputs.gyroYaw;
 		} else {
 			rawGyroRotation = rawGyroRotation.plus(
-					new Rotation2d(m_ChassisSpeeds.omega * .004));
+					new Rotation2d(m_ChassisVelocities.omega * .004));
 		}
 		Translation2d linearFieldVelocity = new Translation2d(
-				m_ChassisSpeeds.vx,
-				m_ChassisSpeeds.vy).rotateBy(getRotation2d());
+				m_ChassisVelocities.vx,
+				m_ChassisVelocities.vy).rotateBy(getRotation2d());
 		fieldVelocity = new Twist2d(linearFieldVelocity.getX(),
-				linearFieldVelocity.getY(), m_ChassisSpeeds.omega);
+				linearFieldVelocity.getY(), m_ChassisVelocities.omega);
 		addOdometryObservation(new OdometryObservation(wheelPositions.getPositions(),
 				rawGyroRotation, wheelPositions.getTimestamp()));
 		collisionDetected = collisionDetected();
@@ -274,7 +262,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 				break;
 		}
 		DrivetrainS.super.periodic();
-		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", System.currentTimeMillis() - timestamp);
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (System.nanoTime() - timestampNs) / 1.0e6);
 	}
 
 	/** Run open loop at the specified voltage. */
@@ -291,7 +279,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	/**
 	 * Run closed loop given speeds + feedforwards, sends feedforward volt to motor
 	 */
-	public void setPathplannerChassisSpeeds(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
+	public void setPathplannerChassisVelocities(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.NORMAL;
 		MecanumDriveWheelVelocities wheelSpeeds = kinematics.toWheelVelocities(speeds);
 		// make the wheel speeds into a list, FL FR BL BR
@@ -400,7 +388,7 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	}
 	@Override
 	public Pose2d getLookAheadPose() {
-		return estimatedPose.plus(getChassisSpeeds().toTwist2d(.05).exp());
+		return estimatedPose.plus(getChassisVelocities().toTwist2d(.05).exp());
 	}
 	/** Resets the current odometry pose. */
 	@Override
@@ -468,8 +456,8 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	@Override
 	@AutoLogOutput(key = "RobotState/Velocity")
 	public double getCharacterizationVelocity() {
-		ChassisVelocities chassisSpeeds = getChassisSpeeds();
-		return Math.sqrt(Math.pow(chassisSpeeds.vx, 2) + Math.pow(chassisSpeeds.vy, 2) + Math.pow(getChassisSpeeds().omega * WHEEL_RADIUS, 2));
+		ChassisVelocities chassisSpeeds = getChassisVelocities();
+		return Math.sqrt(Math.pow(chassisSpeeds.vx, 2) + Math.pow(chassisSpeeds.vy, 2) + Math.pow(getChassisVelocities().omega * WHEEL_RADIUS, 2));
 	
 	}
 
@@ -515,21 +503,21 @@ public class Mecanum extends SubsystemChecker implements DrivetrainS {
 	@Override
 	protected Command systemCheckCommand() {
 		return Commands.sequence(
-				run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 0.5)))
+				run(() -> setChassisVelocities(new ChassisVelocities(0, 0, 0.5)))
 						.withTimeout(2.0),
-				run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, -0.5)))
+				run(() -> setChassisVelocities(new ChassisVelocities(0, 0, -0.5)))
 						.withTimeout(2.0),
-				run(() -> setChassisSpeeds(new ChassisVelocities(1, 0, 0)))
+				run(() -> setChassisVelocities(new ChassisVelocities(1, 0, 0)))
 						.withTimeout(1.0),
 				runOnce(() -> {
-					if (getChassisSpeeds().vx > 1.2
-							|| getChassisSpeeds().vx < .8) {
+					if (getChassisVelocities().vx > 1.2
+							|| getChassisVelocities().vx < .8) {
 						addFault(
 								"[System Check] Forward speed did not reah target speed in time.",
 								false, true);
 					}
 				})).until(() -> !getFaults().isEmpty()).andThen(
-						runOnce(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 0))));
+						runOnce(() -> setChassisVelocities(new ChassisVelocities(0, 0, 0))));
 	}
 
 	@Override

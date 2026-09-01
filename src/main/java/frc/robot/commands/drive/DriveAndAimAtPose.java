@@ -39,7 +39,7 @@ public class DriveAndAimAtPose extends Command {
 	driveTolerance = new LoggableTunedNumber("AimToPose/driveTolerance", .015, TuningConstants.isTuningMacros), 
 	maxThetaSpeed = new LoggableTunedNumber("AimToPose/maxThetaSpeed", Math.PI*2, TuningConstants.isTuningMacros), 
 	thetaKp = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
-	thetaKd = new LoggableTunedNumber("AimToPose/thetaKp", 5, TuningConstants.isTuningMacros), 
+	thetaKd = new LoggableTunedNumber("AimToPose/thetaKd", 5, TuningConstants.isTuningMacros), 
 	thetaTolerance = new LoggableTunedNumber("AimToPose/thetaTolerance", Units.degreesToRadians(1), TuningConstants.isTuningMacros), 
 	ffMaxRadius = new LoggableTunedNumber("AimToPose/ffMaxRadius", 2, TuningConstants.isTuningMacros), 
 	ffMinRadius = new LoggableTunedNumber("AimToPose/ffMinRadius", .125, TuningConstants.isTuningMacros); 
@@ -121,8 +121,8 @@ public class DriveAndAimAtPose extends Command {
 						poseSupplier.get(), GeomUtil.ApproachDirection.FRONT));
 		//targetAngle += Units.degreesToRadians(VisionConstants.DriveToAITargetKError.get()); //Add/subtract from this for any tweaking from where camera placed for actual robot error
 		Rotation2d currentRotation = currentPose.getRotation();
-		Logger.recordOutput("RotateAndDriveToPose/TargetAngle", targetAngle);
-		Logger.recordOutput("RotateAndDriveToPose/currentROtation",
+		Logger.recordOutput("Drive/RotateAndDriveToPose/TargetAngle", targetAngle);
+		Logger.recordOutput("Drive/RotateAndDriveToPose/CurrentRotation",
 				currentRotation);
 		RobotContainer.angleOverrider = Optional.of(new Rotation2d(targetAngle));
 		double thetaVelocity = thetaController.getSetpoint().velocity
@@ -137,14 +137,14 @@ public class DriveAndAimAtPose extends Command {
 						.getTranslation(); //Calculate X and Y speeds from driveVelocity scalar.
 		ChassisVelocities speeds = frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(driveVelocity.getX(),
 				driveVelocity.getY(), thetaVelocity, currentPose.getRotation());
-		drive.setChassisSpeeds(speeds); //assert that we are relative to the current pose
+		drive.setChassisVelocities(speeds); //assert that we are relative to the current pose
 		// Log data for debugging
-		Logger.recordOutput("RotateAndDriveToPose/DriveError", driveErrorAbs);
-		Logger.recordOutput("RotateAndDriveToPose/DriveSpeed",
+		Logger.recordOutput("Drive/RotateAndDriveToPose/DriveError", driveErrorAbs);
+		Logger.recordOutput("Drive/RotateAndDriveToPose/DriveSpeed",
 				driveVelocityScalar);
-		Logger.recordOutput("RotateAndDriveToPose/ThetaError",
+		Logger.recordOutput("Drive/RotateAndDriveToPose/ThetaError",
 				thetaController.getPositionError());
-		Logger.recordOutput("RotateAndDriveToPose/ThetaSpeed", thetaVelocity);
+		Logger.recordOutput("Drive/RotateAndDriveToPose/ThetaSpeed", thetaVelocity);
 		// Check if both drive and rotation are at their goals
 		if (driveController.atGoal() && thetaController.atGoal()) {
 			isFinished = true;

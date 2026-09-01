@@ -28,6 +28,7 @@ import org.wpilib.command2.Commands;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.utils.drive.DriveConstants.MotorVendor;
 import frc.robot.subsystems.SubsystemChecker;
@@ -43,6 +44,7 @@ import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
 import frc.robot.utils.selfCheck.SelfChecking;
 import frc.robot.utils.selfCheck.drive.SelfCheckingCanivore;
+import frc.robot.utils.maths.TimeUtil;
 import frc.robot.utils.vision.VisionConstants;
 import frc.robot.utils.vision.VisionConstants.AITargets;
 import frc.robot.utils.vision.VisionConstants.FieldConstants;
@@ -103,7 +105,6 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	private boolean lastEnabled = false;
 	private ChassisVelocities desiredSpeeds = new ChassisVelocities();
 	private static final double poseBufferSizeSeconds = 2.0;
-	private static final double txTyObservationStaleSecs = .3;
 	private Pose2d odometryPose = new Pose2d();
 	private Pose2d estimatedPose = new Pose2d();
 	private SwerveSetpoint currentSetpoint = new SwerveSetpoint(
@@ -138,8 +139,16 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	public record TxTyPoseRecord(Pose3d pose, double distance, double timestamp, double tx, double ty, int camIndex) {
 	}
-
+	private static final double txTyObservationStaleSecs = 0.5;
 	private final Map<String, TxTyPoseRecord> txTyPoses = new HashMap<>();
+	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
+
+	static {
+		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
+			tagPoses2d.put(i, RobotContainer.getSelectedAprilTagLayout().getLayout()
+					.getTagPose(i).map(Pose3d::toPose2d).orElse(new Pose2d()));
+		}
+	}
 
 	private SwerveModulePosition[] lastWheelPositions = new SwerveModulePosition[] { new SwerveModulePosition(),
 			new SwerveModulePosition(), new SwerveModulePosition(),
@@ -153,24 +162,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	};
 	private final OdometryThread odometryThread;
 	private Feedforwards pathPlannerNM = new Feedforwards(4);
+	// AutoPilot is disabled until a 2027-compatible vendordep is published.
 	private double characterizationVelocity = 0.0;
-	private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
-
-	static {
-		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-			tagPoses2d.put(
-					i,
-					RobotContainer.getSelectedAprilTagLayout().getLayout()
-							.getTagPose(i)
-							.map(Pose3d::toPose2d)
-							.orElse(new Pose2d()));
-		}
-		if (Constants.currentMode == Constants.Mode.REAL) {
-			tagPoses2d.put(42, new Pose2d());
-
-		}
-	}
-
 	public Swerve(GyroIO gyroIO, ModuleIO fl, ModuleIO fr, ModuleIO bl,
 			ModuleIO br) {
 		this.gyroIO = gyroIO;
@@ -186,26 +179,27 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					2));
 		}
 		for (int i = 1; i <= FieldConstants.aprilTagOffsets.length; i++) {
-			txTyPoses.put("A" + i, new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
+			txTyPoses.put("A" + i,
+					new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		}
-		txTyPoses.put("A42", new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		for (AITargets target : AITargets.values()) {
-			txTyPoses.put(target.name(), new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
+			txTyPoses.put(target.name(),
+					new TxTyPoseRecord(Pose3d.kZero, Double.POSITIVE_INFINITY, -1.0, 0, 0, 0));
 		}
 
 		setpointGenerator = new SwerveSetpointGenerator(kinematics,
 				DriveConstants.kModuleTranslations);
 		AutoBuilder.configure(this::getLookAheadPose, this::resetPose,
-				this::getChassisSpeeds, this::setPathplannerChassisSpeeds,
+				this::getChassisVelocities, this::setPathplannerChassisVelocities,
 				DriveConstants.mainController,
 				DriveConstants.mainConfig,
 				() -> Robot.isRed, this);
 		PathPlannerLogging.setLogActivePathCallback((activePath) -> {
-			Logger.recordOutput("Odometry/Trajectory",
+			Logger.recordOutput("RobotState/Trajectory",
 					activePath.toArray(new Pose2d[activePath.size()]));
 		});
 		PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
-			Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+			Logger.recordOutput("RobotState/TrajectorySetpoint", targetPose);
 		});
 		// SwerveDrive view
 		SmartDashboard.putData("Swerve Drive", new Sendable() {
@@ -257,65 +251,48 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	public void addVisionObservation(VisionObservation observation) {
-		// If measurement is old enough to be outside the pose buffer's timespan, skip.
 		try {
-			if (poseBuffer.getInternalBuffer().lastKey()
-					- poseBufferSizeSeconds > observation.timestamp()) {
-
-				System.out.println("OUTSIDE BUFFER");
-				System.out.println("CURRENT TIME DELTA:"
-						+ String.valueOf(poseBuffer.getInternalBuffer().lastKey() - observation.timestamp()));
+			if (poseBuffer.getInternalBuffer().lastKey() - poseBufferSizeSeconds > observation.timestamp()) {
 				return;
 			}
 		} catch (NoSuchElementException ex) {
-			System.err.println("NO ELEMENT!");
 			return;
 		}
-		// Get odometry based pose at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
 		if (sample.isEmpty()) {
-			// exit if not there
 			return;
 		}
-		// sample --> odometryPose transform and backwards of that
-		var sampleToOdometryTransform = new Transform2d(sample.get(),
-				odometryPose);
-		var odometryToSampleTransform = new Transform2d(odometryPose,
-				sample.get());
-		// get old estimate by applying odometryToSample Transform
+		var sampleToOdometryTransform = new Transform2d(sample.get(), odometryPose);
+		var odometryToSampleTransform = new Transform2d(odometryPose, sample.get());
 		Pose2d estimateAtTime = estimatedPose.plus(odometryToSampleTransform);
-		// Calculate 3 x 3 vision matrix
 		var r = new double[3];
 		for (int i = 0; i < 3; ++i) {
-			r[i] = observation.stdDevs().get(i, 0)
-					* observation.stdDevs().get(i, 0);
+			r[i] = Math.pow(observation.stdDevs().get(i, 0), 2);
 		}
-		// Solve for closed form Kalman gain for continuous Kalman filter with A = 0
-		// and C = I. See wpimath/algorithms.md.
 		Matrix<N3, N3> visionK = new Matrix<>(Nat.N3(), Nat.N3());
 		for (int row = 0; row < 3; ++row) {
-			double stdDev = qStdDevs.get(row, 0);
-			if (stdDev == 0.0) {
-				visionK.set(row, row, 0.0);
-			} else {
-				visionK.set(row, row,
-						stdDev / (stdDev + Math.sqrt(stdDev * r[row])));
-			}
+			double variance = getVisionProcessVariance(row);
+			visionK.set(row, row,
+					variance == 0.0 ? 0.0 : variance / (variance + Math.sqrt(variance * r[row])));
 		}
-		// difference between estimate and vision pose
-		Transform2d transform = new Transform2d(estimateAtTime,
-				observation.visionPose());
-		// scale transform by visionK
-		var kTimesTransform = visionK.times(VecBuilder.fill(transform.getX(),
-				transform.getY(), transform.getRotation().getRadians()));
-		Transform2d scaledTransform = new Transform2d(kTimesTransform.get(0, 0),
-				kTimesTransform.get(1, 0),
-				Rotation2d.fromRadians(kTimesTransform.get(2, 0)));
-		// Recalculate current estimate by applying scaled transform to old estimate
-		// then replaying odometry data
-		estimatedPose = estimateAtTime.plus(scaledTransform)
-				.plus(sampleToOdometryTransform);
+		Transform2d transform = new Transform2d(estimateAtTime, observation.visionPose());
+		var correction = visionK.times(VecBuilder.fill(
+				transform.getX(), transform.getY(), transform.getRotation().getRadians()));
+		Transform2d scaledTransform = new Transform2d(
+				correction.get(0, 0), correction.get(1, 0), Rotation2d.fromRadians(correction.get(2, 0)));
+		estimatedPose = estimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
 	}
+
+	private double getVisionProcessVariance(int row) {
+		double variance = qStdDevs.get(row, 0);
+		if (row != 2 || !RobotContainer.shouldReduceGyroYawTrust()) {
+			return variance;
+		}
+		double trustScale = Math.max(1e-3,
+				Math.min(1.0, VisionConstants.shootingGyroYawTrustScale.get()));
+		return variance / trustScale;
+	}
+
 
 	public void addVelocityData(Twist2d robotVelocity) {
 		this.robotVelocity = robotVelocity;
@@ -328,11 +305,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	public boolean[] calculateSkidding() {
 		SwerveModuleVelocity[] moduleStates = getModuleStates();
-		ChassisVelocities currentChassisSpeeds = getChassisSpeeds();
+		ChassisVelocities currentChassisVelocities = getChassisVelocities();
 		// Step 1: Create a measured ChassisVelocities object with solely the rotation
 		// component
 		ChassisVelocities rotationOnlySpeeds = new ChassisVelocities(0.0, 0.0,
-				currentChassisSpeeds.omega + .05);
+				currentChassisVelocities.omega + .05);
 		double[] xComponentList = new double[4];
 		double[] yComponentList = new double[4];
 		// Step 2: Convert it into module states with kinematics
@@ -399,30 +376,30 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	/**
 	 * Get the current pose of the robot with front being whatever front has been
 	 * set to
-	 *
+	 * 
 	 * @return a VISUAL ONLY output of the robot pose
 	 * @see {@link #getPose() getPose} for the geometrically accurate pose
 	 */
 	@AutoLogOutput(key = "RobotState/EstimatedPose")
 	@Override
 	public Pose2d getLookAheadPose() {
-		return estimatedPose.plus(getChassisSpeeds().toTwist2d(lookAheadTime.get()).exp());
+		return estimatedPose.plus(getChassisVelocities().toTwist2d(lookAheadTime.get()).exp());
 		/*
 		 * return estimatedPose.plus(new Transform2d(new Translation2d(),
 		 * DriveConstants.TrainConstants.robotOffsetAngleDirection));
 		 */
 	}
-
 	@Override
 	public ModuleLimits getModuleLimits() {
 		return currentModuleLimits;
 	}
 
+	@Override
 	public void periodic() {
 		// Check if modules are skidding
 		// Update & process inputs
 		odometryThread.lockOdometry();
-		long inputTime = System.currentTimeMillis();
+		long inputStartNs = System.nanoTime();
 		odometryThread.updateInputs(odometryTimestampInputs);
 		Logger.processInputs("Drive/OdometryTimestamps", odometryTimestampInputs);
 		// Read inputs from gyro
@@ -432,8 +409,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		Arrays.stream(modules).forEach(Module::updateInputs);
 		odometryThread.unlockOdometry();
 		Logger.recordOutput("SystemStatus/Periodic/DriveInputsMS",
-				(System.currentTimeMillis() - inputTime));
-		long systemTime = System.currentTimeMillis();
+				(System.nanoTime() - inputStartNs) / 1.0e6);
+		long processStartNs = System.nanoTime();
 		// for each, see if we're disconnected
 		for (Module module : modules) {
 			if (!module.isDriveConnected()) {
@@ -479,7 +456,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 					if (Math.abs(omega) > currentModuleLimits.maxSteeringVelocity()
 							* 5.0
 							|| Math.abs(velocity) > currentModuleLimits
-									.maxDriveVelocity() * 5.0 || isSkidding[j]) {
+									.maxDriveVelocity() * 5.0) {
 						includeMeasurement = false;
 						break;
 					}
@@ -495,7 +472,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			}
 		}
 		// Update current velocities use gyro when possible
-		ChassisVelocities previousSpeeds = getChassisSpeeds();
+		ChassisVelocities previousSpeeds = getChassisVelocities();
 		previousSpeeds.omega = gyroInputs.connected
 				? gyroInputs.yawVelocityRadPerSec
 				: previousSpeeds.omega;
@@ -575,6 +552,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 						DriveConstants.maxRotationalAcceleration.get());
 			}
 		}
+		if (Constants.currentMatchState == FRCMatchState.AUTO){
+			currentModuleLimits = DriveConstants.moduleLimitsAuto;
+		}else{
+			currentModuleLimits = DriveConstants.moduleLimitsAuto;
+		}
 		// Run modules
 		if (!modulesOrienting && currentDriveMode != DriveMode.MODULE_CHARACTERIZATION) {
 			// Run robot at desiredSpeeds
@@ -625,28 +607,12 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 		 */
 		DrivetrainS.super.periodic();
 		// DEBUG log vision stuff
-		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
-			String name = entry.getKey();
-			TxTyPoseRecord record = entry.getValue();
-			double age = Timer.getTimestamp() - record.timestamp;
-			boolean isStale = age > txTyObservationStaleSecs;
-			Logger.recordOutput("Vision/" + name + "/Age", age);
-			Logger.recordOutput("Vision/" + name + "/IsStale", isStale);
-			if (!isStale) {
-				if (!name.contains("A")) {
-					Logger.recordOutput("Vision/" + name + "/Pose", record.pose.toPose2d());
-				} else {
-					Logger.recordOutput("Vision/" + name + "/Pose", record.pose);
-				}
-				Logger.recordOutput("Vision/" + name + "/Distance", record.distance);
-			}
-		}
-		Logger.recordOutput("RobotState/AheadPose", getLookAheadPose().plus(getChassisSpeeds().toTwist2d(.05).exp()));
-		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (systemTime - System.currentTimeMillis()));
+		Logger.recordOutput("RobotState/AheadPose", getLookAheadPose().plus(getChassisVelocities().toTwist2d(.05).exp()));
+		Logger.recordOutput("SystemStatus/Periodic/DriveProcessMS", (System.nanoTime() - processStartNs) / 1.0e6);
 	}
 
 	@Override
-	public void setChassisSpeeds(ChassisVelocities speeds) {
+	public void setChassisVelocities(ChassisVelocities speeds) {
 		currentDriveMode = DriveMode.TELEOP;
 		desiredSpeeds = new ChassisVelocities(speeds.vx,
 				speeds.vy, speeds.omega);
@@ -658,7 +624,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	}
 
 	@Override
-	public void setPathplannerChassisSpeeds(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
+	public void setPathplannerChassisVelocities(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
 		currentDriveMode = DriveMode.TRAJECTORY;
 		desiredSpeeds = new ChassisVelocities(speeds.vx,
 				speeds.vy, speeds.omega);
@@ -668,8 +634,8 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 			pathPlannerNM.x_newtons[i] = robotRelativeForcesXNewtons[i];
 			pathPlannerNM.y_newtons[i] = robotRelativeForcesYNewtons[i];
 		}
-		Logger.recordOutput("Swerve/xForces", feedforwards.robotRelativeForcesXNewtons());
-		Logger.recordOutput("Swerve/yForces", feedforwards.robotRelativeForcesYNewtons());
+		Logger.recordOutput("Drive/xForces", feedforwards.robotRelativeForcesXNewtons());
+		Logger.recordOutput("Drive/yForces", feedforwards.robotRelativeForcesYNewtons());
 	}
 
 	/**
@@ -698,8 +664,11 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	 */
 	@AutoLogOutput(key = "Drive/MeasuredSpeeds")
 	@Override
-	public ChassisVelocities getChassisSpeeds() {
+	public ChassisVelocities getChassisVelocities() {
 		return kinematics.toChassisVelocities(getModuleStates());
+	}
+	public ChassisVelocities getFieldChassisVelocities(){
+		return frc.robot.utils.drive.ChassisVelocityUtil.fromRobotRelative(getChassisVelocities(), getRotation2d());
 	}
 
 	@Override
@@ -814,7 +783,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	@Override
 	protected Command systemCheckCommand() {
 		return Commands
-				.sequence(run(() -> setChassisSpeeds(new ChassisVelocities(1, 0, 0)))
+				.sequence(run(() -> setChassisVelocities(new ChassisVelocities(1, 0, 0)))
 						.withTimeout(1.0), runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
 								// Retrieve the corresponding REVSwerveModule from the hashmap
@@ -848,7 +817,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 1, 0)))
+						}), run(() -> setChassisVelocities(new ChassisVelocities(0, 1, 0)))
 								.withTimeout(1.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
@@ -881,7 +850,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, -2)))
+						}), run(() -> setChassisVelocities(new ChassisVelocities(0, 0, -2)))
 								.withTimeout(2.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
@@ -911,7 +880,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 											false, true);
 								}
 							}
-						}), run(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 2)))
+						}), run(() -> setChassisVelocities(new ChassisVelocities(0, 0, 2)))
 								.withTimeout(2.0),
 						runOnce(() -> {
 							for (int i = 0; i < modules.length; i++) {
@@ -943,7 +912,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 							}
 						}))
 				.until(() -> !getFaults().isEmpty()).andThen(
-						runOnce(() -> setChassisSpeeds(new ChassisVelocities(0, 0, 0))));
+						runOnce(() -> setChassisVelocities(new ChassisVelocities(0, 0, 0))));
 	}
 
 	private boolean isWithinTolerance(double value, double target, double tolerance) {
@@ -1028,109 +997,60 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void addTxTyObservation(TxTyObservation observation) {
-		// Skip if current data for tag is newer
 		if (txTyPoses.containsKey(observation.observationName())
 				&& txTyPoses.get(observation.observationName()).timestamp() >= observation.timestamp()) {
 			return;
 		}
-
-		// Get rotation at timestamp
 		var sample = poseBuffer.getSample(observation.timestamp());
 		if (sample.isEmpty()) {
-			// exit if not there
 			return;
 		}
-		Rotation2d robotRotation = estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
-
-		// Average tx's and ty's
-		double tx = 0.0;
-		double ty = 0.0;
-		for (int i = 0; i < 4; i++) {
-			tx += observation.tx()[i];
-			ty += observation.ty()[i];
-		}
-		tx /= 4.0;
-		ty /= 4.0;
-
+		Rotation2d robotRotation = estimatedPose
+				.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
+		double tx = Arrays.stream(observation.tx()).average().orElse(0.0);
+		double ty = Arrays.stream(observation.ty()).average().orElse(0.0);
 		Pose3d cameraPose = VisionConstants.cameras[observation.camIndex()].getPose().get();
-		double distance = observation.distance();
-
 		if (observation.observationName().startsWith("A")) {
-			// Use 3D distance and tag angles to find robot pose
 			Translation2d camToTargetPos = new Pose3d(Translation3d.kZero, new Rotation3d(0, ty, -tx))
-					.transformBy(
-							new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
-					.getTranslation()
-					.rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
+					.transformBy(new Transform3d(
+							new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
+					.getTranslation().rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
 					.toTranslation2d();
-			Rotation2d camToTargetRotation = robotRotation.plus(
-					cameraPose.toPose2d().getRotation().plus(camToTargetPos.getAngle()));
+			Rotation2d camToTargetRotation = robotRotation
+					.plus(cameraPose.toPose2d().getRotation().plus(camToTargetPos.getAngle()));
 			int apriltag = Integer.parseInt(observation.observationName().substring(1));
-			var tagPose2d = tagPoses2d.get(apriltag);
-			if (tagPose2d == null)
+			Pose2d tagPose2d = tagPoses2d.get(apriltag);
+			if (tagPose2d == null) {
 				return;
+			}
 			Translation2d fieldToCameraTranslation = new Pose2d(tagPose2d.getTranslation(),
 					camToTargetRotation.plus(Rotation2d.kPi))
-					.transformBy(GeomUtil.toTransform2d(camToTargetPos.getNorm(), 0.0))
-					.getTranslation();
-			Pose2d robotPose = new Pose2d(
-					fieldToCameraTranslation, robotRotation.plus(cameraPose.toPose2d().getRotation()))
+					.transformBy(GeomUtil.toTransform2d(camToTargetPos.getNorm(), 0.0)).getTranslation();
+			Pose2d robotPose = new Pose2d(fieldToCameraTranslation,
+					robotRotation.plus(cameraPose.toPose2d().getRotation()))
 					.transformBy(new Transform2d(cameraPose.toPose2d(), Pose2d.kZero));
-			// Use gyro angle at time for robot rotation
 			robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
-
-			// Add transform to current odometry based pose for latency correction
-			txTyPoses.put(
-					"A" + apriltag,
-					new TxTyPoseRecord(new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(), tx, ty,
-							observation.camIndex()));
-		} else {
-			txTyPoses.put(
-					observation.observationName(),
-					new TxTyPoseRecord(observation.objectPose.get(),
-							distance,
-							observation.timestamp(), tx, ty, observation.camIndex()));
+			txTyPoses.put(observation.observationName(), new TxTyPoseRecord(
+					new Pose3d(robotPose), camToTargetPos.getNorm(), observation.timestamp(), tx, ty,
+					observation.camIndex()));
+		} else if (observation.objectPose().isPresent()) {
+			txTyPoses.put(observation.observationName(), new TxTyPoseRecord(
+					observation.objectPose().get(), observation.distance(), observation.timestamp(), tx, ty,
+					observation.camIndex()));
 		}
-
 	}
 
-	public Optional<TxTyPoseRecord> getTxPoseRecord(String tagId) {
-		if (!txTyPoses.containsKey(tagId)) {
+	public Optional<TxTyPoseRecord> getTxPoseRecord(String target) {
+		return Optional.ofNullable(txTyPoses.get(target));
+	}
+
+	public Optional<Pose3d> getTxTyPose(String target) {
+		TxTyPoseRecord data = txTyPoses.get(target);
+		if (data == null || TimeUtil.getLogTimeSeconds() - data.timestamp() >= txTyObservationStaleSecs) {
 			return Optional.empty();
 		}
-		return Optional.of(txTyPoses.get(tagId));
-	}
-
-	public Optional<Pose3d> getTxTyPose(String tagId) {
-		if (!txTyPoses.containsKey(tagId)) {
-			return Optional.empty();
-		}
-		var data = txTyPoses.get(tagId);
-		// Check if stale
-		if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs) {
-			return Optional.empty();
-		}
-		// Get odometry based pose at timestamp
-		var sample = poseBuffer.getSample(data.timestamp());
-		// Latency compensate
-		return sample.map(pose2d -> data.pose().plus(new Transform3d(new Pose3d(pose2d), new Pose3d(odometryPose))));
-	}
-
-	public ArrayList<TxTyPoseRecord> getOpposingRobotPoses() {
-		ArrayList<TxTyPoseRecord> poses = new ArrayList<>();
-		for (Map.Entry<String, TxTyPoseRecord> entry : txTyPoses.entrySet()) {
-			String name = entry.getKey();
-			if (!name.startsWith("A") && !name.startsWith("C")) {
-				poses.add(entry.getValue());
-			}
-		}
-		return poses;
-	}
-	public TxTyPoseRecord getClosestCoralPose(){
-		if (txTyPoses.containsKey("CORAL")) {
-			return txTyPoses.get("CORAL");
-		}
-		return null;
+		return poseBuffer.getSample(data.timestamp()).map(
+				pose -> data.pose().plus(new Transform3d(new Pose3d(pose), new Pose3d(odometryPose))));
 	}
 
 	public Optional<Pose3d> getTxTyPose(int apriltag) {
@@ -1140,10 +1060,9 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 	public Optional<Pose3d> getTxTyPose(AITargets target) {
 		return getTxTyPose(target.name());
 	}
-
 	/**
 	 * Get the current pose of the robot with front being the GEOMETRY front
-	 *
+	 * 
 	 * @return an INTERNAL ONLY output of the robot pose (use this for any
 	 *         driving/turning calculations)
 	 * @see {@link #getLookAheadPose() getLookAheadPose} for the visually
@@ -1156,7 +1075,7 @@ public class Swerve extends SubsystemChecker implements DrivetrainS {
 
 	@Override
 	public void stopModules() {
-		setChassisSpeeds(new ChassisVelocities());
+		setChassisVelocities(new ChassisVelocities());
 	}
 
 	@Override

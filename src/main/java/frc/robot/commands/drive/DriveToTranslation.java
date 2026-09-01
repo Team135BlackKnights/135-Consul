@@ -137,7 +137,7 @@ public class DriveToTranslation extends Command {
 		// Reset all controllers
 		running = true;
 		var currentPose = currentPoseSupplier.get();
-		ChassisVelocities fieldVelocity = drive.getChassisSpeeds();
+		ChassisVelocities fieldVelocity = drive.getFieldChassisVelocities();
 		Translation2d fieldVelocityTranslation = new Translation2d(
 				fieldVelocity.vx, fieldVelocity.vy);
 		driveController.reset(
@@ -181,7 +181,7 @@ public class DriveToTranslation extends Command {
 		// Get current and target pose
 		var currentPose = currentPoseSupplier.get();
 		//look ahwead
-		//currentPose = currentPose.exp(drive.getChassisSpeeds().toTwist2d(.3));
+		//currentPose = currentPose.exp(drive.getChassisVelocities().toTwist2d(.3));
 		var targetPose = poseSupplier.get();
 		// Calculate drive speed
 		double currentDistance = currentPose.getTranslation()
@@ -224,15 +224,15 @@ public class DriveToTranslation extends Command {
 				driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
 				currentPose.getRotation());
 		chassisSpeeds = GeomUtil.avoidRobots(chassisSpeeds);
-		drive.setChassisSpeeds(chassisSpeeds); // assert that we are relative to the current pose
+		drive.setChassisVelocities(chassisSpeeds); // assert that we are relative to the current pose
 		// Log data
-		Logger.recordOutput("DriveToPose/DistanceError", currentDistance);
-		Logger.recordOutput("DriveToPose/DistanceSetpoint",
+		Logger.recordOutput("Drive/DriveToPose/DistanceError", currentDistance);
+		Logger.recordOutput("Drive/DriveToPose/DistanceSetpoint",
 				driveController.getSetpoint().position);
-		Logger.recordOutput("Odometry/DriveToPoseSetpoint",
+		Logger.recordOutput("RobotState/DriveToPoseSetpoint",
 				new Pose2d(lastSetpointTranslation,
 						currentPose.getRotation()));
-		Logger.recordOutput("Odometry/DriveToPoseGoal", new Pose2d(targetPose, currentPose.getRotation()));
+		Logger.recordOutput("RobotState/DriveToPoseGoal", new Pose2d(targetPose, currentPose.getRotation()));
 		if (atGoal())
 			running = false; // If we've reached our goal, stop command.
 	}

@@ -16,8 +16,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants.Reef;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
+import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Rebuilt2026FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.CompetitionFieldSimulation;
 import frc.robot.utils.vision.LimelightHelpers;
 import frc.robot.utils.vision.VisionConstants;
@@ -44,8 +43,8 @@ public class BotAborter extends Command {
 		isFinished = false;
 		if (Constants.currentMode == Mode.SIM) {
 			//If the robot is in sim, target the closest game piece to drive to
-			this.targetPieceLocation = CompetitionFieldSimulation
-					.getClosestGamePiece(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class, drive.getPose().getTranslation()).getTranslation();
+			targetPieceLocation =  RobotContainer.fieldSimulation
+					.getClosestGamePiecePose2d(List.of(Rebuilt2026FieldObjects.FuelOnFieldSimulated.class)).getTranslation();
 		}
 	}
 
@@ -55,10 +54,10 @@ public class BotAborter extends Command {
 				robotTx = 0, robotTy = 0;
 		boolean gamePieceTv = false, robotTv = false;
 		if (Constants.currentMode == Mode.SIM) {
-			//In simulation, get the current pose, and set the degree value to 
+			//In simulation, get the current pose, and set the degree value to
 			currentPose = drive.getPose();
-			targetPieceLocation = CompetitionFieldSimulation
-					.getClosestGamePiece(Reefscape2025FieldObjects.ReefscapeCoralOnFieldSimulated.class, drive.getPose().getTranslation()).getTranslation();
+			targetPieceLocation =  RobotContainer.fieldSimulation
+					.getClosestGamePiecePose2d(List.of(Rebuilt2026FieldObjects.FuelOnFieldSimulated.class)).getTranslation();
 			if (targetPieceLocation == null) {
 				return;
 			}
@@ -77,7 +76,7 @@ public class BotAborter extends Command {
 			gamePieceTy = Units.radiansToDegrees(tyRad);
 			gamePieceTv = true;
 			if (Constants.currentMatchState == FRCMatchState.AUTO) {
-				Pose2d opposingBotPose = CompetitionFieldSimulation
+				Pose2d opposingBotPose =  CompetitionFieldSimulation
 						.getClosestRobotPose(currentPose.getTranslation());
 				Logger.recordOutput("OpposingRobot/GivenPose", opposingBotPose);
 				double robotDeltaX = opposingBotPose.getX() - currentPose.getX();
@@ -97,7 +96,7 @@ public class BotAborter extends Command {
 				robotTv = true;
 			}
 		} else {
-			//THESE ARE IN D E G R E E S 
+			//THESE ARE IN D E G R E E S
 			LimelightHelpers.LimelightTarget_Detector[] results = LimelightHelpers
 					.getLatestResults(
 							VisionConstants.limelightName).targetingResults.targets_Detector;
@@ -105,13 +104,13 @@ public class BotAborter extends Command {
 				if (object.confidence < .4) {
 					continue;
 				}
-				if (object.classID == AITargets.BLUE_BOT.ordinal()) {
+				if (object.classID == AITargets.FUEL.ordinal()) {
 					gamePieceTx = -object.tx;
 					gamePieceTy = object.ty;
 					gamePieceTv = true;
 				} else {
 					gamePieceTv = false;
-					if (object.classID == AITargets.RED_BOT.ordinal()) {
+					if (object.classID == AITargets.FUEL.ordinal()) {
 						robotTx = -object.tx;
 						robotTy = object.ty;
 						robotTv = true;

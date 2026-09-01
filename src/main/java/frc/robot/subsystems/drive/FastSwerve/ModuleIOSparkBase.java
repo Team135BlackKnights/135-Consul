@@ -22,9 +22,9 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.ControlType;
+import com.revrobotics.ResetMode;
+import com.revrobotics.PersistMode;
 
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
@@ -70,17 +70,17 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 moduleName = "Front Left";
                                 zeroRotation = new Rotation2d(DriveConstants.kFrontLeftAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontLeftTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kFrontLeftDriveReversed;
@@ -91,17 +91,17 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 moduleName = "Front Right";
                                 zeroRotation = new Rotation2d(DriveConstants.kFrontRightAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kFrontRightTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kFrontRightDriveReversed;
@@ -112,17 +112,17 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 moduleName = "Back Left";
                                 zeroRotation = new Rotation2d(DriveConstants.kBackLeftAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackLeftTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kBackLeftDriveReversed;
@@ -135,17 +135,17 @@ public class ModuleIOSparkBase implements ModuleIO {
                                 moduleName = "Back Right";
                                 zeroRotation = new Rotation2d(DriveConstants.kBackRightAbsEncoderOffsetRad);
                                 driveSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightDrivePort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 turnSpark = switch (DriveConstants.robotMotorController) {
-                                        case NEO_SPARK_MAX -> new SparkFlex(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
-                                        case VORTEX_SPARK_FLEX -> new SparkMax(DriveConstants.rioCanBusId,
-                                                        DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
+                                        case NEO_SPARK_MAX -> new SparkFlex(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
+                                        case VORTEX_SPARK_FLEX -> new SparkMax(
+                                                        DriveConstants.rioCanBusId, DriveConstants.kBackRightTurningPort, MotorType.kBrushless);
                                         default -> throw new IllegalArgumentException("Invalid motor controller type");
                                 };
                                 driveInverted = DriveConstants.kBackRightDriveReversed;
@@ -308,10 +308,10 @@ public class ModuleIOSparkBase implements ModuleIO {
                 /*
                  * double volts = turnPidController
                  * .calculate(MathUtil.inputModulus(
-                 * turnEncoder.getPosition() / RobotController.getVoltage3V3()
+                 * turnEncoder.getPosition().get() / RobotController.getVoltage3V3()
                  * - zeroRotation.getRadians(),
                  * -Math.PI, Math.PI), MathUtil.inputModulus(rotation, -Math.PI,Math.PI))
-                 * + turnFF.calculate(turnEncoder.getVelocity() /
+                 * + turnFF.calculate(turnEncoder.getVelocity().get() /
                  * RobotController.getVoltage3V3());
                  */
                 double pos = MathUtil.inputModulus(

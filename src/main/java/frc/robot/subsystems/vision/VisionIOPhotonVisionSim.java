@@ -44,8 +44,8 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     cameraProperties.setAvgLatencyMs(50);
     cameraProperties.setLatencyStdDevMs(5);
     cameraProperties.setFPS(60);
-    cameraProperties.setExposureTimeMs(6);
-    cameraProperties.setCalibError(.2, .045);
+    cameraProperties.setExposureTimeMs(14);
+    cameraProperties.setCalibError(.02, .0045);
     cameraProperties.setCalibration(1600, 1304,
     MatBuilder.fill(Nat.N3(), Nat.N3(),
         966.85371839149309, 0.0, 792.59524206028857, 0.0,

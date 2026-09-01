@@ -16,8 +16,6 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.drive.DriveConstants;
 
 import org.littletonrobotics.junction.Logger;
@@ -87,17 +85,7 @@ public class DriveToLine extends Command {
         userControlCommand = new DrivetrainC(drive);
         userControlCommand.initialize();
         hasGottenCoral = false;
-        if ("redLeft".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validRedLeft;
-        } else if ("redRight".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validRedRight;
-        } else if ("blueLeft".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validBlueLeft;
-        } else if ("blueRight".equals(corner.get()))
-            possiblePoints = FieldConstants.CoralStation.validBlueRight;
-        else {
-            possiblePoints = null;
-        }
+            possiblePoints = null; //TODO
         if (timeout != -1 && timeout != 999){
             timeoutTimer.reset();
             timeoutTimer.start();
@@ -163,7 +151,7 @@ public class DriveToLine extends Command {
             RobotContainer.xSpeed = 0;
             RobotContainer.ySpeed = 0;
             RobotContainer.withinLineTolerance = false;
-            drive.setChassisSpeeds(frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(
+            drive.setChassisVelocities(frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(
                     driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
                     drive.getLookAheadPose().getRotation()));
 
@@ -181,14 +169,12 @@ public class DriveToLine extends Command {
             // if in sim, gimme game piece
             if (Constants.currentMode == Mode.SIM && !hasGottenCoral) {
                 hasGottenCoral = true;
-                RobotContainer.fieldSimulation
-                        .addGamePiece(new Reefscape2025FieldObjects.ReefscapeCoralOnManipulator());
 
             }
         }
-        Logger.recordOutput("DriveToLine/DistanceError", distanceToLine);
-        Logger.recordOutput("DriveToLine/DistanceSetpoint", driveController.getSetpoint().position);
-        Logger.recordOutput("DriveToLine/ClosestPoint", new Pose2d(closestPoint, drive.getPose().getRotation()));
+        Logger.recordOutput("Drive/DriveToLine/DistanceError", distanceToLine);
+        Logger.recordOutput("Drive/DriveToLine/DistanceSetpoint", driveController.getSetpoint().position);
+        Logger.recordOutput("Drive/DriveToLine/ClosestPoint", new Pose2d(closestPoint, drive.getPose().getRotation()));
     }
 
     @Override

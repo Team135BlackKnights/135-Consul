@@ -57,6 +57,7 @@ public class MapleMotorSim {
                 state.mechanismAngularVelocity,
                 state.mechanismAngularPosition.times(configs.gearing),
                 state.mechanismAngularVelocity.times(configs.gearing));
+        
         this.appliedVoltage = SimulatedBattery.clamp(appliedVoltage);
         this.statorCurrent = configs.calculateCurrent(state.mechanismAngularVelocity, appliedVoltage);
         this.state.step(configs.calculateTorque(statorCurrent), configs.friction, configs.loadMOI, dt);
@@ -147,7 +148,7 @@ public class MapleMotorSim {
      *
      * <h2>Obtains the <strong>stator</strong> current.</h2>
      *
-     * <p>This is equivalent to {@link DCMotorSim#getCurrentDrawAmps()}
+     * <p>This is equivalent to {@link DCMotorSim#getCurrentDraw()}
      *
      * @return the stator current of the motor
      */
