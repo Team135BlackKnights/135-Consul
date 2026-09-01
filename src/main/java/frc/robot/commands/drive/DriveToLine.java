@@ -1,14 +1,14 @@
 package frc.robot.commands.drive;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.util.Units;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.TuningConstants;
 import frc.robot.Constants;
@@ -16,8 +16,6 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.drive.DrivetrainS;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.drive.DriveConstants;
 
 import org.littletonrobotics.junction.Logger;
@@ -87,17 +85,7 @@ public class DriveToLine extends Command {
         userControlCommand = new DrivetrainC(drive);
         userControlCommand.initialize();
         hasGottenCoral = false;
-        if ("redLeft".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validRedLeft;
-        } else if ("redRight".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validRedRight;
-        } else if ("blueLeft".equals(corner.get())) {
-            possiblePoints = FieldConstants.CoralStation.validBlueLeft;
-        } else if ("blueRight".equals(corner.get()))
-            possiblePoints = FieldConstants.CoralStation.validBlueRight;
-        else {
-            possiblePoints = null;
-        }
+            possiblePoints = null; //TODO
         if (timeout != -1 && timeout != 999){
             timeoutTimer.reset();
             timeoutTimer.start();
@@ -163,7 +151,7 @@ public class DriveToLine extends Command {
             RobotContainer.xSpeed = 0;
             RobotContainer.ySpeed = 0;
             RobotContainer.withinLineTolerance = false;
-            drive.setChassisSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(
+            drive.setChassisVelocities(frc.robot.utils.drive.ChassisVelocityUtil.fromFieldRelative(
                     driveVelocity.getX(), driveVelocity.getY(), RobotContainer.angularSpeed,
                     drive.getLookAheadPose().getRotation()));
 
@@ -181,14 +169,12 @@ public class DriveToLine extends Command {
             // if in sim, gimme game piece
             if (Constants.currentMode == Mode.SIM && !hasGottenCoral) {
                 hasGottenCoral = true;
-                RobotContainer.fieldSimulation
-                        .addGamePiece(new Reefscape2025FieldObjects.ReefscapeCoralOnManipulator());
 
             }
         }
-        Logger.recordOutput("DriveToLine/DistanceError", distanceToLine);
-        Logger.recordOutput("DriveToLine/DistanceSetpoint", driveController.getSetpoint().position);
-        Logger.recordOutput("DriveToLine/ClosestPoint", new Pose2d(closestPoint, drive.getPose().getRotation()));
+        Logger.recordOutput("Drive/DriveToLine/DistanceError", distanceToLine);
+        Logger.recordOutput("Drive/DriveToLine/DistanceSetpoint", driveController.getSetpoint().position);
+        Logger.recordOutput("Drive/DriveToLine/ClosestPoint", new Pose2d(closestPoint, drive.getPose().getRotation()));
     }
 
     @Override

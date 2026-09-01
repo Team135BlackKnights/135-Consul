@@ -17,7 +17,7 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
 	public void updateInputs(DistanceSensorIOInputs inputs) {
 		Measurement measurement = laserCan.getMeasurement();
 		if (measurement != null) {
-			inputs.distanceMeters = measurement.distance_mm;
+			inputs.distance = measurement.distance_mm;
 			inputs.ambientLightLevel = measurement.ambient;
 			inputs.statusCode = measurement.status;
 		}

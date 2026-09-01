@@ -16,12 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Java (FRC typically uses JDK 17)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      # WPILib 2027 requires Java 25.
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '25'
+          distribution: 'temurin'
 
       # Cache Gradle dependencies for faster builds
       - name: Cache Gradle dependencies

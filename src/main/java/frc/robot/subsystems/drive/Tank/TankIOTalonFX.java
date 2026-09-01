@@ -22,12 +22,12 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -65,10 +65,10 @@ public class TankIOTalonFX implements TankIO {
 	public TankIOTalonFX(GyroIO gyro) {
 		this.gyro = gyro;
 		if (DriveConstants.driveCanBus == null) {
-			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort);
-			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort);
-			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort);
-			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort);
+			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.rioCanBus);
+			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.rioCanBus);
+			this.rightLeader = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.rioCanBus);
+			this.rightFollower = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.rioCanBus);
 		} else {
 			this.leftLeader = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
 			this.leftFollower = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);

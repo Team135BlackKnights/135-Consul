@@ -7,11 +7,11 @@ import java.util.Arrays;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.kinematics.DifferentialDriveWheelVelocities;
+import org.wpilib.math.system.Models;
+import org.wpilib.simulation.DCMotorSim;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.RobotPhysicsSimulationConfigs;
 import frc.robot.utils.drive.Sensors.GyroIO;
@@ -46,19 +46,19 @@ public class TankIOSim implements TankIO {
 
 	public TankIOSim(GyroIO gyroSim) {
 		gyro = gyroSim;
-		frontLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		backLeft = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		frontRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
-		backRight = new DCMotorSim(LinearSystemId.createDCMotorSystem(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		frontLeft = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		backLeft = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		frontRight = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
+		backRight = new DCMotorSim(Models.singleJointedArmFromPhysicalConstants(DriveConstants.getDriveTrainMotors(1), .01, DriveConstants.TrainConstants.kDriveMotorGearRatioLow), DriveConstants.getDriveTrainMotors(1), .1,.1);
 		
 	}
 
-	public DifferentialDriveWheelSpeeds getWheelSpeeds() {
-		return new DifferentialDriveWheelSpeeds(
-				((frontLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS
-						+ backLeft.getAngularVelocityRadPerSec() * WHEEL_RADIUS) / 2),
-				((frontRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS
-						+ backRight.getAngularVelocityRadPerSec() * WHEEL_RADIUS)
+	public DifferentialDriveWheelVelocities getWheelSpeeds() {
+		return new DifferentialDriveWheelVelocities(
+				((frontLeft.getAngularVelocity() * WHEEL_RADIUS
+						+ backLeft.getAngularVelocity() * WHEEL_RADIUS) / 2),
+				((frontRight.getAngularVelocity() * WHEEL_RADIUS
+						+ backRight.getAngularVelocity() * WHEEL_RADIUS)
 						/ 2));
 	}
 
@@ -67,14 +67,14 @@ public class TankIOSim implements TankIO {
 		gyro.updateInputs(gyroInputs);
 		Logger.processInputs("Gyro", gyroInputs);
 		if (closedLoop) {
-			leftAppliedVolts = MathUtil
-					.clamp(leftPID.calculate((frontLeft.getAngularVelocityRadPerSec()
-							+ backLeft.getAngularVelocityRadPerSec()) / 2) + leftFFVolts, -12.0, 12.0);
-			rightAppliedVolts = MathUtil
+			leftAppliedVolts = frc.robot.utils.maths.CommonMath
+					.clamp(leftPID.calculate((frontLeft.getAngularVelocity()
+							+ backLeft.getAngularVelocity()) / 2) + leftFFVolts, -12.0, 12.0);
+			rightAppliedVolts = frc.robot.utils.maths.CommonMath
 					.clamp(
 							rightPID
-									.calculate((frontRight.getAngularVelocityRadPerSec()
-											+ backRight.getAngularVelocityRadPerSec()) / 2)
+									.calculate((frontRight.getAngularVelocity()
+											+ backRight.getAngularVelocity()) / 2)
 									+ rightFFVolts,
 							-12.0, 12.0);
 			// Set inputs to the motors
@@ -89,15 +89,15 @@ public class TankIOSim implements TankIO {
 		inputs.leftVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[0] * 2
 				* Math.PI * 4;
 		inputs.leftAppliedVolts = leftAppliedVolts;
-		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDrawAmps(),
-				backLeft.getCurrentDrawAmps()
+		inputs.leftCurrentAmps = new double[] { frontLeft.getCurrentDraw(),
+				backLeft.getCurrentDraw()
 		};
 		inputs.rightPositionRad = tankDrivePhysicsSimResults.driveWheelFinalRevolutions[1] * 2 * Math.PI * 4;
 		inputs.rightVelocityRadPerSec = tankDrivePhysicsSimResults.driveWheelFinalVelocityRevolutionsPerSec[1] * 2
 				* Math.PI * 4;
 		inputs.rightAppliedVolts = rightAppliedVolts;
-		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDrawAmps(),
-				backRight.getCurrentDrawAmps()
+		inputs.rightCurrentAmps = new double[] { frontRight.getCurrentDraw(),
+				backRight.getCurrentDraw()
 		};
 		inputs.gyroYaw = gyroInputs.yawPosition;
 		inputs.gyroConnected = gyroInputs.connected;
@@ -107,8 +107,8 @@ public class TankIOSim implements TankIO {
 	@Override
 	public void setVoltage(double leftVolts, double rightVolts) {
 		closedLoop = false;
-		leftAppliedVolts = MathUtil.clamp(leftVolts, -12.0, 12.0);
-		rightAppliedVolts = MathUtil.clamp(rightVolts, -12.0, 12.0);
+		leftAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(leftVolts, -12.0, 12.0);
+		rightAppliedVolts = frc.robot.utils.maths.CommonMath.clamp(rightVolts, -12.0, 12.0);
 	}
 
 	@Override

@@ -2,8 +2,8 @@
 // ChatGPT4o
 package frc.robot.utils.maths;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
 
 public class SwerveStateProjection {
 	/**
@@ -17,7 +17,7 @@ public class SwerveStateProjection {
 	 *         will effectively make the swerve module move in the direction of
 	 *         currentSwerveFacing while preventing skid
 	 */
-	public static double project(SwerveModuleState swerveSpeed,
+	public static double project(SwerveModuleVelocity swerveSpeed,
 			Rotation2d currentSwerveFacing) {
 		// Get the angle of the swerve module's current direction
 		Rotation2d swerveModuleAngle = swerveSpeed.angle;
@@ -25,6 +25,6 @@ public class SwerveStateProjection {
 		double cosTheta = Math
 				.cos(swerveModuleAngle.minus(currentSwerveFacing).getRadians());
 		// Scale the speed by the cosine value to get the projection
-		return swerveSpeed.speedMetersPerSecond * cosTheta;
+		return swerveSpeed.velocity * cosTheta;
 	}
 }

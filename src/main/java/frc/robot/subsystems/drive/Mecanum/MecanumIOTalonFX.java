@@ -22,12 +22,12 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import frc.robot.utils.drive.Sensors.GyroIO;
 import frc.robot.utils.drive.Sensors.GyroIOInputsAutoLogged;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
 import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.DriveConstants.TrainConstants;
 import frc.robot.utils.selfCheck.SelfChecking;
@@ -71,10 +71,10 @@ public class MecanumIOTalonFX implements MecanumIO {
 
 	public MecanumIOTalonFX(GyroIO gyro) {
 		if (DriveConstants.driveCanBus == null) {
-			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort);
-			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort);
-			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort);
-			backRight = new TalonFX(DriveConstants.kBackRightDrivePort);
+			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.rioCanBus);
+			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.rioCanBus);
+			frontRight = new TalonFX(DriveConstants.kFrontRightDrivePort, DriveConstants.rioCanBus);
+			backRight = new TalonFX(DriveConstants.kBackRightDrivePort, DriveConstants.rioCanBus);
 		} else {
 			frontLeft = new TalonFX(DriveConstants.kFrontLeftDrivePort, DriveConstants.driveCanBus);
 			backLeft = new TalonFX(DriveConstants.kBackLeftDrivePort, DriveConstants.driveCanBus);

@@ -10,6 +10,7 @@ import frc.robot.commands.drive.DrivetrainC;
 import frc.robot.commands.drive.WheelRadiusCharacterization;
 import frc.robot.subsystems.SubsystemChecker;
 import frc.robot.subsystems.drive.DrivetrainS;
+import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.drive.FastSwerve.Swerve;
 import frc.robot.subsystems.drive.Mecanum.Mecanum;
 import frc.robot.subsystems.drive.Mecanum.MecanumIO;
@@ -27,10 +28,9 @@ import frc.robot.subsystems.drive.Tank.TankIOSim;
 import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
 import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
 import frc.robot.subsystems.drive.Tank.Tank;
-import frc.robot.utils.CompetitionFieldUtils.FieldConstants;
-import frc.robot.utils.CompetitionFieldUtils.FieldObjects.Reefscape2025FieldObjects;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.AIRobotInSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.MecanumDriveSimulation;
+import frc.robot.utils.CompetitionFieldUtils.Simulation.Rebuilt2026FieldSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
@@ -39,9 +39,9 @@ import frc.robot.utils.drive.DriveConstants;
 import frc.robot.utils.drive.LocalADStarAK;
 import frc.robot.utils.drive.PathFinder;
 import frc.robot.utils.drive.Sensors.GyroIO;
-import frc.robot.utils.drive.Sensors.GyroIONavX;
 import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
 import frc.robot.utils.drive.Sensors.GyroIOSim;
+import frc.robot.utils.leds.LEDConstants.ImageStates;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -53,14 +53,12 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -71,62 +69,36 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
-import com.therekrab.autopilot.APTarget;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import org.wpilib.math.util.Pair;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.DifferentialDriveKinematics;
+import org.wpilib.math.kinematics.MecanumDriveKinematics;
+import org.wpilib.driverstation.*;
+import org.wpilib.system.Filesystem;
+import org.wpilib.smartdashboard.Field2d;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.CommandScheduler;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.InstantCommand;
+import org.wpilib.command2.button.JoystickButton;
+import org.wpilib.driverstation.NiDsXboxController;
+import org.wpilib.command2.button.Trigger;
 import frc.robot.Constants.TuningConstants;
 
 
 import frc.robot.subsystems.drive.FastSwerve.Swerve.ModuleLimits;
-import frc.robot.subsystems.drive.Mecanum.Mecanum;
-import frc.robot.subsystems.drive.Mecanum.MecanumIO;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSim;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOSparkBase;
-import frc.robot.subsystems.drive.Mecanum.MecanumIOTalonFX;
-import frc.robot.subsystems.drive.Tank.Tank;
-import frc.robot.subsystems.drive.Tank.TankIO;
-import frc.robot.subsystems.drive.Tank.TankIOSim;
-import frc.robot.subsystems.drive.Tank.TankIOSparkBase;
-import frc.robot.subsystems.drive.Tank.TankIOTalonFX;
-import frc.robot.subsystems.leds.LEDs;
 
 import frc.robot.utils.DriverStationHID;
 import frc.robot.utils.GeomUtil;
 import frc.robot.utils.LoggableTunedNumber;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.Reefscape2025FieldSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.TankDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.GyroSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
-import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveModuleSimulation;
-import frc.robot.utils.drive.DriveConstants;
-import frc.robot.utils.drive.LocalADStarAK;
-import frc.robot.utils.drive.PathFinder;
-import frc.robot.utils.drive.Sensors.GyroIO;
-import frc.robot.utils.drive.Sensors.GyroIONavX;
-import frc.robot.utils.drive.Sensors.GyroIOPigeon2;
-import frc.robot.utils.drive.Sensors.GyroIOSim;
-import frc.robot.utils.leds.LEDConstants.ImageStates;
 
 import frc.robot.utils.Touchboard.PosePlotterUtil;
-import frc.robot.utils.Touchboard.PosePlotterUtil.CommandPair;
+import frc.robot.utils.Touchboard.TouchboardAutoFactory;
+import frc.robot.utils.Touchboard.TouchboardAutoPlan;
 
 /**
  * This code depends on WPILib 2025, Choreo 2025, PhotonLib 2025, Studica,
@@ -143,10 +115,11 @@ public class RobotContainer {
 	public static final LoggableTunedNumber humanPlayerWaitTime = new LoggableTunedNumber(
 			"AutoToggles/HumanPlayerWaitTime", .425, TuningConstants.isTuningMacros);
 	// [Map<String,>,]
-	public static XboxController driveController = new XboxController(0);
-	public static XboxController manipController = new XboxController(1);
+	public static TouchboardAutoFactory touchboardAutoFactory;
+	public static NiDsXboxController driveController = new NiDsXboxController(0);
+	public static NiDsXboxController manipController = new NiDsXboxController(1);
 	public static DriverStationHID dsHIDHandler = new DriverStationHID(2);
-	public static XboxController testingController = new XboxController(5);
+	public static NiDsXboxController testingController = new NiDsXboxController(5);
 	public static Optional<Rotation2d> angleOverrider = Optional.empty();
 	public static double angularSpeed = 0;
 	public static double xSpeed = 0;
@@ -164,7 +137,7 @@ public class RobotContainer {
 			bButtonTest = new JoystickButton(testingController, 2),
 			xButtonTest = new JoystickButton(testingController, 3),
 			yButtonTest = new JoystickButton(testingController, 4),
-			leftBumperTest = new JoystickButton(driveController, 5),
+			leftBumperTest = new JoystickButton(testingController, 5),
 			rightBumperTest = new JoystickButton(testingController, 6),
 			selectButtonTest = new JoystickButton(testingController, 7),
 			selectButtonManip = new JoystickButton(manipController, 7),
@@ -177,9 +150,9 @@ public class RobotContainer {
 			rightBumperDrive = new JoystickButton(driveController, 6),
 			leftStickDrive = new JoystickButton(driveController, 9),
 			rightStickDrive = new JoystickButton(driveController, 10);
-	static Trigger driverPOVRight = new Trigger(() -> (driveController.getPOV() == 270));
-	static Trigger testDPadUp = new Trigger(() -> (driveController.getPOV() == 0));
-	static Trigger testDPadDown = new Trigger(() -> (driveController.getPOV() == 180));
+	static Trigger driverPOVRight = new Trigger(() -> driveController.getPOV() == POVDirection.RIGHT);
+	static Trigger testDPadUp = new Trigger(() -> testingController.getPOV() == POVDirection.UP);
+	static Trigger testDPadDown = new Trigger(() -> testingController.getPOV() == POVDirection.DOWN);
 	static Trigger manipRightTrigger = new Trigger(
 			() -> (manipController.getRightTriggerAxis() > .25 && manipController.getRightTriggerAxis() < .75));
 	static Trigger manipRightTriggerFull = new Trigger(() -> (manipController.getRightTriggerAxis() > .75));
@@ -189,13 +162,13 @@ public class RobotContainer {
 	static Trigger manipLeftTrigger = new Trigger(
 			() -> (manipController.getLeftTriggerAxis() > .25 && manipController.getLeftTriggerAxis() < .75));
 	static Trigger manipLeftTriggerFull = new Trigger(() -> (manipController.getLeftTriggerAxis() > .75));
-	static Trigger manipPOVUp = new Trigger(() -> (manipController.getPOV() == 0));
-	static Trigger driverPOVUp = new Trigger(() -> (driveController.getPOV() == 0));
-	static Trigger driverPOVDown = new Trigger(() -> (driveController.getPOV() == 180));
-	static Trigger driverPOVLeft = new Trigger(() -> (driveController.getPOV() == 270));
-	static Trigger manipPOVRight = new Trigger(() -> (manipController.getPOV() == 90));
-	static Trigger manipPOVDown = new Trigger(() -> (manipController.getPOV() == 180));
-	static Trigger manipPOVLeft = new Trigger(() -> (manipController.getPOV() == 270));
+	static Trigger manipPOVUp = new Trigger(() -> manipController.getPOV() == POVDirection.UP);
+	static Trigger driverPOVUp = new Trigger(() -> driveController.getPOV() == POVDirection.UP);
+	static Trigger driverPOVDown = new Trigger(() -> driveController.getPOV() == POVDirection.DOWN);
+	static Trigger driverPOVLeft = new Trigger(() -> driveController.getPOV() == POVDirection.LEFT);
+	static Trigger manipPOVRight = new Trigger(() -> manipController.getPOV() == POVDirection.RIGHT);
+	static Trigger manipPOVDown = new Trigger(() -> manipController.getPOV() == POVDirection.DOWN);
+	static Trigger manipPOVLeft = new Trigger(() -> manipController.getPOV() == POVDirection.LEFT);
 	static Trigger BranchOneScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch1Button());
 	static Trigger BranchTwoScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch2Button());
 	static Trigger BranchThreeScoreTrigger = new Trigger(() -> dsHIDHandler.getBranch3Button());
@@ -231,19 +204,18 @@ public class RobotContainer {
 	@AutoLogOutput(key = "RobotState/currentPath")
 	public static String currentPath = "";
 	public static Field2d field = new Field2d();
-	public static Translation2d[] algaeStartingLocations = FieldConstants.ALGAE_BALL_INITIAL_POSITIONS;
-	public static Translation2d[] coralStartingLocations = FieldConstants.REEFSCAPE_CORAL_INITIAL_POSITIONS;
 	public static boolean userDrive = true;
 	public static boolean withinLineTolerance = false;
 	@AutoLogOutput(key = "RobotState/miloMad")
 	public static boolean miloMad = false;
 	// Simulation
-	public static Reefscape2025FieldSimulation fieldSimulation = null;
+	public static Rebuilt2026FieldSimulation fieldSimulation = null;
 	public static Command currentAuto, lastAuto = null;
 	public static Map<String, Pair<Pose2d, Pose2d>> autoPaths = new HashMap<>();
 	public static String closestChoreoPath = ""; // auto updates from Pathfinder, DON'T TOUCH!
 	public static boolean grabbingAlgae = false; // auto updates from Pathfinder, DON'T TOUCH!
 	int currentUpdate = 0;
+	public static Pose2d startingPoseCache = new Pose2d();
 	// Adjustable PathFollowing
 	public static LoggableTunedNumber pathFollowingMaxLinearSpeed = new LoggableTunedNumber(
 			"PathFollowing/MaxLinearSpeed", 5.5,
@@ -287,8 +259,7 @@ public class RobotContainer {
 									GeomUtil.apply(new Pose2d(
 											path.getPoint(path.getAllPathPoints().size() - 1).position,
 											path.getGoalEndState().rotation().plus(new Rotation2d(Math.PI))), true)));
-				} catch (FileVersionException | IOException | org.json.simple.parser.ParseException
-						| NullPointerException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 
@@ -300,6 +271,13 @@ public class RobotContainer {
 	 * The container for the robot. Contains subsystems, OI devices, and
 	 * commands. y * @throws NotActiveException IF mecanum and Replay
 	 */
+	private static GyroIO disabledNavX() {
+		DriverStationErrors.reportWarning(
+				"Studica navX support is disabled until a 2027-compatible vendordep is published.",
+				false);
+		return new GyroIO() {};
+	}
+
 	public RobotContainer() {
 		/*
 		 * These example states were originally used in 2025, retrofit to be an example
@@ -307,19 +285,34 @@ public class RobotContainer {
 		 * essentially each one of these choosers corresponds to a macro segment which
 		 * then returns a series of commands
 		 */
-		DriverStation.silenceJoystickConnectionWarning(true);
+		// Joystick connection warning suppression is no longer a public 2027 API.
 		// We check to see what drivetrain type we have here, and create the correct
 		// drivetrain system based on that.
 		// If we get something wacky, throw an error
-		List<Pair<String, CommandPair>> autoCommands = new ArrayList<>();
-		String[] auto = PosePlotterUtil.getAutoString().split("_");
-		if (auto.length < 2) {
-			auto = new String[] { "-120", "5.542", "NA" };
+		String raw = PosePlotterUtil.getAutoString();
+		Pose2d startingPose = new Pose2d();
+
+		if (raw != null) {
+			var planOpt = PosePlotterUtil.tryGetPlan();
+			if (planOpt.isPresent()) {
+				TouchboardAutoPlan plan = planOpt.get();
+
+				// startPose from JSON (fallback if missing)
+				if (plan.startPose != null) {
+					startingPose = new Pose2d(
+							plan.startPose.x,
+							GeomUtil.applyY(plan.startPose.y, true),
+							new Rotation2d());
+				} else {
+					startingPose = new Pose2d(4.398, 7.586, new Rotation2d());
+				}
+			} else {
+				startingPose = new Pose2d(4.398, 7.586, new Rotation2d());
+			}
+		} else {
+			startingPose = new Pose2d(4.398, 7.586, new Rotation2d());
 		}
-		double x = Double.parseDouble(auto[1]);
-		double y = 7.02;
-		double theta = Units.degreesToRadians(Double.parseDouble(auto[0]));
-		Pose2d startingPose = new Pose2d(x, y, new Rotation2d(theta));
+		startingPose = GeomUtil.apply(startingPose, false);
 		switch (Constants.currentMode) {
 			case REAL:
 				switch (DriveConstants.driveType) {
@@ -333,7 +326,7 @@ public class RobotContainer {
 										switch (DriveConstants.swerveModuleType) {
 											case SHIFTING_THIFTYSWERVE:
 												// ignore encoder type, assume cancoder
-												drivetrainS = new Swerve(new GyroIONavX(),
+												drivetrainS = new Swerve(disabledNavX(),
 														new ModuleIOKrakenFOCShifting(0),
 														new ModuleIOKrakenFOCShifting(1),
 														new ModuleIOKrakenFOCShifting(2),
@@ -342,13 +335,13 @@ public class RobotContainer {
 											case THRIFTYSWERVE:
 											case SDSMK4I:
 												if (DriveConstants.useThriftyEncoder) {
-													drivetrainS = new Swerve(new GyroIONavX(),
+													drivetrainS = new Swerve(disabledNavX(),
 															new ModuleIOKrakenFOCWithThrifty(0),
 															new ModuleIOKrakenFOCWithThrifty(1),
 															new ModuleIOKrakenFOCWithThrifty(2),
 															new ModuleIOKrakenFOCWithThrifty(3));
 												} else {
-													drivetrainS = new Swerve(new GyroIONavX(),
+													drivetrainS = new Swerve(disabledNavX(),
 															new ModuleIOKrakenFOC(0),
 															new ModuleIOKrakenFOC(1),
 															new ModuleIOKrakenFOC(2),
@@ -384,7 +377,7 @@ public class RobotContainer {
 							case VORTEX_SPARK_FLEX:
 								switch (DriveConstants.gyroType) {
 									case NAVX:
-										drivetrainS = new Swerve(new GyroIONavX(),
+										drivetrainS = new Swerve(disabledNavX(),
 												new ModuleIOSparkBase(0), new ModuleIOSparkBase(1),
 												new ModuleIOSparkBase(2), new ModuleIOSparkBase(3));
 										break;
@@ -409,7 +402,7 @@ public class RobotContainer {
 												new TankIOTalonFX(new GyroIOPigeon2()));
 										break;
 									case NAVX:
-										drivetrainS = new Tank(new TankIOTalonFX(new GyroIONavX()));
+										drivetrainS = new Tank(new TankIOTalonFX(disabledNavX()));
 										break;
 								}
 								break;
@@ -422,7 +415,7 @@ public class RobotContainer {
 												new TankIOSparkBase(new GyroIOPigeon2()));
 										break;
 									case NAVX:
-										drivetrainS = new Tank(new TankIOSparkBase(new GyroIONavX()));
+										drivetrainS = new Tank(new TankIOSparkBase(disabledNavX()));
 										break;
 								}
 								break;
@@ -440,7 +433,7 @@ public class RobotContainer {
 										break;
 									case NAVX:
 										drivetrainS = new Mecanum(
-												new MecanumIOTalonFX(new GyroIONavX()));
+												new MecanumIOTalonFX(disabledNavX()));
 										break;
 								}
 								break;
@@ -454,7 +447,7 @@ public class RobotContainer {
 										break;
 									case NAVX:
 										drivetrainS = new Mecanum(
-												new MecanumIOSparkBase(new GyroIONavX()));
+												new MecanumIOSparkBase(disabledNavX()));
 										break;
 								}
 								break;
@@ -514,7 +507,7 @@ public class RobotContainer {
 										moduleSimulations[2], moduleSimulations[3]
 								}, DriveConstants.kModuleTranslations, gyroSimulation,
 								GeomUtil.apply(startingPose, false), drivetrainS::resetPose);
-						fieldSimulation = new Reefscape2025FieldSimulation(driveSim);
+						fieldSimulation = new Rebuilt2026FieldSimulation(driveSim);
 						fieldSimulation.placeGamePiecesOnField(true);
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
@@ -531,7 +524,7 @@ public class RobotContainer {
 								(Tank) drivetrainS,
 								tankIOSim,
 								drivetrainS::resetPose);
-						fieldSimulation = new Reefscape2025FieldSimulation(tankSim);
+						fieldSimulation = new Rebuilt2026FieldSimulation(tankSim);
 						fieldSimulation.placeGamePiecesOnField(true);
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 
@@ -552,7 +545,7 @@ public class RobotContainer {
 								(Mecanum) drivetrainS,
 								mecanumIOSim,
 								drivetrainS::resetPose);
-						fieldSimulation = new Reefscape2025FieldSimulation(mecanumSim);
+						fieldSimulation = new Rebuilt2026FieldSimulation(mecanumSim);
 						fieldSimulation.placeGamePiecesOnField(true);
 						AIRobotInSimulation.startOpponentRobotSimulations(); // Start your engines...
 						break;
@@ -591,49 +584,10 @@ public class RobotContainer {
 
 		// Make sure to watch your flipped poses. Our custom DriveToPose and all of
 		// those do NOT auto flip for red.
-		autoCommands.addAll(Arrays.asList(
-				new Pair<String, CommandPair>("RT", // Example Drive to the right top face of the coral station
-						new CommandPair(
-								(Supplier<Command>) () -> PathFinder.goToPose(
-										GeomUtil.apply(FieldConstants.CoralStation.blueRightTopFace, false),
-										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
-								Set.of(drivetrainS))),
-				new Pair<String, CommandPair>("RM", // Example Drive to the right top face of the coral station
-						new CommandPair(
-								(Supplier<Command>) () -> PathFinder.goToPose(
-										GeomUtil.apply(FieldConstants.CoralStation.blueRightCenterFace, false),
-										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
-								Set.of(drivetrainS))),
-				new Pair<String, CommandPair>("RB", // Example Drive to the right top face of the coral station
-						new CommandPair(
-								(Supplier<Command>) () -> PathFinder.goToPose(
-										GeomUtil.apply(FieldConstants.CoralStation.blueRightBottomFace, false),
-										() -> DriveConstants.pathConstraints, drivetrainS, false, 0, .5,.1),
-								Set.of(drivetrainS))),
-				new Pair<String, CommandPair>("10", // Example Drive to the right top face of the coral station
-					new CommandPair(
-							(Supplier<Command>) () -> PathFinder.goToPose(
-									GeomUtil.apply(new Pose2d(4,2.82,new Rotation2d(Math.PI/3)), false),
-									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
-							Set.of(drivetrainS))),
-				new Pair<String, CommandPair>("11", // Example Drive to the right top face of the coral station
-					new CommandPair(
-							(Supplier<Command>) () -> PathFinder.goToPose(
-									GeomUtil.apply(new Pose2d(3.693,3.01,new Rotation2d(Math.PI/3)), false),
-									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
-							Set.of(drivetrainS))),
-				new Pair<String, CommandPair>("12", // Example Drive to the right top face of the coral station
-					new CommandPair(
-							(Supplier<Command>) () -> PathFinder.goToPose(
-									GeomUtil.apply(new Pose2d(3.211,3.883,new Rotation2d(0)), false),
-									() -> DriveConstants.pathConstraints, drivetrainS, false, 1, .5,.05),
-							Set.of(drivetrainS)))
-								));
-		precalculateAllStartAndEndChoreos();
-
-		for (Pair<String, CommandPair> autoCommand : autoCommands) {
-			PosePlotterUtil.addCommandPair(autoCommand.getFirst(), autoCommand.getSecond());
-		}
+		// PathPlanner 2027 SystemCore alpha-3 only accepts Choreo trajectory format
+		// version 1. Keep the 2026 v2/v3 trajectories in deploy for later conversion,
+		// but do not load them until a compatible Choreo/PathPlanner release exists.
+		// precalculateAllStartAndEndChoreos();
 
 		if (Constants.isCompetition) {
 			PPLibTelemetry.enableCompetitionMode();
@@ -643,7 +597,7 @@ public class RobotContainer {
 				new Pose2d(15.0, 4.0, Rotation2d.k180deg),
 				new PathConstraints(8, 11, 4, 4),
 				() -> new Pose2d(1.5, 4, Rotation2d.kZero),
-				ChassisSpeeds::new,
+				ChassisVelocities::new,
 				(speeds, feedforwards) -> {
 				},
 				new PPHolonomicDriveController(
@@ -657,11 +611,14 @@ public class RobotContainer {
 			Logger.recordOutput("LEDS/Main",
 					"No images found for " + ImageStates.debug.name());
 		}
+
 		if (!AutoBuilder.isConfigured()) {
 			throw new RuntimeException(
 					"AutoBuilder was not configured before attempting to build an auto chooser");
 		}
-		autoChooser = new LoggedDashboardChooser<>("Auto Routine", AutoBuilder.buildAutoChooser());
+		// Avoid scanning legacy .auto files that reference unsupported 2026 Choreo
+		// trajectories. Feature branches can add compatible autos to this chooser.
+		autoChooser = new LoggedDashboardChooser<>("Auto Routine");
 		autoChooser.addDefaultOption("DynamicPathing",
 				Commands.defer(() -> PosePlotterUtil.getAuto(), Set.of(drivetrainS)));
 		if (drivetrainS instanceof Swerve) {
@@ -739,7 +696,6 @@ public class RobotContainer {
 		// Some condition that should decide if we want to override rotation
 		return angleOverrider;
 	}
-
 	private void configureBindings() {
 		xButtonDrive
 				.and(aButtonTest.or(bButtonTest).or(xButtonTest).or(yButtonTest)
@@ -756,8 +712,7 @@ public class RobotContainer {
 		aButtonDrive.whileTrue(
 				Commands.defer(() -> PathFinder.goToPose(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false),() -> DriveConstants.pathConstraints, drivetrainS, false, 2, .5, .05),
 						Set.of(drivetrainS))); //3.5,4
-		bButtonDrive.whileTrue(PathFinder.goToAutoPilotPose(pathFinder,new APTarget(GeomUtil.apply(new Pose2d(8,3.5,Rotation2d.fromDegrees(-45)),false)), drivetrainS,() -> DriveConstants.pathConstraints, 1, .02)
-		);
+		// AutoPilot binding is disabled until a 2027-compatible vendordep is published.
 		/*
 		 * yButtonDrive.whileTrue(superStructure.updateMacroAlgaeGrab(()
 		 * ->false).andThen(Commands.defer(superStructure.scoreAt(xboxPosition, true,
@@ -770,7 +725,7 @@ public class RobotContainer {
 		 */
 		// These are examples of the go to line command
 
-		leftBumperDrive.whileTrue(PathFinder.goToLine(drivetrainS,
+		/*leftBumperDrive.whileTrue(PathFinder.goToLine(drivetrainS,
 				() -> Robot.isRed ? FieldConstants.CoralStation.redLeftTopFace.getTranslation()
 						: FieldConstants.CoralStation.blueLeftTopFace.getTranslation(),
 				() -> Robot.isRed ? FieldConstants.CoralStation.redLeftBottomFace.getTranslation()
@@ -792,7 +747,7 @@ public class RobotContainer {
 				999,
 				() -> Robot.isRed ? FieldConstants.CoralStation.redRightCenterFace.getRotation()
 						: FieldConstants.CoralStation.blueRightCenterFace.getRotation(),
-				() -> DriveConstants.pathConstraints, () -> Robot.isRed ? "redRight" : "blueRight"));
+				() -> DriveConstants.pathConstraints, () -> Robot.isRed ? "redRight" : "blueRight"));*/
 		driverPOVRight.onTrue(
 				Commands.either(
 						Commands.runOnce(() -> {
@@ -820,25 +775,27 @@ public class RobotContainer {
 		// Button Board Controls
 
 		if (Constants.currentMode == Mode.SIM) {
-			testDPadUp.onTrue(new InstantCommand(() -> {
-				try {
-					System.out.println("Creating Algae");
-					fieldSimulation.addGamePiece(new Reefscape2025FieldObjects.AlgaeBallOnManipulator(
-							Logger.getTimestamp(), 999,
-							fieldSimulation.getMainDriveSimulation().getPose3d()));
-				} catch (Exception e) {
-					System.out.println("Failed to Create Algae");
-				}
-			}));
-			testDPadDown.onTrue(new InstantCommand(() -> {
-				try {
-					System.out.println("Creating Coral");
-					fieldSimulation.addGamePiece(new Reefscape2025FieldObjects.ReefscapeCoralOnManipulator());
-					// superStructure.setCoralGamepieceState(CoralGamepieceState.HOPPER_STAGED);
-				} catch (Exception e) {
-					System.out.println("Failed to Create Algae");
-				}
-			}));
+			/*testDPadUp.onTrue(new InstantCommand(() -> {
+			  try {
+			  System.out.println("Creating Algae");
+			  fieldSimulation.addGamePiece(new
+			  Reefscape2025FieldObjects.AlgaeBallOnManipulator(
+			  Logger.getTimestamp(), 999,
+			  fieldSimulation.getMainDriveSimulation().getPose3d()));
+			  } catch (Exception e) {
+			  System.out.println("Failed to Create Algae");
+			  }
+			  }));
+			  testDPadDown.onTrue(new InstantCommand(() -> {
+			  try {
+			  System.out.println("Creating Coral");
+			  fieldSimulation.addGamePiece(new
+			  Reefscape2025FieldObjects.ReefscapeCoralOnManipulator());
+			  // superStructure.setCoralGamepieceState(CoralGamepieceState.HOPPER_STAGED);
+			  } catch (Exception e) {
+			  System.out.println("Failed to Create Algae");
+			  }
+			  }));*/
 		}
 	}
 	// Interface for command factories
@@ -929,7 +886,7 @@ public class RobotContainer {
 
 	public static SubsystemChecker[] getAllSubsystems() {
 
-		SubsystemChecker[] subsystems = new SubsystemChecker[1];
+		SubsystemChecker[] subsystems = new SubsystemChecker[2];
 		switch (DriveConstants.driveType) {
 			case SWERVE:
 				subsystems[0] = (Swerve) drivetrainS;
@@ -941,6 +898,7 @@ public class RobotContainer {
 				subsystems[0] = (Tank) drivetrainS;
 				break;
 		}
+		subsystems[1] = leds;
 		return subsystems;
 	}
 

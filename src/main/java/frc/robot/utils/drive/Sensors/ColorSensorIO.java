@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.wpilibj.util.Color;
+import org.wpilib.util.Color;
 import frc.robot.utils.selfCheck.SelfChecking;
 
 public interface ColorSensorIO {

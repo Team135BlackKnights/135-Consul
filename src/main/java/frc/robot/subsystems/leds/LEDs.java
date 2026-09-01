@@ -1,12 +1,12 @@
 package frc.robot.subsystems.leds;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.simulation.AddressableLEDSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
+import org.wpilib.command2.Command;
+import org.wpilib.hardware.led.AddressableLED;
+import org.wpilib.hardware.led.AddressableLEDBuffer;
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.simulation.AddressableLEDSim;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.util.Color;
 import frc.robot.Constants;
 import frc.robot.Constants.FRCMatchState;
 import frc.robot.Constants.Mode;
@@ -29,7 +29,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import javax.imageio.ImageIO;
-import edu.wpi.first.wpilibj2.command.Commands;
+import org.wpilib.command2.Commands;
 
 import com.ctre.phoenix6.hardware.ParentDevice;
 import java.util.Collections;
@@ -707,7 +707,7 @@ public class LEDs extends SubsystemChecker {
 			offsetX[i] = 0.0;
 			shouldBlink[i] = null;
 			progressSupplier[i] = () -> 0.0;
-			steps[i] = Map.of(0.0, Color.kAntiqueWhite);// Initialize an empty map for steps
+			steps[i] = Map.of(0.0, Color.ANTIQUE_WHITE);// Initialize an empty map for steps
 		}
 		currentTimeMs = TimeUtil.getLogTimeSeconds() * 1000.0;
 
@@ -727,7 +727,7 @@ public class LEDs extends SubsystemChecker {
 		// sets length of the LED strip to buffer length
 		leds.setLength(ledBuffer.getLength());
 		// starts LED strips
-		leds.start(); // FOR THE LOVE OF GOD PLEASE REMEMBER THIS IF YOU'RE GONNA CODE YOUR OWN
+		// Systemcore begins output when data is written; AddressableLED.start() was removed.
 						// SUBSYSTEM I SPENT LIKE 6 HOURS TROUBLESHOOTING AND IT DIDNT WORK BECAUSE OF
 						// THIS -N
 		// if the robot is a simulation, create a simulation for the addressableLEDs
@@ -865,7 +865,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Sets the LEDs to a progress bar, using a DoubleSupplier for custom progress.
-	 * 
+	 *
 	 * @param panelIndex
 	 */
 	private void setProgress(int panelIndex) {
@@ -901,7 +901,7 @@ public class LEDs extends SubsystemChecker {
 	 */
 	public void setSteps(int panelIndex) {
 		if (steps[panelIndex].size() == 1 && steps[panelIndex].keySet().iterator().next() == 0.0) {
-			DriverStation.reportWarning("Setting LED steps with only one color!", false);
+			DriverStationErrors.reportWarning("Setting LED steps with only one color!", false);
 			// Set a solid color and exit
 			setSolidColor(panelIndex);
 			return;
@@ -918,7 +918,7 @@ public class LEDs extends SubsystemChecker {
 			stopPositions.put(ledPosition, colorD);
 		});
 		// Apply colors to the LED buffer
-		Color currentColor = Color.kBlack; // Default to black before first step
+		Color currentColor = Color.BLACK; // Default to black before first step
 		for (int led = (int) startVal; led < endVal; led++) {
 			int localIndex = led - (int) startVal;
 			currentColor = stopPositions.getOrDefault(localIndex, currentColor);
@@ -930,7 +930,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Sets an individual pixel to the main color
-	 * 
+	 *
 	 * @param panelIndex
 	 */
 	private void setDebugPixel(int panelIndex) {
@@ -1067,7 +1067,7 @@ public class LEDs extends SubsystemChecker {
 	 */
 	private void setGif(int panelIndex) {
 		if (!gifFound(currentImageState[panelIndex])) {
-			DriverStation.reportError("No images found for ID "
+			DriverStationErrors.reportError("No images found for ID "
 					+ currentImageState[panelIndex].ordinal(), false);
 			updateState(new LEDState(LEDStates.OFF, panelIndex));
 			return;
@@ -1125,7 +1125,7 @@ public class LEDs extends SubsystemChecker {
 								.get(currentImageState[panelIndex].ordinal()).size();
 				lastUpdateTimeMs[panelIndex] = currentTimeMs;
 			} catch (Exception e) {
-				DriverStation.reportWarning("Error setting next image for the gif. Resetting to frame 0", false);
+				DriverStationErrors.reportWarning("Error setting next image for the gif. Resetting to frame 0", false);
 				currentImageIndex[panelIndex] = 0;
 			}
 		}
@@ -1226,7 +1226,7 @@ public class LEDs extends SubsystemChecker {
 	/**
 	 * Within ledCols and ledRows IN FRAME, get the index of the LED, accounting for
 	 * the panel orientation and serpentine
-	 * 
+	 *
 	 * @param x within frame
 	 * @param y within frame
 	 * @return index of the LED WITHIN FRAME (add panel offset if necessary)
@@ -1325,7 +1325,7 @@ public class LEDs extends SubsystemChecker {
 	 * Updates all functions to the new flash rate "FlashRate" is defined as the
 	 * either the ENTIRE time for a single cycle of the LED state, or, for a gif,
 	 * the time between each frame
-	 * 
+	 *
 	 * @param flashRateMilliSeconds
 	 */
 	public void updateFlashRate(int flashRateMilliSeconds, int panelIndex) {
@@ -1335,7 +1335,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Updates all functions to a new brightness
-	 * 
+	 *
 	 * @param brightness (0-1)
 	 */
 	public void updateBrightness(double brightness, int panelIndex) {
@@ -1344,7 +1344,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Updates all functions to a new color
-	 * 
+	 *
 	 * @param color
 	 */
 	public void updateColor(int[] color, int panelIndex) {
@@ -1353,7 +1353,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Updates all functions to a new alternate color
-	 * 
+	 *
 	 * @param altColor (Used in wave2)
 	 */
 	public void updateAltColor(int[] altColor, int panelIndex) {
@@ -1362,7 +1362,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Updates all functions to a new state
-	 * 
+	 *
 	 * @param state
 	 */
 	public void updateState(LEDState state) {
@@ -1390,7 +1390,7 @@ public class LEDs extends SubsystemChecker {
 
 	/**
 	 * Updates all functions (really just Gif) to a new image state
-	 * 
+	 *
 	 * @param imageState
 	 */
 	public void updateImageState(ImageStates imageState, int panelIndex) {
@@ -1400,7 +1400,7 @@ public class LEDs extends SubsystemChecker {
 	/**
 	 * Updates all functions to a new state, with additional arguments for the
 	 * flash rate, color, and image state.
-	 * 
+	 *
 	 * @param state The new LED state with it's panel index.
 	 * @param args  Additional arguments that can be:
 	 *              <ul>
@@ -1408,7 +1408,7 @@ public class LEDs extends SubsystemChecker {
 	 *              contain three elements representing the RGB values. Each
 	 *              value should be between 0 and 255. Check
 	 *              {@link LEDConstants} or
-	 *              {@link edu.wpi.first.wpilibj.util.Color} for default
+	 *              {@link org.wpilib.util.Color} for default
 	 *              colors (For WPILib.color, mulitiply by 255 for RGB
 	 *              vals)</li>
 	 *              <li>ANOTHER (must provide main color before alt color) int array
@@ -1416,7 +1416,7 @@ public class LEDs extends SubsystemChecker {
 	 *              array should contain three elements representing the RGB
 	 *              values. Each value should be between 0 and 255. Check
 	 *              {@link LEDConstants} or
-	 *              {@link edu.wpi.first.wpilibj.util.Color} for default
+	 *              {@link org.wpilib.util.Color} for default
 	 *              colors (For WPILib.color, mulitiply by 255 for RGB
 	 *              vals)</li>
 	 *              <li>An integer representing the flash rate in
@@ -1605,7 +1605,7 @@ public class LEDs extends SubsystemChecker {
 			// updateLEDState(new LEDState(LEDStates.WAVE2, 1), 4000, ImageStates.gif1);
 			updateLEDState(new LEDState(LEDStates.TEXT, 0), 1000);
 			updateLEDState(new LEDState(LEDStates.STEPS, 6),
-					Map.of(0.0, Color.kBrown, 0.6, Color.kAqua, .67, Color.kAntiqueWhite));
+					Map.of(0.0, Color.BROWN, 0.6, Color.AQUA, .67, Color.ANTIQUE_WHITE));
 		} else if (Constants.currentMatchState == FRCMatchState.TEST) {
 			updateLEDState(new LEDState(LEDStates.FIRE, 0), 40, ImageStates.gif2);
 		}

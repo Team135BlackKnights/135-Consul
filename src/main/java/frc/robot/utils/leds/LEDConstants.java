@@ -5,7 +5,7 @@ import java.util.List;
 public class LEDConstants {
 	//Using doubles to prevent integer division
 	public static double
-	//The physical port where the LED strip is plugged in 
+	//The physical port where the LED strip is plugged in
 	ledPort = 9,
 			//The number of LEDs in the PANELS (if there are multiple, they are daisy chained and MUST be the same dimensions)
 			ledColsInFrame = 16, ledRowsInFrame = 16, ledColsPerPanel = 16, ledRowsPerPanel = 16,
@@ -32,7 +32,7 @@ public class LEDConstants {
 	public static PanelOrientation panelOrientation = PanelOrientation.BOTTOM_LEFT; //The orientation of ALL panels (MUST be same)
 	//String constants
 	public static String[] phrases = new String[]{
-		"TOUCHDOWN", "GO PENN", "WIN!" 
+		"TOUCHDOWN", "GO PENN", "WIN!"
 	};
 	//Wave constants
 	public static double waveExponent = .5;

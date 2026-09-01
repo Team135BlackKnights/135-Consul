@@ -4,19 +4,18 @@ import static frc.robot.utils.maths.CommonMath.constrainMagnitude;
 
 import java.util.function.Consumer;
 
-import edu.wpi.first.math.controller.HolonomicDriveController;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.trajectory.Trajectory;
+import org.wpilib.math.trajectory.TrapezoidProfile;
+import org.wpilib.system.Timer;
+import org.wpilib.command2.Command;
+import org.wpilib.command2.Commands;
+import org.wpilib.command2.SequentialCommandGroup;
+import org.wpilib.command2.Subsystem;
 import frc.robot.Robot;
 import frc.robot.utils.CompetitionFieldUtils.Simulation.drive.Swerve.SwerveDriveSimulation;
 import frc.robot.utils.drive.DriveConstants;
@@ -72,7 +71,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
   }
   @SuppressWarnings("unused")
   private int id;
-  private ChassisSpeeds desiredFieldRelativeSpeeds = new ChassisSpeeds();
+  private ChassisVelocities desiredFieldRelativeSpeeds = new ChassisVelocities();
 
   /**
    *
@@ -86,16 +85,16 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * desired speeds.
    *
    * <p>This method is different from {@link
-   * AbstractDriveTrainSimulation#setRobotSpeeds(ChassisSpeeds)}, which jumps to the speed
+   * AbstractDriveTrainSimulation#setRobotSpeeds(ChassisVelocities)}, which jumps to the speed
    * <strong>Instantaneously</strong>.
    *
-   * @param speeds the desired robot-relative speeds, represented as {@link ChassisSpeeds}
+   * @param speeds the desired robot-relative speeds, represented as {@link ChassisVelocities}
    */
-  public void runChassisSpeeds(ChassisSpeeds speeds, boolean fieldRelative) {
+  public void runChassisSpeeds(ChassisVelocities speeds, boolean fieldRelative) {
     if (fieldRelative) desiredFieldRelativeSpeeds = speeds;
     else
     desiredFieldRelativeSpeeds =
-    ChassisSpeeds.fromRobotRelativeSpeeds(speeds, getSimulatedDriveTrainPose().getRotation());
+    speeds.toFieldRelative(getSimulatedDriveTrainPose().getRotation());
   }
  /**
    *
@@ -109,13 +108,13 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * desired speeds.
    *
    * <p>This method is different from {@link
-   * AbstractDriveTrainSimulation#setRobotSpeeds(ChassisSpeeds)}, which jumps to the speed
+   * AbstractDriveTrainSimulation#setRobotSpeeds(ChassisVelocities)}, which jumps to the speed
    * <strong>Instantaneously</strong>.
    *
-   * @param speeds the desired robot-relative speeds, represented as {@link ChassisSpeeds}
+   * @param speeds the desired robot-relative speeds, represented as {@link ChassisVelocities}
    */
-  public void runChassisSpeeds(ChassisSpeeds speeds, Rotation2d fieldRelative) {
-    desiredFieldRelativeSpeeds =  ChassisSpeeds.fromRobotRelativeSpeeds(speeds, fieldRelative);
+  public void runChassisSpeeds(ChassisVelocities speeds, Rotation2d fieldRelative) {
+    desiredFieldRelativeSpeeds = speeds.toFieldRelative(fieldRelative);
   }
   /**
    *
@@ -136,10 +135,10 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
    * simulates both the linear force and rotational torque due to friction and propulsion.
    *
    * @param desiredChassisSpeedsFieldRelative the desired chassis speeds relative to the field,
-   *     represented as {@link ChassisSpeeds}
+   *     represented as {@link ChassisVelocities}
    */
   public void simulateChassisBehaviorWithFieldRelativeSpeeds(
-      ChassisSpeeds desiredChassisSpeedsFieldRelative) {
+      ChassisVelocities desiredChassisSpeedsFieldRelative) {
     super.setAtRest(false);
 
     final Vector2 desiredLinearMotionPercent =
@@ -151,7 +150,7 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
             desiredLinearMotionPercent.getDirection()));
 
     final double desiredRotationalMotionPercent =
-        desiredChassisSpeedsFieldRelative.omegaRadiansPerSecond / profile.maxAngularVelocity;
+        desiredChassisSpeedsFieldRelative.omega / profile.maxAngularVelocity;
     simulateChassisRotationalBehavior(constrainMagnitude(desiredRotationalMotionPercent, 1));
   }
 
@@ -200,16 +199,16 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
       Rotation2d endingRotation,
       boolean teleportToStartingPose) {
     final Timer trajectoryTimer = new Timer();
-    final HolonomicDriveController driveController =
-        new HolonomicDriveController(
-            new PIDController(5.0, 0, 0.02),
-            new PIDController(5.0, 0, 0.02),
-            new ProfiledPIDController(
-                5.0,
-                0,
-                0.02,
-                new TrapezoidProfile.Constraints(
-                    profile.maxAngularVelocity, profile.maxAngularAcceleration)));
+    final PIDController xController = new PIDController(5.0, 0, 0.02);
+    final PIDController yController = new PIDController(5.0, 0, 0.02);
+    final ProfiledPIDController thetaController =
+        new ProfiledPIDController(
+            5.0,
+            0,
+            0.02,
+            new TrapezoidProfile.Constraints(
+                profile.maxAngularVelocity, profile.maxAngularAcceleration));
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
     final SequentialCommandGroup commandGroup = new SequentialCommandGroup();
     commandGroup.addCommands(Commands.runOnce(trajectoryTimer::start));
     if (teleportToStartingPose)
@@ -220,18 +219,26 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
                       new Pose2d(trajectory.getInitialPose().getTranslation(), startingRotation))));
     commandGroup.addCommands(
         Commands.run(
-            () ->
-                this.runChassisSpeeds(
-                    driveController.calculate(
-                        getSimulatedDriveTrainPose(),
-                        trajectory.sample(trajectoryTimer.get()),
-                        startingRotation.interpolate(
-                            endingRotation,
-                            trajectoryTimer.get() / trajectory.getTotalTimeSeconds())),
-                    false)));
+            () -> {
+              var currentPose = getSimulatedDriveTrainPose();
+              var desiredState = trajectory.sample(trajectoryTimer.get());
+              var desiredHeading =
+                  startingRotation.interpolate(
+                      endingRotation,
+                      trajectoryTimer.get() / trajectory.getTotalTime());
+              var desiredFieldVelocity =
+                  new ChassisVelocities(
+                      desiredState.velocity * desiredState.pose.getRotation().getCos()
+                          + xController.calculate(currentPose.getX(), desiredState.pose.getX()),
+                      desiredState.velocity * desiredState.pose.getRotation().getSin()
+                          + yController.calculate(currentPose.getY(), desiredState.pose.getY()),
+                      thetaController.calculate(
+                          currentPose.getRotation().getRadians(), desiredHeading.getRadians()));
+              this.runChassisSpeeds(desiredFieldVelocity, true);
+            }));
     return commandGroup;
   }
-  private void setPathplannerChassisSpeeds(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
+  private void setPathplannerChassisSpeeds(ChassisVelocities speeds, DriveFeedforwards feedforwards) {
     runChassisSpeeds(speeds, true);}
     @SuppressWarnings("unused")
    private Command opponentRobotFollowPath(PathPlannerPath path) {
@@ -249,13 +256,12 @@ public class SimplifiedHolonomicDriveSimulation extends AbstractDriveTrainSimula
 public Pose2d getObjectOnFieldPose2d() {
 	 return getSimulatedDriveTrainPose();
 }
-public ChassisSpeeds getMeasuredChassisSpeedsRobotRelative() {
-   return ChassisSpeeds.fromFieldRelativeSpeeds(
-    getMeasuredChassisSpeedsFieldRelative(),
-    getObjectOnFieldPose2d().getRotation());
+public ChassisVelocities getMeasuredChassisSpeedsRobotRelative() {
+   return getMeasuredChassisSpeedsFieldRelative()
+       .toRobotRelative(getObjectOnFieldPose2d().getRotation());
 }
 
-public ChassisSpeeds getMeasuredChassisSpeedsFieldRelative() {
+public ChassisVelocities getMeasuredChassisSpeedsFieldRelative() {
   return GeometryConvertor.toWpilibChassisSpeeds(getLinearVelocity(),
           getAngularVelocity());
 }
