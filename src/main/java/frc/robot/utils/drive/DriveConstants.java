@@ -179,19 +179,20 @@ public class DriveConstants {
 			new Translation2d(-kChassisLength / 2, kChassisWidth / 2),
 			new Translation2d(-kChassisLength / 2, -kChassisWidth / 2)
 	};
-	public static final int kFrontLeftDrivePort = 10, // REV 16 CTRE 16
-			kFrontLeftTurningPort = 11, // REV 16 CTRE 17
-			kFrontLeftAbsEncoderPort = 12, // REV 2 CTRE 20
-			kFrontRightDrivePort = 13, // REV 10 CTRE 10
-			kFrontRightTurningPort = 14, // REV 11 CTRE 11
-			kFrontRightAbsEncoderPort = 15, // REV 0 CTRE 21
-			kBackLeftDrivePort = 19, // REV 14 CTRE 14
-			kBackLeftTurningPort = 20, // REV 15 CTRE 15
-			kBackLeftAbsEncoderPort = 21, // REV 3 CTRE 23
-			kBackRightDrivePort = 16, // REV 12 CTRE 12
+	public static final int 
+			kFrontLeftDrivePort = 10, // REV 16 CTRE 16
+			kFrontLeftTurningPort = 14, // REV 16 CTRE 17
+			kFrontLeftAbsEncoderPort = 20, // REV 2 CTRE 20
+			kFrontRightDrivePort = 11, // REV 10 CTRE 10
+			kFrontRightTurningPort = 15, // REV 11 CTRE 11
+			kFrontRightAbsEncoderPort = 21, // REV 0 CTRE 21
+			kBackLeftDrivePort = 12, // REV 14 CTRE 14
+			kBackLeftTurningPort = 16, // REV 15 CTRE 15
+			kBackLeftAbsEncoderPort = 22, // REV 3 CTRE 23
+			kBackRightDrivePort = 13, // REV 12 CTRE 12
 			kBackRightTurningPort = 17, // REV 13 CTRE 13
-			kBackRightAbsEncoderPort = 18, // REV 1 CTRE 24
-			kGyroPort = 9, // REV DOESN'T MATTER, USE kUSB1 CTRE 18
+			kBackRightAbsEncoderPort = 23, // REV 1 CTRE 24
+			kGyroPort = 19, // REV DOESN'T MATTER, USE kUSB1 CTRE 18
 			kFrontLeftShifterForward = 0, kFrontLeftShifterReverse = 1,
 			kFrontRightShifterForward = 2, kFrontRightShifterReverse = 3,
 			kBackLeftShifterForward = 4, kBackLeftShifterReverse = 5,
@@ -315,6 +316,7 @@ public class DriveConstants {
 			}
 		}
 	}
+
 	public static DriveTrainSimulationProfile mainRobotProfile = new DriveTrainSimulationProfile(
 			kMaxSpeedMetersPerSecond, maxTranslationalAcceleration.get(),
 			kMaxTurningSpeedRadPerSec, maxRotationalAcceleration.get(), TrainConstants.weight, kBumperToBumperWidth,
